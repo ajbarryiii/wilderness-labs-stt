@@ -1,0 +1,8 @@
+{
+  "label": "speech-balanced batches",
+  "hypothesis": "Sample each training batch with 60% speech-positive clips using supported torch.nonzero indexing so missed speech examples contribute more frequent gradients, reducing development FNR while the fixed calibration threshold and retained non-speech examples preserve the current zero FPR.",
+  "started_at": "2026-09-09T22:59:47.629066+00:00",
+  "train_seconds": 300,
+  "seed": 20260909,
+  "rank": true
+}

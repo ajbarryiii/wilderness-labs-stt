@@ -1,0 +1,8 @@
+{
+  "label": "ema exported weights",
+  "hypothesis": "Export an exponential moving average of the trained master weights so late-step ternary code jitter is smoothed after convergence, reducing development speech false negatives while preserving the retained sampler, architecture, calibration procedure, and zero-FPR behavior.",
+  "started_at": "2026-09-09T23:22:24.955860+00:00",
+  "train_seconds": 300,
+  "seed": 20260909,
+  "rank": true
+}

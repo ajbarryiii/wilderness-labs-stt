@@ -1,0 +1,12 @@
+{
+  "trial": "009",
+  "source_sha256": "4f743d27da51aee323a9041747387a74251ba8d2952aeead0d268c2db3571cee",
+  "status": "discard",
+  "fnr": 0.023696682464454975,
+  "fpr": 0.0,
+  "cpu_p95_ms": 0.37907905,
+  "num_parameters": 14176,
+  "seconds": 282.159,
+  "hypothesis": "Increase the exported master-weight EMA decay from 0.9999 to 0.99995 so the final ternary codes average over a longer late-training window, reducing residual speech false negatives from code jitter while preserving the retained sampler, architecture, calibration procedure, and zero-FPR behavior.",
+  "error": ""
+}

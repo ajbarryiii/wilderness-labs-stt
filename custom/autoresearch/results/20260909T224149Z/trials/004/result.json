@@ -1,0 +1,12 @@
+{
+  "trial": "004",
+  "source_sha256": "b3a2a16fbb8d228c5e4cc82cf3a089d66d24b830143a256535d2edbed01fa62d",
+  "status": "infeasible_best",
+  "fnr": 0.023696682464454975,
+  "fpr": 0.0,
+  "cpu_p95_ms": 0.37885615,
+  "num_parameters": 14176,
+  "seconds": 283.142,
+  "hypothesis": "Sample each training batch with 60% speech-positive clips using supported torch.nonzero indexing so missed speech examples contribute more frequent gradients, reducing development FNR while the fixed calibration threshold and retained non-speech examples preserve the current zero FPR.",
+  "error": ""
+}

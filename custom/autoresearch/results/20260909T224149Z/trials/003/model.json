@@ -1,0 +1,48 @@
+{
+  "schema_version": 2,
+  "model_type": "causal_ternary_clip_cnn",
+  "layers": [
+    {
+      "channels": 32,
+      "kernel": 5
+    },
+    {
+      "channels": 48,
+      "kernel": 3
+    },
+    {
+      "channels": 48,
+      "kernel": 3
+    }
+  ],
+  "activation_precision": "fp32_reference",
+  "learned_bias": false,
+  "normalization": "nonaffine channel RMS",
+  "pooling": "valid-length masked whole-clip mean+max; not a streaming VAD decision",
+  "scale_metadata": "one FP32 absmean scale per tensor, derived from master weights; no learned affine parameters",
+  "packed_format": "2bits/code, mapping -1=0,0=1,+1=2,3 invalid; layer order thenhead, each tensor padded to4",
+  "training": {
+    "training_cuda_verified": true,
+    "training_device": "cuda:0",
+    "gpu_name": "NVIDIA GeForce RTX 5090",
+    "training_steps": 191903,
+    "training_seconds": 278.7932147440006,
+    "process_seconds": 280.000309639996,
+    "peak_vram_mb": 211.3798828125,
+    "initial_train_loss": 0.766123354434967,
+    "final_train_loss": 1.0492126278904834e-08,
+    "master_weight_l1_change": 6236.738693237305,
+    "seed": 20260909,
+    "batch_size": 128,
+    "optimizer": "AdamW",
+    "learning_rate": 0.003,
+    "training_activation_precision": "BF16 autocast",
+    "positive_loss_weight": 2.5,
+    "positive_margin": 6.0,
+    "hard_positive_weight": 0.35,
+    "num_parameters": 14176,
+    "torch_version": "2.11.0+cu128",
+    "cuda_version": "12.8",
+    "train_samples": 1886
+  }
+}

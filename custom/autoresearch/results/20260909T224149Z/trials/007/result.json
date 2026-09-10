@@ -1,0 +1,12 @@
+{
+  "trial": "007",
+  "source_sha256": "8d600a7cfb88e26f70951562d4b8ebc27482f3726687bb070d506acdb19986eb",
+  "status": "discard",
+  "fnr": 0.04265402843601896,
+  "fpr": 0.0,
+  "cpu_p95_ms": 0.3766775,
+  "num_parameters": 14176,
+  "seconds": 282.131,
+  "hypothesis": "Sample speech-positive training clips with inverse-square-root length weighting while keeping the retained 60% positive batch fraction, so shorter speech clips receive more frequent gradients and development FNR may fall without changing the ternary model contract, calibration procedure, or negative training coverage.",
+  "error": ""
+}

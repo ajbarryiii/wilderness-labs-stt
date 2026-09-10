@@ -1,0 +1,22 @@
+{
+  ".gitignore": "80f960982d30cf1aaf057efa292cd1905ebe52d7f40f208b44ce6069152252f5",
+  "AGENTS.md": "2e21ef71d6c0accabecbc4c6e3270c524ee3d93ffa66291cfa38995fb5c38586",
+  "LICENSE": "807967661fdab76ba2df01368dbf1279a2a67c0c2d99878e60a0499266552c56",
+  "custom/PLAN.md": "d99ac3cb7c3649f2033a0491543fa585862850a705e82c2c339a3c8c95f28977",
+  "custom/autoresearch/data_prepare.py": "73bec3502e45a162246b7b7938d0d018d41911f94b0a0a21510985900b4a0ccc",
+  "custom/autoresearch/data_setup.py": "05ea059460556f56409cfba8576379d5fafd5f90dc95de42fa9fccc50228af21",
+  "custom/autoresearch/runtime-python": "72e3b9d09d777f730823f1aad9c1ae3479285c0608eef4a669837bf65b6c775e",
+  "custom/autoresearch/runtime.nix": "de5aad9e71468a72ddd41b4e8b44faf732aef4dd0d656d51b9cda1881cef40fe",
+  "custom/autoresearch/runtime_lock.json": "5bc44f8947d78b408a55a00f1c091bb232b70a72f6e58bc41ede2a7f3c6ab808",
+  "custom/autoresearch/runtime_setup.py": "b0aef80d9535b87200a82fa5ce9fb5dd1a5bf7aa343e175acc3c4ed3a135614e",
+  "custom/autoresearch/runtime_verify.py": "0ae015d06b6e88bbb551c8365ec9e1fc7d82f2d3c66d74f0b29b33aa5dcd62cf",
+  "custom/tests/test_vad.py": "f22cbdf12b1de3f32cbd4df762ece281278f0597b1909f133c9921dcd022346e",
+  "custom/vad/.gitignore": "f2b6bbc60bc5740fb2144eb9a932dff4f68eda0585df45e0ec3e4aa341026b5c",
+  "custom/vad/README.md": "8e4774ecdc1b08985b030c50292da54a676a83353747c3e07273cc2fdb325a59",
+  "custom/vad/benchmark.json": "4494e76292b6b642d6da9df0d33e9a28e4ba859222a6fff8727e21a9a63291b1",
+  "custom/vad/data_manifest.json": "6d8ea56094ac85a1dd8f03dbdfedb1e9c34ca6370d969f997c95543c1c52c418",
+  "custom/vad/prepare.py": "3bea53c73e6e2fe7b32fde1f2b136103ba3e3d83fbad044e42751a5ec562b867",
+  "experiment.json": "b91add36281c549c18ec842b3ab3209dffeccd91be76dbbf77ae855352ee21e9",
+  "program.md": "7d78e2fb4c178f31d7cc782ca7d2ab9a3af79e65c327b58a390a89b657d3019f",
+  "runtime_contract.json": "20fc57971d22dbec1a7fa641dd5000d0d3359b42bb922dacc95bc31d276a5c10"
+}

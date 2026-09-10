@@ -1,0 +1,8 @@
+{
+  "label": "baseline",
+  "hypothesis": "Validated initial ternary model on frozen real-audio splits",
+  "started_at": "2026-09-09T22:41:49.129905+00:00",
+  "train_seconds": 300,
+  "seed": 20260909,
+  "rank": true
+}

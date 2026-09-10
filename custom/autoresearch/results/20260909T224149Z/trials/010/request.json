@@ -1,0 +1,8 @@
+{
+  "label": "shorter EMA export",
+  "hypothesis": "Decrease the exported master-weight EMA decay from 0.9999 to 0.9998 so the exported ternary codes track the late converged weights more closely while still smoothing step-to-step code jitter, reducing residual speech false negatives without changing architecture, calibration, or the fixed zero-FPR operating procedure.",
+  "started_at": "2026-09-09T23:33:08.003297+00:00",
+  "train_seconds": 300,
+  "seed": 20260909,
+  "rank": true
+}

@@ -1,0 +1,20 @@
+{"step": 1, "loss": 1.3322254419326782, "elapsed_seconds": 1.4501361180009553}
+{"step": 11219, "loss": 7.5159059633733705e-06, "elapsed_seconds": 16.4503527199995}
+{"step": 22390, "loss": 8.436535914313481e-09, "elapsed_seconds": 31.450433666999743}
+{"step": 33577, "loss": 4.0139546797490766e-08, "elapsed_seconds": 46.45134778800275}
+{"step": 44476, "loss": 5.011064341253757e-10, "elapsed_seconds": 61.451622629996564}
+{"step": 55215, "loss": 1.526376358640391e-08, "elapsed_seconds": 76.45194526200066}
+{"step": 65583, "loss": 8.291776154578656e-10, "elapsed_seconds": 91.45319131699944}
+{"step": 76748, "loss": 1.2960909012704747e-09, "elapsed_seconds": 106.45415291799873}
+{"step": 87226, "loss": 3.6668848513166097e-10, "elapsed_seconds": 121.45460423299664}
+{"step": 98413, "loss": 3.121188854038337e-07, "elapsed_seconds": 136.4558995510015}
+{"step": 109382, "loss": 3.0780206161651336e-10, "elapsed_seconds": 151.45649627900275}
+{"step": 120149, "loss": 8.579193178093192e-08, "elapsed_seconds": 166.45697353300056}
+{"step": 131470, "loss": 1.7132052443358248e-09, "elapsed_seconds": 181.45716934800294}
+{"step": 142752, "loss": 3.6863909258499916e-08, "elapsed_seconds": 196.4578082959997}
+{"step": 153377, "loss": 6.67786181907104e-08, "elapsed_seconds": 211.4587538889973}
+{"step": 163944, "loss": 8.161522568883584e-10, "elapsed_seconds": 226.45986266800173}
+{"step": 174575, "loss": 3.2150512807582743e-10, "elapsed_seconds": 241.45998002799752}
+{"step": 184821, "loss": 8.655828054315862e-09, "elapsed_seconds": 256.46061132199975}
+{"step": 195016, "loss": 5.737876396239017e-09, "elapsed_seconds": 271.46165346699854}
+{"training_cuda_verified": true, "training_device": "cuda:0", "gpu_name": "NVIDIA GeForce RTX 5090", "training_steps": 201410, "training_seconds": 278.77903139900445, "process_seconds": 280.00061532799737, "peak_vram_mb": 211.400390625, "initial_train_loss": 0.5418639183044434, "final_train_loss": 1.7007978669880686e-07, "master_weight_l1_change": 5803.895286560059, "seed": 20260909, "batch_size": 128, "optimizer": "AdamW", "learning_rate": 0.003, "training_activation_precision": "BF16 autocast", "positive_loss_weight": 2.5, "positive_margin": 6.0, "positive_margin_weight": 0.02, "positive_batch_fraction": 0.6, "positive_sampling": "inverse_sqrt_clip_length", "num_parameters": 14176, "torch_version": "2.11.0+cu128", "cuda_version": "12.8", "train_samples": 1886}

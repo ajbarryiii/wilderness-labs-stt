@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "cuda_available": true,
+  "gpu": "NVIDIA GeForce RTX 5090",
+  "compute_capability": [
+    12,
+    0
+  ],
+  "architectures": [
+    "sm_75",
+    "sm_80",
+    "sm_86",
+    "sm_90",
+    "sm_100",
+    "sm_120"
+  ],
+  "torch": "2.11.0+cu128",
+  "cuda_runtime": "12.8",
+  "python": "3.13.13",
+  "numpy": "2.4.4",
+  "scipy": "1.17.1",
+  "soundfile": "0.13.1",
+  "cuda_forward_backward_steps": 3,
+  "weights_changed": true,
+  "loss": 0.06562153995037079,
+  "elapsed_seconds": 0.1926136830006726,
+  "peak_cuda_bytes": 5680128
+}

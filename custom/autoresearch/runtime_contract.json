@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "python_command": [
+    "/home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt/custom/autoresearch/runtime-python"
+  ],
+  "dependency_files": [
+    "custom/autoresearch/runtime.nix",
+    "custom/autoresearch/runtime-python",
+    "custom/autoresearch/runtime_verify.py",
+    "custom/autoresearch/runtime_lock.json",
+    "custom/autoresearch/runtime_setup.py",
+    "custom/autoresearch/data_prepare.py",
+    "custom/autoresearch/data_setup.py"
+  ],
+  "verify_command": [
+    "/home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt/custom/autoresearch/runtime-python",
+    "/home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt/custom/autoresearch/runtime_verify.py"
+  ]
+}

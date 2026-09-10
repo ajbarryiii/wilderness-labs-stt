@@ -1,0 +1,8 @@
+{
+  "label": "stronger positive BCE weight",
+  "hypothesis": "Increase the positive BCE class weight from 2.5 to 3.5 while keeping the current 60% positive batch sampler, so speech-positive clips receive stronger gradients and development FNR may fall without changing the ternary model contract or the fixed calibration/evaluation procedure.",
+  "started_at": "2026-09-09T23:10:42.925391+00:00",
+  "train_seconds": 300,
+  "seed": 20260909,
+  "rank": true
+}

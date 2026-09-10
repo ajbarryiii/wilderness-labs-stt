@@ -1,0 +1,8 @@
+{
+  "label": "longer EMA export",
+  "hypothesis": "Increase the exported master-weight EMA decay from 0.9999 to 0.99995 so the final ternary codes average over a longer late-training window, reducing residual speech false negatives from code jitter while preserving the retained sampler, architecture, calibration procedure, and zero-FPR behavior.",
+  "started_at": "2026-09-09T23:27:50.955882+00:00",
+  "train_seconds": 300,
+  "seed": 20260909,
+  "rank": true
+}

@@ -1,0 +1,81 @@
+{
+  "fnr": 0.04265402843601896,
+  "fpr": 0.0,
+  "speech_samples": 211,
+  "nonspeech_samples": 212,
+  "schema_version": 2,
+  "data_kind": "real_audio",
+  "label_granularity": "clip",
+  "cpu_p95_ms": 0.38284694999999996,
+  "cpu_timing_workload": "one second mono16k PCM, fixed DSP+FP32 independent model; one x86 CPU thread",
+  "num_parameters": 14176,
+  "precision_ok": true,
+  "ternary_code_bits": 2,
+  "packed_weight_bytes": 3544,
+  "scale_bytes": 16,
+  "activation_precision": "fp32_reference",
+  "arithmetic": "expanded scaled ternary weights, ordinary FP32 convolutions; not packed execution",
+  "threshold": 24.93561553955078,
+  "auroc": 1.0,
+  "score_range": 88.75033569335938,
+  "balanced_error_rate": 0.02132701421800948,
+  "feasible": false,
+  "calibration": {
+    "fnr": 0.00804289544235925,
+    "fpr": 0.0,
+    "speech_samples": 373,
+    "nonspeech_samples": 221
+  },
+  "conditions": {
+    "clean_read_english": {
+      "count": 211,
+      "fnr": 0.04265402843601896,
+      "fpr": null
+    },
+    "real_background_noise": {
+      "count": 24,
+      "fnr": null,
+      "fpr": 0.0
+    },
+    "real_foreground_noise": {
+      "count": 188,
+      "fnr": null,
+      "fpr": 0.0
+    }
+  },
+  "training": {
+    "training_cuda_verified": true,
+    "training_device": "cuda:0",
+    "gpu_name": "NVIDIA GeForce RTX 5090",
+    "training_steps": 191903,
+    "training_seconds": 278.7932147440006,
+    "process_seconds": 280.000309639996,
+    "peak_vram_mb": 211.3798828125,
+    "initial_train_loss": 0.766123354434967,
+    "final_train_loss": 1.0492126278904834e-08,
+    "master_weight_l1_change": 6236.738693237305,
+    "seed": 20260909,
+    "batch_size": 128,
+    "optimizer": "AdamW",
+    "learning_rate": 0.003,
+    "training_activation_precision": "BF16 autocast",
+    "torch_version": "2.11.0+cu128",
+    "cuda_version": "12.8",
+    "train_samples": 1886
+  },
+  "training_cuda_verified": true,
+  "training_device": "cuda:0",
+  "training_steps": 191903,
+  "training_seconds": 278.7932147440006,
+  "gpu_name": "NVIDIA GeForce RTX 5090",
+  "peak_vram_mb": 211.3798828125,
+  "cache_sha256": "3bef409e8ae25e61ba2ea1c45458beb1b0db6b145a9f70a6ef2081a9506c1315",
+  "manifest_sha256": "6d8ea56094ac85a1dd8f03dbdfedb1e9c34ca6370d969f997c95543c1c52c418",
+  "iphone_joules": null,
+  "frame_vad_metrics": null,
+  "limitations": [
+    "Whole-utterance presence proxy; no frame activity labels",
+    "Public corpus/source differences may inflate discrimination",
+    "No held-out final test or iPhone energy evaluation"
+  ]
+}

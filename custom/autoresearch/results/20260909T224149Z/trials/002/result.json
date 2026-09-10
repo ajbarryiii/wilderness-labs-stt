@@ -1,0 +1,12 @@
+{
+  "trial": "002",
+  "source_sha256": "82312407da9163180e0912662ed023756813f5bbb60a136c4d2ec2c9034d8033",
+  "status": "error",
+  "fnr": "",
+  "fpr": "",
+  "cpu_p95_ms": "",
+  "num_parameters": "",
+  "seconds": 3.035,
+  "hypothesis": "Sample each training batch with 60% speech-positive clips so missed speech examples contribute more frequent gradients, reducing development FNR while the fixed calibration threshold and negative examples preserve the current low FPR.",
+  "error": "Exit 1; see /home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt/custom/autoresearch/runs/20260909T224149Z/trials/002/train.log"
+}

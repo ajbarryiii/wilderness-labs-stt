@@ -1,0 +1,8 @@
+{
+  "label": "seventy percent speech-balanced batches",
+  "hypothesis": "Increase the speech-positive batch fraction from 60% to 70% so scarce missed-speech cases contribute more frequent gradients, reducing development FNR while the fixed calibration procedure and retained non-speech samples continue to control FPR.",
+  "started_at": "2026-09-09T23:05:04.823808+00:00",
+  "train_seconds": 300,
+  "seed": 20260909,
+  "rank": true
+}

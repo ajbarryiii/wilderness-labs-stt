@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt/custom/autoresearch/runs/20260909T224149Z/workspace/custom/vad/train.py", line 159, in <module>
+    if __name__=="__main__":main()
+                            ~~~~^^
+  File "/home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt/custom/autoresearch/runs/20260909T224149Z/workspace/custom/vad/train.py", line 94, in main
+    positive_indices=torch.flatnonzero(y>0.5)
+                     ^^^^^^^^^^^^^^^^^
+  File "/home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt/custom/autoresearch/.training-runtime/lib/python3.13/site-packages/torch/__init__.py", line 2881, in __getattr__
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+AttributeError: module 'torch' has no attribute 'flatnonzero'

@@ -1,0 +1,25 @@
+{
+  "upstream_url": "https://github.com/karpathy/autoresearch/blob/master/program.md",
+  "upstream_commit": "228791fb499afffb54b46200aca536f79142f117",
+  "upstream_pinned_url": "https://raw.githubusercontent.com/karpathy/autoresearch/228791fb499afffb54b46200aca536f79142f117/program.md",
+  "upstream_program_sha256": "86cf987a5c381e46eefe0d0a82765223fd766d8d7acdc2afacfbbce15ecacece",
+  "adaptation": "Original rewrite; no upstream program executed or indefinite loop retained",
+  "prepared_at": "2026-09-09T21:03:49.202650+00:00",
+  "python": "3.13.13",
+  "codex_cli": "0.153.4",
+  "nixpkgs_source": "/nix/store/agyg2m8bkbcr2d5p57my3bla8794arlp-source",
+  "runtime": "/nix/store/l9k0anq0z7zz81zcwy035jfwap9ga6rl-python3-3.13.13",
+  "status": "prepared_not_started",
+  "checks": [
+    "8 unit tests",
+    "freeze/trial/ledger fake fixture",
+    "2-second cgroup watchdog with separate-session child"
+  ],
+  "not_run": [
+    "research agent",
+    "model training",
+    "CUDA training preflight",
+    "dataset download",
+    "iPhone benchmark"
+  ]
+}

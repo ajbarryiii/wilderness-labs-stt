@@ -1,0 +1,11 @@
+{
+  "status": "completed",
+  "created_at": "2026-09-09T22:41:49.081016+00:00",
+  "unit": "wilderness-autoresearch-20260909t224149z",
+  "duration_seconds": 3600,
+  "run_dir": "/home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt/custom/autoresearch/runs/20260909T224149Z",
+  "started_at": "2026-09-09T22:41:49.127755+00:00",
+  "started_epoch": 1788993709.1277628,
+  "deadline_epoch": 1788997309.1277628,
+  "finished_at": "2026-09-09T23:39:20.780962+00:00"
+}

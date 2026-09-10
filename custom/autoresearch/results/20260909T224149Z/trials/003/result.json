@@ -1,0 +1,12 @@
+{
+  "trial": "003",
+  "source_sha256": "2c74844b4fb6f2aa5dd73ffd736eeaac81442678317c085eb707a06accf9d746",
+  "status": "discard",
+  "fnr": 0.04265402843601896,
+  "fpr": 0.0,
+  "cpu_p95_ms": 0.38284694999999996,
+  "num_parameters": 14176,
+  "seconds": 282.16,
+  "hypothesis": "Add an extra loss term on the highest-loss speech-positive clips in each batch so borderline speech examples receive stronger gradients, reducing development FNR while leaving the ternary model contract, calibration procedure and negative examples unchanged.",
+  "error": ""
+}

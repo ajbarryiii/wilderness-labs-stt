@@ -1,0 +1,12 @@
+{
+  "trial": "005",
+  "source_sha256": "11868f0755e10fadd944859e987c63d69639482e4d877f91a183b387ecf0335a",
+  "status": "discard",
+  "fnr": 0.04739336492890995,
+  "fpr": 0.0,
+  "cpu_p95_ms": 0.3814455,
+  "num_parameters": 14176,
+  "seconds": 283.148,
+  "hypothesis": "Increase the speech-positive batch fraction from 60% to 70% so scarce missed-speech cases contribute more frequent gradients, reducing development FNR while the fixed calibration procedure and retained non-speech samples continue to control FPR.",
+  "error": ""
+}

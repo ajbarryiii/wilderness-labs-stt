@@ -1,0 +1,12 @@
+{
+  "trial": "008",
+  "source_sha256": "c95108c73108833474cef92a6705b915998cbfc386d259b22747dec7cb80541d",
+  "status": "keep",
+  "fnr": 0.009478672985781991,
+  "fpr": 0.0,
+  "cpu_p95_ms": 0.3825341,
+  "num_parameters": 14176,
+  "seconds": 283.128,
+  "hypothesis": "Export an exponential moving average of the trained master weights so late-step ternary code jitter is smoothed after convergence, reducing development speech false negatives while preserving the retained sampler, architecture, calibration procedure, and zero-FPR behavior.",
+  "error": ""
+}

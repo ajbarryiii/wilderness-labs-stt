@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-09-09T22:28:46.535795+00:00",
+  "nixpkgs_store_path": "/nix/store/agyg2m8bkbcr2d5p57my3bla8794arlp-source",
+  "runtime_store_path": "/nix/store/g8sa08ia6s47i6pymkz4da0piwwi9kdv-python3-3.13.13-env",
+  "nix_paths": {
+    "info": {
+      "agyg2m8bkbcr2d5p57my3bla8794arlp-source": {
+        "ca": {
+          "hash": "sha256-ZeRxu4yn6shd3SNF5ZUQb4r7BaVo1zBKMjRhfoNSBmw=",
+          "method": "nar"
+        },
+        "deriver": null,
+        "narHash": "sha256-ZeRxu4yn6shd3SNF5ZUQb4r7BaVo1zBKMjRhfoNSBmw=",
+        "narSize": 205245416,
+        "references": [],
+        "registrationTime": 1782696141,
+        "signatures": [],
+        "storeDir": "/nix/store",
+        "ultimate": false,
+        "version": 2
+      },
+      "g8sa08ia6s47i6pymkz4da0piwwi9kdv-python3-3.13.13-env": {
+        "ca": null,
+        "deriver": "xfhjdnbx6qivkv2vi6db58sqxgsxnw04-python3-3.13.13-env.drv",
+        "narHash": "sha256-jNjnB+NFu79+JQEPjmyqU7B9Z2CSKiFzK03oStsLjsg=",
+        "narSize": 345976,
+        "references": [
+          "24lnp6kjbxwj3lw5a1x65qipmmjp04wj-python3.13-typing-extensions-4.15.0",
+          "28mk2rwm6a4nmz8b5my2359y5947dkiy-python3.13-jinja2-3.1.6",
+          "5yr31fd6xyci9xbxywh7f7bb7cyszjd5-python3.13-networkx-3.6.1",
+          "7nkpbpia5j19ci1rfy9pzq6sgmaz37k0-python3.13-triton-3.6.0",
+          "7w8rlw472k6xwvrh20kfyjvx93l3cgpx-python3.13-mpmath-1.4.1",
+          "7wbdh8nb0vd523v6v3ilhngh2m7wswrz-python3.13-charset-normalizer-3.4.7",
+          "8fhz2272cwdryz3z1s7x7nbd2bs6hxdb-python3.13-cuda-bindings-12.9.6",
+          "8kvxvr3pmsypxiypq4g8zy13glnfr7nx-glibc-2.42-67",
+          "8y2s7rsacczsg78ws1d6lvi3clxk358c-python3.13-certifi-2026.01.04",
+          "9asvh5g5wxj0aywr5f9wbn2ib27pfkkb-python3.13-numpy-2.4.4",
+          "a3y1nvgxarjkwcjkyin247xy27drv5m3-python3.13-fsspec-2026.3.0",
+          "anbz5pbq5z9174bpj299aw41rh99kl4g-python3.13-sympy-1.14.0",
+          "g8sa08ia6s47i6pymkz4da0piwwi9kdv-python3-3.13.13-env",
+          "hngmi01i8wgi25a0byrxcn4ysz5j79mw-gcc-15.2.0-lib",
+          "l600sbvlb7px0dr040ff47glf8d502zb-python3.13-idna-3.13",
+          "l9k0anq0z7zz81zcwy035jfwap9ga6rl-python3-3.13.13",
+          "laij9cq1g35l4vkhnyyidir17mnccmbv-python3.13-soundfile-0.13.1",
+          "lkiz1ls5ivhi5dzw0nx0k0xsjcaklm4j-python3.13-requests-2.33.1",
+          "m0v936rc6b8lckpi7xgsbhbmgis5hy95-python3.13-scipy-1.17.1",
+          "n3m8vv39lcpfm5z3wasrs2ngvp74q0l4-python3.13-pycparser-3.00",
+          "n97k32kd1dffsp4phzvw431wxhfyxf0w-python3.13-pyyaml-6.0.3",
+          "na8gs8bz4bfs8ghpzbqq6gwir6sa2ihl-python3.13-markupsafe-3.0.3",
+          "v0pvbpzlfxrrp3qjbhq0bfl2dhl4y5ym-python3.13-urllib3-2.6.3",
+          "v576yikxy3l0pbv79lgqnjxj0cwns7wk-python3.13-torch-2.11.0",
+          "vdmncda4fbgd5ji7q087a8ax3r7zv3g0-python3.13-cffi-2.0.0",
+          "x72ryd1ff4xw1p92szk0cjyp53gph00y-python3.13-setuptools-80.10.1",
+          "yafrllbdz6zdxd6pxb8ghsqxjjnvfvgl-python3.13-filelock-3.20.3"
+        ],
+        "registrationTime": 1788992908,
+        "signatures": [],
+        "storeDir": "/nix/store",
+        "ultimate": true,
+        "version": 2
+      }
+    },
+    "storeDir": "/nix/store",
+    "version": 2
+  },
+  "versions": {
+    "ok": true,
+    "cuda_available": true,
+    "gpu": "NVIDIA GeForce RTX 5090",
+    "compute_capability": [
+      12,
+      0
+    ],
+    "architectures": [
+      "sm_75",
+      "sm_80",
+      "sm_86",
+      "sm_90",
+      "sm_100",
+      "sm_120"
+    ],
+    "torch": "2.11.0+cu128",
+    "cuda_runtime": "12.8",
+    "python": "3.13.13",
+    "numpy": "2.4.4",
+    "scipy": "1.17.1",
+    "soundfile": "0.13.1",
+    "cuda_forward_backward_steps": 3,
+    "weights_changed": true,
+    "loss": 0.06562153995037079,
+    "elapsed_seconds": 0.1926136830006726,
+    "peak_cuda_bytes": 5680128
+  },
+  "recipe": "runtime.nix; all package sources and transitive versions fixed by Nix source/store content",
+  "binary_overrides": {
+    "nccl": "NVIDIA nvidia-nccl-cu12 2.28.9",
+    "nvshmem": "NVIDIA nvidia-nvshmem-cu12 3.6.5"
+  }
+}

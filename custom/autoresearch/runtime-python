@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+export LD_LIBRARY_PATH="/run/opengl-driver/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+exec /home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt/custom/autoresearch/.training-runtime/bin/python3 "$@"

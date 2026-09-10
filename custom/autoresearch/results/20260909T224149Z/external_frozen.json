@@ -1,0 +1,9 @@
+{
+  "/home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt/custom/autoresearch/runtime.nix": "de5aad9e71468a72ddd41b4e8b44faf732aef4dd0d656d51b9cda1881cef40fe",
+  "/home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt/custom/autoresearch/runtime-python": "72e3b9d09d777f730823f1aad9c1ae3479285c0608eef4a669837bf65b6c775e",
+  "/home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt/custom/autoresearch/runtime_verify.py": "0ae015d06b6e88bbb551c8365ec9e1fc7d82f2d3c66d74f0b29b33aa5dcd62cf",
+  "/home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt/custom/autoresearch/runtime_lock.json": "5bc44f8947d78b408a55a00f1c091bb232b70a72f6e58bc41ede2a7f3c6ab808",
+  "/home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt/custom/autoresearch/runtime_setup.py": "b0aef80d9535b87200a82fa5ce9fb5dd1a5bf7aa343e175acc3c4ed3a135614e",
+  "/home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt/custom/autoresearch/data_prepare.py": "73bec3502e45a162246b7b7938d0d018d41911f94b0a0a21510985900b4a0ccc",
+  "/home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt/custom/autoresearch/data_setup.py": "05ea059460556f56409cfba8576379d5fafd5f90dc95de42fa9fccc50228af21"
+}

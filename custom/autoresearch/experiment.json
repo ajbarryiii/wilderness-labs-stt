@@ -1,0 +1,51 @@
+{
+  "schema_version": 2,
+  "name": "ternary-stt-hour1",
+  "state": "requires_verified_readiness",
+  "duration_seconds": 3600,
+  "report_reserve_seconds": 90,
+  "agent_proposal_seconds": 120,
+  "trial_training_seconds": 300,
+  "trial_timeout_seconds": 420,
+  "max_consecutive_agent_errors": 3,
+  "scope": "Prepared real-audio ternary speech/no-speech classifier GPU optimization",
+  "recognizer_final_parameters": [
+    500000000,
+    1000000000
+  ],
+  "vad_max_parameters": 50000,
+  "early_device": "iPhone 15 Pro / Safari / WASM SIMD CPU",
+  "training_device": "single RTX 5090",
+  "auto_start": false,
+  "schedule": null,
+  "prerequisite_setup_in_timed_session": false,
+  "readiness_required": [
+    "pinned_cuda_environment",
+    "cuda_forward_backward_optimizer",
+    "real_labeled_audio_and_split_audit",
+    "independent_nondegenerate_baseline",
+    "immutable_evaluator_and_data_hashes",
+    "sandbox_proposal_smoke"
+  ],
+  "protected_after_freeze": [
+    "custom/vad/prepare.py",
+    "custom/vad/benchmark.json",
+    "custom/vad/data_manifest.json"
+  ],
+  "candidate_files": [
+    "custom/vad/train.py"
+  ],
+  "proposal_file": "proposal.json",
+  "score_requires_real_audio": true,
+  "reject_degenerate_predictions": true,
+  "notes": "All environment/data setup, CUDA checks and baseline qualification occur before the timer. One-hour wall clock includes proposal reasoning, GPU trials, independent evaluation and reporting. No synthetic-accuracy fallback. Final 0.5\u20131B recognizer and iPhone 15 Pro power target unchanged.",
+  "max_fnr": 0.01,
+  "max_fpr": 0.2,
+  "diagnostic_retention": {
+    "max_fnr_exclusive": 0.95,
+    "max_fpr_exclusive": 0.95,
+    "max_balanced_error_exclusive": 0.49,
+    "minimum_score_range_exclusive": 1e-08,
+    "status": "infeasible_best"
+  }
+}

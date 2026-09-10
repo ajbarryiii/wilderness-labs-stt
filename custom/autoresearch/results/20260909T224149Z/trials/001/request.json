@@ -1,0 +1,8 @@
+{
+  "label": "stronger positive margin",
+  "hypothesis": "Increase the positive-logit margin target and weight so borderline speech clips are pushed farther above the calibrated threshold, reducing development FNR while preserving the current zero-FPR separation.",
+  "started_at": "2026-09-09T22:46:59.045134+00:00",
+  "train_seconds": 300,
+  "seed": 20260909,
+  "rank": true
+}

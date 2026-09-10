@@ -1,0 +1,8 @@
+{
+  "label": "hard positive BCE emphasis",
+  "hypothesis": "Add an extra loss term on the highest-loss speech-positive clips in each batch so borderline speech examples receive stronger gradients, reducing development FNR while leaving the ternary model contract, calibration procedure and negative examples unchanged.",
+  "started_at": "2026-09-09T22:53:59.785342+00:00",
+  "train_seconds": 300,
+  "seed": 20260909,
+  "rank": true
+}

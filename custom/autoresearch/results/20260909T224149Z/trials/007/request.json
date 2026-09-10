@@ -1,0 +1,8 @@
+{
+  "label": "length-weighted speech sampling",
+  "hypothesis": "Sample speech-positive training clips with inverse-square-root length weighting while keeping the retained 60% positive batch fraction, so shorter speech clips receive more frequent gradients and development FNR may fall without changing the ternary model contract, calibration procedure, or negative training coverage.",
+  "started_at": "2026-09-09T23:16:30.277094+00:00",
+  "train_seconds": 300,
+  "seed": 20260909,
+  "rank": true
+}

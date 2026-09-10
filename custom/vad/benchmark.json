@@ -1,0 +1,52 @@
+{
+  "schema_version": 2,
+  "name": "english-real-audio-clip-presence-v1",
+  "data_kind": "real_audio",
+  "label_granularity": "clip",
+  "seed": 20260909,
+  "sample_rate": 16000,
+  "target_fnr": 0.01,
+  "max_fpr": 0.2,
+  "minimum_samples_per_class": {
+    "train": 256,
+    "calibration": 128,
+    "development": 128
+  },
+  "cache_path": "/home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt/custom/vad/cache/features.npz",
+  "cache_sha256": "3bef409e8ae25e61ba2ea1c45458beb1b0db6b145a9f70a6ef2081a9506c1315",
+  "python_command": [
+    "/home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt/custom/autoresearch/runtime-python"
+  ],
+  "frontend": {
+    "bands": 16,
+    "window_samples": 320,
+    "hop_samples": 160,
+    "fft_samples": 512,
+    "mel_min_hz": 60,
+    "mel_max_hz": 7800,
+    "frame_averaging": 4,
+    "max_bins": 500
+  },
+  "threshold_policy": "Highest calibration-positive score threshold allowing at most floor(0.01*Npositive) misses; apply unchanged on development.",
+  "degenerate_rejection": {
+    "minimum_score_range": 1e-05,
+    "minimum_auroc_exclusive": 0.51,
+    "maximum_fnr_exclusive": 0.95,
+    "maximum_fpr_exclusive": 0.95,
+    "maximum_balanced_error_exclusive": 0.49
+  },
+  "training_budget_seconds": 300,
+  "training_budget_includes": "Process startup, imports, cache verification, optimizer updates and checkpoint writing; reserve20seconds for export",
+  "eval_budget_seconds": 120,
+  "deployment_weight_precision": "All learned conv and head codes ternary, per-tensor derivedFP32scale; no bias/no affine normalization",
+  "reference_activation_precision": "FP32; training BF16autocast",
+  "cpu_workload": "One second mono16k PCM to DSP and classifier on one remote x86 CPUthread",
+  "label_semantics": "Full3\u201320second English transcript-bearing utterances contain speech; source-labeled non-speech noise segments. No activity labels for individual frames.",
+  "limits": [
+    "Clip-presence engineering proxy, not streaming/frameVAD",
+    "Corpus differences may inflate classification; noise labels not individually audited",
+    "No quiet/noisy speech conditions validated in this initial clean-speech proxy",
+    "No medical-domain accuracy/WER/clinical-quality conclusions",
+    "No iPhone15Pro energy measurement"
+  ]
+}

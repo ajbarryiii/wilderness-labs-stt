@@ -1,0 +1,12 @@
+{
+  "trial": "001",
+  "source_sha256": "084b69f0d284683bbe78dd26b55d5d764ebb2d8e11ad92ff70e5501ba5f438ce",
+  "status": "discard",
+  "fnr": 0.08056872037914692,
+  "fpr": 0.0,
+  "cpu_p95_ms": 0.37970204999999996,
+  "num_parameters": 14176,
+  "seconds": 282.144,
+  "hypothesis": "Increase the positive-logit margin target and weight so borderline speech clips are pushed farther above the calibrated threshold, reducing development FNR while preserving the current zero-FPR separation.",
+  "error": ""
+}

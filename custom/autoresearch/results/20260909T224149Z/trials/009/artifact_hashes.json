@@ -1,0 +1,7 @@
+{
+  "weights.npz": "941dae3d1bf4cd7110f5c5c1cafdf69118da980b8ae5883eb34c7631e1fbba4c",
+  "weights.2bit": "5a57f216d9cb41aa5155ed982749de9cbe0708d580f6475e1252f6ff7411ae08",
+  "training-state.pt": "1b98388640c59a034a3aeb0c89f0ce403bf811c48cb2d79d1e2e0eb75e972424",
+  "gpu.csv": "f4489cdc87140ada397c0f3826b01b714b6478277bcdb72c1061689e70b956d6",
+  "gpu-processes.csv": "51749f2fdb3fb5c95ac7ab5cd160e295d308f940f5dd1db2ac11b2f98216c4d6"
+}

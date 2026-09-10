@@ -1,0 +1,8 @@
+{
+  "label": "speech-balanced batches",
+  "hypothesis": "Sample each training batch with 60% speech-positive clips so missed speech examples contribute more frequent gradients, reducing development FNR while the fixed calibration threshold and negative examples preserve the current low FPR.",
+  "started_at": "2026-09-09T22:52:42.825179+00:00",
+  "train_seconds": 300,
+  "seed": 20260909,
+  "rank": true
+}

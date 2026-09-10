@@ -1,0 +1,12 @@
+{
+  "trial": "000",
+  "source_sha256": "b9de1f06f02f341da0d00ef63aac9b1fbf2c1723a56d65d9c6055ecaa36b3e71",
+  "status": "infeasible_best",
+  "fnr": 0.02843601895734597,
+  "fpr": 0.0,
+  "cpu_p95_ms": 0.3832841,
+  "num_parameters": 14176,
+  "seconds": 282.175,
+  "hypothesis": "Validated initial ternary model on frozen real-audio splits",
+  "error": ""
+}
