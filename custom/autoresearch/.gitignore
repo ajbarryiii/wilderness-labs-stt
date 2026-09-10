@@ -6,3 +6,6 @@
 /readiness.json
 /.runtime-nixpkgs
 /.data-runtime
+# Inference weights remain local; archive metadata and hashes only.
+/results/**/weights.npz
+/results/**/weights.2bit

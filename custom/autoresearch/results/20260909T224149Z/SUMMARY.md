@@ -15,8 +15,9 @@ continuous VAD validation, transcription measurement or phone power result.
 The prior run 20260909T213516Z stopped without real GPU training; its synthetic
 scores are invalid and must not be combined with these results.
 
-This archive contains trial recipes, safe inference exports, metrics and artifact
-hashes. Large optimizer states, runtime environments, cached audio and full GPU
+This archive contains trial recipes, inference graph metadata, metrics and artifact
+hashes. Weight exports are local-only and ignored by Git. Restore candidates 008
+and 010 from the original local run with custom/stt/prepare_gates.py. Large optimizer states, runtime environments, cached audio and full GPU
 telemetry remain in the ignored local runs directory. Absolute paths in historical
 evidence describe the original host. Main-checkout train.py is not implicitly
 replaced by a winning trial.

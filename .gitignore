@@ -219,3 +219,13 @@ __marimo__/
 
 # ssh passwords
 .ssh_remote_password
+
+# Learned model artifacts stay local; commit recipes, metrics and hashes instead.
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.2bit
+weights.npz
+pytorch_model*.bin
