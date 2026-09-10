@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+stt_repo="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$stt_repo"
+nix shell --impure --expr 'let p = import /nix/store/agyg2m8bkbcr2d5p57my3bla8794arlp-source {}; in p.uv' -c uv pip install --python custom/autoresearch/.training-runtime/bin/python3 --target finetune/stt/deps --require-hashes -r finetune/stt/requirements.lock
+exec custom/autoresearch/runtime-python custom/stt/pretrained.py setup

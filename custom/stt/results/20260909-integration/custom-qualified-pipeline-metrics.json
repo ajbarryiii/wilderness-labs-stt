@@ -1,0 +1,4466 @@
+{
+  "schema": 1,
+  "backend": "custom",
+  "device": "cpu",
+  "split": "development",
+  "scenes": 72,
+  "repeats": 1,
+  "summary": {
+    "always_on": {
+      "wer": 1.147607934655776,
+      "cer": 0.7851528384279476,
+      "word_errors": 1967,
+      "reference_words": 1714,
+      "char_errors": 7192,
+      "reference_chars": 9160,
+      "nonspeech_inserted_words": 197,
+      "wall_seconds": 1.0768257289892063,
+      "rtf": 0.0009714989682258105,
+      "asr_audio_fraction": 1.0,
+      "cpu_package_joules": null,
+      "iphone_joules": null,
+      "utterance_audio_omitted_seconds": 0.0,
+      "utterance_audio_seconds": 641.62,
+      "by_condition": {
+        "clean": {
+          "wer": 1.0245040840140023,
+          "cer": 0.6141921397379912,
+          "word_errors": 878,
+          "reference_words": 857,
+          "char_errors": 2813,
+          "reference_chars": 4580,
+          "nonspeech_inserted_words": 0
+        },
+        "mixed_10db": {
+          "wer": 1.0408401400233371,
+          "cer": 0.6914847161572052,
+          "word_errors": 892,
+          "reference_words": 857,
+          "char_errors": 3167,
+          "reference_chars": 4580,
+          "nonspeech_inserted_words": 0
+        }
+      }
+    },
+    "gate_008": {
+      "wer": 0.9877479579929989,
+      "cer": 0.8743449781659388,
+      "word_errors": 1693,
+      "reference_words": 1714,
+      "char_errors": 8009,
+      "reference_chars": 9160,
+      "nonspeech_inserted_words": 0,
+      "wall_seconds": 2.4032993229775457,
+      "rtf": 0.002168227178971759,
+      "asr_audio_fraction": 0.10375158982395384,
+      "cpu_package_joules": null,
+      "iphone_joules": null,
+      "utterance_audio_omitted_seconds": 527.0,
+      "utterance_audio_seconds": 641.62,
+      "by_condition": {
+        "clean": {
+          "wer": 0.9813302217036173,
+          "cer": 0.8344978165938864,
+          "word_errors": 841,
+          "reference_words": 857,
+          "char_errors": 3822,
+          "reference_chars": 4580,
+          "nonspeech_inserted_words": 0
+        },
+        "mixed_10db": {
+          "wer": 0.9941656942823804,
+          "cer": 0.9141921397379913,
+          "word_errors": 852,
+          "reference_words": 857,
+          "char_errors": 4187,
+          "reference_chars": 4580,
+          "nonspeech_inserted_words": 0
+        }
+      },
+      "wer_delta": -0.15985997666277707,
+      "gating_quality_passes": false,
+      "wall_time_reduction_fraction": -1.2318368314188337
+    },
+    "gate_010": {
+      "wer": 0.9865810968494749,
+      "cer": 0.8819868995633188,
+      "word_errors": 1691,
+      "reference_words": 1714,
+      "char_errors": 8079,
+      "reference_chars": 9160,
+      "nonspeech_inserted_words": 0,
+      "wall_seconds": 2.367016215022886,
+      "rtf": 0.0021354930038930625,
+      "asr_audio_fraction": 0.09500036876923773,
+      "cpu_package_joules": null,
+      "iphone_joules": null,
+      "utterance_audio_omitted_seconds": 536.7,
+      "utterance_audio_seconds": 641.62,
+      "by_condition": {
+        "clean": {
+          "wer": 0.9801633605600933,
+          "cer": 0.8395196506550219,
+          "word_errors": 840,
+          "reference_words": 857,
+          "char_errors": 3845,
+          "reference_chars": 4580,
+          "nonspeech_inserted_words": 0
+        },
+        "mixed_10db": {
+          "wer": 0.9929988331388565,
+          "cer": 0.9244541484716157,
+          "word_errors": 851,
+          "reference_words": 857,
+          "char_errors": 4234,
+          "reference_chars": 4580,
+          "nonspeech_inserted_words": 0
+        }
+      },
+      "wer_delta": -0.161026837806301,
+      "gating_quality_passes": false,
+      "wall_time_reduction_fraction": -1.1981423282342583
+    }
+  },
+  "predictions": [
+    {
+      "id": "speech-0-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "once there lived a king who had no children for many years after his marriage at length heaven granted him a daughter of such remarkable beauty that he could think of no name so appropriate for her as fairer than a fairy",
+      "hypothesis": "woncsthenlitetociengt hadneciulletrn to miny as etr hies mane at haenf him inanogd inmoedostriasaitre mcalple fe ydiy atd he kcnd ind of now manmne soe protrtho har as fer thandfa cdm",
+      "audio_seconds": 18.235,
+      "asr_audio_seconds": 18.235,
+      "wall_seconds": 0.019402097001147922,
+      "gate_seconds": 5.309993866831064e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          291760
+        ]
+      ],
+      "utterance_audio_seconds": 14.235,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-0-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "once there lived a king who had no children for many years after his marriage at length heaven granted him a daughter of such remarkable beauty that he could think of no name so appropriate for her as fairer than a fairy",
+      "hypothesis": "ncialltrne to mind a to his marne ad henf set ri yclble feymdiy aprpren hofc ar as",
+      "audio_seconds": 18.235,
+      "asr_audio_seconds": 7.0,
+      "wall_seconds": 0.05166753599769436,
+      "gate_seconds": 0.03599873699567979,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          65600,
+          89600
+        ],
+        [
+          91200,
+          121600
+        ],
+        [
+          142400,
+          169600
+        ],
+        [
+          203200,
+          233600
+        ]
+      ],
+      "utterance_audio_seconds": 14.235,
+      "utterance_audio_omitted_seconds": 7.235
+    },
+    {
+      "id": "speech-0-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "once there lived a king who had no children for many years after his marriage at length heaven granted him a daughter of such remarkable beauty that he could think of no name so appropriate for her as fairer than a fairy",
+      "hypothesis": "ncialltrne to mind a to his marne ad henf set ri yclble feymdiy aprpren hofc ar as",
+      "audio_seconds": 18.235,
+      "asr_audio_seconds": 6.8,
+      "wall_seconds": 0.04870791999564972,
+      "gate_seconds": 0.03536494699801551,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          65600,
+          86400
+        ],
+        [
+          91200,
+          121600
+        ],
+        [
+          142400,
+          169600
+        ],
+        [
+          203200,
+          233600
+        ]
+      ],
+      "utterance_audio_seconds": 14.235,
+      "utterance_audio_omitted_seconds": 7.435
+    },
+    {
+      "id": "speech-0-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "once there lived a king who had no children for many years after his marriage at length heaven granted him a daughter of such remarkable beauty that he could think of no name so appropriate for her as fairer than a fairy",
+      "hypothesis": "",
+      "audio_seconds": 18.235,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03557263599941507,
+      "gate_seconds": 0.0355705929978285,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 14.235,
+      "utterance_audio_omitted_seconds": 14.235
+    },
+    {
+      "id": "speech-0-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "once there lived a king who had no children for many years after his marriage at length heaven granted him a daughter of such remarkable beauty that he could think of no name so appropriate for her as fairer than a fairy",
+      "hypothesis": "",
+      "audio_seconds": 18.235,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03526419700210681,
+      "gate_seconds": 0.035262183999293484,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 14.235,
+      "utterance_audio_omitted_seconds": 14.235
+    },
+    {
+      "id": "speech-0-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "once there lived a king who had no children for many years after his marriage at length heaven granted him a daughter of such remarkable beauty that he could think of no name so appropriate for her as fairer than a fairy",
+      "hypothesis": "woncsthenlitetocionge hadnecj'll mrnso miniyas edchis manss ad an hin in anedinmhetituras ato mcaleblm yvi atd e can ingo af mnow manmnsoo hrtrantht har as far thandhfa cdm",
+      "audio_seconds": 18.235,
+      "asr_audio_seconds": 18.235,
+      "wall_seconds": 0.01645090700185392,
+      "gate_seconds": 5.210022209212184e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          291760
+        ]
+      ],
+      "utterance_audio_seconds": 14.235,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-1-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "the voice was that of a young man and its sweetness of tone and the agreeable things it uttered led one to infer that its owner must be equally charming but this had to be a mere matter of fancy for no one was visible",
+      "hypothesis": "tere yea plef fingst ogernd onooing her",
+      "audio_seconds": 19.955,
+      "asr_audio_seconds": 3.0,
+      "wall_seconds": 0.04546939200372435,
+      "gate_seconds": 0.03886453500308562,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          113600,
+          140800
+        ],
+        [
+          148800,
+          169600
+        ]
+      ],
+      "utterance_audio_seconds": 15.955,
+      "utterance_audio_omitted_seconds": 12.955
+    },
+    {
+      "id": "speech-1-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "the voice was that of a young man and its sweetness of tone and the agreeable things it uttered led one to infer that its owner must be equally charming but this had to be a mere matter of fancy for no one was visible",
+      "hypothesis": "fria ars thevoics wase ta afthi han ma and isfvi msie tei an heapr ou bl tingst pojerd let wongtooe hurn at is po man musde deepei cally tamei the this s hpt beimnym mair thieensty fon now on mos fes for rarrr aorr r r",
+      "audio_seconds": 19.955,
+      "asr_audio_seconds": 19.955,
+      "wall_seconds": 0.019009750001714565,
+      "gate_seconds": 3.710010787472129e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          319280
+        ]
+      ],
+      "utterance_audio_seconds": 15.955,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-1-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "the voice was that of a young man and its sweetness of tone and the agreeable things it uttered led one to infer that its owner must be equally charming but this had to be a mere matter of fancy for no one was visible",
+      "hypothesis": "tere yea plef fingst o onooing her",
+      "audio_seconds": 19.955,
+      "asr_audio_seconds": 2.6,
+      "wall_seconds": 0.04517340699385386,
+      "gate_seconds": 0.03906417999678524,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          113600,
+          134400
+        ],
+        [
+          148800,
+          169600
+        ]
+      ],
+      "utterance_audio_seconds": 15.955,
+      "utterance_audio_omitted_seconds": 13.355
+    },
+    {
+      "id": "speech-1-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "the voice was that of a young man and its sweetness of tone and the agreeable things it uttered led one to infer that its owner must be equally charming but this had to be a mere matter of fancy for no one was visible",
+      "hypothesis": "fria aro eoc swas ant ofti yan ma and disfvi msoe tn an eapi o tbotingst pojerd let wongtoo e hurn at is po man musde deepei cally tamei the this s hpt beim mar aaor s amnsol aone nown o ws es fharr arer orer",
+      "audio_seconds": 19.955,
+      "asr_audio_seconds": 19.955,
+      "wall_seconds": 0.017592368996702135,
+      "gate_seconds": 4.209941835142672e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          319280
+        ]
+      ],
+      "utterance_audio_seconds": 15.955,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-1-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "the voice was that of a young man and its sweetness of tone and the agreeable things it uttered led one to infer that its owner must be equally charming but this had to be a mere matter of fancy for no one was visible",
+      "hypothesis": "tere ye plef tingst o onooing her",
+      "audio_seconds": 19.955,
+      "asr_audio_seconds": 2.6,
+      "wall_seconds": 0.04519701100070961,
+      "gate_seconds": 0.039067136000085156,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          113600,
+          134400
+        ],
+        [
+          148800,
+          169600
+        ]
+      ],
+      "utterance_audio_seconds": 15.955,
+      "utterance_audio_omitted_seconds": 13.355
+    },
+    {
+      "id": "speech-1-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "the voice was that of a young man and its sweetness of tone and the agreeable things it uttered led one to infer that its owner must be equally charming but this had to be a mere matter of fancy for no one was visible",
+      "hypothesis": "onooing her",
+      "audio_seconds": 19.955,
+      "asr_audio_seconds": 1.3,
+      "wall_seconds": 0.04145066999626579,
+      "gate_seconds": 0.0385219829986454,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          148800,
+          169600
+        ]
+      ],
+      "utterance_audio_seconds": 15.955,
+      "utterance_audio_omitted_seconds": 14.655
+    },
+    {
+      "id": "speech-2-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "she took the bird's advice and in due time arrived at the house of locrinos luckily she only found his wife at home who was much struck by the princess's youth and beauty and sweet gentle manners",
+      "hypothesis": "fikese indin jtot u tand has haie at hom his meh strck tath ho sentmanes f",
+      "audio_seconds": 16.66,
+      "asr_audio_seconds": 5.6,
+      "wall_seconds": 0.04459220600256231,
+      "gate_seconds": 0.03236388399818679,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          56000,
+          80000
+        ],
+        [
+          139200,
+          163200
+        ],
+        [
+          164800,
+          185600
+        ],
+        [
+          216000,
+          236800
+        ]
+      ],
+      "utterance_audio_seconds": 12.66,
+      "utterance_audio_omitted_seconds": 7.2
+    },
+    {
+      "id": "speech-2-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "she took the bird's advice and in due time arrived at the house of locrinos luckily she only found his wife at home who was much struck by the princess's youth and beauty and sweet gentle manners",
+      "hypothesis": "fikese indin jtot u tand has haie at hom his meh strck tath ho sentmanes f",
+      "audio_seconds": 16.66,
+      "asr_audio_seconds": 5.6,
+      "wall_seconds": 0.04461671200260753,
+      "gate_seconds": 0.03241596199950436,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          56000,
+          80000
+        ],
+        [
+          139200,
+          163200
+        ],
+        [
+          164800,
+          185600
+        ],
+        [
+          216000,
+          236800
+        ]
+      ],
+      "utterance_audio_seconds": 12.66,
+      "utterance_audio_omitted_seconds": 7.2
+    },
+    {
+      "id": "speech-2-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "she took the bird's advice and in due time arrived at the house of locrinos luckily she only found his wife at home who was much struck by the princess's youth and beauty and sweet gentle manners",
+      "hypothesis": "s evaaf she tuk the ber i fhese anin to me had attha hoseoft le hees leget lshee ha le hond his whifetit hon fo waes nuh strck ath honsises ist erht n theri and seshient manhes fahihoyv",
+      "audio_seconds": 16.66,
+      "asr_audio_seconds": 16.66,
+      "wall_seconds": 0.017013742995914072,
+      "gate_seconds": 3.0999945010989904e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          266560
+        ]
+      ],
+      "utterance_audio_seconds": 12.66,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-2-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "she took the bird's advice and in due time arrived at the house of locrinos luckily she only found his wife at home who was much struck by the princess's youth and beauty and sweet gentle manners",
+      "hypothesis": "his m hstrct tad aisa",
+      "audio_seconds": 16.66,
+      "asr_audio_seconds": 1.5,
+      "wall_seconds": 0.03634966500248993,
+      "gate_seconds": 0.032950635002634954,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          164800,
+          188800
+        ]
+      ],
+      "utterance_audio_seconds": 12.66,
+      "utterance_audio_omitted_seconds": 11.16
+    },
+    {
+      "id": "speech-2-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "she took the bird's advice and in due time arrived at the house of locrinos luckily she only found his wife at home who was much struck by the princess's youth and beauty and sweet gentle manners",
+      "hypothesis": "s evaadp ci tit peersen lings indinsis im aad d adth hoseosi he m lactklies hol e and his whieit o owas nmhistrc ad ahsys est hee angiuiee admsbecsienet maynherst oivv",
+      "audio_seconds": 16.66,
+      "asr_audio_seconds": 16.66,
+      "wall_seconds": 0.014788838001550175,
+      "gate_seconds": 3.710010787472129e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          266560
+        ]
+      ],
+      "utterance_audio_seconds": 12.66,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-2-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "she took the bird's advice and in due time arrived at the house of locrinos luckily she only found his wife at home who was much struck by the princess's youth and beauty and sweet gentle manners",
+      "hypothesis": "his m hstrct tad aisa",
+      "audio_seconds": 16.66,
+      "asr_audio_seconds": 1.5,
+      "wall_seconds": 0.03613385999778984,
+      "gate_seconds": 0.03275212299922714,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          164800,
+          188800
+        ]
+      ],
+      "utterance_audio_seconds": 12.66,
+      "utterance_audio_omitted_seconds": 11.16
+    },
+    {
+      "id": "speech-3-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "the princess on her side vowed to have no other husband and declared herself willing to brave death itself in order to rejoin him they were not allowed much time for their adieus the rainbow vanished and the princess resolved to run all risks",
+      "hypothesis": "chmh he at b fenfsesne he sind sant hav note hsbpend ind carthr soff wulignt prate taetatsll in ournterdtov rghuing hm i en how lune matc s time frther andgyyous h rengdenv ams andh eandsess for isolf to ravmalwreets che",
+      "audio_seconds": 19.5,
+      "asr_audio_seconds": 19.5,
+      "wall_seconds": 0.019561314999009483,
+      "gate_seconds": 3.6100391298532486e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          312000
+        ]
+      ],
+      "utterance_audio_seconds": 15.5,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-3-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "the princess on her side vowed to have no other husband and declared herself willing to brave death itself in order to rejoin him they were not allowed much time for their adieus the rainbow vanished and the princess resolved to run all risks",
+      "hypothesis": "tasne hesind sant havn nota h teregher sofwuligt prate taa tense s ormsolf tor em",
+      "audio_seconds": 19.5,
+      "asr_audio_seconds": 5.9,
+      "wall_seconds": 0.049221745000977535,
+      "gate_seconds": 0.03821787200286053,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          46400,
+          83200
+        ],
+        [
+          94400,
+          124800
+        ],
+        [
+          241600,
+          268800
+        ]
+      ],
+      "utterance_audio_seconds": 15.5,
+      "utterance_audio_omitted_seconds": 9.6
+    },
+    {
+      "id": "speech-3-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "the princess on her side vowed to have no other husband and declared herself willing to brave death itself in order to rejoin him they were not allowed much time for their adieus the rainbow vanished and the princess resolved to run all risks",
+      "hypothesis": "tasne hesind sant havn nota h teregher sofwuligt prate taa tense s ormsolf tor em",
+      "audio_seconds": 19.5,
+      "asr_audio_seconds": 5.9,
+      "wall_seconds": 0.04726362999645062,
+      "gate_seconds": 0.037707252995460294,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          46400,
+          83200
+        ],
+        [
+          94400,
+          124800
+        ],
+        [
+          241600,
+          268800
+        ]
+      ],
+      "utterance_audio_seconds": 15.5,
+      "utterance_audio_omitted_seconds": 9.6
+    },
+    {
+      "id": "speech-3-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "the princess on her side vowed to have no other husband and declared herself willing to brave death itself in order to rejoin him they were not allowed much time for their adieus the rainbow vanished and the princess resolved to run all risks",
+      "hypothesis": "bfand t havm not teregdher sof wuuligmt raioqve ta ses her soln to",
+      "audio_seconds": 19.5,
+      "asr_audio_seconds": 4.3,
+      "wall_seconds": 0.0470786930018221,
+      "gate_seconds": 0.0378891649961588,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          59200,
+          80000
+        ],
+        [
+          94400,
+          121600
+        ],
+        [
+          244800,
+          265600
+        ]
+      ],
+      "utterance_audio_seconds": 15.5,
+      "utterance_audio_omitted_seconds": 11.2
+    },
+    {
+      "id": "speech-3-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "the princess on her side vowed to have no other husband and declared herself willing to brave death itself in order to rejoin him they were not allowed much time for their adieus the rainbow vanished and the princess resolved to run all risks",
+      "hypothesis": "bfand t havm not teregdher sof wuuligmt raioqve ta ses her soln to",
+      "audio_seconds": 19.5,
+      "asr_audio_seconds": 4.3,
+      "wall_seconds": 0.04703256599896122,
+      "gate_seconds": 0.03788040800282033,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          59200,
+          80000
+        ],
+        [
+          94400,
+          121600
+        ],
+        [
+          244800,
+          265600
+        ]
+      ],
+      "utterance_audio_seconds": 15.5,
+      "utterance_audio_omitted_seconds": 11.2
+    },
+    {
+      "id": "speech-3-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "the princess on her side vowed to have no other husband and declared herself willing to brave death itself in order to rejoin him they were not allowed much time for their adieus the rainbow vanished and the princess resolved to run all risks",
+      "hypothesis": "chmh he t b tfemfesame ha sind sant hav nota hsbpend and carthr sof hwulig mt raife tathse in outer tmrha i ene ow luned metc sstime frther agys th rendenvasheses er isolvto bal reets che",
+      "audio_seconds": 19.5,
+      "asr_audio_seconds": 19.5,
+      "wall_seconds": 0.017188841993629467,
+      "gate_seconds": 3.5099947126582265e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          312000
+        ]
+      ],
+      "utterance_audio_seconds": 15.5,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-4-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "that they wished their houses and garments to be equally alike their occupation consisted in helping those in misfortune and they were as gentle and benevolent as lagree had been cruel and spiteful the third fairy comforted the poor traveller",
+      "hypothesis": "v copastin hand sis tein an hlbin chinand th wrea mfrngsicfa t therend seyi thoufu den thep poar th",
+      "audio_seconds": 19.82,
+      "asr_audio_seconds": 6.8,
+      "wall_seconds": 0.05349943400506163,
+      "gate_seconds": 0.038882820001163054,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          110400,
+          137600
+        ],
+        [
+          155200,
+          176000
+        ],
+        [
+          212800,
+          240000
+        ],
+        [
+          244800,
+          278400
+        ]
+      ],
+      "utterance_audio_seconds": 15.82,
+      "utterance_audio_omitted_seconds": 9.02
+    },
+    {
+      "id": "speech-4-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "that they wished their houses and garments to be equally alike their occupation consisted in helping those in misfortune and they were as gentle and benevolent as lagree had been cruel and spiteful the third fairy comforted the poor traveller",
+      "hypothesis": "nrasspsssscsf tha they wicchd tharc hasiss ind chamanstsobee wle algh ac kc peistin hind sis ed aind helbing thellis inmys ferchion and that res iontllna nevli d aslic r had binfrnesicf it tharyee fer thomcefr den thep por thaveoliro mhvpias",
+      "audio_seconds": 19.82,
+      "asr_audio_seconds": 19.82,
+      "wall_seconds": 0.019451328000286594,
+      "gate_seconds": 4.4100306695327163e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          317120
+        ]
+      ],
+      "utterance_audio_seconds": 15.82,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-4-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "that they wished their houses and garments to be equally alike their occupation consisted in helping those in misfortune and they were as gentle and benevolent as lagree had been cruel and spiteful the third fairy comforted the poor traveller",
+      "hypothesis": "v copastin hand sis tein an hlbin chinand th wrea mfrngsicfa t therend seyi thoufu den thep poar th",
+      "audio_seconds": 19.82,
+      "asr_audio_seconds": 6.8,
+      "wall_seconds": 0.05189465200237464,
+      "gate_seconds": 0.03903700900264084,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          110400,
+          137600
+        ],
+        [
+          155200,
+          176000
+        ],
+        [
+          212800,
+          240000
+        ],
+        [
+          244800,
+          278400
+        ]
+      ],
+      "utterance_audio_seconds": 15.82,
+      "utterance_audio_omitted_seconds": 9.02
+    },
+    {
+      "id": "speech-4-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "that they wished their houses and garments to be equally alike their occupation consisted in helping those in misfortune and they were as gentle and benevolent as lagree had been cruel and spiteful the third fairy comforted the poor traveller",
+      "hypothesis": "nrasspsssscsp ta the which sa hesiss im hases eeing woiale ai h paetimhensis eiv an halpbing gtaenshimms oshos an hatre as tomntll nanevid has lihre ha ghes icst h te thirc cery homfe di sce por havouer aosmoxopiso",
+      "audio_seconds": 19.82,
+      "asr_audio_seconds": 19.82,
+      "wall_seconds": 0.017758109999704175,
+      "gate_seconds": 5.00003807246685e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          317120
+        ]
+      ],
+      "utterance_audio_seconds": 15.82,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-4-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "that they wished their houses and garments to be equally alike their occupation consisted in helping those in misfortune and they were as gentle and benevolent as lagree had been cruel and spiteful the third fairy comforted the poor traveller",
+      "hypothesis": "s jopatinmhns ais teivha mscit hl dcary thowfe i sch p ore h",
+      "audio_seconds": 19.82,
+      "asr_audio_seconds": 4.5,
+      "wall_seconds": 0.04864462200202979,
+      "gate_seconds": 0.039140724002209026,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          110400,
+          131200
+        ],
+        [
+          222400,
+          243200
+        ],
+        [
+          248000,
+          278400
+        ]
+      ],
+      "utterance_audio_seconds": 15.82,
+      "utterance_audio_omitted_seconds": 11.32
+    },
+    {
+      "id": "speech-4-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "that they wished their houses and garments to be equally alike their occupation consisted in helping those in misfortune and they were as gentle and benevolent as lagree had been cruel and spiteful the third fairy comforted the poor traveller",
+      "hypothesis": "s jopatinmhns ais teivha dcary thowfe i sch",
+      "audio_seconds": 19.82,
+      "asr_audio_seconds": 2.6,
+      "wall_seconds": 0.04441336899617454,
+      "gate_seconds": 0.038553892001800705,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          110400,
+          131200
+        ],
+        [
+          248000,
+          268800
+        ]
+      ],
+      "utterance_audio_seconds": 15.82,
+      "utterance_audio_omitted_seconds": 13.22
+    },
+    {
+      "id": "speech-5-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "the prince was not completely roused but he opened his eyes a little and looked all the handsomer impatient at not being recognised fairer than a fairy now drew out her third present and on opening the crystal scent bottle a little syren flew out",
+      "hypothesis": "b as notome fieetlly atns fait eni frd hisiss vetle m ia chashint ot being reak y fe sard han a hering awd erat fesin an",
+      "audio_seconds": 18.555,
+      "asr_audio_seconds": 8.4,
+      "wall_seconds": 0.05154317199776415,
+      "gate_seconds": 0.03580008300195914,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          46400,
+          92800
+        ],
+        [
+          110400,
+          150400
+        ],
+        [
+          152000,
+          179200
+        ],
+        [
+          184000,
+          204800
+        ]
+      ],
+      "utterance_audio_seconds": 14.555,
+      "utterance_audio_omitted_seconds": 6.155
+    },
+    {
+      "id": "speech-5-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "the prince was not completely roused but he opened his eyes a little and looked all the handsomer impatient at not being recognised fairer than a fairy now drew out her third present and on opening the crystal scent bottle a little syren flew out",
+      "hypothesis": "b as notome fieetlly atns fa m ia chashint ot being reak y fe sard han a hering awd erat",
+      "audio_seconds": 18.555,
+      "asr_audio_seconds": 5.9,
+      "wall_seconds": 0.045528934002504684,
+      "gate_seconds": 0.035791828006040305,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          46400,
+          73600
+        ],
+        [
+          110400,
+          150400
+        ],
+        [
+          152000,
+          179200
+        ]
+      ],
+      "utterance_audio_seconds": 14.555,
+      "utterance_audio_omitted_seconds": 8.655
+    },
+    {
+      "id": "speech-5-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "the prince was not completely roused but he opened his eyes a little and looked all the handsomer impatient at not being recognised fairer than a fairy now drew out her third present and on opening the crystal scent bottle a little syren flew out",
+      "hypothesis": "ho cat laa daa aliadaag'gs i mens was hac ome soeelly ats fatien ferd hisiss vetlemlit he hens me i cashimn ot beng reak ms sfar an efhering anderather terfuas in an molke'ing kik estes sent fo ol linl sieing it a hratd oaa bb",
+      "audio_seconds": 18.555,
+      "asr_audio_seconds": 18.555,
+      "wall_seconds": 0.018292242995812558,
+      "gate_seconds": 3.309978637844324e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          296880
+        ]
+      ],
+      "utterance_audio_seconds": 14.555,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-5-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "the prince was not completely roused but he opened his eyes a little and looked all the handsomer impatient at not being recognised fairer than a fairy now drew out her third present and on opening the crystal scent bottle a little syren flew out",
+      "hypothesis": "vfe as noc omuieetig a",
+      "audio_seconds": 18.555,
+      "asr_audio_seconds": 1.3,
+      "wall_seconds": 0.03940668300492689,
+      "gate_seconds": 0.03620041500107618,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          46400,
+          67200
+        ]
+      ],
+      "utterance_audio_seconds": 14.555,
+      "utterance_audio_omitted_seconds": 13.255
+    },
+    {
+      "id": "speech-5-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "the prince was not completely roused but he opened his eyes a little and looked all the handsomer impatient at not being recognised fairer than a fairy now drew out her third present and on opening the crystal scent bottle a little syren flew out",
+      "hypothesis": "ho cat laa daa aliadaab' i pvaens ais ht mef ieneig hast haid n lf im maisisobet a hat ohe hasm chashim ofp en rad myss fair and aciring wveratherd herpetot an n no enn naeast e sen ho on thela imng sfta atdal ba",
+      "audio_seconds": 18.555,
+      "asr_audio_seconds": 18.555,
+      "wall_seconds": 0.016768643996329047,
+      "gate_seconds": 3.809982445091009e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          296880
+        ]
+      ],
+      "utterance_audio_seconds": 14.555,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-5-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "the prince was not completely roused but he opened his eyes a little and looked all the handsomer impatient at not being recognised fairer than a fairy now drew out her third present and on opening the crystal scent bottle a little syren flew out",
+      "hypothesis": "vfe as noc omuieetig a e therinandaharing aw vera",
+      "audio_seconds": 18.555,
+      "asr_audio_seconds": 2.6,
+      "wall_seconds": 0.042133249997277744,
+      "gate_seconds": 0.036048368994670454,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          46400,
+          67200
+        ],
+        [
+          155200,
+          176000
+        ]
+      ],
+      "utterance_audio_seconds": 14.555,
+      "utterance_audio_omitted_seconds": 11.955
+    },
+    {
+      "id": "speech-6-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "you would fall in with some grand guard of the line or the suburbs",
+      "hypothesis": "to theley asdihs houwad fon whi semaovrann goordiend thi waornger de soeverrdstpc tleh",
+      "audio_seconds": 8.65,
+      "asr_audio_seconds": 8.65,
+      "wall_seconds": 0.009483159003139008,
+      "gate_seconds": 3.5100674722343683e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          138400
+        ]
+      ],
+      "utterance_audio_seconds": 4.65,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-6-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "you would fall in with some grand guard of the line or the suburbs",
+      "hypothesis": "foid fon whi semtor",
+      "audio_seconds": 8.65,
+      "asr_audio_seconds": 1.5,
+      "wall_seconds": 0.020287597995775286,
+      "gate_seconds": 0.01701153899921337,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          40000,
+          64000
+        ]
+      ],
+      "utterance_audio_seconds": 4.65,
+      "utterance_audio_omitted_seconds": 3.15
+    },
+    {
+      "id": "speech-6-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "you would fall in with some grand guard of the line or the suburbs",
+      "hypothesis": "foid fon whi semtor",
+      "audio_seconds": 8.65,
+      "asr_audio_seconds": 1.5,
+      "wall_seconds": 0.020002443001430947,
+      "gate_seconds": 0.01678916200035019,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          40000,
+          64000
+        ]
+      ],
+      "utterance_audio_seconds": 4.65,
+      "utterance_audio_omitted_seconds": 3.15
+    },
+    {
+      "id": "speech-6-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "you would fall in with some grand guard of the line or the suburbs",
+      "hypothesis": "",
+      "audio_seconds": 8.65,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.016776687996753026,
+      "gate_seconds": 0.016774773997894954,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 4.65,
+      "utterance_audio_omitted_seconds": 4.65
+    },
+    {
+      "id": "speech-6-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "you would fall in with some grand guard of the line or the suburbs",
+      "hypothesis": "ftoi d folland thissemet cth",
+      "audio_seconds": 8.65,
+      "asr_audio_seconds": 1.5,
+      "wall_seconds": 0.019827864998660516,
+      "gate_seconds": 0.016630924998025876,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          40000,
+          64000
+        ]
+      ],
+      "utterance_audio_seconds": 4.65,
+      "utterance_audio_omitted_seconds": 3.15
+    },
+    {
+      "id": "speech-6-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "you would fall in with some grand guard of the line or the suburbs",
+      "hypothesis": "to theley asdihftttilfolaing whissemetctreang goid ed thi wor in gdo i heoberae veh",
+      "audio_seconds": 8.65,
+      "asr_audio_seconds": 8.65,
+      "wall_seconds": 0.007432600999891292,
+      "gate_seconds": 3.5099947126582265e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          138400
+        ]
+      ],
+      "utterance_audio_seconds": 4.65,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-7-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "who sing and prattle who are like a living perfume who prove the existence of angels in heaven by the purity of virgins on earth",
+      "hypothesis": "",
+      "audio_seconds": 13.285,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.025898028005030937,
+      "gate_seconds": 0.025895764003507793,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 9.285,
+      "utterance_audio_omitted_seconds": 9.285
+    },
+    {
+      "id": "speech-7-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "who sing and prattle who are like a living perfume who prove the existence of angels in heaven by the purity of virgins on earth",
+      "hypothesis": "er his seen inkcrad oo war li to liteeng per trm whe root e is insif engdouasin heaven by theppreiete a virjient soi hearr",
+      "audio_seconds": 13.285,
+      "asr_audio_seconds": 13.285,
+      "wall_seconds": 0.01313283900526585,
+      "gate_seconds": 3.0099909054115415e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          212560
+        ]
+      ],
+      "utterance_audio_seconds": 9.285,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-7-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "who sing and prattle who are like a living perfume who prove the existence of angels in heaven by the purity of virgins on earth",
+      "hypothesis": "ofms et eingnurasin h",
+      "audio_seconds": 13.285,
+      "asr_audio_seconds": 1.3,
+      "wall_seconds": 0.028995401997235604,
+      "gate_seconds": 0.025895954000588972,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          120000,
+          140800
+        ]
+      ],
+      "utterance_audio_seconds": 9.285,
+      "utterance_audio_omitted_seconds": 7.985
+    },
+    {
+      "id": "speech-7-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "who sing and prattle who are like a living perfume who prove the existence of angels in heaven by the purity of virgins on earth",
+      "hypothesis": "er this setn in rad arco therdi che di din cheurt uure theo foor hi cis a s i tireure s i ha avay theredear firctua s aar",
+      "audio_seconds": 13.285,
+      "asr_audio_seconds": 13.285,
+      "wall_seconds": 0.010878007000428624,
+      "gate_seconds": 3.6100391298532486e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          212560
+        ]
+      ],
+      "utterance_audio_seconds": 9.285,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-7-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "who sing and prattle who are like a living perfume who prove the existence of angels in heaven by the purity of virgins on earth",
+      "hypothesis": "e xri caensi teereur sin had e tyoeirer firjiees aare",
+      "audio_seconds": 13.285,
+      "asr_audio_seconds": 3.2,
+      "wall_seconds": 0.03244033800001489,
+      "gate_seconds": 0.025904891997925006,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          113600,
+          144000
+        ],
+        [
+          155200,
+          176000
+        ]
+      ],
+      "utterance_audio_seconds": 9.285,
+      "utterance_audio_omitted_seconds": 6.085
+    },
+    {
+      "id": "speech-7-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "who sing and prattle who are like a living perfume who prove the existence of angels in heaven by the purity of virgins on earth",
+      "hypothesis": "ofemseeerere sa had a tyoeirer firjiees aare",
+      "audio_seconds": 13.285,
+      "asr_audio_seconds": 2.8,
+      "wall_seconds": 0.03242922700155759,
+      "gate_seconds": 0.02621784799703164,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          120000,
+          144000
+        ],
+        [
+          155200,
+          176000
+        ]
+      ],
+      "utterance_audio_seconds": 9.285,
+      "utterance_audio_omitted_seconds": 6.485
+    },
+    {
+      "id": "speech-8-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "he is dead he was taken to the necker hospital where i saw him i was house surgeon in that hospital",
+      "hypothesis": "fi mhese haos sirigininte hu",
+      "audio_seconds": 12.755,
+      "asr_audio_seconds": 1.9,
+      "wall_seconds": 0.02796087000024272,
+      "gate_seconds": 0.024546110995288473,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          129600,
+          160000
+        ]
+      ],
+      "utterance_audio_seconds": 8.755,
+      "utterance_audio_omitted_seconds": 6.855
+    },
+    {
+      "id": "speech-8-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "he is dead he was taken to the necker hospital where i saw him i was house surgeon in that hospital",
+      "hypothesis": "s vs haein to hin ether fi mhese haos sirigininte hu",
+      "audio_seconds": 12.755,
+      "asr_audio_seconds": 3.2,
+      "wall_seconds": 0.03082422399893403,
+      "gate_seconds": 0.024524439999368042,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          68800,
+          89600
+        ],
+        [
+          129600,
+          160000
+        ]
+      ],
+      "utterance_audio_seconds": 8.755,
+      "utterance_audio_omitted_seconds": 5.555
+    },
+    {
+      "id": "speech-8-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "he is dead he was taken to the necker hospital where i saw him i was house surgeon in that hospital",
+      "hypothesis": "aan' yhay rn he ais gend he whes taaking toi thin ether hase phint l weiri so hin a les haserd ginin a huese thet ow",
+      "audio_seconds": 12.755,
+      "asr_audio_seconds": 12.755,
+      "wall_seconds": 0.012702862004516646,
+      "gate_seconds": 3.810055204667151e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          204080
+        ]
+      ],
+      "utterance_audio_seconds": 8.755,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-8-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "he is dead he was taken to the necker hospital where i saw him i was house surgeon in that hospital",
+      "hypothesis": "s t heia homstomh ing a cer hosiri gyinine",
+      "audio_seconds": 12.755,
+      "asr_audio_seconds": 2.6,
+      "wall_seconds": 0.0313952659998904,
+      "gate_seconds": 0.025426193002203945,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          68800,
+          89600
+        ],
+        [
+          132800,
+          153600
+        ]
+      ],
+      "utterance_audio_seconds": 8.755,
+      "utterance_audio_omitted_seconds": 6.155
+    },
+    {
+      "id": "speech-8-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "he is dead he was taken to the necker hospital where i saw him i was house surgeon in that hospital",
+      "hypothesis": "aan' yhay rnn he ils darae o qhy wars coc amc tmov n wa cer yaose hive alwheri gaihug ae les haos siriginina huese thet ow",
+      "audio_seconds": 12.755,
+      "asr_audio_seconds": 12.755,
+      "wall_seconds": 0.010726872998930048,
+      "gate_seconds": 3.399982233531773e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          204080
+        ]
+      ],
+      "utterance_audio_seconds": 8.755,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-8-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "he is dead he was taken to the necker hospital where i saw him i was house surgeon in that hospital",
+      "hypothesis": "s t heia homstomh ing a cer hosiri gyinine",
+      "audio_seconds": 12.755,
+      "asr_audio_seconds": 2.6,
+      "wall_seconds": 0.03074891299911542,
+      "gate_seconds": 0.0247802710000542,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          68800,
+          89600
+        ],
+        [
+          132800,
+          153600
+        ]
+      ],
+      "utterance_audio_seconds": 8.755,
+      "utterance_audio_omitted_seconds": 6.155
+    },
+    {
+      "id": "speech-9-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "it is your duty rather retorted the man you have two sisters whom you maintain and an unprecedented controversy broke forth",
+      "hypothesis": "iis weard de ei reather redtor then man ie ata sic ters honm inmen taieng and in hanm resatgentecunjor ver ef bero orh k a",
+      "audio_seconds": 14.045,
+      "asr_audio_seconds": 14.045,
+      "wall_seconds": 0.013971923995995894,
+      "gate_seconds": 3.309978637844324e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          224720
+        ]
+      ],
+      "utterance_audio_seconds": 10.045,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-9-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "it is your duty rather retorted the man you have two sisters whom you maintain and an unprecedented controversy broke forth",
+      "hypothesis": "fhieres hei mlin men ta",
+      "audio_seconds": 14.045,
+      "asr_audio_seconds": 1.5,
+      "wall_seconds": 0.030978353002865333,
+      "gate_seconds": 0.027613388003373984,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          97600,
+          121600
+        ]
+      ],
+      "utterance_audio_seconds": 10.045,
+      "utterance_audio_omitted_seconds": 8.545
+    },
+    {
+      "id": "speech-9-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "it is your duty rather retorted the man you have two sisters whom you maintain and an unprecedented controversy broke forth",
+      "hypothesis": "fhieres hei mlin men ta",
+      "audio_seconds": 14.045,
+      "asr_audio_seconds": 1.5,
+      "wall_seconds": 0.030616273994382937,
+      "gate_seconds": 0.02730976799648488,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          97600,
+          121600
+        ]
+      ],
+      "utterance_audio_seconds": 10.045,
+      "utterance_audio_omitted_seconds": 8.545
+    },
+    {
+      "id": "speech-9-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "it is your duty rather retorted the man you have two sisters whom you maintain and an unprecedented controversy broke forth",
+      "hypothesis": "t thin wly oumein ta",
+      "audio_seconds": 14.045,
+      "asr_audio_seconds": 1.3,
+      "wall_seconds": 0.03029110299394233,
+      "gate_seconds": 0.027321809997374658,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          100800,
+          121600
+        ]
+      ],
+      "utterance_audio_seconds": 10.045,
+      "utterance_audio_omitted_seconds": 8.745
+    },
+    {
+      "id": "speech-9-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "it is your duty rather retorted the man you have two sisters whom you maintain and an unprecedented controversy broke forth",
+      "hypothesis": "t thin wly oumein ta",
+      "audio_seconds": 14.045,
+      "asr_audio_seconds": 1.3,
+      "wall_seconds": 0.030215040998882614,
+      "gate_seconds": 0.027286563999950886,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          100800,
+          121600
+        ]
+      ],
+      "utterance_audio_seconds": 10.045,
+      "utterance_audio_omitted_seconds": 8.745
+    },
+    {
+      "id": "speech-9-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "it is your duty rather retorted the man you have two sisters whom you maintain and an unprecedented controversy broke forth",
+      "hypothesis": "itisye weard de wedig reather tetord them man me aefti secs aicst inlynmeintaeng ind in hanm pres ti dente duiteo ver ev wgerof for k a",
+      "audio_seconds": 14.045,
+      "asr_audio_seconds": 14.045,
+      "wall_seconds": 0.013349615997867659,
+      "gate_seconds": 3.4999538911506534e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          224720
+        ]
+      ],
+      "utterance_audio_seconds": 10.045,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-10-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "chapter seven the inquest the coroner who fully realized that for that one day of his life as a provincial solicitor he was living in the gaze of the world had resolved to be worthy of the fleeting eminence",
+      "hypothesis": "n whesste",
+      "audio_seconds": 20.59,
+      "asr_audio_seconds": 1.3,
+      "wall_seconds": 0.043043739002314396,
+      "gate_seconds": 0.03994784800306661,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          59200,
+          80000
+        ]
+      ],
+      "utterance_audio_seconds": 16.59,
+      "utterance_audio_omitted_seconds": 15.29
+    },
+    {
+      "id": "speech-10-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "chapter seven the inquest the coroner who fully realized that for that one day of his life as a provincial solicitor he was living in the gaze of the world had resolved to be worthy of the fleeting eminence",
+      "hypothesis": "i aa anlrnaitc cami sen the in whast then pon a wn thollie ma iss tfa fo e d ane thad a lid s asing romanol sosecharn he weas lng ina gain onf le wo al had masoll in to the wor the tlos singing haans bo aaru frouhaa",
+      "audio_seconds": 20.59,
+      "asr_audio_seconds": 20.59,
+      "wall_seconds": 0.0223470630007796,
+      "gate_seconds": 3.300010575912893e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          329440
+        ]
+      ],
+      "utterance_audio_seconds": 16.59,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-10-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "chapter seven the inquest the coroner who fully realized that for that one day of his life as a provincial solicitor he was living in the gaze of the world had resolved to be worthy of the fleeting eminence",
+      "hypothesis": "n whesste",
+      "audio_seconds": 20.59,
+      "asr_audio_seconds": 1.3,
+      "wall_seconds": 0.04309514600026887,
+      "gate_seconds": 0.040021567001531366,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          59200,
+          80000
+        ]
+      ],
+      "utterance_audio_seconds": 16.59,
+      "utterance_audio_omitted_seconds": 15.29
+    },
+    {
+      "id": "speech-10-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "chapter seven the inquest the coroner who fully realized that for that one day of his life as a provincial solicitor he was living in the gaze of the world had resolved to be worthy of the fleeting eminence",
+      "hypothesis": "i aa anlrnaintn oin senn ly modewa ahi lod a f onothon wril 's ot fothv waye ta h liif a ithasm sosrcaeat ye wnsminghi van thane o li wa ha mesollng gh to whi oarla hesni is u ya frouhaa",
+      "audio_seconds": 20.59,
+      "asr_audio_seconds": 20.59,
+      "wall_seconds": 0.020162403001450002,
+      "gate_seconds": 3.5099947126582265e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          329440
+        ]
+      ],
+      "utterance_audio_seconds": 16.59,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-10-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "chapter seven the inquest the coroner who fully realized that for that one day of his life as a provincial solicitor he was living in the gaze of the world had resolved to be worthy of the fleeting eminence",
+      "hypothesis": "",
+      "audio_seconds": 20.59,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03992292200564407,
+      "gate_seconds": 0.03991964600572828,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 16.59,
+      "utterance_audio_omitted_seconds": 16.59
+    },
+    {
+      "id": "speech-10-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "chapter seven the inquest the coroner who fully realized that for that one day of his life as a provincial solicitor he was living in the gaze of the world had resolved to be worthy of the fleeting eminence",
+      "hypothesis": "",
+      "audio_seconds": 20.59,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03948754500015639,
+      "gate_seconds": 0.03948537100222893,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 16.59,
+      "utterance_audio_omitted_seconds": 16.59
+    },
+    {
+      "id": "speech-11-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "but her voice was low and clear to the end her husband she said had come up to his bedroom about his usual hour for retiring on the sunday night",
+      "hypothesis": "",
+      "audio_seconds": 15.74,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.030368638996151276,
+      "gate_seconds": 0.030366494996997062,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 11.74,
+      "utterance_audio_omitted_seconds": 11.74
+    },
+    {
+      "id": "speech-11-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "but her voice was low and clear to the end her husband she said had come up to his bedroom about his usual hour for retiring on the sunday night",
+      "hypothesis": "",
+      "audio_seconds": 15.74,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.030233795994718093,
+      "gate_seconds": 0.030231841999921016,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 11.74,
+      "utterance_audio_omitted_seconds": 11.74
+    },
+    {
+      "id": "speech-11-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "but her voice was low and clear to the end her husband she said had come up to his bedroom about his usual hour for retiring on the sunday night",
+      "hypothesis": "tmam o ouim ahd su cag outc but her vose his oe andy tlinn t thyd her hist bann sha san hed co mobt ag heis bat aen ond a hasiewle formingt haen ong his sonhing loint sl whe ar s inhahi",
+      "audio_seconds": 15.74,
+      "asr_audio_seconds": 15.74,
+      "wall_seconds": 0.0167009560027509,
+      "gate_seconds": 3.2000389182940125e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          251840
+        ]
+      ],
+      "utterance_audio_seconds": 11.74,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-11-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "but her voice was low and clear to the end her husband she said had come up to his bedroom about his usual hour for retiring on the sunday night",
+      "hypothesis": "",
+      "audio_seconds": 15.74,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03083944299578434,
+      "gate_seconds": 0.030831817995931488,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 11.74,
+      "utterance_audio_omitted_seconds": 11.74
+    },
+    {
+      "id": "speech-11-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "but her voice was low and clear to the end her husband she said had come up to his bedroom about his usual hour for retiring on the sunday night",
+      "hypothesis": "tmam o ouim ahd su cag outc put phervlf es lol ha te evhe gdh far hisd bankinkoo ilsad'hst mas hi mes in is tia k an thichane a hiskela wonmit hy an gis soun t on cat x wikaas inahi",
+      "audio_seconds": 15.74,
+      "asr_audio_seconds": 15.74,
+      "wall_seconds": 0.01509424999676412,
+      "gate_seconds": 3.300010575912893e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          251840
+        ]
+      ],
+      "utterance_audio_seconds": 11.74,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-11-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "but her voice was low and clear to the end her husband she said had come up to his bedroom about his usual hour for retiring on the sunday night",
+      "hypothesis": "",
+      "audio_seconds": 15.74,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03077253700030269,
+      "gate_seconds": 0.030769791999773588,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 11.74,
+      "utterance_audio_omitted_seconds": 11.74
+    },
+    {
+      "id": "speech-12-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "the witness dropped her head and silently waited for her dismissal but it was not to be yet missus manderson the coroner's voice was sympathetic but it had a hint of firmness in it now",
+      "hypothesis": "oreou or our uui the wid nstopc turr had an seiand ly wasinfor herdsneasae nontts i whis nos to tie ate mis is nand m saind e coarnmias ors ma send thi tat thatin ha i hindo farmnosnind emh uhouoh",
+      "audio_seconds": 17.715,
+      "asr_audio_seconds": 17.715,
+      "wall_seconds": 0.01789892400120152,
+      "gate_seconds": 3.400054993107915e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          283440
+        ]
+      ],
+      "utterance_audio_seconds": 13.715,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-12-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "the witness dropped her head and silently waited for her dismissal but it was not to be yet missus manderson the coroner's voice was sympathetic but it had a hint of firmness in it now",
+      "hypothesis": "mtsi wis nos to tie a",
+      "audio_seconds": 17.715,
+      "asr_audio_seconds": 1.5,
+      "wall_seconds": 0.038238991000980604,
+      "gate_seconds": 0.03477500000008149,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          116800,
+          140800
+        ]
+      ],
+      "utterance_audio_seconds": 13.715,
+      "utterance_audio_omitted_seconds": 12.215
+    },
+    {
+      "id": "speech-12-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "the witness dropped her head and silently waited for her dismissal but it was not to be yet missus manderson the coroner's voice was sympathetic but it had a hint of firmness in it now",
+      "hypothesis": "mtsi wis nos to tie a",
+      "audio_seconds": 17.715,
+      "asr_audio_seconds": 1.5,
+      "wall_seconds": 0.03752447000442771,
+      "gate_seconds": 0.03421546900062822,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          116800,
+          140800
+        ]
+      ],
+      "utterance_audio_seconds": 13.715,
+      "utterance_audio_omitted_seconds": 12.215
+    },
+    {
+      "id": "speech-12-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "the witness dropped her head and silently waited for her dismissal but it was not to be yet missus manderson the coroner's voice was sympathetic but it had a hint of firmness in it now",
+      "hypothesis": "",
+      "audio_seconds": 17.715,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03417570499732392,
+      "gate_seconds": 0.03417374099808512,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 13.715,
+      "utterance_audio_omitted_seconds": 13.715
+    },
+    {
+      "id": "speech-12-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "the witness dropped her head and silently waited for her dismissal but it was not to be yet missus manderson the coroner's voice was sympathetic but it had a hint of firmness in it now",
+      "hypothesis": "",
+      "audio_seconds": 17.715,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.034106305000022985,
+      "gate_seconds": 0.03410433100361843,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 13.715,
+      "utterance_audio_omitted_seconds": 13.715
+    },
+    {
+      "id": "speech-12-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "the witness dropped her head and silently waited for her dismissal but it was not to be yet missus manderson the coroner's voice was sympathetic but it had a hint of firmness in it now",
+      "hypothesis": "oreou or our uuia a nstolc tu had an seiend ly wlasinorer psneaso mets i wis nots to tye yantm aisas tand msind e caras oris ma sind this say thatin ha hindo fvarmnosnind omymuoho",
+      "audio_seconds": 17.715,
+      "asr_audio_seconds": 17.715,
+      "wall_seconds": 0.015746063996630255,
+      "gate_seconds": 3.1999661587178707e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          283440
+        ]
+      ],
+      "utterance_audio_seconds": 13.715,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-13-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "of any other matter which might have been preying upon her husband's mind recently missus manderson knew of none whatever the coroner intimated that her ordeal was at an end and the veiled lady made her way to the door",
+      "hypothesis": "",
+      "audio_seconds": 19.8,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.0391770220012404,
+      "gate_seconds": 0.03917410600115545,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 15.8,
+      "utterance_audio_omitted_seconds": 15.8
+    },
+    {
+      "id": "speech-13-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "of any other matter which might have been preying upon her husband's mind recently missus manderson knew of none whatever the coroner intimated that her ordeal was at an end and the veiled lady made her way to the door",
+      "hypothesis": "mechss oedin any ather nat her wodch nmi hand in pain pongthe hes ans mnoindlysnly mesis hand ysan inrofh non wau thin kcuaiar ings i mat id te har ord dhe ws ha indin sand the tmal tling aher ay to dorr h doah",
+      "audio_seconds": 19.8,
+      "asr_audio_seconds": 19.8,
+      "wall_seconds": 0.019557398001779802,
+      "gate_seconds": 3.609966370277107e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          316800
+        ]
+      ],
+      "utterance_audio_seconds": 15.8,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-13-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "of any other matter which might have been preying upon her husband's mind recently missus manderson knew of none whatever the coroner intimated that her ordeal was at an end and the veiled lady made her way to the door",
+      "hypothesis": "",
+      "audio_seconds": 19.8,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.038708652995410375,
+      "gate_seconds": 0.038705747996573336,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 15.8,
+      "utterance_audio_omitted_seconds": 15.8
+    },
+    {
+      "id": "speech-13-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "of any other matter which might have been preying upon her husband's mind recently missus manderson knew of none whatever the coroner intimated that her ordeal was at an end and the veiled lady made her way to the door",
+      "hypothesis": "mechss hmen any an ere ntg m bwhiachjeie hid co painetprshomgs beth gnusenly dshh misswn and isaen ionuwal ni o wye thin caiar ings i mat id teuizword dyes ms hang an caev theyiaca her way to dramn h w dohh",
+      "audio_seconds": 19.8,
+      "asr_audio_seconds": 19.8,
+      "wall_seconds": 0.017650298999797087,
+      "gate_seconds": 3.710010787472129e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          316800
+        ]
+      ],
+      "utterance_audio_seconds": 15.8,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-13-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "of any other matter which might have been preying upon her husband's mind recently missus manderson knew of none whatever the coroner intimated that her ordeal was at an end and the veiled lady made her way to the door",
+      "hypothesis": "",
+      "audio_seconds": 19.8,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03864337999402778,
+      "gate_seconds": 0.03864055399753852,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 15.8,
+      "utterance_audio_omitted_seconds": 15.8
+    },
+    {
+      "id": "speech-13-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "of any other matter which might have been preying upon her husband's mind recently missus manderson knew of none whatever the coroner intimated that her ordeal was at an end and the veiled lady made her way to the door",
+      "hypothesis": "",
+      "audio_seconds": 19.8,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.038085413005319424,
+      "gate_seconds": 0.038083309002104215,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 15.8,
+      "utterance_audio_omitted_seconds": 15.8
+    },
+    {
+      "id": "speech-14-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "she thought she could go through with it but she had not expected those last questions i am glad you did not hear me she said when he explained but of course you will read it all in the reports",
+      "hypothesis": "fa setded te t he in horse he a wol wle",
+      "audio_seconds": 17.11,
+      "asr_audio_seconds": 2.6,
+      "wall_seconds": 0.03931932900013635,
+      "gate_seconds": 0.03306639199581696,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          43200,
+          64000
+        ],
+        [
+          200000,
+          220800
+        ]
+      ],
+      "utterance_audio_seconds": 13.11,
+      "utterance_audio_omitted_seconds": 10.51
+    },
+    {
+      "id": "speech-14-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "she thought she could go through with it but she had not expected those last questions i am glad you did not hear me she said when he explained but of course you will read it all in the reports",
+      "hypothesis": "fa setded te t he in horse he a wol wle",
+      "audio_seconds": 17.11,
+      "asr_audio_seconds": 2.6,
+      "wall_seconds": 0.03909425700112479,
+      "gate_seconds": 0.033140452003863174,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          43200,
+          64000
+        ],
+        [
+          200000,
+          220800
+        ]
+      ],
+      "utterance_audio_seconds": 13.11,
+      "utterance_audio_omitted_seconds": 10.51
+    },
+    {
+      "id": "speech-14-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "she thought she could go through with it but she had not expected those last questions i am glad you did not hear me she said when he explained but of course you will read it all in the reports",
+      "hypothesis": "to e lmra she so she aded tot he win ase met she had nogidxsecten vos lss qreseinds ind l thi n heremin she saadwn atstlaing bot cor s heawo wle idlollinthenrt ompore se poearicasarr",
+      "audio_seconds": 17.11,
+      "asr_audio_seconds": 17.11,
+      "wall_seconds": 0.01739757399627706,
+      "gate_seconds": 3.410023055039346e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          273760
+        ]
+      ],
+      "utterance_audio_seconds": 13.11,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-14-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "she thought she could go through with it but she had not expected those last questions i am glad you did not hear me she said when he explained but of course you will read it all in the reports",
+      "hypothesis": "",
+      "audio_seconds": 17.11,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03359639800328296,
+      "gate_seconds": 0.03359354200074449,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 13.11,
+      "utterance_audio_omitted_seconds": 13.11
+    },
+    {
+      "id": "speech-14-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "she thought she could go through with it but she had not expected those last questions i am glad you did not hear me she said when he explained but of course you will read it all in the reports",
+      "hypothesis": "to e lmras e hon se vie vut reaiyascs mab s hayd hmiscady va ls vastswae ainloldn hi matsyeveism seheon mhods lan bat horcs ie val thei eivivir hos h ireayarar",
+      "audio_seconds": 17.11,
+      "asr_audio_seconds": 17.11,
+      "wall_seconds": 0.015253400000801776,
+      "gate_seconds": 3.310051397420466e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          273760
+        ]
+      ],
+      "utterance_audio_seconds": 13.11,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-14-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "she thought she could go through with it but she had not expected those last questions i am glad you did not hear me she said when he explained but of course you will read it all in the reports",
+      "hypothesis": "",
+      "audio_seconds": 17.11,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03347624199523125,
+      "gate_seconds": 0.03347345599468099,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 13.11,
+      "utterance_audio_omitted_seconds": 13.11
+    },
+    {
+      "id": "speech-15-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "the lamb chops were fragile the bread was delicious but cut in transparent slices and the butter pat was nearly stamped through with its bouquet of flowers this was all the feast except sponge cake which felt like muslin in the fingers",
+      "hypothesis": "h fi leawa arroorrrinf the lanschul o froa ill thu br hivd mwis o lehis but cotintrams parids wlinhecens a th b erp pogt wis mo n stap tro witgit eo bo ca f flowrs mes us oltpe fest dexsetts onrc dk whech folet moso lin in to fiwars ohar airar ar rrrrn h",
+      "audio_seconds": 20.015,
+      "asr_audio_seconds": 20.015,
+      "wall_seconds": 0.018706891998590436,
+      "gate_seconds": 3.1099625630304217e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          320240
+        ]
+      ],
+      "utterance_audio_seconds": 16.015,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-15-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "the lamb chops were fragile the bread was delicious but cut in transparent slices and the butter pat was nearly stamped through with its bouquet of flowers this was all the feast except sponge cake which felt like muslin in the fingers",
+      "hypothesis": "feeslinegtes tmi'swesl obe fes dxset",
+      "audio_seconds": 20.015,
+      "asr_audio_seconds": 3.0,
+      "wall_seconds": 0.04580803800490685,
+      "gate_seconds": 0.03926964600395877,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          110400,
+          131200
+        ],
+        [
+          206400,
+          233600
+        ]
+      ],
+      "utterance_audio_seconds": 16.015,
+      "utterance_audio_omitted_seconds": 13.015
+    },
+    {
+      "id": "speech-15-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "the lamb chops were fragile the bread was delicious but cut in transparent slices and the butter pat was nearly stamped through with its bouquet of flowers this was all the feast except sponge cake which felt like muslin in the fingers",
+      "hypothesis": "feeslinegtes tmi'swesl obe fes dxset",
+      "audio_seconds": 20.015,
+      "asr_audio_seconds": 3.0,
+      "wall_seconds": 0.04521696900337702,
+      "gate_seconds": 0.03897232800227357,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          110400,
+          131200
+        ],
+        [
+          206400,
+          233600
+        ]
+      ],
+      "utterance_audio_seconds": 16.015,
+      "utterance_audio_omitted_seconds": 13.015
+    },
+    {
+      "id": "speech-15-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "the lamb chops were fragile the bread was delicious but cut in transparent slices and the butter pat was nearly stamped through with its bouquet of flowers this was all the feast except sponge cake which felt like muslin in the fingers",
+      "hypothesis": "",
+      "audio_seconds": 20.015,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.038933845004066825,
+      "gate_seconds": 0.038931731003685854,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 16.015,
+      "utterance_audio_omitted_seconds": 16.015
+    },
+    {
+      "id": "speech-15-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "the lamb chops were fragile the bread was delicious but cut in transparent slices and the butter pat was nearly stamped through with its bouquet of flowers this was all the feast except sponge cake which felt like muslin in the fingers",
+      "hypothesis": "",
+      "audio_seconds": 20.015,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03879969400441041,
+      "gate_seconds": 0.03879782099829754,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 16.015,
+      "utterance_audio_omitted_seconds": 16.015
+    },
+    {
+      "id": "speech-15-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "the lamb chops were fragile the bread was delicious but cut in transparent slices and the butter pat was nearly stamped through with its bouquet of flowers this was all the feast except sponge cake which felt like muslin in the fingers",
+      "hypothesis": "h fi leawa arroorrrinf o lonttcaullo fr ilo wodonr hudvmniso eocu'scrurt pt ion th allaras hismrh oo athe wbater two on dhis babroui wil whogr puol hihtswa'l oe qisrs tls qomitr nco heh rorloitwn mrnsowi maoit her us do rvalr rrrnn h",
+      "audio_seconds": 20.015,
+      "asr_audio_seconds": 20.015,
+      "wall_seconds": 0.018897638998168986,
+      "gate_seconds": 4.6190034481696784e-06,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          320240
+        ]
+      ],
+      "utterance_audio_seconds": 16.015,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-16-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "undressing meanwhile and surveying the apartment cassy missus morgeson is an excellent housekeeper yes i said huskily for the dry biscuit choked me what would temperance and hepsey say to this",
+      "hypothesis": "fersing tlean a hl an s asin wics s ckeer ofirsa it hustofit fr that geo",
+      "audio_seconds": 19.92,
+      "asr_audio_seconds": 6.8,
+      "wall_seconds": 0.051579691004008055,
+      "gate_seconds": 0.03897795800003223,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          40000,
+          60800
+        ],
+        [
+          100800,
+          128000
+        ],
+        [
+          148800,
+          172800
+        ],
+        [
+          184000,
+          220800
+        ]
+      ],
+      "utterance_audio_seconds": 15.92,
+      "utterance_audio_omitted_seconds": 9.12
+    },
+    {
+      "id": "speech-16-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "undressing meanwhile and surveying the apartment cassy missus morgeson is an excellent housekeeper yes i said huskily for the dry biscuit choked me what would temperance and hepsey say to this",
+      "hypothesis": "amo gdresing the ahld an shevaiinglye partpen asi wecs s botends hind as nattro chask pher yerts aish it hustofit furthat geogt bes gituolf ma whit waltd campprisin hd o chtiof hiss ioh",
+      "audio_seconds": 19.92,
+      "asr_audio_seconds": 19.92,
+      "wall_seconds": 0.02026031699642772,
+      "gate_seconds": 3.5999983083456755e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          318720
+        ]
+      ],
+      "utterance_audio_seconds": 15.92,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-16-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "undressing meanwhile and surveying the apartment cassy missus morgeson is an excellent housekeeper yes i said huskily for the dry biscuit choked me what would temperance and hepsey say to this",
+      "hypothesis": "fersing tlean a hl an s asin wics s teusket fher ofirsa it hustofit fr that geo",
+      "audio_seconds": 19.92,
+      "asr_audio_seconds": 7.0,
+      "wall_seconds": 0.05178973500005668,
+      "gate_seconds": 0.03906204600207275,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          40000,
+          60800
+        ],
+        [
+          100800,
+          128000
+        ],
+        [
+          145600,
+          172800
+        ],
+        [
+          184000,
+          220800
+        ]
+      ],
+      "utterance_audio_seconds": 15.92,
+      "utterance_audio_omitted_seconds": 8.92
+    },
+    {
+      "id": "speech-16-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "undressing meanwhile and surveying the apartment cassy missus morgeson is an excellent housekeeper yes i said huskily for the dry biscuit choked me what would temperance and hepsey say to this",
+      "hypothesis": "amod hardreshin the ah an hevainge harpem d afin rieshis vortin hine as oinaitthe hasad he etfsi it hus tof ite o tha drge bs ginxuo h man wut wut tcemprisn hid y chi hot hihs tnou",
+      "audio_seconds": 19.92,
+      "asr_audio_seconds": 19.92,
+      "wall_seconds": 0.018294727997272275,
+      "gate_seconds": 3.6100391298532486e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          318720
+        ]
+      ],
+      "utterance_audio_seconds": 15.92,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-16-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "undressing meanwhile and surveying the apartment cassy missus morgeson is an excellent housekeeper yes i said huskily for the dry biscuit choked me what would temperance and hepsey say to this",
+      "hypothesis": "tber ofirsas id hes gofit",
+      "audio_seconds": 19.92,
+      "asr_audio_seconds": 2.8,
+      "wall_seconds": 0.0454247489979025,
+      "gate_seconds": 0.039048440994520206,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          152000,
+          172800
+        ],
+        [
+          184000,
+          208000
+        ]
+      ],
+      "utterance_audio_seconds": 15.92,
+      "utterance_audio_omitted_seconds": 13.12
+    },
+    {
+      "id": "speech-16-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "undressing meanwhile and surveying the apartment cassy missus morgeson is an excellent housekeeper yes i said huskily for the dry biscuit choked me what would temperance and hepsey say to this",
+      "hypothesis": "ofirsas id hes gofite",
+      "audio_seconds": 19.92,
+      "asr_audio_seconds": 2.1,
+      "wall_seconds": 0.04147810100403149,
+      "gate_seconds": 0.03857389999757288,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          184000,
+          217600
+        ]
+      ],
+      "utterance_audio_seconds": 15.92,
+      "utterance_audio_omitted_seconds": 13.82
+    },
+    {
+      "id": "speech-17-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "the ham was most savory but cut in such thin slices that it curled and the biscuits were as white and feathery as snowflakes",
+      "hypothesis": "te and susj flimstlfthis faocite wroud whihing",
+      "audio_seconds": 12.525,
+      "asr_audio_seconds": 3.0,
+      "wall_seconds": 0.030929371001548134,
+      "gate_seconds": 0.024539327998354565,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          72000,
+          99200
+        ],
+        [
+          123200,
+          144000
+        ]
+      ],
+      "utterance_audio_seconds": 8.525,
+      "utterance_audio_omitted_seconds": 5.525
+    },
+    {
+      "id": "speech-17-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "the ham was most savory but cut in such thin slices that it curled and the biscuits were as white and feathery as snowflakes",
+      "hypothesis": "te and susj flimstlfthis faocite wroud whihing",
+      "audio_seconds": 12.525,
+      "asr_audio_seconds": 3.0,
+      "wall_seconds": 0.03117353999550687,
+      "gate_seconds": 0.02467377999710152,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          72000,
+          99200
+        ],
+        [
+          123200,
+          144000
+        ]
+      ],
+      "utterance_audio_seconds": 8.525,
+      "utterance_audio_omitted_seconds": 5.525
+    },
+    {
+      "id": "speech-17-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "the ham was most savory but cut in such thin slices that it curled and the biscuits were as white and feathery as snowflakes",
+      "hypothesis": "v ssf a hammos noi saer yy but catventsuc flinstlfhthis atit crereld 'nm the bis hit wgrtd wihing fetheres mor falae l",
+      "audio_seconds": 12.525,
+      "asr_audio_seconds": 12.525,
+      "wall_seconds": 0.012805794998712372,
+      "gate_seconds": 3.710010787472129e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          200400
+        ]
+      ],
+      "utterance_audio_seconds": 8.525,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-17-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "the ham was most savory but cut in such thin slices that it curled and the biscuits were as white and feathery as snowflakes",
+      "hypothesis": "",
+      "audio_seconds": 12.525,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.024516724995919503,
+      "gate_seconds": 0.024514250995707698,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 8.525,
+      "utterance_audio_omitted_seconds": 8.525
+    },
+    {
+      "id": "speech-17-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "the ham was most savory but cut in such thin slices that it curled and the biscuits were as white and feathery as snowflakes",
+      "hypothesis": "v ssf ra chammos moinstalerybmcurtidt set pinstloethis hotyt crld nd tat visd it whrd mlik hiang fethers mour plot e rll",
+      "audio_seconds": 12.525,
+      "asr_audio_seconds": 12.525,
+      "wall_seconds": 0.01034995599911781,
+      "gate_seconds": 3.1099625630304217e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          200400
+        ]
+      ],
+      "utterance_audio_seconds": 8.525,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-17-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "the ham was most savory but cut in such thin slices that it curled and the biscuits were as white and feathery as snowflakes",
+      "hypothesis": "",
+      "audio_seconds": 12.525,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.024372825006139465,
+      "gate_seconds": 0.024370601000555325,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 8.525,
+      "utterance_audio_omitted_seconds": 8.525
+    },
+    {
+      "id": "speech-18-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "as an old college friend locke morgeson sounded familiarly he said a member of his mother's family named somers had married a gentleman of that name he remembered it from an old ivory miniature which his mother had shown him",
+      "hypothesis": "feroheorororemeeqrwed perehredvred hahid they a had mreetd mhedantt eas kn wwe cole froan woot an wortedt in sen p milioig isad a anperf is mconets halml mnand somversd hadt nargd dg ontohit ataot mnon he ermeunverd id fro hin aw ciemryi min achur fhitc hos miy he hifsiod yim pepapraeheppra peabha tered brd head bre h erdaeo",
+      "audio_seconds": 19.8,
+      "asr_audio_seconds": 19.8,
+      "wall_seconds": 0.018410905002383515,
+      "gate_seconds": 3.300010575912893e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          316800
+        ]
+      ],
+      "utterance_audio_seconds": 15.8,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-18-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "as an old college friend locke morgeson sounded familiarly he said a member of his mother's family named somers had married a gentleman of that name he remembered it from an old ivory miniature which his mother had shown him",
+      "hypothesis": "otrn tnashad mard ag o",
+      "audio_seconds": 19.8,
+      "asr_audio_seconds": 2.6,
+      "wall_seconds": 0.04443092300061835,
+      "gate_seconds": 0.03824778800480999,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          49600,
+          70400
+        ],
+        [
+          174400,
+          195200
+        ]
+      ],
+      "utterance_audio_seconds": 15.8,
+      "utterance_audio_omitted_seconds": 13.2
+    },
+    {
+      "id": "speech-18-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "as an old college friend locke morgeson sounded familiarly he said a member of his mother's family named somers had married a gentleman of that name he remembered it from an old ivory miniature which his mother had shown him",
+      "hypothesis": "tnashad mard ag o",
+      "audio_seconds": 19.8,
+      "asr_audio_seconds": 1.3,
+      "wall_seconds": 0.04083922099380288,
+      "gate_seconds": 0.037908009995589964,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          174400,
+          195200
+        ]
+      ],
+      "utterance_audio_seconds": 15.8,
+      "utterance_audio_omitted_seconds": 14.5
+    },
+    {
+      "id": "speech-18-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "as an old college friend locke morgeson sounded familiarly he said a member of his mother's family named somers had married a gentleman of that name he remembered it from an old ivory miniature which his mother had shown him",
+      "hypothesis": "",
+      "audio_seconds": 19.8,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03795455799991032,
+      "gate_seconds": 0.0379525440002908,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 15.8,
+      "utterance_audio_omitted_seconds": 15.8
+    },
+    {
+      "id": "speech-18-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "as an old college friend locke morgeson sounded familiarly he said a member of his mother's family named somers had married a gentleman of that name he remembered it from an old ivory miniature which his mother had shown him",
+      "hypothesis": "",
+      "audio_seconds": 19.8,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03795456699299393,
+      "gate_seconds": 0.03795236299629323,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 15.8,
+      "utterance_audio_omitted_seconds": 15.8
+    },
+    {
+      "id": "speech-18-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "as an old college friend locke morgeson sounded familiarly he said a member of his mother's family named somers had married a gentleman of that name he remembered it from an old ivory miniature which his mother had shown him",
+      "hypothesis": "feroheorororemeeqrwed perehredvred hahid they a had mreetd mhedaet owrsdtle hrnda commddro auwtede ee tre rrrertemr ratanm wor te oncaemtepem mii he iny ban ef thea he or marebere hisd oetatst paor mrieineltged oe tcomaearntsadre h avd onaridvyon imvrin iaout mog eq'i ted hre r hev renemvered id frovier ardgd uieverarindecaur ritoh mipereaiftorieirpp praeathatt hed re heime aeod pre pted pre h erd eo",
+      "audio_seconds": 19.8,
+      "asr_audio_seconds": 19.8,
+      "wall_seconds": 0.017744885000865906,
+      "gate_seconds": 3.400054993107915e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          316800
+        ]
+      ],
+      "utterance_audio_seconds": 15.8,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-19-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "my duty added he somewhat pretentiously is to carry the king's mail and if anything was to obstruckt or impade or delay the correspondience it's on me the blame would lie",
+      "hypothesis": "tatthing as to stetpt",
+      "audio_seconds": 16.0,
+      "asr_audio_seconds": 1.3,
+      "wall_seconds": 0.0345619300060207,
+      "gate_seconds": 0.03138516800390789,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          126400,
+          147200
+        ]
+      ],
+      "utterance_audio_seconds": 12.0,
+      "utterance_audio_omitted_seconds": 10.7
+    },
+    {
+      "id": "speech-19-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "my duty added he somewhat pretentiously is to carry the king's mail and if anything was to obstruckt or impade or delay the correspondience it's on me the blame would lie",
+      "hypothesis": "azaayris wsr nii moiddoti andd te someoce we tancsy is t eceryda cas meyl and ih anting was to stoept or ay rer da lata corsepo dense its ao mato boialod lowi a i agjin x i",
+      "audio_seconds": 16.0,
+      "asr_audio_seconds": 16.0,
+      "wall_seconds": 0.016309301005094312,
+      "gate_seconds": 4.210014594718814e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          256000
+        ]
+      ],
+      "utterance_audio_seconds": 12.0,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-19-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "my duty added he somewhat pretentiously is to carry the king's mail and if anything was to obstruckt or impade or delay the correspondience it's on me the blame would lie",
+      "hypothesis": "tatthing as to stetpt or",
+      "audio_seconds": 16.0,
+      "asr_audio_seconds": 1.5,
+      "wall_seconds": 0.03457102699758252,
+      "gate_seconds": 0.031176375996437855,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          126400,
+          150400
+        ]
+      ],
+      "utterance_audio_seconds": 12.0,
+      "utterance_audio_omitted_seconds": 10.5
+    },
+    {
+      "id": "speech-19-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "my duty added he somewhat pretentiously is to carry the king's mail and if anything was to obstruckt or impade or delay the correspondience it's on me the blame would lie",
+      "hypothesis": "azaayris wsr niiwiy r thatif eas s sovaitit omtstyslioo icary ias wel and if cati as sostefi wo eayn wear thelado ose bortensatst aes ol euti oile lolsn r yi ie",
+      "audio_seconds": 16.0,
+      "asr_audio_seconds": 16.0,
+      "wall_seconds": 0.014573382002708968,
+      "gate_seconds": 3.800014383159578e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          256000
+        ]
+      ],
+      "utterance_audio_seconds": 12.0,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-19-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "my duty added he somewhat pretentiously is to carry the king's mail and if anything was to obstruckt or impade or delay the correspondience it's on me the blame would lie",
+      "hypothesis": "",
+      "audio_seconds": 16.0,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03109263800433837,
+      "gate_seconds": 0.03109023400611477,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 12.0,
+      "utterance_audio_omitted_seconds": 12.0
+    },
+    {
+      "id": "speech-19-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "my duty added he somewhat pretentiously is to carry the king's mail and if anything was to obstruckt or impade or delay the correspondience it's on me the blame would lie",
+      "hypothesis": "",
+      "audio_seconds": 16.0,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03058869300002698,
+      "gate_seconds": 0.030586748995119706,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 12.0,
+      "utterance_audio_omitted_seconds": 12.0
+    },
+    {
+      "id": "speech-20-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "since all is going on so well above stairs i'll draw you a gallon of ale boys and we ll drink to the master's speedy recovery it was a rare occasion when the corporal suffered himself to expand in this fashion and great was the applause at the unexpected munificence",
+      "hypothesis": "faois caono so we s forf toespearndte tdisfojean",
+      "audio_seconds": 21.075,
+      "asr_audio_seconds": 3.0,
+      "wall_seconds": 0.0472699809979531,
+      "gate_seconds": 0.04074027499882504,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          40000,
+          60800
+        ],
+        [
+          212800,
+          240000
+        ]
+      ],
+      "utterance_audio_seconds": 17.075,
+      "utterance_audio_omitted_seconds": 14.075
+    },
+    {
+      "id": "speech-20-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "since all is going on so well above stairs i'll draw you a gallon of ale boys and we ll drink to the master's speedy recovery it was a rare occasion when the corporal suffered himself to expand in this fashion and great was the applause at the unexpected munificence",
+      "hypothesis": "faois caono so we s forf toespearndte tdisfojean",
+      "audio_seconds": 21.075,
+      "asr_audio_seconds": 3.0,
+      "wall_seconds": 0.04681846399762435,
+      "gate_seconds": 0.04055252300167922,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          40000,
+          60800
+        ],
+        [
+          212800,
+          240000
+        ]
+      ],
+      "utterance_audio_seconds": 17.075,
+      "utterance_audio_omitted_seconds": 14.075
+    },
+    {
+      "id": "speech-20-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "since all is going on so well above stairs i'll draw you a gallon of ale boys and we ll drink to the master's speedy recovery it was a rare occasion when the corporal suffered himself to expand in this fashion and great was the applause at the unexpected munificence",
+      "hypothesis": "us sas aws boinon sowe wal le bo sters a d jo yowod den of vere bhowas ad hod tadttin the mesterd spve cover it was a rer coein wa the qo fo seffer han soef toistearnti tdhist oean thad greaed was fpos atthe eor esvectid le nifethisecs",
+      "audio_seconds": 21.075,
+      "asr_audio_seconds": 21.075,
+      "wall_seconds": 0.021577329003775958,
+      "gate_seconds": 3.609966370277107e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          337200
+        ]
+      ],
+      "utterance_audio_seconds": 17.075,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-20-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "since all is going on so well above stairs i'll draw you a gallon of ale boys and we ll drink to the master's speedy recovery it was a rare occasion when the corporal suffered himself to expand in this fashion and great was the applause at the unexpected munificence",
+      "hypothesis": "faois coino so wa s forf toiestao tisf oije n stis tr ghvistuse",
+      "audio_seconds": 21.075,
+      "asr_audio_seconds": 4.3,
+      "wall_seconds": 0.050473514005716424,
+      "gate_seconds": 0.04121683999983361,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          40000,
+          60800
+        ],
+        [
+          212800,
+          240000
+        ],
+        [
+          276800,
+          297600
+        ]
+      ],
+      "utterance_audio_seconds": 17.075,
+      "utterance_audio_omitted_seconds": 12.775
+    },
+    {
+      "id": "speech-20-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "since all is going on so well above stairs i'll draw you a gallon of ale boys and we ll drink to the master's speedy recovery it was a rare occasion when the corporal suffered himself to expand in this fashion and great was the applause at the unexpected munificence",
+      "hypothesis": "us sas alrs boino sole wall wo sterst owd rioyo op gein of tvel dels u hie regtdute mistes spite coverf li was i wif toi nong noxe qolro sefpeir han soelf toistao thist oicea d chand prite was opos afthefpul cstis hte be is tusins",
+      "audio_seconds": 21.075,
+      "asr_audio_seconds": 21.075,
+      "wall_seconds": 0.02053318900289014,
+      "gate_seconds": 3.6100391298532486e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          337200
+        ]
+      ],
+      "utterance_audio_seconds": 17.075,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-20-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "since all is going on so well above stairs i'll draw you a gallon of ale boys and we ll drink to the master's speedy recovery it was a rare occasion when the corporal suffered himself to expand in this fashion and great was the applause at the unexpected munificence",
+      "hypothesis": "faois coino so wa fviscrthi mestespe s forf toiestao tisf oije n stis tr ghvistuse",
+      "audio_seconds": 21.075,
+      "asr_audio_seconds": 5.6,
+      "wall_seconds": 0.05332886300311657,
+      "gate_seconds": 0.04107431299780728,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          40000,
+          60800
+        ],
+        [
+          120000,
+          140800
+        ],
+        [
+          212800,
+          240000
+        ],
+        [
+          276800,
+          297600
+        ]
+      ],
+      "utterance_audio_seconds": 17.075,
+      "utterance_audio_omitted_seconds": 11.475
+    },
+    {
+      "id": "speech-21-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "when i haven't tuppence to buy tobacco and without a shoe to my foot and my hair through my hat i can be dancin wid princesses and handin empresses in to tay musha musha",
+      "hypothesis": "h a wo a in tovans ibo te bocho e we aner suodta muf foi and my hedsie miha ac cit the dinns in whi prsosas and ha dint anpresies in totay mosho moi shiec",
+      "audio_seconds": 16.88,
+      "asr_audio_seconds": 16.88,
+      "wall_seconds": 0.016805711995402817,
+      "gate_seconds": 3.399982233531773e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          270080
+        ]
+      ],
+      "utterance_audio_seconds": 12.88,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-21-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "when i haven't tuppence to buy tobacco and without a shoe to my foot and my hair through my hat i can be dancin wid princesses and handin empresses in to tay musha musha",
+      "hypothesis": "fenr soothe mu flo notsho mosio",
+      "audio_seconds": 16.88,
+      "asr_audio_seconds": 2.8,
+      "wall_seconds": 0.039450604999728967,
+      "gate_seconds": 0.03294638700026553,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          75200,
+          96000
+        ],
+        [
+          216000,
+          240000
+        ]
+      ],
+      "utterance_audio_seconds": 12.88,
+      "utterance_audio_omitted_seconds": 10.2
+    },
+    {
+      "id": "speech-21-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "when i haven't tuppence to buy tobacco and without a shoe to my foot and my hair through my hat i can be dancin wid princesses and handin empresses in to tay musha musha",
+      "hypothesis": "fenr soothe mu flo notsho mosio",
+      "audio_seconds": 16.88,
+      "asr_audio_seconds": 2.8,
+      "wall_seconds": 0.03901301499718102,
+      "gate_seconds": 0.032835270001669414,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          75200,
+          96000
+        ],
+        [
+          216000,
+          240000
+        ]
+      ],
+      "utterance_audio_seconds": 12.88,
+      "utterance_audio_omitted_seconds": 10.2
+    },
+    {
+      "id": "speech-21-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "when i haven't tuppence to buy tobacco and without a shoe to my foot and my hair through my hat i can be dancin wid princesses and handin empresses in to tay musha musha",
+      "hypothesis": "fener soote mu fho tfotsho moa sio",
+      "audio_seconds": 16.88,
+      "asr_audio_seconds": 2.8,
+      "wall_seconds": 0.038734360998205375,
+      "gate_seconds": 0.03264557299553417,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          75200,
+          96000
+        ],
+        [
+          216000,
+          240000
+        ]
+      ],
+      "utterance_audio_seconds": 12.88,
+      "utterance_audio_omitted_seconds": 10.2
+    },
+    {
+      "id": "speech-21-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "when i haven't tuppence to buy tobacco and without a shoe to my foot and my hair through my hat i can be dancin wid princesses and handin empresses in to tay musha musha",
+      "hypothesis": "fener soote mu fho tfotsho moa sio",
+      "audio_seconds": 16.88,
+      "asr_audio_seconds": 2.8,
+      "wall_seconds": 0.038635696000710595,
+      "gate_seconds": 0.03253874200163409,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          75200,
+          96000
+        ],
+        [
+          216000,
+          240000
+        ]
+      ],
+      "utterance_audio_seconds": 12.88,
+      "utterance_audio_omitted_seconds": 10.2
+    },
+    {
+      "id": "speech-21-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "when i haven't tuppence to buy tobacco and without a shoe to my foot and my hair through my hat i can be dancin wid princesses and handin empresses in to tay musha musha",
+      "hypothesis": "h won a in togans i baoy te vothe he wad aner suodta mutfo and my ha the myiha c cit the des in wit prsastus and ha dint an presis into tay moshon mo shiee",
+      "audio_seconds": 16.88,
+      "asr_audio_seconds": 16.88,
+      "wall_seconds": 0.015374426999187563,
+      "gate_seconds": 3.210006980225444e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          270080
+        ]
+      ],
+      "utterance_audio_seconds": 12.88,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-22-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "so musical and the words came droppin down like the clear water filterin over a rocky ledge and glitterin like little spangles over moss and wild flowers it wasn't only in english but scotch ballads too and once or twice in italian that he recited",
+      "hypothesis": "ov wors can totian do nmo tocspeollhits to fomsoto hs mnetti tha he wiseidi",
+      "audio_seconds": 19.605,
+      "asr_audio_seconds": 4.9,
+      "wall_seconds": 0.04793167399475351,
+      "gate_seconds": 0.03869551899697399,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          56000,
+          80000
+        ],
+        [
+          222400,
+          243200
+        ],
+        [
+          248000,
+          281600
+        ]
+      ],
+      "utterance_audio_seconds": 15.605,
+      "utterance_audio_omitted_seconds": 10.705
+    },
+    {
+      "id": "speech-22-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "so musical and the words came droppin down like the clear water filterin over a rocky ledge and glitterin like little spangles over moss and wild flowers it wasn't only in english but scotch ballads too and once or twice in italian that he recited",
+      "hypothesis": "nsstx seys ico and the woars can jrtan do nmonpt the qlerwoar fholtterin overer rccting tlag and lnherid my litl s penlas of ver moson he frs it was in wereayin thes bu spocpeo is tooo and moansesut sonetii tne he wisoindihams",
+      "audio_seconds": 19.605,
+      "asr_audio_seconds": 19.605,
+      "wall_seconds": 0.01883262699993793,
+      "gate_seconds": 3.1999661587178707e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          313680
+        ]
+      ],
+      "utterance_audio_seconds": 15.605,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-22-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "so musical and the words came droppin down like the clear water filterin over a rocky ledge and glitterin like little spangles over moss and wild flowers it wasn't only in english but scotch ballads too and once or twice in italian that he recited",
+      "hypothesis": "ov wors can totian do nmo tocspeollhits to an woncesut sonetii tne he wisoindi",
+      "audio_seconds": 19.605,
+      "asr_audio_seconds": 5.2,
+      "wall_seconds": 0.04825441999855684,
+      "gate_seconds": 0.03886122900439659,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          56000,
+          80000
+        ],
+        [
+          222400,
+          281600
+        ]
+      ],
+      "utterance_audio_seconds": 15.605,
+      "utterance_audio_omitted_seconds": 10.405
+    },
+    {
+      "id": "speech-22-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "so musical and the words came droppin down like the clear water filterin over a rocky ledge and glitterin like little spangles over moss and wild flowers it wasn't only in english but scotch ballads too and once or twice in italian that he recited",
+      "hypothesis": "nsstx seiys ifoal h a tle woares conssti ou lmon the coerboeor ttvus shernnolverey a cke svedhands ladermnl jel s enlis ow hm mo simd vlil st et as intleian nnm lisvuss stusehel as tis adloaicesitysit itti tnat hi isseind ia mm",
+      "audio_seconds": 19.605,
+      "asr_audio_seconds": 19.605,
+      "wall_seconds": 0.01765333399816882,
+      "gate_seconds": 3.809982445091009e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          313680
+        ]
+      ],
+      "utterance_audio_seconds": 15.605,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-22-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "so musical and the words came droppin down like the clear water filterin over a rocky ledge and glitterin like little spangles over moss and wild flowers it wasn't only in english but scotch ballads too and once or twice in italian that he recited",
+      "hypothesis": "torscainesshido lmo askel as tons tiethat he hisseit i",
+      "audio_seconds": 19.605,
+      "asr_audio_seconds": 3.9,
+      "wall_seconds": 0.047837186000833753,
+      "gate_seconds": 0.03878809200250544,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          59200,
+          80000
+        ],
+        [
+          222400,
+          243200
+        ],
+        [
+          260800,
+          281600
+        ]
+      ],
+      "utterance_audio_seconds": 15.605,
+      "utterance_audio_omitted_seconds": 11.705
+    },
+    {
+      "id": "speech-22-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "so musical and the words came droppin down like the clear water filterin over a rocky ledge and glitterin like little spangles over moss and wild flowers it wasn't only in english but scotch ballads too and once or twice in italian that he recited",
+      "hypothesis": "torscainesshido lmo askel as tons tiethat he hisseit i",
+      "audio_seconds": 19.605,
+      "asr_audio_seconds": 3.9,
+      "wall_seconds": 0.04692259000148624,
+      "gate_seconds": 0.03817715599871008,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          59200,
+          80000
+        ],
+        [
+          222400,
+          243200
+        ],
+        [
+          260800,
+          281600
+        ]
+      ],
+      "utterance_audio_seconds": 15.605,
+      "utterance_audio_omitted_seconds": 11.705
+    },
+    {
+      "id": "speech-23-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "while the corporal snored loudly like a man who had a right to indulge himself to the fullest extent there's the bell again muttered one that's from the lord's room and craggs starting up by the instinct of his office hastened off",
+      "hypothesis": "fwmtn wordsoworm",
+      "audio_seconds": 18.575,
+      "asr_audio_seconds": 1.3,
+      "wall_seconds": 0.03877571799966972,
+      "gate_seconds": 0.03584274299646495,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          180800,
+          201600
+        ]
+      ],
+      "utterance_audio_seconds": 14.575,
+      "utterance_audio_omitted_seconds": 13.275
+    },
+    {
+      "id": "speech-23-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "while the corporal snored loudly like a man who had a right to indulge himself to the fullest extent there's the bell again muttered one that's from the lord's room and craggs starting up by the instinct of his office hastened off",
+      "hypothesis": "fwmtn wordsoworm",
+      "audio_seconds": 18.575,
+      "asr_audio_seconds": 1.3,
+      "wall_seconds": 0.0386136839952087,
+      "gate_seconds": 0.03568795299361227,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          180800,
+          201600
+        ]
+      ],
+      "utterance_audio_seconds": 14.575,
+      "utterance_audio_omitted_seconds": 13.275
+    },
+    {
+      "id": "speech-23-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "while the corporal snored loudly like a man who had a right to indulge himself to the fullest extent there's the bell again muttered one that's from the lord's room and craggs starting up by the instinct of his office hastened off",
+      "hypothesis": "t getarp the qorpfo snord lu lay wet cha meinnmee wrht to docsemnslf to t e fosiestaat ans tit boti din maerde on tha sooa lordsow rm and carse stord ig not bythi instindaif his feis as in og dorttdue",
+      "audio_seconds": 18.575,
+      "asr_audio_seconds": 18.575,
+      "wall_seconds": 0.01804311599698849,
+      "gate_seconds": 3.9099541027098894e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          297200
+        ]
+      ],
+      "utterance_audio_seconds": 14.575,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-23-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "while the corporal snored loudly like a man who had a right to indulge himself to the fullest extent there's the bell again muttered one that's from the lord's room and craggs starting up by the instinct of his office hastened off",
+      "hypothesis": "",
+      "audio_seconds": 18.575,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03612352100026328,
+      "gate_seconds": 0.036121056000411045,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 14.575,
+      "utterance_audio_omitted_seconds": 14.575
+    },
+    {
+      "id": "speech-23-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "while the corporal snored loudly like a man who had a right to indulge himself to the fullest extent there's the bell again muttered one that's from the lord's room and craggs starting up by the instinct of his office hastened off",
+      "hypothesis": "t getare olthe for fhl s e nlid eis li i iah hal ilt thofseo sesythe fetsessefe fes the alydin foueh teas loolars loit ad cra stei e fai the eston tvihis l tis as af shaa eau",
+      "audio_seconds": 18.575,
+      "asr_audio_seconds": 18.575,
+      "wall_seconds": 0.016447962007077876,
+      "gate_seconds": 3.6100391298532486e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          297200
+        ]
+      ],
+      "utterance_audio_seconds": 14.575,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-23-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "while the corporal snored loudly like a man who had a right to indulge himself to the fullest extent there's the bell again muttered one that's from the lord's room and craggs starting up by the instinct of his office hastened off",
+      "hypothesis": "",
+      "audio_seconds": 18.575,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03604944200196769,
+      "gate_seconds": 0.03604716799600283,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 14.575,
+      "utterance_audio_omitted_seconds": 14.575
+    },
+    {
+      "id": "noise-0",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "acdhm",
+      "audio_seconds": 13.9,
+      "asr_audio_seconds": 13.9,
+      "wall_seconds": 0.01413671299815178,
+      "gate_seconds": 3.0999945010989904e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          222400
+        ]
+      ]
+    },
+    {
+      "id": "noise-0",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 13.9,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.02717674899759004,
+      "gate_seconds": 0.027174383998499252,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-0",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 13.9,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.026834456002688967,
+      "gate_seconds": 0.02683257299941033,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-1",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 14.847,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.028675009998551104,
+      "gate_seconds": 0.028673127002548426,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-1",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 14.847,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.02848438200453529,
+      "gate_seconds": 0.028482429006544407,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-1",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "fria arrar omeror a r arar",
+      "audio_seconds": 14.847,
+      "asr_audio_seconds": 14.847,
+      "wall_seconds": 0.01452879000134999,
+      "gate_seconds": 3.609966370277107e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          237552
+        ]
+      ]
+    },
+    {
+      "id": "noise-2",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 11.724,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.022986512994975783,
+      "gate_seconds": 0.022984348994214088,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-2",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "s evaadaravivthav ativa ar aaima",
+      "audio_seconds": 11.724,
+      "asr_audio_seconds": 11.724,
+      "wall_seconds": 0.011880938996910118,
+      "gate_seconds": 3.799941623583436e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          187584
+        ]
+      ]
+    },
+    {
+      "id": "noise-2",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 11.724,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.02279684799577808,
+      "gate_seconds": 0.022794693999458104,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-3",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "chmh hemeae e hmee h e edeatharmh",
+      "audio_seconds": 5.8441875,
+      "asr_audio_seconds": 5.8441875,
+      "wall_seconds": 0.007122367998817936,
+      "gate_seconds": 3.4999538911506534e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          93507
+        ]
+      ]
+    },
+    {
+      "id": "noise-3",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 5.8441875,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.01150473299639998,
+      "gate_seconds": 0.011502167995786294,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-3",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 5.8441875,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.011407441001210827,
+      "gate_seconds": 0.011405347002437338,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-4",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 13.045,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.02511546899768291,
+      "gate_seconds": 0.025113364994467702,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-4",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 13.045,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.025046250004379544,
+      "gate_seconds": 0.025044266003533266,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-4",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "nrasspsssscs ilh hsshshiispi ethh sts athiatiihi",
+      "audio_seconds": 13.045,
+      "asr_audio_seconds": 13.045,
+      "wall_seconds": 0.01268570999673102,
+      "gate_seconds": 3.399982233531773e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          208720
+        ]
+      ]
+    },
+    {
+      "id": "noise-5",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 16.08,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.031253911001840606,
+      "gate_seconds": 0.03125166700192494,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-5",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "ho cat laa daa aliadaabeabagi igi adian'i t eg a ie tdiaiindi tiait daeg idiae adbi'iid ai atidgt giiedani' inddidiln' d ita'ti tdgd bgto dibh atsind dtby at ad iagt idgi aideivt idaidaag a id iaad e a da",
+      "audio_seconds": 16.08,
+      "asr_audio_seconds": 16.08,
+      "wall_seconds": 0.016254438000032678,
+      "gate_seconds": 3.5999983083456755e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          257280
+        ]
+      ]
+    },
+    {
+      "id": "noise-5",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 16.08,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.031200951998471282,
+      "gate_seconds": 0.031198466997011565,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-6",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "to theley asdihftacnlm ssc vehcaac l amsanca i",
+      "audio_seconds": 11.785,
+      "asr_audio_seconds": 11.785,
+      "wall_seconds": 0.012202443002024665,
+      "gate_seconds": 3.710010787472129e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          188560
+        ]
+      ]
+    },
+    {
+      "id": "noise-6",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 11.785,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.02295728900207905,
+      "gate_seconds": 0.022954504005610943,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-6",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 11.785,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.022364757001923863,
+      "gate_seconds": 0.022362793002685066,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-7",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 7.365,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.014050161000341177,
+      "gate_seconds": 0.014048186996660661,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-7",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 7.365,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.013974358997074887,
+      "gate_seconds": 0.01397239499783609,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-7",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "er",
+      "audio_seconds": 7.365,
+      "asr_audio_seconds": 7.365,
+      "wall_seconds": 0.008213376000639983,
+      "gate_seconds": 3.710010787472129e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          117840
+        ]
+      ]
+    },
+    {
+      "id": "noise-8",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 14.24,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.027696263998223003,
+      "gate_seconds": 0.027694180003891233,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-8",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "aan' yhay tnavhagh a h ha h aowy awy ah aoe aow ao aow ao o i a a haio ho h oh m",
+      "audio_seconds": 14.24,
+      "asr_audio_seconds": 14.24,
+      "wall_seconds": 0.0138819549974869,
+      "gate_seconds": 3.6100391298532486e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          227840
+        ]
+      ]
+    },
+    {
+      "id": "noise-8",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 14.24,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.027953546996286605,
+      "gate_seconds": 0.02795110199804185,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-9",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "a af",
+      "audio_seconds": 12.76,
+      "asr_audio_seconds": 12.76,
+      "wall_seconds": 0.011058315998525359,
+      "gate_seconds": 4.309986252337694e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          204160
+        ]
+      ]
+    },
+    {
+      "id": "noise-9",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 12.76,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.024838340003043413,
+      "gate_seconds": 0.024836035001499113,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-9",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 12.76,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.02439322400459787,
+      "gate_seconds": 0.024391261002165265,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-10",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 13.72,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.026265849002811592,
+      "gate_seconds": 0.026263785002811346,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-10",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 13.72,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.026161112000409048,
+      "gate_seconds": 0.026159139000810683,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-10",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "i aa anlrnan nnonnnnninnnrnrnungnrnnlornrnnrnirririinnrnnrrinerilennunnnnriininir nnnnngrnini niinn",
+      "audio_seconds": 13.72,
+      "asr_audio_seconds": 13.72,
+      "wall_seconds": 0.013485319999745116,
+      "gate_seconds": 3.4999538911506534e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          219520
+        ]
+      ]
+    },
+    {
+      "id": "noise-11",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 11.8400625,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.023398146004183218,
+      "gate_seconds": 0.023396122000121977,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-11",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "tmam o ouim ahd su cag outco wica rsinhahibu ava finr g i'lyiztene ba iias gthi o sngecsaartma clao tho sket hunth",
+      "audio_seconds": 11.8400625,
+      "asr_audio_seconds": 11.8400625,
+      "wall_seconds": 0.011531504002050497,
+      "gate_seconds": 3.710010787472129e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          189441
+        ]
+      ]
+    },
+    {
+      "id": "noise-11",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 11.8400625,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.02331601199693978,
+      "gate_seconds": 0.02331370799947763,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-12",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "oreou or our uuiaiaurn",
+      "audio_seconds": 10.295,
+      "asr_audio_seconds": 10.295,
+      "wall_seconds": 0.010664075998647604,
+      "gate_seconds": 3.910026862286031e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          164720
+        ]
+      ]
+    },
+    {
+      "id": "noise-12",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 10.295,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.02030128399928799,
+      "gate_seconds": 0.020299129995692056,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-12",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 10.295,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.019696048002515454,
+      "gate_seconds": 0.019694144000823144,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-13",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 11.9901875,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.022898287999851163,
+      "gate_seconds": 0.022896485003002454,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-13",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 11.9901875,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.022757553997507785,
+      "gate_seconds": 0.02275548999750754,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-13",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "mechshs dhmhs mdohwsw mdhhs dohmwsh",
+      "audio_seconds": 11.9901875,
+      "asr_audio_seconds": 11.9901875,
+      "wall_seconds": 0.011815015997854061,
+      "gate_seconds": 3.709938027895987e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          191843
+        ]
+      ]
+    },
+    {
+      "id": "noise-14",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 6.625,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.013214422004239168,
+      "gate_seconds": 0.013212158002716023,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-14",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "to e lmra rwaar arar at aaene",
+      "audio_seconds": 6.625,
+      "asr_audio_seconds": 6.625,
+      "wall_seconds": 0.008241429000918288,
+      "gate_seconds": 3.710010787472129e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          106000
+        ]
+      ]
+    },
+    {
+      "id": "noise-14",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 6.625,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.013179546993342228,
+      "gate_seconds": 0.013177462999010459,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-15",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "h fi leawa arroorrrinrnrnrrrrrrrorrrrrrnrnrnrnrnrnrrirnrnrnrrrrrnrnrrnrrrrnrrrnrrrorrrorirrrrorrrrnri ninrrrrrrrrn rrn",
+      "audio_seconds": 15.255,
+      "asr_audio_seconds": 15.255,
+      "wall_seconds": 0.015168119003647007,
+      "gate_seconds": 3.710010787472129e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          244080
+        ]
+      ]
+    },
+    {
+      "id": "noise-15",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 15.255,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.02986900200630771,
+      "gate_seconds": 0.029866627002775203,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-15",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 15.255,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.02936762000172166,
+      "gate_seconds": 0.029365667003730778,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-16",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 10.04,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.019389642002352048,
+      "gate_seconds": 0.01938763899670448,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-16",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 10.04,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.01931353999680141,
+      "gate_seconds": 0.0193116359951091,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-16",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "amo",
+      "audio_seconds": 10.04,
+      "asr_audio_seconds": 10.04,
+      "wall_seconds": 0.01176914000097895,
+      "gate_seconds": 3.710010787472129e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          160640
+        ]
+      ]
+    },
+    {
+      "id": "noise-17",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 15.93,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.030924031001632102,
+      "gate_seconds": 0.030921737001335714,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-17",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "v ssrlll h",
+      "audio_seconds": 15.93,
+      "asr_audio_seconds": 15.93,
+      "wall_seconds": 0.015856199999689125,
+      "gate_seconds": 3.699969965964556e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          254880
+        ]
+      ]
+    },
+    {
+      "id": "noise-17",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 15.93,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.031134877004660666,
+      "gate_seconds": 0.031132413001614623,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-18",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "feroheorororemeeqrwed perehredvred hahid they a had mreetd mhedaered ae dere mrmd mr hamd mre eramraaea praalrt pavre hlt mt hea mevet phe ertd pred br",
+      "audio_seconds": 4.875,
+      "asr_audio_seconds": 4.875,
+      "wall_seconds": 0.006877779000205919,
+      "gate_seconds": 3.809982445091009e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          78000
+        ]
+      ]
+    },
+    {
+      "id": "noise-18",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 4.875,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.009627539999200962,
+      "gate_seconds": 0.00962541600165423,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-18",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 4.875,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.009444055998756085,
+      "gate_seconds": 0.009442151997063775,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-19",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 3.8298125,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.007454832004441414,
+      "gate_seconds": 0.007452928002749104,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-19",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 3.8298125,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.0074436110007809475,
+      "gate_seconds": 0.007441677997121587,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-19",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "azaayris wsr nii ri",
+      "audio_seconds": 3.8298125,
+      "asr_audio_seconds": 3.8298125,
+      "wall_seconds": 0.006001414003549144,
+      "gate_seconds": 3.710010787472129e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          61277
+        ]
+      ]
+    },
+    {
+      "id": "noise-20",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 10.27,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.020014576002722606,
+      "gate_seconds": 0.02001251200272236,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-20",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "ust ctss",
+      "audio_seconds": 10.27,
+      "asr_audio_seconds": 10.27,
+      "wall_seconds": 0.011102037999080494,
+      "gate_seconds": 3.710010787472129e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          164320
+        ]
+      ]
+    },
+    {
+      "id": "noise-20",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 10.27,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.020025375997647643,
+      "gate_seconds": 0.02002284100308316,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-21",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "h",
+      "audio_seconds": 8.8515,
+      "asr_audio_seconds": 8.8515,
+      "wall_seconds": 0.009960395000234712,
+      "gate_seconds": 3.7000427255406976e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          141624
+        ]
+      ]
+    },
+    {
+      "id": "noise-21",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 8.8515,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.017290903997491114,
+      "gate_seconds": 0.01728873999672942,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-21",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 8.8515,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.017050411996024195,
+      "gate_seconds": 0.017048527995939367,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-22",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 14.7,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.028270902002986986,
+      "gate_seconds": 0.028269078000448644,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-22",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 14.7,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.028085183999792207,
+      "gate_seconds": 0.028083319994038902,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-22",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "nsstxst mt f em ttn ussositsamss thmt",
+      "audio_seconds": 14.7,
+      "asr_audio_seconds": 14.7,
+      "wall_seconds": 0.013788388998364098,
+      "gate_seconds": 3.399982233531773e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          235200
+        ]
+      ]
+    },
+    {
+      "id": "noise-23",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 14.985,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.02906312899722252,
+      "gate_seconds": 0.0290609149960801,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-23",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "t getarrruururirru rruesur sruururrrurrrireurrrurruerrruuruuurruiraerudrwr urrurrrrrre",
+      "audio_seconds": 14.985,
+      "asr_audio_seconds": 14.985,
+      "wall_seconds": 0.014213968002877664,
+      "gate_seconds": 4.0099985199049115e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          239760
+        ]
+      ]
+    },
+    {
+      "id": "noise-23",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 14.985,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.02894428600120591,
+      "gate_seconds": 0.02894200100126909,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    }
+  ],
+  "candidate_files": {
+    "weights.2bit": "743b796c1fdb99e3d0ee7fd9daa8a56dabcc473e4a14a0d7e1f9d529749b5f7c",
+    "weights.npz": "c5781dd7b3def3d7d91a7f68a64fdb2d45b8bafe12652f63d61b1fd94f42b9cd",
+    "model.json": "faba92d8d1829b881b02395f376dde453756a7d4b289d187e0e835c1268ca482"
+  },
+  "gate_files": {
+    "008": {
+      "weights.2bit": "cf3641291b8f90fff132bffed3c6e07b3d623526d9588b71ccbe0d8258fb282b",
+      "weights.npz": "3c0537e35216da4803ff9d05ade944b8d4293b65081578ebdad3da6ae717e2e9",
+      "metrics.json": "a91e4220bbad2de720508daf72f72d4d9189dcbb59fe1b67d9309cbe3d57b53c",
+      "model.json": "91c179cafd0305c4048cf7ee96f67157e61ff19ef0ab5c849605063b80c101ad"
+    },
+    "010": {
+      "weights.2bit": "23b05ce3fd482800322e834cf9abf417138de8d3108a1733409743c6a92c7584",
+      "weights.npz": "734eb2b021e81b54c333f298356b10aade17129c06156438ea4db73ff77eadab",
+      "metrics.json": "21e4bd4353f3740d08c8fd9a736187ab3863c8c87b2d83673b5dc77f7f27381b",
+      "model.json": "75e217f6e839012a363d5ee181ef46d6b5ed241f055e39bfeef4a5780b41200a"
+    }
+  },
+  "manifest_sha256": "fc4b9c542e8868ed8813bd7a6edbc08f94f3183709144ff6062c4e0e18a6c828",
+  "limitations": [
+    "Composed continuous playback from real clips; no frame activity labels.",
+    "Original full-clip gate thresholds applied to causal windows without recalibration.",
+    "Development evidence, not untouched holdout or battlefield/medical validation.",
+    "Elapsed time/audio skipped are cost proxies, not power measurements.",
+    "CPU package energy, if available, excludes whole-device and GPU energy.",
+    "Offline replay omits real-time idle, capture and device wake overhead."
+  ]
+}

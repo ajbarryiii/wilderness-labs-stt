@@ -6,3 +6,7 @@ This repository is aimed at creating the most power efficient Speech-to-text pip
 2. Finetuning existing models to be more power efficient (./finetune).
 
 This machine is running NixOS and has access to an nvidia 5090 gpu for training and finetuning of any models.
+
+Store all training data and model weights on the second hard drive, mounted at `/mnt/hd` (`/dev/sda`, a 7.3 TiB ext4 disk). This includes downloaded datasets, prepared data, dataset/model caches, pretrained weights, training checkpoints, and exported models. Use project-specific directories under `/mnt/hd/wilderness-labs-stt/` and explicitly configure download, cache, and training output paths accordingly. Before writing these artifacts, verify that `/mnt/hd` is mounted; do not fall back to storing them on the system drive or in this repository if the mount is unavailable.
+
+Never push actual model files to GitHub.

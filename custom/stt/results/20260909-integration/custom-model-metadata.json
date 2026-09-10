@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "graph": "causal_ternary_ctc",
+  "recipe": {
+    "width": 192,
+    "depth": 8,
+    "kernel": 5,
+    "learning_rate": 0.001,
+    "batch_size": 16,
+    "weight_decay": 0.01,
+    "grad_clip": 5.0,
+    "noise_probability": 0.25,
+    "ema_decay": 0.99
+  },
+  "alphabet": "_abcdefghijklmnopqrstuvwxyz' ",
+  "arithmetic": "expanded ternary FP32 reference",
+  "parameters": 1556928,
+  "packed_bytes": 389232
+}

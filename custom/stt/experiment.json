@@ -1,0 +1,14 @@
+{
+  "duration_seconds": 3600,
+  "training_seconds": 300,
+  "evaluation_seconds": 180,
+  "proposal_seconds": 120,
+  "report_reserve_seconds": 90,
+  "development_speech_limit": 24,
+  "evaluation_repeats": 1,
+  "seed": 20260909,
+  "max_baseline_wer": 0.95,
+  "max_baseline_cer": 0.8,
+  "auto_start": false,
+  "final_recognizer_parameters": [500000000, 1000000000]
+}

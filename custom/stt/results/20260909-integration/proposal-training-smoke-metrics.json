@@ -1,0 +1,836 @@
+{
+  "schema": 1,
+  "backend": "custom",
+  "device": "cpu",
+  "split": "development",
+  "scenes": 12,
+  "repeats": 1,
+  "summary": {
+    "always_on": {
+      "wer": 1.2602739726027397,
+      "cer": 0.7971813725490197,
+      "word_errors": 368,
+      "reference_words": 292,
+      "char_errors": 1301,
+      "reference_chars": 1632,
+      "nonspeech_inserted_words": 30,
+      "wall_seconds": 0.191174856001453,
+      "rtf": 0.0010017041217736374,
+      "asr_audio_fraction": 1.0,
+      "cpu_package_joules": null,
+      "iphone_joules": null,
+      "utterance_audio_omitted_seconds": 0.0,
+      "utterance_audio_seconds": 112.12,
+      "by_condition": {
+        "clean": {
+          "wer": 1.1575342465753424,
+          "cer": 0.6678921568627451,
+          "word_errors": 169,
+          "reference_words": 146,
+          "char_errors": 545,
+          "reference_chars": 816,
+          "nonspeech_inserted_words": 0
+        },
+        "mixed_10db": {
+          "wer": 1.1575342465753424,
+          "cer": 0.7610294117647058,
+          "word_errors": 169,
+          "reference_words": 146,
+          "char_errors": 621,
+          "reference_chars": 816,
+          "nonspeech_inserted_words": 0
+        }
+      }
+    },
+    "gate_008": {
+      "wer": 0.9931506849315068,
+      "cer": 0.9356617647058824,
+      "word_errors": 290,
+      "reference_words": 292,
+      "char_errors": 1527,
+      "reference_chars": 1632,
+      "nonspeech_inserted_words": 0,
+      "wall_seconds": 0.3994177659988054,
+      "rtf": 0.002092840192894303,
+      "asr_audio_fraction": 0.06497261914976254,
+      "cpu_package_joules": null,
+      "iphone_joules": null,
+      "utterance_audio_omitted_seconds": 99.855,
+      "utterance_audio_seconds": 112.12,
+      "by_condition": {
+        "clean": {
+          "wer": 0.9863013698630136,
+          "cer": 0.8713235294117647,
+          "word_errors": 144,
+          "reference_words": 146,
+          "char_errors": 711,
+          "reference_chars": 816,
+          "nonspeech_inserted_words": 0
+        },
+        "mixed_10db": {
+          "wer": 1.0,
+          "cer": 1.0,
+          "word_errors": 146,
+          "reference_words": 146,
+          "char_errors": 816,
+          "reference_chars": 816,
+          "nonspeech_inserted_words": 0
+        }
+      },
+      "wer_delta": -0.26712328767123283,
+      "gating_quality_passes": false,
+      "wall_time_reduction_fraction": -1.0892798056862127
+    },
+    "gate_010": {
+      "wer": 0.9897260273972602,
+      "cer": 0.9375,
+      "word_errors": 289,
+      "reference_words": 292,
+      "char_errors": 1530,
+      "reference_chars": 1632,
+      "nonspeech_inserted_words": 0,
+      "wall_seconds": 0.394293128985737,
+      "rtf": 0.0020659884921740714,
+      "asr_audio_fraction": 0.06287672820944762,
+      "cpu_package_joules": null,
+      "iphone_joules": null,
+      "utterance_audio_omitted_seconds": 100.455,
+      "utterance_audio_seconds": 112.12,
+      "by_condition": {
+        "clean": {
+          "wer": 0.9794520547945206,
+          "cer": 0.875,
+          "word_errors": 143,
+          "reference_words": 146,
+          "char_errors": 714,
+          "reference_chars": 816,
+          "nonspeech_inserted_words": 0
+        },
+        "mixed_10db": {
+          "wer": 1.0,
+          "cer": 1.0,
+          "word_errors": 146,
+          "reference_words": 146,
+          "char_errors": 816,
+          "reference_chars": 816,
+          "nonspeech_inserted_words": 0
+        }
+      },
+      "wer_delta": -0.2705479452054794,
+      "gating_quality_passes": false,
+      "wall_time_reduction_fraction": -1.062473785688324
+    }
+  },
+  "predictions": [
+    {
+      "id": "speech-0-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "once there lived a king who had no children for many years after his marriage at length heaven granted him a daughter of such remarkable beauty that he could think of no name so appropriate for her as fairer than a fairy",
+      "hypothesis": "wonsthallies te ce ng had ne thiull ean tom mingysafter his hage hap theanks hding andte t imoadgogteri secto murcplebleo peedi t itd he ped teingd onon mame so prfree o he as char an chi coema",
+      "audio_seconds": 18.235,
+      "asr_audio_seconds": 18.235,
+      "wall_seconds": 0.019403259000682738,
+      "gate_seconds": 5.609981599263847e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          291760
+        ]
+      ],
+      "utterance_audio_seconds": 14.235,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-0-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "once there lived a king who had no children for many years after his marriage at length heaven granted him a daughter of such remarkable beauty that he could think of no name so appropriate for her as fairer than a fairy",
+      "hypothesis": "ghudemin tom min y to his ainge ha theank sectr macplbplefee di t prpreetethof ar as",
+      "audio_seconds": 18.235,
+      "asr_audio_seconds": 7.0,
+      "wall_seconds": 0.051962523997644894,
+      "gate_seconds": 0.03609273600159213,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          65600,
+          89600
+        ],
+        [
+          91200,
+          121600
+        ],
+        [
+          142400,
+          169600
+        ],
+        [
+          203200,
+          233600
+        ]
+      ],
+      "utterance_audio_seconds": 14.235,
+      "utterance_audio_omitted_seconds": 7.235
+    },
+    {
+      "id": "speech-0-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "once there lived a king who had no children for many years after his marriage at length heaven granted him a daughter of such remarkable beauty that he could think of no name so appropriate for her as fairer than a fairy",
+      "hypothesis": "ghudemin tom min y to his ainge ha theank sectr macplbplefee di t prpreetethof ar as",
+      "audio_seconds": 18.235,
+      "asr_audio_seconds": 6.8,
+      "wall_seconds": 0.048878764995606616,
+      "gate_seconds": 0.035585163001087494,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          65600,
+          86400
+        ],
+        [
+          91200,
+          121600
+        ],
+        [
+          142400,
+          169600
+        ],
+        [
+          203200,
+          233600
+        ]
+      ],
+      "utterance_audio_seconds": 14.235,
+      "utterance_audio_omitted_seconds": 7.435
+    },
+    {
+      "id": "speech-0-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "once there lived a king who had no children for many years after his marriage at length heaven granted him a daughter of such remarkable beauty that he could think of no name so appropriate for her as fairer than a fairy",
+      "hypothesis": "",
+      "audio_seconds": 18.235,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03543287700449582,
+      "gate_seconds": 0.03543073300534161,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 14.235,
+      "utterance_audio_omitted_seconds": 14.235
+    },
+    {
+      "id": "speech-0-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "once there lived a king who had no children for many years after his marriage at length heaven granted him a daughter of such remarkable beauty that he could think of no name so appropriate for her as fairer than a fairy",
+      "hypothesis": "",
+      "audio_seconds": 18.235,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03547860399703495,
+      "gate_seconds": 0.03547660999902291,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 14.235,
+      "utterance_audio_omitted_seconds": 14.235
+    },
+    {
+      "id": "speech-0-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "once there lived a king who had no children for many years after his marriage at length heaven granted him a daughter of such remarkable beauty that he could think of no name so appropriate for her as fairer than a fairy",
+      "hypothesis": "wonsthallis te ke ingw had negeiull einsom mangaysavdte chis baggj atd thans hening andod nm ma dog eri set murcledbleeedi and inddengi anont mame sof krr ptriensomfhary as char an a chi coema",
+      "audio_seconds": 18.235,
+      "asr_audio_seconds": 18.235,
+      "wall_seconds": 0.016680159002135042,
+      "gate_seconds": 5.609981599263847e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          291760
+        ]
+      ],
+      "utterance_audio_seconds": 14.235,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-1-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "but your families will and what sufferings see here is a pretty healthy child with cheeks like an apple who babbles prattles chatters who laughs who smells sweet beneath your kiss",
+      "hypothesis": "tamweys wi tthin a the yo the hv th rcest",
+      "audio_seconds": 18.665,
+      "asr_audio_seconds": 3.9,
+      "wall_seconds": 0.04513752299681073,
+      "gate_seconds": 0.03662094700121088,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          40000,
+          60800
+        ],
+        [
+          161600,
+          182400
+        ],
+        [
+          251200,
+          272000
+        ]
+      ],
+      "utterance_audio_seconds": 14.665,
+      "utterance_audio_omitted_seconds": 11.1
+    },
+    {
+      "id": "speech-1-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "but your families will and what sufferings see here is a pretty healthy child with cheeks like an apple who babbles prattles chatters who laughs who smells sweet beneath your kiss",
+      "hypothesis": "ftorrmthint eit who ie asc lmlo thitd mhe yourf fiam oleys we in wat saef f reas see here s at fre ha he thraild wicth sheede slde in ahole yo the hvise prandoas taeers h la sei s mhe seme then geu e t dg sd he terrotiet ot who iee",
+      "audio_seconds": 18.665,
+      "asr_audio_seconds": 18.665,
+      "wall_seconds": 0.018533097005274612,
+      "gate_seconds": 3.5099947126582265e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          298640
+        ]
+      ],
+      "utterance_audio_seconds": 14.665,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-1-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "but your families will and what sufferings see here is a pretty healthy child with cheeks like an apple who babbles prattles chatters who laughs who smells sweet beneath your kiss",
+      "hypothesis": "tamweys wi lt hvet in apthoe ho the hv anfger cyes",
+      "audio_seconds": 18.665,
+      "asr_audio_seconds": 4.1,
+      "wall_seconds": 0.04581399299786426,
+      "gate_seconds": 0.03680734700174071,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          40000,
+          60800
+        ],
+        [
+          158400,
+          182400
+        ],
+        [
+          248000,
+          268800
+        ]
+      ],
+      "utterance_audio_seconds": 14.665,
+      "utterance_audio_omitted_seconds": 10.7
+    },
+    {
+      "id": "speech-1-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "but your families will and what sufferings see here is a pretty healthy child with cheeks like an apple who babbles prattles chatters who laughs who smells sweet beneath your kiss",
+      "hypothesis": "ftorrmthint eit who ie asc lmlo thid lhe hei thiaslytvf ita tn n liit etf lrit ctdce sadts tere afitftr fime hapehaie heydh she s lei in art bor bekf the hoosew rai alces t tterdc kham lts he chomherrl sithaeec tinyl h ifptekeldt ocd ceteeuriot end who ie",
+      "audio_seconds": 18.665,
+      "asr_audio_seconds": 18.665,
+      "wall_seconds": 0.017290714997216128,
+      "gate_seconds": 3.209934220649302e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          298640
+        ]
+      ],
+      "utterance_audio_seconds": 14.665,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-1-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "but your families will and what sufferings see here is a pretty healthy child with cheeks like an apple who babbles prattles chatters who laughs who smells sweet beneath your kiss",
+      "hypothesis": "",
+      "audio_seconds": 18.665,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.036571103999449406,
+      "gate_seconds": 0.036568379000527784,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 14.665,
+      "utterance_audio_omitted_seconds": 14.665
+    },
+    {
+      "id": "speech-1-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "but your families will and what sufferings see here is a pretty healthy child with cheeks like an apple who babbles prattles chatters who laughs who smells sweet beneath your kiss",
+      "hypothesis": "",
+      "audio_seconds": 18.665,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.036031461000675336,
+      "gate_seconds": 0.03602952800429193,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 14.665,
+      "utterance_audio_omitted_seconds": 14.665
+    },
+    {
+      "id": "speech-2-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "the furniture was dark the mantel and table tops were black marble and the vases and candelabra were bronze he directed mother's attention to the portraits of his children explaining them",
+      "hypothesis": "",
+      "audio_seconds": 16.585,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03151799899933394,
+      "gate_seconds": 0.03151614500529831,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 12.585,
+      "utterance_audio_omitted_seconds": 12.585
+    },
+    {
+      "id": "speech-2-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "the furniture was dark the mantel and table tops were black marble and the vases and candelabra were bronze he directed mother's attention to the portraits of his children explaining them",
+      "hypothesis": "",
+      "audio_seconds": 16.585,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03153275699878577,
+      "gate_seconds": 0.03153082299832022,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 12.585,
+      "utterance_audio_omitted_seconds": 12.585
+    },
+    {
+      "id": "speech-2-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "the furniture was dark the mantel and table tops were black marble and the vases and candelabra were bronze he directed mother's attention to the portraits of his children explaining them",
+      "hypothesis": "hn frrwh toh arreoeutth for it to wais dtork tad mamtolinpheweldt hop ho blnck marol an the veeis hamnae loger wabraos he ge retit mofthisphat ond the pwoap khus of is todr x thad hem oirer i",
+      "audio_seconds": 16.585,
+      "asr_audio_seconds": 16.585,
+      "wall_seconds": 0.01720042499800911,
+      "gate_seconds": 3.309978637844324e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          265360
+        ]
+      ],
+      "utterance_audio_seconds": 12.585,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-2-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "the furniture was dark the mantel and table tops were black marble and the vases and candelabra were bronze he directed mother's attention to the portraits of his children explaining them",
+      "hypothesis": "",
+      "audio_seconds": 16.585,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.0323318569935509,
+      "gate_seconds": 0.032329421999747865,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 12.585,
+      "utterance_audio_omitted_seconds": 12.585
+    },
+    {
+      "id": "speech-2-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "the furniture was dark the mantel and table tops were black marble and the vases and candelabra were bronze he directed mother's attention to the portraits of his children explaining them",
+      "hypothesis": "hn frrwh toh arreoeutr fher aoto weve r nw ua momtelan hywled he thr gbmonu larmor an the miensens hamtae muoer th brolrswdo wheyerei mothile lol hepwoe hisowae todural ot r om eairhi",
+      "audio_seconds": 16.585,
+      "asr_audio_seconds": 16.585,
+      "wall_seconds": 0.015230817996780388,
+      "gate_seconds": 3.210006980225444e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          265360
+        ]
+      ],
+      "utterance_audio_seconds": 12.585,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-2-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "the furniture was dark the mantel and table tops were black marble and the vases and candelabra were bronze he directed mother's attention to the portraits of his children explaining them",
+      "hypothesis": "",
+      "audio_seconds": 16.585,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.032293666001351085,
+      "gate_seconds": 0.032291061004798394,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 12.585,
+      "utterance_audio_omitted_seconds": 12.585
+    },
+    {
+      "id": "speech-3-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "while the corporal snored loudly like a man who had a right to indulge himself to the fullest extent there's the bell again muttered one that's from the lord's room and craggs starting up by the instinct of his office hastened off",
+      "hypothesis": "th hd d tit ecte xixeeu e wo the corposored lwd la lit om mnennwahedio reiht to duj self to thes fousystat histi botigan ma rd womne dat soa lworitze re and cfures sting no boytyi instin af his oufeiss as ont outf dasa ctt tiut eus s tt t",
+      "audio_seconds": 18.575,
+      "asr_audio_seconds": 18.575,
+      "wall_seconds": 0.018402121000690386,
+      "gate_seconds": 3.210006980225444e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          297200
+        ]
+      ],
+      "utterance_audio_seconds": 14.575,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "speech-3-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "while the corporal snored loudly like a man who had a right to indulge himself to the fullest extent there's the bell again muttered one that's from the lord's room and craggs starting up by the instinct of his office hastened off",
+      "hypothesis": "o fm ouw orsow r",
+      "audio_seconds": 18.575,
+      "asr_audio_seconds": 1.3,
+      "wall_seconds": 0.03925451100076316,
+      "gate_seconds": 0.03621440399729181,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          180800,
+          201600
+        ]
+      ],
+      "utterance_audio_seconds": 14.575,
+      "utterance_audio_omitted_seconds": 13.275
+    },
+    {
+      "id": "speech-3-snr-None",
+      "condition": "clean",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "while the corporal snored loudly like a man who had a right to indulge himself to the fullest extent there's the bell again muttered one that's from the lord's room and craggs starting up by the instinct of his office hastened off",
+      "hypothesis": "o fm ouw orsow r",
+      "audio_seconds": 18.575,
+      "asr_audio_seconds": 1.3,
+      "wall_seconds": 0.038492380001116544,
+      "gate_seconds": 0.03558497299673036,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          180800,
+          201600
+        ]
+      ],
+      "utterance_audio_seconds": 14.575,
+      "utterance_audio_omitted_seconds": 13.275
+    },
+    {
+      "id": "speech-3-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "while the corporal snored loudly like a man who had a right to indulge himself to the fullest extent there's the bell again muttered one that's from the lord's room and craggs starting up by the instinct of his office hastened off",
+      "hypothesis": "",
+      "audio_seconds": 18.575,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03575626399833709,
+      "gate_seconds": 0.03575417999672936,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 14.575,
+      "utterance_audio_omitted_seconds": 14.575
+    },
+    {
+      "id": "speech-3-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "while the corporal snored loudly like a man who had a right to indulge himself to the fullest extent there's the bell again muttered one that's from the lord's room and craggs starting up by the instinct of his office hastened off",
+      "hypothesis": "",
+      "audio_seconds": 18.575,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.03577167399635073,
+      "gate_seconds": 0.035769639995123725,
+      "cpu_package_joules": null,
+      "intervals_samples": [],
+      "utterance_audio_seconds": 14.575,
+      "utterance_audio_omitted_seconds": 14.575
+    },
+    {
+      "id": "speech-3-snr-10",
+      "condition": "mixed_10db",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "while the corporal snored loudly like a man who had a right to indulge himself to the fullest extent there's the bell again muttered one that's from the lord's room and craggs starting up by the instinct of his office hastened off",
+      "hypothesis": "th hd d tit ecte xixeeu e tto fotfe so lu lva shti e ha meatte dedi sece th failuceytcefe fesdi feli a fel i haoss ha semloze fi ad fease stoi h fei the fes i dvi is athis cais ot cict uuty tutetdusf t t",
+      "audio_seconds": 18.575,
+      "asr_audio_seconds": 18.575,
+      "wall_seconds": 0.016936820997216273,
+      "gate_seconds": 3.410023055039346e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          297200
+        ]
+      ],
+      "utterance_audio_seconds": 14.575,
+      "utterance_audio_omitted_seconds": 0.0
+    },
+    {
+      "id": "noise-0",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 13.9,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.027293029001157265,
+      "gate_seconds": 0.027290594996884465,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-0",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "coheme",
+      "audio_seconds": 13.9,
+      "asr_audio_seconds": 13.9,
+      "wall_seconds": 0.015264601999660954,
+      "gate_seconds": 3.6100391298532486e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          222400
+        ]
+      ]
+    },
+    {
+      "id": "noise-0",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 13.9,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.027381674997741356,
+      "gate_seconds": 0.027379349994589575,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-1",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "ftorrmthint eit who ie asc lmlo thit dctede psek istdng ioc",
+      "audio_seconds": 3.459625,
+      "asr_audio_seconds": 3.459625,
+      "wall_seconds": 0.005214997996517923,
+      "gate_seconds": 3.5999983083456755e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          55354
+        ]
+      ]
+    },
+    {
+      "id": "noise-1",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 3.459625,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.007083155003783759,
+      "gate_seconds": 0.007081021001795307,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-1",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 3.459625,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.0066978719987673685,
+      "gate_seconds": 0.0066958979950868525,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-2",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 14.385,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.027260386996204033,
+      "gate_seconds": 0.027258483998593874,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-2",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 14.385,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.027296165004372597,
+      "gate_seconds": 0.027294111001538113,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-2",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "hn frrwh toh arreoeoo rarrr ganehg",
+      "audio_seconds": 14.385,
+      "asr_audio_seconds": 14.385,
+      "wall_seconds": 0.015286884001397993,
+      "gate_seconds": 3.710010787472129e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          230160
+        ]
+      ]
+    },
+    {
+      "id": "noise-3",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_010",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 14.985,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.029351042001508176,
+      "gate_seconds": 0.029348517004109453,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    },
+    {
+      "id": "noise-3",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "always_on",
+      "reference": "",
+      "hypothesis": "th hd d tit ecte xixeeu e ht t t f f",
+      "audio_seconds": 14.985,
+      "asr_audio_seconds": 14.985,
+      "wall_seconds": 0.01573095700587146,
+      "gate_seconds": 3.810055204667151e-07,
+      "cpu_package_joules": null,
+      "intervals_samples": [
+        [
+          0,
+          239760
+        ]
+      ]
+    },
+    {
+      "id": "noise-3",
+      "condition": "noise_only",
+      "repeat": 0,
+      "arm": "gate_008",
+      "reference": "",
+      "hypothesis": "",
+      "audio_seconds": 14.985,
+      "asr_audio_seconds": 0.0,
+      "wall_seconds": 0.0290896110018366,
+      "gate_seconds": 0.02908726700115949,
+      "cpu_package_joules": null,
+      "intervals_samples": []
+    }
+  ],
+  "candidate_files": {
+    "weights.2bit": "80a870ce61dd28fefe8cabbaa447bed68406307367d23f48622b0fa5a180e571",
+    "weights.npz": "191681b360e34829090f2134ed0561596664675578ef914bc37154f873a228d6",
+    "model.json": "b1f410d57592621f96ed2a06691f4a70901055955c50574e025e67cf0fabdecb"
+  },
+  "gate_files": {
+    "008": {
+      "weights.2bit": "cf3641291b8f90fff132bffed3c6e07b3d623526d9588b71ccbe0d8258fb282b",
+      "weights.npz": "3c0537e35216da4803ff9d05ade944b8d4293b65081578ebdad3da6ae717e2e9",
+      "metrics.json": "a91e4220bbad2de720508daf72f72d4d9189dcbb59fe1b67d9309cbe3d57b53c",
+      "model.json": "91c179cafd0305c4048cf7ee96f67157e61ff19ef0ab5c849605063b80c101ad"
+    },
+    "010": {
+      "weights.2bit": "23b05ce3fd482800322e834cf9abf417138de8d3108a1733409743c6a92c7584",
+      "weights.npz": "734eb2b021e81b54c333f298356b10aade17129c06156438ea4db73ff77eadab",
+      "metrics.json": "21e4bd4353f3740d08c8fd9a736187ab3863c8c87b2d83673b5dc77f7f27381b",
+      "model.json": "75e217f6e839012a363d5ee181ef46d6b5ed241f055e39bfeef4a5780b41200a"
+    }
+  },
+  "manifest_sha256": "fc4b9c542e8868ed8813bd7a6edbc08f94f3183709144ff6062c4e0e18a6c828",
+  "limitations": [
+    "Composed continuous playback from real clips; no frame activity labels.",
+    "Original full-clip gate thresholds applied to causal windows without recalibration.",
+    "Development evidence, not untouched holdout or battlefield/medical validation.",
+    "Elapsed time/audio skipped are cost proxies, not power measurements.",
+    "CPU package energy, if available, excludes whole-device and GPU energy.",
+    "Offline replay omits real-time idle, capture and device wake overhead."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "hypothesis": "Reduce only the learning rate from 0.001 to 0.0007 to test whether a slightly less aggressive optimizer improves development WER and CER stability for the same architecture and augmentation budget; compare equal-budget runs from the same seed against the retained recipe, using dev WER as the primary evidence and CER, empty outputs, noise insertions, and paired gating losses only to interpret the change.",
+  "recipe": {
+    "width": 192,
+    "depth": 8,
+    "kernel": 5,
+    "learning_rate": 0.0007,
+    "batch_size": 16,
+    "weight_decay": 0.01,
+    "grad_clip": 5,
+    "noise_probability": 0.25,
+    "ema_decay": 0.99
+  }
+}

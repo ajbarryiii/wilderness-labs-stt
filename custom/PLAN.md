@@ -1,8 +1,27 @@
 # Custom English ternary speech-to-text model plan
 
-Status: proposed research and implementation plan; no model or training results yet.
+Status: implementation in progress. The real-audio VAD experiment is archived; a local pretrained STT reference and a custom ternary CTC training/comparison pipeline are implemented. See `stt/README.md` and its results for current qualification evidence.
 Written: 2026-09-09.
 Repository: /home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt
+
+## Implementation update (2026-09-09)
+
+The first working transcription reference is local Whisper tiny.en under `finetune/stt`.
+The custom engineering recognizer under `custom/stt` is a 1,556,928-parameter causal
+convolutional CTC model with ternary learned weights. It is the convolution-only
+pilot/control, not the planned Conformer or the final 0.5–1B recognizer. Its first
+short training run overfits the small corpus; decoded development quality remains
+poor. A low training loss is not evidence of a usable recognizer.
+
+The paired playback evaluator compares always-on transcription against both
+archived VAD candidates. Applying their whole-clip thresholds directly to trailing
+one-second windows drops substantial speech. These gates remain experimental;
+streaming calibration and speech-preservation validation are required before
+using them in the deployment flow below. CPU timing and skipped audio are cost
+proxies. No phone power improvement has been established.
+
+Model weights remain local. Git stores code, recipes, results, provenance and
+artifact hashes. The original starting-point observations below are historical.
 
 ## 1. Objective and inspected starting point
 

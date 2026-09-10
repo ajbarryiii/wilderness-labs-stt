@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+stt_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+exec "$stt_dir/../autoresearch/runtime-python" "$stt_dir/control.py" "$@"

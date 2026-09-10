@@ -1,0 +1,26 @@
+{
+  "seed": 20260909,
+  "training_cuda_verified": true,
+  "gpu": "NVIDIA GeForce RTX 5090",
+  "training_steps": 56156,
+  "optimizer_seconds": 288.78318492799735,
+  "initial_loss": 8.225861549377441,
+  "final_loss": 0.050450146198272705,
+  "master_weight_l1_change": 486619.470703125,
+  "peak_vram_mb": 777.919921875,
+  "train_samples": 898,
+  "overfit_samples": 0,
+  "cache_lock_sha256": "effd2cdfeddf95916ed5ee6e6e3d67aa42c5507d4c59861492fd61bfd34e0fbc",
+  "torch_version": "2.11.0+cu128",
+  "recipe": {
+    "width": 192,
+    "depth": 8,
+    "kernel": 5,
+    "learning_rate": 0.001,
+    "batch_size": 16,
+    "weight_decay": 0.01,
+    "grad_clip": 5.0,
+    "noise_probability": 0.25,
+    "ema_decay": 0.99
+  }
+}

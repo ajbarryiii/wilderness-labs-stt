@@ -1,0 +1,37 @@
+{
+  "manifest_sha256": "fc4b9c542e8868ed8813bd7a6edbc08f94f3183709144ff6062c4e0e18a6c828",
+  "sources": [
+    {
+      "filename": "train-clean-5.tar.gz",
+      "url": "https://www.openslr.org/resources/31/train-clean-5.tar.gz",
+      "bytes": 332954390,
+      "sha256": "47805806c8b15f7549f3c51bd6b7da72ec0128a34d32830c8014a88658c0292d",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "filename": "rirs_noises.zip",
+      "url": "https://www.openslr.org/resources/28/rirs_noises.zip",
+      "bytes": 1311166223,
+      "sha256": "3b50cfde915b3984738169b4beb341e9f6b8062ae4c2076146c5db71c2c05dc7",
+      "license": "Apache-2.0 archive; selected pointsource recordings Public Domain per included LICENSE"
+    }
+  ],
+  "split_policy": "18 train / 5 calibration / 5 development LibriSpeech speakers sorted by SHA256(seed+speaker); 70/15/15 percent unique noise recording hashes; all windows from a recording remain together",
+  "data_limitations": [
+    "Development reused during search; no final holdout measurement.",
+    "Read English speech, not medical or field validation."
+  ],
+  "measurement_limitations": [
+    "Pretrained comparison overlapped CUDA training on the same host; timing is exploratory and not an isolated efficiency benchmark.",
+    "CPU package and iPhone energy unavailable. No power-saving conclusion.",
+    "24 unique speech utterances in two conditions and 24 noise-only recordings; repetitions are not independent samples.",
+    "Old full-clip gate thresholds were transferred unchanged to one-second windows.",
+    "Literal scoring preserves digits rather than equating number formatting with spelled numbers."
+  ],
+  "custom_smoke_artifacts": {
+    "weights.2bit": "dcc179b21e9c4186ca1979d7851774ae9ff767f670426de6e58cda446a80f6e6",
+    "training.json": "b0313d086218510956bf8d4fa080985fbf72cdfbb34f19a778d3916f8363d439",
+    "weights.npz": "b1a2554f2030c143e44ce941c19a3924cba940f72b31760826c027c8b848e941",
+    "model.json": "faba92d8d1829b881b02395f376dde453756a7d4b289d187e0e835c1268ca482"
+  }
+}
