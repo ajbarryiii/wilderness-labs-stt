@@ -229,3 +229,36 @@ __marimo__/
 *.2bit
 weights.npz
 pytorch_model*.bin
+
+# Local plans, results, and research summaries
+*[Pp][Ll][Aa][Nn]*.[mM][dD]
+*[Rr][Ee][Ss][Uu][Ll][Tt]*.[mM][dD]
+*[Rr][Ee][Pp][Oo][Rr][Tt]*.[mM][dD]
+*[Ss][Uu][Mm][Mm][Aa][Rr][Yy]*.[mM][dD]
+*[Rr][Ee][Ss][Ee][Aa][Rr][Cc][Hh]*.[mM][dD]
+**/results/**/*.[mM][dD]
+
+# Experiment plans and research notes with nonstandard filenames
+/custom/BINARY_STT_5090_ARCHITECTURE.md
+/custom/binary_stt/BITNET_TRAINING.md
+/custom/binary_stt/STANDARD_EXPERIMENT.md
+/custom/binary_stt/TERNARY_EXPERIMENT.md
+/custom/inference-efficiency/AGENT_KERNEL_SPRINT.md
+/custom/inference-efficiency/POPCOUNT_BENCHMARK.md
+/custom/inference-efficiency/POPCOUNT_OPTIMIZATION.md
+/custom/inference-efficiency/SPRINT_AUDIT.md
+/custom/inference-efficiency/SPRINT_AVENUES.md
+/custom/inference-efficiency/kernels/CUDA_FOLLOWUP.md
+/custom/stt-distillation/INVESTIGATION_BROAD_20260910.md
+/custom/stt-distillation/ONSET_REPAIR.md
+/custom/stt-distillation/PILOT_4H.md
+/custom/stt-distillation/PILOT_8H.md
+/custom/stt-distillation/RECOVERY_8H.md
+/custom/stt-distillation/TRAINING_REPAIR_20260910.md
+
+# Machine-local links to datasets, caches, and model runs
+/custom/stt/cache
+/custom/stt/runs
+
+#passwords
+.ssh_remote_password

@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+stt_exp_root=/mnt/hd/wilderness-labs-stt/stt-distillation
+mountpoint -q /mnt/hd || { echo '/mnt/hd is not mounted' >&2; exit 1; }
+mkdir -p "$stt_exp_root/caches/tmp"
+export PYTHONPATH="$stt_exp_root/deps"
+export HF_HOME="$stt_exp_root/caches/hf"
+export HF_DATASETS_CACHE="$stt_exp_root/caches/datasets"
+export XDG_CACHE_HOME="$stt_exp_root/caches"
+export NUMBA_CACHE_DIR="$stt_exp_root/caches/numba"
+export TORCH_HOME="$stt_exp_root/caches/torch"
+export TMPDIR="$stt_exp_root/caches/tmp"
+export HF_HUB_DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 WANDB_MODE=disabled TOKENIZERS_PARALLELISM=false
+export OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1 PYTHONDONTWRITEBYTECODE=1
+export LD_LIBRARY_PATH="/nix/store/hngmi01i8wgi25a0byrxcn4ysz5j79mw-gcc-15.2.0-lib/lib:/run/opengl-driver/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+exec /home/aj/workspace/github.com/wilderness-labs/wilderness-labs-stt/custom/autoresearch/runtime-python "$@"

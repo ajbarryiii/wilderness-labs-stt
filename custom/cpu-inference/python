@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+mountpoint -q /mnt/hd || { echo '/mnt/hd is not mounted; refusing artifact writes.' >&2; exit 1; }
+cpu_code="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+cpu_art=/mnt/hd/wilderness-labs-stt/cpu-inference
+gpu_art=/mnt/hd/wilderness-labs-stt/inference-efficiency
+export XDG_CACHE_HOME="$cpu_art/cache" HF_HOME="$cpu_art/cache/huggingface"
+export HF_HUB_CACHE="$HF_HOME/hub" HF_DATASETS_CACHE="$cpu_art/cache/datasets"
+export HF_XET_CACHE="$cpu_art/cache/xet" TORCH_HOME="$cpu_art/cache/torch"
+export TORCH_EXTENSIONS_DIR="$cpu_art/cache/extensions" TORCHINDUCTOR_CACHE_DIR="$cpu_art/cache/inductor"
+export TRITON_CACHE_DIR="$cpu_art/cache/triton" CUDA_CACHE_PATH="$cpu_art/cache/cuda"
+export UV_CACHE_DIR="$cpu_art/cache/uv" NUMBA_CACHE_DIR="$cpu_art/cache/numba"
+export TMPDIR="$cpu_art/tmp" PYTHONDONTWRITEBYTECODE=1
+export CUDA_VISIBLE_DEVICES='' HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
+export HF_HUB_DISABLE_TELEMETRY=1 TOKENIZERS_PARALLELISM=false
+export OMP_NUM_THREADS="${CPU_THREADS:-1}" MKL_NUM_THREADS="${CPU_THREADS:-1}"
+export OPENBLAS_NUM_THREADS=1 OMP_DYNAMIC=false OMP_WAIT_POLICY=PASSIVE
+export PYTHONPATH="$cpu_code:$gpu_art/deps:$cpu_code/../inference-efficiency${PYTHONPATH:+:$PYTHONPATH}"
+export LD_LIBRARY_PATH="/run/opengl-driver/lib:/nix/store/hngmi01i8wgi25a0byrxcn4ysz5j79mw-gcc-15.2.0-lib/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+if [[ -f "$gpu_art/library-path.txt" ]]; then
+  export LD_LIBRARY_PATH="$(< "$gpu_art/library-path.txt"):$LD_LIBRARY_PATH"
+fi
+mkdir -p "$TMPDIR" "$XDG_CACHE_HOME"
+exec "$cpu_code/../autoresearch/.training-runtime/bin/python3" "$@"

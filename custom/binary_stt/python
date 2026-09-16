@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+mountpoint -q /mnt/hd || { echo '/mnt/hd is not mounted; refusing artifact writes.' >&2; exit 1; }
+binary_stt_code="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+binary_stt_art=/mnt/hd/wilderness-labs-stt/binary-stt
+mkdir -p "$binary_stt_art/tmp"
+export PYTHONPATH="$binary_stt_code:$binary_stt_art/deps:/mnt/hd/wilderness-labs-stt/stt-distillation/deps${PYTHONPATH:+:$PYTHONPATH}"
+export HF_HOME="$binary_stt_art/cache/huggingface" HF_DATASETS_CACHE="$binary_stt_art/cache/datasets"
+export HF_HUB_CACHE="$HF_HOME/hub" HF_XET_CACHE="$binary_stt_art/cache/xet"
+export XDG_CACHE_HOME="$binary_stt_art/cache" TORCH_HOME="$binary_stt_art/cache/torch"
+export TRITON_CACHE_DIR="$binary_stt_art/cache/triton" TORCHINDUCTOR_CACHE_DIR="$binary_stt_art/cache/inductor"
+export TORCH_EXTENSIONS_DIR="$binary_stt_art/cache/extensions" CUDA_CACHE_PATH="$binary_stt_art/cache/cuda"
+export TMPDIR="$binary_stt_art/tmp" UV_CACHE_DIR="$binary_stt_art/cache/uv" NUMBA_CACHE_DIR="$binary_stt_art/cache/numba"
+export HF_HUB_DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 WANDB_MODE=disabled TOKENIZERS_PARALLELISM=false
+export PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=4
+export TRITON_LIBCUDA_PATH=/run/opengl-driver/lib
+export LD_LIBRARY_PATH="/run/opengl-driver/lib:/nix/store/hngmi01i8wgi25a0byrxcn4ysz5j79mw-gcc-15.2.0-lib/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+exec "$binary_stt_code/autoresearch/.training-runtime/bin/python3" "$@"

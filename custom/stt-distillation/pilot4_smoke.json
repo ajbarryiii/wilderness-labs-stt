@@ -1,0 +1,89 @@
+{
+  "duration_seconds": 600,
+  "seed": 20260910,
+  "model": {
+    "width": 32,
+    "depth": 2,
+    "heads": 4,
+    "context": 16,
+    "dropout": 0.0,
+    "checkpoint": false,
+    "initial_blank_bias": 2.0,
+    "startup_floor": -1.95,
+    "startup_confirmation_frames": 3,
+    "startup_hold_frames": 10
+  },
+  "batch_size": 4,
+  "domain_probabilities": {
+    "general": 0.5,
+    "medical_symptoms": 0.3,
+    "digits": 0.2
+  },
+  "supervision": "ground_truth_ctc_only",
+  "betas": [
+    0.9,
+    0.95
+  ],
+  "warmup_steps": 200,
+  "grad_clip": 1.0,
+  "max_vram_gib": 28,
+  "eval_every": 1,
+  "checkpoint_every": 1,
+  "max_steps": 40000,
+  "gate_steps": 12000,
+  "gate_seconds": 1500,
+  "report_reserve_seconds": 900,
+  "arms": [
+    {
+      "name": "fp_control",
+      "precision": "fp",
+      "peak_lr": 1e-05,
+      "weight_decay": 0.01,
+      "schedule": "cosine"
+    },
+    {
+      "name": "ternary_matched",
+      "precision": "ternary",
+      "peak_lr": 1e-05,
+      "weight_decay": 0.01,
+      "schedule": "cosine"
+    },
+    {
+      "name": "ternary_twostage",
+      "precision": "ternary",
+      "peak_lr": 6e-05,
+      "second_peak_lr": 4e-05,
+      "weight_decay": 0.01,
+      "second_weight_decay": 0.0,
+      "schedule": "two_stage"
+    }
+  ],
+  "gate": {
+    "max_wer": 0.02,
+    "max_cer": 0.01,
+    "consecutive_passes": 2,
+    "all_digits_exact": true
+  },
+  "collapse": {
+    "after_fraction": 0.6,
+    "consecutive_checks": 2,
+    "min_modal_fraction": 0.95,
+    "min_cer": 0.9
+  },
+  "scope": "Four-hour learning and optimizer pilot. No capacity reduction. Retain Conformer LayerNorm and floating activations; only transformer linear matrices become ternary. Teachers screen the 32-clip gate, but training uses inherited ground truth only. Development is reused validation, not an untouched test. Medical symptom data do not qualify TCCC/drug/dose recognition. Revised onset: three sustained feature frames plus a 100 ms hold; prefix/gain augmentation on training inputs. Original and transformed digit learning gates are both required. Four-hour budget includes all gates.",
+  "model_class": "onset_model.OnsetModel",
+  "augmentation": {
+    "prefix_ms": "uniform integer 10 ms hops, 0..1000",
+    "gain_db": [
+      0,
+      -6,
+      -12,
+      -18,
+      -24
+    ],
+    "original_probability": 0.25,
+    "seed": 20261081,
+    "scope": "All training clips in gate, benchmark and comparison; development and monitor decoding retain original audio. Only the known synthetic 200 ms zero prefix is removed from digit clips."
+  },
+  "extra_gate": "All eight digit clips exact at prefix 0/600 ms x gain 0/-24 dB, two consecutive checks."
+}

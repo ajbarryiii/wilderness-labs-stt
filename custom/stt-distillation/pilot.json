@@ -1,0 +1,58 @@
+{
+  "duration_seconds": 28800,
+  "teacher_seconds": 6000,
+  "report_reserve_seconds": 900,
+  "seed": 20260910,
+  "model": {
+    "width": 1280,
+    "depth": 16,
+    "heads": 10,
+    "context": 64,
+    "dropout": 0.1,
+    "checkpoint": true
+  },
+  "learning_rate": 0.0003,
+  "weight_decay": 0.01,
+  "grad_clip": 1.0,
+  "microbatch": 1,
+  "accumulation": 4,
+  "teacher_weight": 0.3,
+  "max_steps": 100000,
+  "arms": [
+    {
+      "name": "fp_single",
+      "precision": "fp",
+      "supervision": "single"
+    },
+    {
+      "name": "ternary_single",
+      "precision": "ternary",
+      "supervision": "single"
+    },
+    {
+      "name": "fp_multi",
+      "precision": "fp",
+      "supervision": "multi"
+    },
+    {
+      "name": "ternary_multi",
+      "precision": "ternary",
+      "supervision": "multi"
+    }
+  ],
+  "teachers": {
+    "omi": {
+      "model": "omi-health/omi-med-stt-v1",
+      "revision": "75d3bdf176dd051b5a87df7752470230ec6dc1ed"
+    },
+    "whisper": {
+      "model": "openai/whisper-medium.en",
+      "revision": "2e98eb6279edf5095af0c8dedb36bdec0acd172b"
+    }
+  },
+  "limits": {
+    "max_vram_gib": 28,
+    "max_training_samples": 5000
+  },
+  "scope": "Eight-hour learning/throughput pilot; no accuracy qualification, compression sweep or phone energy claim."
+}

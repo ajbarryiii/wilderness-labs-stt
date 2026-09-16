@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+mountpoint -q /mnt/hd || { echo '/mnt/hd is not mounted' >&2; exit 1; }
+stt_decoder_root=/mnt/hd/wilderness-labs-stt/stt-distillation/recovery-and-decoding
+unset PYTHONPATH
+export PYTHONDONTWRITEBYTECODE=1
+export XDG_CACHE_HOME="$stt_decoder_root/caches"
+export TMPDIR="$stt_decoder_root/tmp"
+export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
+export LD_LIBRARY_PATH="/nix/store/hngmi01i8wgi25a0byrxcn4ysz5j79mw-gcc-15.2.0-lib/lib:/nix/store/dbz6pb9g67kpgpl95k8d85kzpxm1c32p-zlib-1.3.2/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+exec "$stt_decoder_root/decoder-env/bin/python" "$@"

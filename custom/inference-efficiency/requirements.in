@@ -1,0 +1,5 @@
+ctranslate2==4.8.2
+transformers==4.57.6
+nvidia-ml-py==13.610.43
+numpy==2.4.4
+nvidia-cuda-nvrtc-cu12==12.9.86

@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "scope": "Predeclared exact lexical mentions, not clinically adjudicated entities. A missing reference term provides no evidence about recognition of that term.",
+  "terms": ["tourniquet", "hemorrhage", "haemorrhage", "hemostatic", "haemostatic", "nasopharyngeal", "pneumothorax", "needle decompression", "chest seal", "cricothyrotomy", "tranexamic acid", "ketamine", "fentanyl", "morphine", "moxifloxacin", "ertapenem", "cefazolin", "hypothermia", "hypovolemia", "hypovolaemia", "hypoxia", "tachycardia", "bradycardia", "blood pressure", "oxygen", "intravenous", "intraosseous", "intramuscular", "intranasal", "hemoglobin", "haemoglobin", "cbc", "hb", "hgb", "respiratory", "fracture", "dislocation", "concussion", "seizure", "diabetes", "insulin", "antibiotic", "antibiotics", "allergy", "allergic", "asthma"]
+}

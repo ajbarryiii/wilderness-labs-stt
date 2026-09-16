@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "seeds": [20260910, 20260911],
+  "sizes": {"small": 1, "medium": 4, "large": 8},
+  "duration_edges_seconds": [3, 6, 9, 12, 15],
+  "domain_counts_per_block": {"general": 5, "medical_symptoms": 3, "digits": 2},
+  "batch_size": 4,
+  "checkpoint_updates": [500, 1500, 3000, 6000, 12000, 18000, 27000],
+  "checkpoint_training_seconds": [900, 1800, 3600, 5400, 7200],
+  "recovery_every_updates": 1500,
+  "warmup_updates": 200,
+  "peak_lr": 0.00001,
+  "lr_floor_fraction": 0.2,
+  "betas": [0.9, 0.95],
+  "weight_decay": 0.01,
+  "grad_clip": 1.0,
+  "gains_db": [0, -6, -12, -18, -24],
+  "original_probability": 0.25,
+  "maximum_prefix_frames": 100,
+  "max_vram_gib": 28,
+  "minimum_free_disk_gib": 300,
+  "feature_cache_gib": 10,
+  "bootstrap_replicates": 1000,
+  "model": {
+    "width": 1280, "depth": 16, "heads": 10, "context": 64,
+    "dropout": 0.0, "checkpoint": true, "initial_blank_bias": 2.0,
+    "startup_floor": -1.95, "startup_confirmation_frames": 3,
+    "startup_hold_frames": 10
+  }
+}

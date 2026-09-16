@@ -1,0 +1,22 @@
+{
+  "duration_seconds": 28800,
+  "training_reserve_seconds": 3600,
+  "job_seconds": 4200,
+  "exposure_horizon": 108000,
+  "seed": 20260910,
+  "confirmation_seed": 20260911,
+  "eval_every_examples": 12000,
+  "checkpoint_every_examples": 12000,
+  "gradient_probe_at": [],
+  "arms": {
+    "A0": {"kind": "baseline", "probability": 0.0, "ramp_examples": 12000},
+    "A1": {"kind": "specaugment", "probability": 0.5, "ramp_examples": 12000},
+    "A2": {"kind": "noise", "probability": 0.5, "ramp_examples": 12000, "db_range": [15, 25]},
+    "A3": {"kind": "speech", "probability": 0.5, "ramp_examples": 12000, "db_range": [15, 25]}
+  },
+  "selection": {
+    "minimum_relative_robust_wer_improvement": 0.05,
+    "maximum_clean_domain_wer_regression": 0.01,
+    "maximum_clean_digit_sequence_regression": 1
+  }
+}

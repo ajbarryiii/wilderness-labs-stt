@@ -1,0 +1,24 @@
+# Ignore both directories and optional symlinks to external artifact storage.
+/artifacts
+/cache
+/data
+/models
+/runs
+/teacher-targets
+/checkpoints
+/exports
+/readiness.json
+*.npz
+*.npy
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.bin
+*.2bit
+*.1bit
+*.wav
+*.flac
+*.mp3
+*.ogg

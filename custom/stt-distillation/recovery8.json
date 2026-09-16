@@ -1,0 +1,78 @@
+{
+  "duration_seconds": 28800,
+  "seed": 20260910,
+  "model": {
+    "width": 1280,
+    "depth": 16,
+    "heads": 10,
+    "context": 64,
+    "dropout": 0.0,
+    "checkpoint": true,
+    "initial_blank_bias": 2.0,
+    "startup_floor": -1.95,
+    "startup_confirmation_frames": 3,
+    "startup_hold_frames": 10
+  },
+  "batch_size": 4,
+  "domain_probabilities": {
+    "general": 0.5,
+    "medical_symptoms": 0.3,
+    "digits": 0.2
+  },
+  "supervision": "ground_truth_ctc_only",
+  "betas": [
+    0.9,
+    0.95
+  ],
+  "warmup_steps": 200,
+  "grad_clip": 1.0,
+  "max_vram_gib": 28,
+  "eval_every": 1000,
+  "checkpoint_every": 5000,
+  "max_steps": 40000,
+  "gate_steps": 12000,
+  "gate_seconds": 1500,
+  "report_reserve_seconds": 1800,
+  "gate": {
+    "max_wer": 0.02,
+    "max_cer": 0.01,
+    "consecutive_passes": 2,
+    "all_digits_exact": true
+  },
+  "collapse": {
+    "after_fraction": 0.6,
+    "consecutive_checks": 2,
+    "min_modal_fraction": 0.95,
+    "min_cer": 0.9
+  },
+  "scope": "Eight-hour FP recovery screens and full-exposure confirmation, then frozen CTC beam/LM diagnosis. Development is reused validation. Independent seeds and deployment quality are only established by completed measurements.",
+  "model_class": "onset_model.OnsetModel",
+  "augmentation": {
+    "prefix_ms": "uniform integer 10 ms hops, 0..1000",
+    "gain_db": [
+      0,
+      -6,
+      -12,
+      -18,
+      -24
+    ],
+    "original_probability": 0.25,
+    "seed": 20261081,
+    "scope": "All training clips in gate, benchmark and comparison; development and monitor decoding retain original audio. Only the known synthetic 200 ms zero prefix is removed from digit clips."
+  },
+  "extra_gate": "All eight digit clips exact at prefix 0/600 ms x gain 0/-24 dB, two consecutive checks.",
+  "screen_seconds": 1500,
+  "confirmation_seconds": 4800,
+  "confirmation_seeds": [
+    20260911,
+    20260912
+  ],
+  "eval_every_examples": 2000,
+  "checkpoint_every_examples": 12000,
+  "gradient_probe_at": [
+    2000,
+    12000,
+    24000
+  ],
+  "collapse_grace": 12000
+}

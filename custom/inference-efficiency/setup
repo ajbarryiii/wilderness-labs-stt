@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+mountpoint -q /mnt/hd || { echo '/mnt/hd is not mounted.' >&2; exit 1; }
+experiment_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+experiment_art=/mnt/hd/wilderness-labs-stt/inference-efficiency
+mkdir -p "$experiment_art/cache/uv" "$experiment_art/tmp"
+export UV_CACHE_DIR="$experiment_art/cache/uv"
+export TMPDIR="$experiment_art/tmp"
+experiment_python="$experiment_dir/../autoresearch/.training-runtime/bin/python3"
+if [[ ! -f "$experiment_dir/requirements.lock" ]]; then
+  nix shell --impure --expr 'let p = import /nix/store/agyg2m8bkbcr2d5p57my3bla8794arlp-source {}; in p.uv' -c uv pip compile --quiet --python "$experiment_python" --generate-hashes "$experiment_dir/requirements.in" -o "$experiment_dir/requirements.lock"
+fi
+nix shell --impure --expr 'let p = import /nix/store/agyg2m8bkbcr2d5p57my3bla8794arlp-source {}; in p.uv' -c uv pip install --python "$experiment_python" --target "$experiment_art/deps" --require-hashes -r "$experiment_dir/requirements.lock"
+"$experiment_dir/python" "$experiment_dir/prepare.py" runtime

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+mountpoint -q /mnt/hd || { echo '/mnt/hd is not mounted; refusing artifact writes.' >&2; exit 1; }
+experiment_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+experiment_art=/mnt/hd/wilderness-labs-stt/inference-efficiency
+export EFFICIENCY_ARTIFACT_ROOT="$experiment_art"
+export XDG_CACHE_HOME="$experiment_art/cache"
+export HF_HOME="$experiment_art/cache/huggingface"
+export HF_HUB_CACHE="$HF_HOME/hub"
+export TORCH_HOME="$experiment_art/cache/torch"
+export TRITON_CACHE_DIR="$experiment_art/cache/triton"
+export TORCHINDUCTOR_CACHE_DIR="$experiment_art/cache/inductor"
+export TORCH_EXTENSIONS_DIR="$experiment_art/cache/extensions"
+export CUDA_CACHE_PATH="$experiment_art/cache/cuda"
+export TRITON_LIBCUDA_PATH=/run/opengl-driver/lib
+export UV_CACHE_DIR="$experiment_art/cache/uv"
+export TMPDIR="$experiment_art/tmp"
+export PYTHONDONTWRITEBYTECODE=1
+export TOKENIZERS_PARALLELISM=false
+export OMP_NUM_THREADS=4
+export MKL_NUM_THREADS=4
+export PYTHONPATH="$experiment_art/deps:$experiment_dir${PYTHONPATH:+:$PYTHONPATH}"
+mkdir -p "$TMPDIR" "$HF_HOME" "$TORCH_HOME" "$TRITON_CACHE_DIR" "$TORCHINDUCTOR_CACHE_DIR" "$TORCH_EXTENSIONS_DIR" "$CUDA_CACHE_PATH" "$UV_CACHE_DIR"
+export LD_LIBRARY_PATH="/run/opengl-driver/lib:/nix/store/hngmi01i8wgi25a0byrxcn4ysz5j79mw-gcc-15.2.0-lib/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+if [[ -f "$experiment_art/library-path.txt" ]]; then
+  export LD_LIBRARY_PATH="$(< "$experiment_art/library-path.txt"):$LD_LIBRARY_PATH"
+fi
+exec "$experiment_dir/../autoresearch/.training-runtime/bin/python3" "$@"
