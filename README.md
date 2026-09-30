@@ -19,6 +19,15 @@ the exported artifact, not the training graph.
 | Ternary projections, QAT with ramp + distillation (v2) | 13.12% | 30.90% | 46.8 MB |
 | Ternary projections + tied embedding, v2 | **12.12%** | **28.42%** | **12.2 MB** |
 
+The 12.2 MB model is on Hugging Face at
+[rajb3/whisper-tiny.en-ternary](https://huggingface.co/rajb3/whisper-tiny.en-ternary),
+with a standalone loader that needs only `torch`, `transformers` and `safetensors`:
+
+```sh
+hf download rajb3/whisper-tiny.en-ternary --local-dir whisper-ternary
+python whisper-ternary/load_ternary.py clip.wav   # 16 kHz audio
+```
+
 Full tables, learning-rate selection and the secondary error analysis:
 [`finetune/whisper-ternary/results/`](finetune/whisper-ternary/results/).
 Design and protocol: [`finetune/whisper-ternary/DESIGN.md`](finetune/whisper-ternary/DESIGN.md).
@@ -36,7 +45,7 @@ what does it cost in accuracy and energy? Nothing here is a fielded system.
 
 | Directory | What it is | State |
 | --- | --- | --- |
-| [`finetune/whisper-ternary/`](finetune/whisper-ternary/) | Ternary-weight QAT of Whisper tiny.en: preregistered design, training, export, evaluation, resumable sweep, power flight recorder, 123 tests | Complete, results above |
+| [`finetune/whisper-ternary/`](finetune/whisper-ternary/) | Ternary-weight QAT of Whisper tiny.en: preregistered design, training, export, evaluation, resumable sweep, power flight recorder, transcription demo, tests | Complete, results above |
 | [`custom/cpu-inference/`](custom/cpu-inference/) | Hand-written AVX-512 VPOPCNTDQ binary/ternary kernels for a Whisper medium.en-shaped graph on a Ryzen 9 9950X3D, with RAPL energy measurement and bit-exact verification | Complete, benchmarks below |
 | [`custom/inference-efficiency/`](custom/inference-efficiency/) | Packed CUDA GEMV and fused decoder kernels on an RTX 5090, NVML energy measurement, CTranslate2 controls, independent audit | Complete, benchmarks below |
 | [`custom/binary_stt/`](custom/binary_stt/) | 488M-parameter binary/ternary CTC Conformer trained from scratch on streamed LibriSpeech, AMI, People's Speech; learning-rate and quantizer studies | Negative result, documented |
@@ -59,10 +68,11 @@ applied at step 0 with cross-entropy alone; two of three learning rates
 collapsed into audio-independent language-model loops.
 
 What the secondary analysis adds: the remaining ternary errors on the test sets
-are word substitutions. A small number of utterances where the decoder keeps
-generating text after the speech ends account for under half a point, and a
-duration-based hypothesis cap that truncates no reference transcript closes
-most of that.
+are mostly word substitutions. A handful of utterances (6 to 8 per test set) where the decoder keeps
+generating text after the speech ends account for 0.5 to 0.8 WER points on
+test-clean and 0.7 to 1.5 on test-other. A duration-based hypothesis cap that
+truncates no reference transcript recovers only part of that (0.0 to 0.8
+points), because most continuations fit inside a plausible word budget.
 
 Limits: tiny.en only, LibriSpeech only, greedy decoding, activations left in
 floating point. The trained ternary model has not yet been run through the

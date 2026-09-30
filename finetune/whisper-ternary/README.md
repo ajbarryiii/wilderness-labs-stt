@@ -240,13 +240,21 @@ tied embedding ternarizes essentially for free (A3 is within noise of A2 on
 every split), so the 12.2 MB artifact is the one to show. Learning rate
 mattered most: 1e-3 beat 3e-4 by 1.4 points on dev-clean, and both v1 rates
 below that never recovered. `results/v2-SECONDARY.md` shows that runaway
-continuations after the end of speech account for under half a point on the
-full test sets, so the remaining gap is word accuracy, not decoding failure.
+continuations after the end of speech account for 0.5 to 0.8 WER points on
+test-clean and 0.7 to 1.5 on test-other, so most of the remaining gap is word
+accuracy, not decoding failure.
 `sweep.py --protocol v2` reproduces the whole table; the power flight recorder
 logged a mean GPU draw of 387 W (at its 400 W cap 92% of the time) and an
 estimated 585 W at the wall for the 97-minute sweep.
 
 ## Transcribe a file (demo)
+
+The published model is
+[rajb3/whisper-tiny.en-ternary](https://huggingface.co/rajb3/whisper-tiny.en-ternary).
+`hf/stage.py USER/NAME` builds its upload folder from the export (with
+`hf/load_ternary.py`, `hf/MODEL_CARD.md`, `hf/NOTICE`, the Apache-2.0 text and
+the base tokenizer files) and requires the standalone loader to reproduce this
+repository's logits exactly before printing the upload command.
 
 `transcribe.py` loads an export (SHA-256 checked against its manifest),
 rebuilds the model from the ternary codes and scales, and decodes exactly like
