@@ -1,0 +1,136 @@
+{
+ "protocol": "v1",
+ "rows": [
+  {
+   "arm": "A0-fp32-zeroshot",
+   "source": "pretrained",
+   "path": null,
+   "dev_clean_wer": 0.05881601518303588,
+   "test-clean_wer": 0.05655609406528749,
+   "test-other_wer": 0.14541810067697894
+  },
+  {
+   "arm": "A1-fp32-finetune",
+   "source": "hf-dir",
+   "path": "/mnt/hd/wilderness-labs-stt/whisper-ternary/runs/fp32-lr1e-5/best-hf",
+   "dev_clean_wer": 0.05306763020548195,
+   "test-clean_wer": 0.0541045127953684,
+   "test-other_wer": 0.12945803865209335
+  },
+  {
+   "arm": "A2-ternary-ptq",
+   "source": "export",
+   "path": "/mnt/hd/wilderness-labs-stt/whisper-ternary/runs/ternary-ptq/export",
+   "dev_clean_wer": 1.0,
+   "test-clean_wer": 1.0,
+   "test-other_wer": 1.0,
+   "ternary_parameters": 16515072,
+   "packed_code_bytes": 4128768,
+   "artifact_bytes": 46837920,
+   "code_histogram": {
+    "minus_one": 0.33440187242296004,
+    "zero": 0.3342324514237661,
+    "plus_one": 0.33136567615327384
+   }
+  },
+  {
+   "arm": "A2-ternary",
+   "source": "export",
+   "path": "/mnt/hd/wilderness-labs-stt/whisper-ternary/runs/ternary-lr3e-4/export",
+   "dev_clean_wer": 0.502938063432972,
+   "test-clean_wer": 0.5046297169366549,
+   "test-other_wer": 0.7185809916417685,
+   "ternary_parameters": 16515072,
+   "packed_code_bytes": 4128768,
+   "artifact_bytes": 46837920,
+   "code_histogram": {
+    "minus_one": 0.3356538802858383,
+    "zero": 0.3324873182508681,
+    "plus_one": 0.33185880146329366
+   }
+  },
+  {
+   "arm": "A3-ternary-embed",
+   "source": "export",
+   "path": "/mnt/hd/wilderness-labs-stt/whisper-ternary/runs/ternary-embed-lr3e-4/export",
+   "dev_clean_wer": 0.7647724369502537,
+   "test-clean_wer": 0.7631395326908933,
+   "test-other_wer": 0.8758367686547407,
+   "ternary_parameters": 36430848,
+   "packed_code_bytes": 9107712,
+   "artifact_bytes": 12192744,
+   "code_histogram": {
+    "minus_one": 0.2829772724477893,
+    "zero": 0.4235945043058015,
+    "plus_one": 0.2934282232464092
+   }
+  }
+ ],
+ "selection": {
+  "fp32": {
+   "selected_lr": "1e-5",
+   "selected_run": "fp32-lr1e-5",
+   "criterion": "lowest full dev-clean WER of the run's best checkpoint",
+   "candidates": [
+    {
+     "lr": "1e-5",
+     "run": "fp32-lr1e-5",
+     "dev_clean_wer": 0.05306763020548195,
+     "dev_subset_wer": 0.04678650578675203,
+     "best_step": 3500
+    },
+    {
+     "lr": "3e-5",
+     "run": "fp32-lr3e-5",
+     "dev_clean_wer": 0.05604219132085113,
+     "dev_subset_wer": 0.049125831076089636,
+     "best_step": 1500
+    },
+    {
+     "lr": "1e-4",
+     "run": "fp32-lr1e-4",
+     "dev_clean_wer": 0.06381619767144786,
+     "dev_subset_wer": 0.05565131740950505,
+     "best_step": 3500
+    }
+   ]
+  },
+  "ternary": {
+   "selected_lr": "3e-4",
+   "selected_run": "ternary-lr3e-4",
+   "criterion": "lowest full dev-clean WER of the run's best checkpoint",
+   "candidates": [
+    {
+     "lr": "5e-5",
+     "run": "ternary-lr5e-5",
+     "dev_clean_wer": 1.1098032774918793,
+     "dev_subset_wer": 1.0855700566362965,
+     "best_step": 1500
+    },
+    {
+     "lr": "1e-4",
+     "run": "ternary-lr1e-4",
+     "dev_clean_wer": 0.9534107084200153,
+     "dev_subset_wer": 0.9580152671755725,
+     "best_step": 4000
+    },
+    {
+     "lr": "3e-4",
+     "run": "ternary-lr3e-4",
+     "dev_clean_wer": 0.502938063432972,
+     "dev_subset_wer": 0.49963063284905196,
+     "best_step": 4000
+    }
+   ]
+  },
+  "protocol": {
+   "name": "v1",
+   "max_steps": 4000,
+   "warmup": 200,
+   "train_splits": [
+    "train-clean-100"
+   ],
+   "extra": []
+  }
+ }
+}
