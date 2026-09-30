@@ -87,6 +87,11 @@ All packed outputs match the dense reference bit for bit across every core
 placement tested. Details and audits: [`custom/cpu-inference/RESULTS.md`](custom/cpu-inference/RESULTS.md),
 [`custom/cpu-inference/OPTIMIZATION_RESULTS.md`](custom/cpu-inference/OPTIMIZATION_RESULTS.md).
 
+The last kernel iteration, measured against the original AVX-512 backend over
+480 timed clips in fresh-process windows (whiskers are observed window ranges):
+
+![Original vs optimized AVX-512 kernels: median latency and CPU energy per 30 s clip](custom/cpu-inference/figures/optimization-comparison.svg)
+
 ### 3. GPU kernels
 
 Same graph on the RTX 5090 with CUDA-graph replay. An agent-led kernel sprint
@@ -142,6 +147,18 @@ Whisper experiment end to end:
 ```sh
 finetune/whisper-ternary/python -m unittest discover -s finetune/whisper-ternary/tests
 finetune/whisper-ternary/python finetune/whisper-ternary/sweep.py --protocol v2
+```
+
+To transcribe your own 16 kHz audio with the 12.2 MB ternary model, optionally
+side by side with the FP32 original:
+
+```sh
+finetune/whisper-ternary/python finetune/whisper-ternary/transcribe.py clip.wav --compare-fp32
+```
+
+```
+[ternary] owing to his insistence on low pressure direct current for use in densely populated districts ...
+[fp32] owing to his insistence on low pressure, direct current for use in densely populated districts ...
 ```
 
 ## License

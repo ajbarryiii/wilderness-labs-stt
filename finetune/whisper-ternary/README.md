@@ -246,6 +246,30 @@ full test sets, so the remaining gap is word accuracy, not decoding failure.
 logged a mean GPU draw of 387 W (at its 400 W cap 92% of the time) and an
 estimated 585 W at the wall for the 97-minute sweep.
 
+## Transcribe a file (demo)
+
+`transcribe.py` loads an export (SHA-256 checked against its manifest),
+rebuilds the model from the ternary codes and scales, and decodes exactly like
+the evaluation: greedy, shipped generation config, 225 tokens per 30 s window,
+FP32. Input must be 16 kHz; channels are averaged. The default export is the v2
+ternary projections + embedding run (12.2 MB).
+
+```sh
+$W/python $W/transcribe.py clip.wav                 # ternary model
+$W/python $W/transcribe.py clip.wav --compare-fp32  # plus the pretrained FP32 tiny.en
+$W/python $W/transcribe.py clip.wav --export DIR --duration-cap --device cuda
+ffmpeg -i in.m4a -ar 16000 -ac 1 clip.wav           # convert other formats first
+```
+
+Audio over 30 s is split into consecutive 30 s windows without overlap, so a
+word cut at a boundary can be misrecognized. `--duration-cap` applies the
+secondary ceil(4.5 x seconds) + 5 word cap, counted on the printed words rather
+than the normalized ones `analysis.py` counts; it is off by default so output
+matches the primary metric. The model runs on dequantized FP32 weights: this
+shows accuracy and file size, not packed-kernel speed. The ternary model was
+fine-tuned on lowercase, unpunctuated LibriSpeech text, so its output is
+mostly lowercase with little punctuation, unlike the pretrained FP32 model.
+
 ## Error analysis (secondary)
 
 `analysis.py` computes the post hoc analyses in DESIGN.md "Secondary analyses"
