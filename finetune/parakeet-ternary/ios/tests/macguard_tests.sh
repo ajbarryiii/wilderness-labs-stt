@@ -2,7 +2,8 @@
 #   MACGUARD_DIR=<dir> sh tests/macguard_tests.sh "<macguard command>" <python for jobs> <scratch dir under the artifacts>
 # Prints one line per check; expected exits: 1 0, 2-6 124 (6: second invocation 3, grandchild gone),
 # 7 exactly one 0 and one 3, 8 3 and 2, 9 130, 10 3 then cleanup and 0, 11 124 with the job dead,
-# 12 3 while the orphaned job lives, 0 after it is killed.
+# 12 3 while the orphaned job lives, 0 after it is killed; 13 yes, 13b /caller/sdk.
+# On Linux pass "env MACGUARD_PYTHON=<python> sh ios/macguard" as the macguard command.
 G="$1"; PY="$2"; W="$3"; mkdir -p "$W"; A="$MACGUARD_DIR"; LOG="$A/logs/macguard.log"
 st() { "$@" 2>/dev/null; echo $?; }
 alive() { kill -0 "$1" 2>/dev/null && echo yes || echo no; }
@@ -43,3 +44,11 @@ sen=$(grep "sentinel [0-9]*:" $LOG | tail -1 | sed 's/.*sentinel \([0-9]*\):.*/\
 kill -KILL $m $sen; sleep 1
 echo "12 supervisor $m and sentinel $sen killed; job $job alive=$(alive $job); new invocation exit=$(st $G --rss-cap 200M --timeout 5 -- true)"
 kill -KILL -- -$job 2>/dev/null; sleep 1; echo "12 after killing the job: job alive=$(alive $job); new invocation exit=$(st $G --rss-cap 200M --timeout 5 -- true)"
+# 13: the job's environment equals the caller's (the sh front end restores what the python3 shim injects), apart
+# from the thread caps macguard sets on purpose and shell bookkeeping
+X='^(SHLVL|_|PWD|OLDPWD|MACGUARD_PYTHON|OMP_NUM_THREADS|VECLIB_MAXIMUM_THREADS|MKL_NUM_THREADS|OPENBLAS_NUM_THREADS|NUMEXPR_NUM_THREADS)='
+env | grep -v -E "$X" | sort > $W/env.caller
+$G --rss-cap 200M --timeout 30 -- sh -c "env | grep -v -E '$X' | sort > $W/env.job" 2>/dev/null
+echo "13 job environment == caller environment: $(cmp -s $W/env.caller $W/env.job && echo yes || { echo no:; diff $W/env.caller $W/env.job | head -8 | tr '\n' ' '; })"
+SDKROOT=/caller/sdk $G --rss-cap 200M --timeout 30 -- sh -c 'echo "13b caller SDKROOT kept: ${SDKROOT:-unset}"' 2>/dev/null
+rm -f $W/env.caller $W/env.job
