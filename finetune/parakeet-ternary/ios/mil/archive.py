@@ -1,7 +1,7 @@
 """Move compiled WP3 models off the shared Mac to NixOS storage and back (disk floor: Mac free > 60 GB).
 
   ./python ios/mil/archive.py out MODEL ARM      # Mac <artifacts>/arms/MODEL/ARM/*.mlmodelc,*.mlpackage -> /mnt/hd
-  ./python ios/mil/archive.py back MODEL ARM     # restore them to the Mac (when the latency sweep needs them)
+  ./python ios/mil/archive.py back MODEL ARM [fixed.mlmodelc,...]   # restore (all or some) to the Mac
 
 Runs on NixOS. out: per-file SHA-256 on the Mac, a tar stream over SSH (each Mac side as a macguard job,
 512 MB cap), extraction under /mnt/hd/wilderness-labs-stt/parakeet-ios/arms-archive/MODEL/ARM, verification
@@ -30,8 +30,15 @@ def guarded(cmd: str) -> list[str]:
     return [RUN, "--repo", MAC_IOS, "--", "sh", "-c", inner]
 
 
-def mac(cmd: str) -> str:
-    return subprocess.run(guarded(cmd), check=True, capture_output=True, text=True).stdout
+def mac(cmd: str, tries: int = 40) -> str:
+    """Run a guarded command on the Mac; a macguard refusal (exit 3) is retried every 180 s."""
+    for _ in range(tries):
+        proc = subprocess.run(guarded(cmd), capture_output=True, text=True)
+        if proc.returncode != 3:
+            proc.check_returncode()
+            return proc.stdout
+        time.sleep(180)
+    raise SystemExit("macguard refused 40 times")
 
 
 def out(model: str, arm: str) -> None:
@@ -46,10 +53,18 @@ def out(model: str, arm: str) -> None:
     dest = LOCAL / model / arm
     dest.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
-    tar = subprocess.Popen(guarded(f"cd {base} && COPYFILE_DISABLE=1 tar cf - {quoted}"), stdout=subprocess.PIPE)
-    subprocess.run(["tar", "xf", "-", "-C", str(dest), "--warning=no-unknown-keyword"], stdin=tar.stdout, check=True)
-    if tar.wait() != 0:
-        raise SystemExit("tar stream failed")
+    for _ in range(40):
+        tar = subprocess.Popen(guarded(f"cd {base} && COPYFILE_DISABLE=1 tar cf - {quoted}"), stdout=subprocess.PIPE)
+        local = subprocess.run(["tar", "xf", "-", "-C", str(dest), "--warning=no-unknown-keyword"], stdin=tar.stdout)
+        status = tar.wait()
+        if status == 3:  # refused by macguard before anything was sent
+            time.sleep(180)
+            continue
+        if status != 0 or local.returncode != 0:
+            raise SystemExit(f"tar stream failed ({status}, {local.returncode})")
+        break
+    else:
+        raise SystemExit("macguard refused 40 times")
     bad, n = [], 0
     for line in sums.splitlines():
         digest, rel = line.split(None, 1)
@@ -59,14 +74,21 @@ def out(model: str, arm: str) -> None:
                 bad.append(rel)
     if bad or n == 0:
         raise SystemExit(f"checksum mismatch on {len(bad)} of {n} files; Mac copies kept")
-    (dest / "SHA256SUMS").write_text(sums)
-    note = {"archived_to": f"nixos:{dest}", "models": names, "files": n, "date": time.strftime("%Y-%m-%d %H:%M"),
+    merged = {}
+    if (dest / "SHA256SUMS").exists():  # an arm archived in several rounds (e.g. fixed/multi, then enum)
+        for line in (dest / "SHA256SUMS").read_text().splitlines():
+            merged[line.split(None, 1)[1]] = line
+    for line in sums.splitlines():
+        merged[line.split(None, 1)[1]] = line
+    (dest / "SHA256SUMS").write_text("".join(merged[k] + "\n" for k in sorted(merged)))
+    names = sorted({k.split("/", 1)[0] for k in merged})
+    note = {"archived_to": f"nixos:{dest}", "models": names, "files": len(merged), "date": time.strftime("%Y-%m-%d %H:%M"),
             "restore": f"./python ios/mil/archive.py back {model} {arm}", "seconds": round(time.time() - t0, 1)}
     mac(f"cd {base} && rm -rf {quoted} && printf %s {shlex.quote(json.dumps(note))} > ARCHIVED.json")
     print(json.dumps(note))
 
 
-def back(model: str, arm: str, host: str = "100.81.222.117") -> None:
+def back(model: str, arm: str, only: list[str] | None = None, host: str = "100.81.222.117") -> None:
     """Restore: the Mac pulls a tar stream from a one-shot, token-gated HTTP server bound to this machine's
     tailnet address (run.sh gives SSH no stdin), extracts it and verifies every SHA-256."""
     import http.server
@@ -76,6 +98,9 @@ def back(model: str, arm: str, host: str = "100.81.222.117") -> None:
     src = LOCAL / model / arm
     sums = (src / "SHA256SUMS").read_text()
     names = sorted({line.split(None, 1)[1].split("/", 1)[0] for line in sums.splitlines()})
+    if only:
+        names = [n for n in names if n in only]
+        sums = "".join(line + "\n" for line in sums.splitlines() if line.split(None, 1)[1].split("/", 1)[0] in names)
     token = secrets.token_hex(16)
 
     class Handler(http.server.BaseHTTPRequestHandler):
@@ -98,12 +123,14 @@ def back(model: str, arm: str, host: str = "100.81.222.117") -> None:
     try:
         url = f"http://{host}:{server.server_address[1]}/{token}.tar"
         base = f"{MAC_ARMS}/{model}/{arm}"
-        mac(f"cd {base} && curl -fsS {url} | tar xf - && printf %s {shlex.quote(sums)} | shasum -a 256 -c --quiet "
-            f"&& rm -f ARCHIVED.json")
+        mac(f"cd {base} && curl -fsS {url} | tar xf - && printf %s {shlex.quote(sums)} | shasum -a 256 -c --quiet")
     finally:
         server.shutdown()
     print(f"restored {names} to {MAC_ARMS}/{model}/{arm}")
 
 
 if __name__ == "__main__":
-    {"out": out, "back": back}[sys.argv[1]](sys.argv[2], sys.argv[3])
+    if sys.argv[1] == "back":
+        back(sys.argv[2], sys.argv[3], sys.argv[4].split(",") if len(sys.argv) > 4 else None)
+    else:
+        out(sys.argv[2], sys.argv[3])
