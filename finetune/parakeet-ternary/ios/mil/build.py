@@ -366,10 +366,12 @@ def build_decoder(model: str, out_root: Path, plan: bool = True) -> dict:
     return manifest
 
 
-def replan(model: str, arm: str, variant: str) -> None:
-    """Recompute compute plans (both unit settings, every function) and rewrite the manifest and its results copy."""
+def replan(model: str, arm: str, variant: str, only_units: str | None = None, only_function: str | None = None) -> None:
+    """Recompute compute plans and merge them into the manifest and its results copy. By default both unit
+    settings and every function; --units/--function restrict it to one, so each guarded job compiles at most
+    one ANE program (smaller system-memory and swap footprint on the shared Mac)."""
     base = default_out() / model / arm
-    units = ("cpuAndNeuralEngine", "cpuOnly")
+    units = (only_units,) if only_units else ("cpuAndNeuralEngine", "cpuOnly")
     if arm == "decoder":
         path = base / "manifest.json"
         m = json.loads(path.read_text())
@@ -381,10 +383,17 @@ def replan(model: str, arm: str, variant: str) -> None:
         return
     path = base / f"manifest-{variant}.json"
     m = json.loads(path.read_text())
-    m["compute_plan"] = {u: compute_plan(base / f"{variant}.mlmodelc", u, function_names(variant)) for u in units}
+    fns = [only_function] if only_function else function_names(variant)
+    plans = m.setdefault("compute_plan", {})
+    for u in units:
+        new = compute_plan(base / f"{variant}.mlmodelc", u, fns)
+        if u in plans and "functions" in plans[u] and only_function:
+            plans[u]["functions"].update(new["functions"])
+        else:
+            plans[u] = new
     save_manifest(m, base, model, arm, variant)
-    print(json.dumps({fn: v.get("ops_with_usage_by_preferred_device") for fn, v in
-                      m["compute_plan"]["cpuAndNeuralEngine"]["functions"].items()}))
+    print(json.dumps({u: {fn: v.get("ops_with_usage_by_preferred_device") for fn, v in p["functions"].items()}
+                      for u, p in m["compute_plan"].items()}))
 
 
 def default_out() -> Path:
@@ -416,6 +425,8 @@ def main() -> None:
     p.add_argument("--model", required=True)
     p.add_argument("--arm", required=True, help="encoder arm or 'decoder'")
     p.add_argument("--variant", default="fixed")
+    p.add_argument("--units", choices=("cpuAndNeuralEngine", "cpuOnly"))
+    p.add_argument("--function")
     p = sub.add_parser("loadtimes")
     p.add_argument("--path", required=True)
     p.add_argument("--functions", default="")
@@ -435,7 +446,7 @@ def main() -> None:
         fns = [f for f in args.functions.split(",") if f] or None
         print(json.dumps(compute_plan(Path(args.path), args.units, fns), indent=1))
     elif args.cmd == "replan":
-        replan(args.model, args.arm, args.variant)
+        replan(args.model, args.arm, args.variant, args.units, args.function)
     elif args.cmd == "loadtimes":
         fns = [f or None for f in args.functions.split(",")] if args.functions else [None]
         print(json.dumps(load_times(Path(args.path), fns, args.units)))
