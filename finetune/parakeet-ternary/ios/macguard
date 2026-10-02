@@ -4,42 +4,55 @@
     macguard --rss-cap SIZE --timeout SECONDS [--min-free 40] [--abort-free 25] [--max-swap-growth 1G]
              [--threads 4] -- CMD ARGS...
 
-Start: refuses (exit 3) unless the system-wide free memory percentage (memory_pressure -Q) is at
-least --min-free and the guard lock is free. The lock is fcntl.flock on the permanent file
-<dir>/macguard.lockfile, held by this process for the job's whole lifetime including cleanup (the
-kernel drops it if macguard dies). For compatibility with the earlier shell version, macguard also
-refuses while the old lock directory <dir>/macguard.lock names a live pid, and holds that
-directory (with its own pid) while it runs, so an old copy refuses too.
+Lock. One guarded job at a time: macguard takes fcntl.flock on the permanent file
+<dir>/macguard.lockfile (refusing, exit 3, if it is held) and never unlocks it explicitly. The
+locked file description is inherited by the job (pass_fds) and by the sentinel, so the lock is held
+as long as the supervisor, the sentinel or any job process that kept the descriptor is alive. (A
+job that closes inherited descriptors, e.g. Python's subprocess with close_fds, drops its copy;
+the sentinel keeps the lock until the group is verified empty.) It then refuses, exit 3, unless the
+system-wide free memory percentage (memory_pressure -Q) is at least --min-free.
 
-Run: CMD runs in a new session and process group (setsid; verified pgid == pid, distinct from
-macguard's), under nice 10, with OMP/BLAS/vecLib thread caps. Every second the summed RSS of the
-group's processes is read with ps; every 5 s the free memory percentage and swap use. Abort when
-the group RSS exceeds --rss-cap, the job runs past --timeout, free memory falls below --abort-free,
-swap use grows by more than --max-swap-growth since the start, or any probe fails (fail closed:
-an unreadable ps, memory_pressure or swap reading aborts the job; it is never taken as "group
-gone"). Abort and end of job both terminate the whole group: SIGTERM, up to 5 s grace, SIGKILL,
-then wait until the kernel reports the group empty (os.killpg(pgid, 0) -> ProcessLookupError)
-before the lock is released. A leader that exits normally with descendants still in its group
-gets the same cleanup. SIGINT/SIGTERM/SIGHUP to macguard abort the job the same way.
+Sentinel. Before the job starts, macguard forks a sentinel in its own session that holds the lock
+and watches the supervisor through a control pipe (EOF = supervisor gone) and getppid, every
+second. The supervisor tells it the job's process group and waits for its acknowledgement before
+the job may run: the job is started as `macguard --exec-after-gate FD -- CMD`, which blocks on a
+gate pipe and execs CMD only once the sentinel knows the group. If the supervisor dies (even by
+SIGKILL), the sentinel terminates the group (SIGTERM, 5 s grace, SIGKILL until the kernel reports
+it empty), logs, and exits, releasing the lock. In normal operation the supervisor tells it to exit
+only after its own cleanup has verified the group empty.
 
-Exit status: CMD's status if it ran to completion (128 + signal if a signal ended it);
-124 whenever the guard aborted the job (resource, timeout, probe failure), whatever CMD returned;
-130 if macguard itself was interrupted; 3 refused to start; 2 usage error; 125 internal error
-(e.g. the group could not be verified empty, or the job could not be started).
+Run. CMD runs in a new session and process group (pgid == pid, verified distinct from macguard's),
+under nice 10, with OMP/BLAS/vecLib thread caps. Every second: summed RSS of the group from ps;
+every 5 s: free memory and swap use. Abort (exit 124) when the group RSS exceeds --rss-cap, the
+job runs past --timeout, free memory falls below --abort-free, swap use grows by more than
+--max-swap-growth since the start, or any monitoring or logging step fails (fail closed: a failed
+or malformed ps, memory_pressure or sysctl reading, any parse or I/O error; a malformed ps row is
+an abort, never skipped). Cleanup runs in a finally block for every outcome: SIGTERM to the group,
+5 s grace, then SIGKILL repeated until the kernel reports the group empty (os.killpg(pgid, 0) ->
+ProcessLookupError), for at most 60 s. If the group still cannot be verified empty, macguard exits
+125 and hands the group to the sentinel, which keeps the lock and keeps sending SIGKILL until the
+group is empty. A leader that exits normally with descendants left in its group gets the same
+cleanup. SIGINT/SIGTERM/SIGHUP to macguard abort the job the same way (exit 130).
+
+Exit status: CMD's status if it ran to completion (128 + signal if a signal ended it); 124 the
+guard aborted the job (resource, timeout, monitoring or logging failure), whatever CMD returned;
+130 macguard was interrupted; 125 the guard's own machinery failed (sentinel, gate, process group
+not verifiable or not empty after cleanup; the lock then stays with the sentinel); 3 refused to
+start; 2 usage error.
 
 Log: <dir>/logs/macguard.log (dir = $MACGUARD_DIR, default
 /Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios): start and end, kill reason, peak group
 RSS, exit status, free memory, swap growth, load average and the top 5 CPU processes at start and
-end. RSS polling can miss short peaks and memory used by system services on the job's behalf.
-Standard library only (the Mac's /usr/bin/python3 is 3.9). The probes are macOS commands; on
-Linux (tests only) /proc/meminfo stands in.
+end, and the sentinel's actions. RSS polling can miss short peaks and memory used by system
+services on the job's behalf. Standard library only (the Mac's /usr/bin/python3 is 3.9). The
+probes are macOS commands; on Linux (tests only) /proc/meminfo stands in for memory and swap.
 """
 from __future__ import annotations
 
 import errno
 import fcntl
 import os
-import shutil
+import select
 import signal
 import subprocess
 import sys
@@ -48,14 +61,16 @@ import time
 EXIT_USAGE, EXIT_REFUSED, EXIT_ABORTED, EXIT_INTERNAL, EXIT_INTERRUPTED = 2, 3, 124, 125, 130
 DARWIN = sys.platform == "darwin"
 DEFAULT_DIR = "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios"
-GRACE_S, KILL_WAIT_S, PROBE_TIMEOUT_S = 5.0, 60.0, 15.0
+GRACE_S, KILL_DEADLINE_S, PROBE_TIMEOUT_S, ACK_TIMEOUT_S = 5.0, 60.0, 15.0, 10.0
 USAGE = ("usage: macguard --rss-cap SIZE --timeout SECONDS [--min-free PCT] [--abort-free PCT] "
          "[--max-swap-growth SIZE] [--threads N] -- CMD ...")
 
 
-class ProbeError(RuntimeError):
+class ProbeError(Exception):
     pass
 
+
+# --- arguments ------------------------------------------------------------------------------------
 
 def to_kb(size: str) -> int:
     """SIZE with optional K/M/G suffix (binary units; no suffix = bytes) -> KB."""
@@ -65,7 +80,7 @@ def to_kb(size: str) -> int:
     return int(size) // 1024
 
 
-def parse(argv: list[str]) -> tuple[dict, list[str]]:
+def parse(argv: list) -> tuple:
     opts = {"rss-cap": None, "timeout": None, "min-free": "40", "abort-free": "25", "max-swap-growth": "1G",
             "threads": "4"}
     i = 0
@@ -87,10 +102,12 @@ def parse(argv: list[str]) -> tuple[dict, list[str]]:
     return parsed, cmd
 
 
-def run_probe(args: list[str]) -> str:
+# --- probes (every failure or malformed reading raises ProbeError) ----------------------------------
+
+def run_probe(args: list) -> str:
     try:
         out = subprocess.run(args, capture_output=True, text=True, timeout=PROBE_TIMEOUT_S)
-    except (OSError, subprocess.SubprocessError) as exc:
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
         raise ProbeError(f"{args[0]}: {exc}") from exc
     if out.returncode != 0:
         raise ProbeError(f"{args[0]} exited {out.returncode}")
@@ -98,46 +115,65 @@ def run_probe(args: list[str]) -> str:
 
 
 def free_pct() -> int:
-    if DARWIN:
-        for line in run_probe(["memory_pressure", "-Q"]).splitlines():
-            if "free percentage" in line:
-                return int(line.split(":")[1].strip().rstrip("%"))
-        raise ProbeError("memory_pressure: no free percentage")
-    info = _meminfo()
-    return int(100 * info["MemAvailable"] / info["MemTotal"])
+    try:
+        if DARWIN:
+            lines = [l for l in run_probe(["memory_pressure", "-Q"]).splitlines() if "free percentage" in l]
+            if len(lines) != 1:
+                raise ProbeError("memory_pressure: no single free percentage line")
+            value = int(lines[0].split(":")[1].strip().rstrip("%"))
+        else:
+            info = _meminfo()
+            value = int(100 * info["MemAvailable"] / info["MemTotal"])
+    except (ValueError, IndexError, KeyError, ZeroDivisionError) as exc:
+        raise ProbeError(f"free memory: {exc!r}") from exc
+    if not 0 <= value <= 100:
+        raise ProbeError(f"free memory {value}% out of range")
+    return value
 
 
 def swap_used_kb() -> int:
-    if DARWIN:
-        fields = run_probe(["sysctl", "-n", "vm.swapusage"]).split()
-        try:
+    try:
+        if DARWIN:
+            fields = run_probe(["sysctl", "-n", "vm.swapusage"]).split()
             value = fields[fields.index("used") + 2]
             scale = {"K": 1, "M": 1024, "G": 1024 * 1024}[value[-1]]
-            return int(float(value[:-1]) * scale)
-        except (ValueError, IndexError, KeyError) as exc:
-            raise ProbeError(f"vm.swapusage: {' '.join(fields)}") from exc
-    info = _meminfo()
-    return info["SwapTotal"] - info["SwapFree"]
+            used = int(float(value[:-1]) * scale)
+        else:
+            info = _meminfo()
+            used = info["SwapTotal"] - info["SwapFree"]
+    except (ValueError, IndexError, KeyError) as exc:
+        raise ProbeError(f"swap usage: {exc!r}") from exc
+    if used < 0:
+        raise ProbeError(f"swap usage {used}KB negative")
+    return used
 
 
-def _meminfo() -> dict[str, int]:
+def _meminfo() -> dict:
     try:
         with open("/proc/meminfo") as handle:
             return {k: int(v.split()[0]) for k, v in (line.split(":", 1) for line in handle)}
-    except (OSError, ValueError) as exc:
-        raise ProbeError(f"/proc/meminfo: {exc}") from exc
+    except (OSError, ValueError, IndexError) as exc:
+        raise ProbeError(f"/proc/meminfo: {exc!r}") from exc
 
 
 def group_rss_kb(pgid: int) -> int:
-    """Summed RSS (KB) of the processes in process group pgid (0 if none listed)."""
+    """Summed RSS (KB) of the processes in process group pgid; every ps row must parse."""
     total, rows = 0, 0
     for line in run_probe(["ps", "-A", "-o", "pid=,pgid=,rss="]).splitlines():
-        parts = line.split()
-        if len(parts) != 3:
+        if not line.strip():
             continue
+        parts = line.split()
+        try:
+            if len(parts) != 3:
+                raise ValueError(line)
+            pid, group, rss = (int(p) for p in parts)
+        except ValueError as exc:
+            raise ProbeError(f"malformed ps row {line!r}") from exc
+        if pid <= 0 or rss < 0:
+            raise ProbeError(f"malformed ps row {line!r}")
         rows += 1
-        if int(parts[1]) == pgid:
-            total += int(parts[2])
+        if group == pgid:
+            total += rss
     if rows == 0:
         raise ProbeError("ps listed no processes")
     return total
@@ -154,177 +190,267 @@ def group_alive(pgid: int) -> bool:
     return True
 
 
+def kill_group(pgid: int, sig: int) -> None:
+    try:
+        os.killpg(pgid, sig)
+    except ProcessLookupError:
+        pass
+
+
+def escalate(pgid: int, reap=lambda: None, kill_deadline: float | None = KILL_DEADLINE_S) -> bool:
+    """SIGTERM, up to GRACE_S, then SIGKILL every 0.5 s until the group is empty (or kill_deadline s pass)."""
+    kill_group(pgid, signal.SIGTERM)
+    end = time.monotonic() + GRACE_S
+    while time.monotonic() < end:
+        reap()
+        if not group_alive(pgid):
+            return True
+        time.sleep(0.1)
+    end = None if kill_deadline is None else time.monotonic() + kill_deadline
+    while end is None or time.monotonic() < end:
+        kill_group(pgid, signal.SIGKILL)
+        for _ in range(5):
+            reap()
+            if not group_alive(pgid):
+                return True
+            time.sleep(0.1)
+    return False
+
+
+# --- logging ----------------------------------------------------------------------------------------
+
+def log(path: str, tag: str, message: str, echo: bool = True) -> None:
+    """Append one line to the log (OSError propagates) and echo it to stderr (errors ignored)."""
+    line = f"{time.strftime('%Y-%m-%dT%H:%M:%S')} [{tag}] {message}"
+    with open(path, "a") as handle:
+        handle.write(line + "\n")
+    if echo:
+        try:
+            print(f"macguard: {message}", file=sys.stderr, flush=True)
+        except (OSError, ValueError):
+            pass
+
+
+def log_safe(path: str, tag: str, message: str, echo: bool = True) -> None:
+    try:
+        log(path, tag, message, echo)
+    except OSError:
+        pass
+
+
+# --- sentinel -----------------------------------------------------------------------------------------
+
+def sentinel(ctrl_r: int, ack_w: int, lock_fd: int, supervisor: int, log_path: str) -> None:
+    """Child of the supervisor in its own session; holds the lock until the job group is gone (see module doc)."""
+    os.setsid()
+    for signum in (signal.SIGINT, signal.SIGHUP, signal.SIGTERM):
+        signal.signal(signum, signal.SIG_IGN)
+    null = os.open(os.devnull, os.O_RDWR)
+    for fd in (0, 1, 2):
+        os.dup2(null, fd)
+    keep = {0, 1, 2, ctrl_r, ack_w, lock_fd}
+    for fd in range(3, 1024):
+        if fd not in keep:
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+    tag = f"sentinel {os.getpid()}"
+    pgid, buffer = None, b""
+    while True:
+        ready, _, _ = select.select([ctrl_r], [], [], 1.0)
+        message = None
+        if ready:
+            data = os.read(ctrl_r, 4096)
+            if not data:
+                message = "eof"
+            else:
+                buffer += data
+                while b"\n" in buffer and message is None:
+                    line, buffer = buffer.split(b"\n", 1)
+                    words = line.decode().split()
+                    if words[:1] == ["pgid"]:
+                        pgid = int(words[1])
+                        os.write(ack_w, b"ok\n")
+                    elif words[:1] in (["done"], ["watch"]):
+                        message = words[0]
+        elif os.getppid() != supervisor:
+            message = "eof"
+        if message == "done":
+            return
+        if message == "watch":
+            log_safe(log_path, tag, f"supervisor could not verify group {pgid} empty; killing until it is", False)
+            escalate(pgid, kill_deadline=None)
+            log_safe(log_path, tag, f"group {pgid} empty; releasing the lock", False)
+            return
+        if message == "eof":
+            if pgid is None:
+                log_safe(log_path, tag, "supervisor gone before the job was released; nothing to clean up", False)
+                return
+            log_safe(log_path, tag, f"supervisor {supervisor} gone; terminating job group {pgid}", False)
+            escalate(pgid, kill_deadline=None)
+            log_safe(log_path, tag, f"group {pgid} empty; releasing the lock", False)
+            return
+
+
+# --- supervisor ---------------------------------------------------------------------------------------
+
 class Guard:
-    def __init__(self, opts: dict, cmd: list[str], directory: str) -> None:
+    def __init__(self, opts: dict, cmd: list, directory: str) -> None:
         self.opts, self.cmd, self.dir = opts, cmd, directory
         self.log_path = os.path.join(directory, "logs", "macguard.log")
+        self.tag = str(os.getpid())
         self.interrupted = 0
-        self.proc: subprocess.Popen | None = None
-        self.old_lock_held = False
 
     def say(self, message: str) -> None:
-        line = f"{time.strftime('%Y-%m-%dT%H:%M:%S')} [{os.getpid()}] {message}"
-        with open(self.log_path, "a") as handle:
-            handle.write(line + "\n")
-        print(f"macguard: {message}", file=sys.stderr, flush=True)
+        log(self.log_path, self.tag, message)
 
-    def snapshot(self, label: str, free: object, swap: object) -> None:
+    def say_safe(self, message: str) -> None:
+        log_safe(self.log_path, self.tag, message)
+
+    def snapshot(self, label: str, free: object, swap: object, strict: bool) -> None:
+        say = self.say if strict else self.say_safe
         load = " ".join(f"{x:.2f}" for x in os.getloadavg())
-        self.say(f"{label}: free {free}% swap_used {swap}KB load {load}")
+        say(f"{label}: free {free}% swap_used {swap}KB load {load}")
         try:
             args = (["ps", "-A", "-r", "-o", "pid=,pcpu=,rss=,comm="] if DARWIN
                     else ["ps", "-A", "-o", "pid=,pcpu=,rss=,comm=", "--sort=-pcpu"])
             for line in run_probe(args).splitlines()[:5]:
-                self.say(f"{label}: top {line.strip()}")
+                say(f"{label}: top {line.strip()}")
         except ProbeError as exc:
-            self.say(f"{label}: top unavailable ({exc})")
+            say(f"{label}: top unavailable ({exc})")
 
-    # --- locks ----------------------------------------------------------------------------------
-    def acquire(self) -> str | None:
-        """Take the flock and the compatibility lock directory; None on success, else the refusal reason."""
-        self.lock_fd = os.open(os.path.join(self.dir, "macguard.lockfile"), os.O_RDWR | os.O_CREAT, 0o644)
-        try:
-            fcntl.flock(self.lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except OSError as exc:
-            if exc.errno in (errno.EWOULDBLOCK, errno.EAGAIN):
-                return "lock held by another macguard"
-            raise
-        os.ftruncate(self.lock_fd, 0)
-        os.write(self.lock_fd, f"{os.getpid()}\n".encode())
-        old = os.path.join(self.dir, "macguard.lock")
-        for _ in range(2):
-            try:
-                os.mkdir(old)
-            except FileExistsError:
-                try:
-                    with open(os.path.join(old, "pid")) as handle:
-                        owner = int(handle.read().strip() or 0)
-                except (OSError, ValueError):
-                    owner = 0
-                if owner and _pid_alive(owner):
-                    return f"old-style lock held by live pid {owner}"
-                self.say(f"removing stale old-style lock of pid {owner or 'unknown'}")
-                shutil.rmtree(old, ignore_errors=True)
-                continue
-            with open(os.path.join(old, "pid"), "w") as handle:
-                handle.write(f"{os.getpid()}\n")
-            self.old_lock_held = True
-            return None
-        return "could not take the old-style lock directory"
-
-    def release(self) -> None:
-        if self.old_lock_held:
-            shutil.rmtree(os.path.join(self.dir, "macguard.lock"), ignore_errors=True)
-            self.old_lock_held = False
-        os.ftruncate(self.lock_fd, 0)
-        fcntl.flock(self.lock_fd, fcntl.LOCK_UN)
-        os.close(self.lock_fd)
-
-    # --- job ---------------------------------------------------------------------------------------
-    def on_signal(self, signum: int, frame) -> None:
+    def on_signal(self, signum, frame) -> None:
         self.interrupted = signum
 
-    def terminate_group(self, pgid: int) -> bool:
-        """SIGTERM, grace, SIGKILL; True once the kernel reports the group empty (leader reaped)."""
-        for sig, wait_s in ((signal.SIGTERM, GRACE_S), (signal.SIGKILL, KILL_WAIT_S)):
-            try:
-                os.killpg(pgid, sig)
-            except ProcessLookupError:
-                pass
-            deadline = time.monotonic() + wait_s
-            while time.monotonic() < deadline:
-                self.proc.poll()
-                if not group_alive(pgid):
-                    return True
-                time.sleep(0.1)
-            self.say(f"group {pgid} still alive after {signal.Signals(sig).name}")
-        return False
-
     def run(self) -> int:
-        opts = self.opts
+        lock_fd = os.open(os.path.join(self.dir, "macguard.lockfile"), os.O_RDWR | os.O_CREAT, 0o644)
+        try:
+            fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError as exc:
+            os.close(lock_fd)
+            if exc.errno in (errno.EWOULDBLOCK, errno.EAGAIN):
+                self.say_safe(f"refused: lock held by another guarded job: {' '.join(self.cmd)}")
+                return EXIT_REFUSED
+            raise
         try:
             free0, swap0 = free_pct(), swap_used_kb()
         except ProbeError as exc:
-            self.say(f"refused: cannot read memory state ({exc}): {' '.join(self.cmd)}")
+            self.say_safe(f"refused: cannot read memory state ({exc}): {' '.join(self.cmd)}")
             return EXIT_REFUSED
-        if free0 < opts["min_free"]:
-            self.say(f"refused: free memory {free0}% < {opts['min_free']}%: {' '.join(self.cmd)}")
+        if free0 < self.opts["min_free"]:
+            self.say_safe(f"refused: free memory {free0}% < {self.opts['min_free']}%: {' '.join(self.cmd)}")
             return EXIT_REFUSED
-        reason = self.acquire()
-        if reason:
-            self.say(f"refused: {reason}: {' '.join(self.cmd)}")
-            return EXIT_REFUSED
-        try:
-            return self.supervise(free0, swap0)
-        finally:
-            self.release()
-
-    def supervise(self, free0: int, swap0: int) -> int:
-        opts = self.opts
         for signum in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
             signal.signal(signum, self.on_signal)
-        self.say(f"start: cap {opts['cap']} ({opts['cap_kb']}KB) timeout {opts['timeout']}s threads {opts['threads']} "
-                 f"min_free {opts['min_free']}% abort_free {opts['abort_free']}% max_swap_growth {opts['growth']}: "
-                 f"{' '.join(self.cmd)}")
-        self.snapshot("start", free0, swap0)
-        env = dict(os.environ)
-        for key in ("OMP_NUM_THREADS", "VECLIB_MAXIMUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS",
-                    "NUMEXPR_NUM_THREADS"):
-            env[key] = str(opts["threads"])
-        start = time.monotonic()
-        try:
-            self.proc = subprocess.Popen(self.cmd, env=env, start_new_session=True, preexec_fn=lambda: os.nice(10))
-        except OSError as exc:
-            self.say(f"end: could not start: {exc}")
-            return EXIT_INTERNAL
-        pgid = self.proc.pid
-        try:
-            if os.getpgid(pgid) != pgid or pgid == os.getpgrp():
-                raise ProbeError(f"job is not in its own process group (pgid {os.getpgid(pgid)})")
-        except (ProcessLookupError, ProbeError) as exc:
-            if self.proc.poll() is None or isinstance(exc, ProbeError):
-                self.say(f"cannot verify the job's process group: {exc}")
-                reason = "process group not verified"
-            else:
-                reason = None  # exited before the check; still clean up the group below
-        else:
-            reason = None
-        peak, tick = 0, 0
-        while reason is None:
-            if self.interrupted:
-                reason = f"macguard received {signal.Signals(self.interrupted).name}"
-                break
-            if self.proc.poll() is not None:
-                break
+        ctrl_r, ctrl_w = os.pipe()
+        ack_r, ack_w = os.pipe()
+        child = os.fork()
+        if child == 0:
             try:
-                rss = group_rss_kb(pgid)
-                peak = max(peak, rss)
-                elapsed = time.monotonic() - start
-                if rss > opts["cap_kb"]:
-                    reason = f"rss {rss}KB > cap {opts['cap_kb']}KB"
-                elif elapsed > opts["timeout"]:
-                    reason = f"timeout {elapsed:.1f}s > {opts['timeout']}s"
-                elif tick % 5 == 0:
-                    free, swap = free_pct(), swap_used_kb()
-                    if free < opts["abort_free"]:
-                        reason = f"system free memory {free}% < {opts['abort_free']}%"
-                    elif swap - swap0 > opts["growth_kb"]:
-                        reason = f"swap grew {swap - swap0}KB > {opts['growth_kb']}KB"
-            except ProbeError as exc:
-                reason = f"monitoring failed: {exc}"
-            tick += 1
-            if reason is None:
+                sentinel(ctrl_r, ack_w, lock_fd, os.getppid(), self.log_path)
+            finally:
+                os._exit(0)
+        os.close(ctrl_r)
+        os.close(ack_w)
+        return self.supervise(lock_fd, ctrl_w, ack_r, child, free0, swap0)
+
+    def supervise(self, lock_fd: int, ctrl_w: int, ack_r: int, sentinel_pid: int, free0: int, swap0: int) -> int:
+        opts = self.opts
+        start = time.monotonic()
+        reason, internal, proc, pgid, peak, phase = None, None, None, None, 0, "start"
+        try:
+            self.say(f"start: cap {opts['cap']} ({opts['cap_kb']}KB) timeout {opts['timeout']}s threads "
+                     f"{opts['threads']} min_free {opts['min_free']}% abort_free {opts['abort_free']}% "
+                     f"max_swap_growth {opts['growth']} sentinel {sentinel_pid}: {' '.join(self.cmd)}")
+            self.snapshot("start", free0, swap0, strict=True)
+            env = dict(os.environ)
+            for key in ("OMP_NUM_THREADS", "VECLIB_MAXIMUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS",
+                        "NUMEXPR_NUM_THREADS"):
+                env[key] = str(opts["threads"])
+            phase = "launch"
+            gate_r, gate_w = os.pipe()
+            try:
+                proc = subprocess.Popen([sys.executable, os.path.abspath(__file__), "--exec-after-gate", str(gate_r),
+                                         "--", *self.cmd], env=env, start_new_session=True,
+                                        pass_fds=(lock_fd, gate_r), preexec_fn=lambda: os.nice(10))
+                os.close(gate_r)
+                pgid = proc.pid
+                if os.getpgid(pgid) != pgid or pgid == os.getpgrp():
+                    raise RuntimeError(f"job is not in its own process group (pgid {os.getpgid(pgid)})")
+                os.write(ctrl_w, f"pgid {pgid}\n".encode())
+                ready, _, _ = select.select([ack_r], [], [], ACK_TIMEOUT_S)
+                if not ready or os.read(ack_r, 16) != b"ok\n":
+                    raise RuntimeError("sentinel did not acknowledge the job's process group")
+                os.write(gate_w, b"g")
+            finally:
+                os.close(gate_w)
+            phase = "monitor"
+            tick = 0
+            while True:
+                if self.interrupted:
+                    reason = f"macguard received {signal.Signals(self.interrupted).name}"
+                    break
+                if proc.poll() is not None:
+                    break
+                try:
+                    rss = group_rss_kb(pgid)
+                    peak = max(peak, rss)
+                    elapsed = time.monotonic() - start
+                    if rss > opts["cap_kb"]:
+                        reason = f"rss {rss}KB > cap {opts['cap_kb']}KB"
+                    elif elapsed > opts["timeout"]:
+                        reason = f"timeout {elapsed:.1f}s > {opts['timeout']}s"
+                    elif tick % 5 == 0:
+                        free, swap = free_pct(), swap_used_kb()
+                        if free < opts["abort_free"]:
+                            reason = f"system free memory {free}% < {opts['abort_free']}%"
+                        elif swap - swap0 > opts["growth_kb"]:
+                            reason = f"swap grew {swap - swap0}KB > {opts['growth_kb']}KB"
+                except Exception as exc:  # monitoring and logging failures abort the job (fail closed)
+                    reason = f"monitoring failed: {exc!r}"
+                if reason:
+                    break
+                tick += 1
                 time.sleep(1.0)
-        leftover = reason is None and group_alive(pgid)
-        if leftover:
-            self.say(f"job leader exited with processes left in group {pgid}; terminating them")
-        empty = self.terminate_group(pgid) if (reason or leftover) else True
-        self.proc.wait()
-        if not empty:
-            self.say(f"ERROR: process group {pgid} not empty after SIGKILL; lock released on exit anyway")
-        code = self.proc.returncode
+        except Exception as exc:  # start-up logging or monitoring failure: abort; launch failure: internal
+            if phase == "launch":
+                internal = repr(exc)
+            else:
+                reason = f"{'logging' if phase == 'start' else 'monitoring'} failed: {exc!r}"
+        finally:
+            empty = True
+            if pgid is not None:
+                leftover = reason is None and internal is None and group_alive(pgid)
+                if leftover:
+                    self.say_safe(f"job leader exited with processes left in group {pgid}; terminating them")
+                if reason or internal or leftover:
+                    empty = escalate(pgid, reap=proc.poll)
+            elif proc is not None:
+                proc.kill()
+            if proc is not None:
+                try:
+                    proc.wait(timeout=KILL_DEADLINE_S)
+                except subprocess.TimeoutExpired:
+                    empty = False
+            try:
+                os.write(ctrl_w, b"done\n" if empty else b"watch\n")
+            except OSError as exc:
+                self.say_safe(f"ERROR: cannot reach the sentinel {sentinel_pid}: {exc!r}")
+            if empty:
+                try:
+                    os.waitpid(sentinel_pid, 0)
+                except ChildProcessError:
+                    pass
+            else:
+                self.say_safe(f"ERROR: process group {pgid} not empty after SIGKILL for {KILL_DEADLINE_S:.0f}s; "
+                              f"the sentinel {sentinel_pid} keeps the lock and keeps killing it")
+            os.close(ctrl_w)
+            os.close(ack_r)
+            os.close(lock_fd)  # never LOCK_UN: the lock lasts while any holder of the description lives
+        code = proc.returncode if proc is not None and proc.returncode is not None else 0
         child_status = 128 - code if code < 0 else code
-        if not empty:
+        if internal or not empty:
             status = EXIT_INTERNAL
         elif self.interrupted:
             status = EXIT_INTERRUPTED
@@ -337,23 +463,31 @@ class Guard:
             growth = f"{swap1 - swap0}KB"
         except ProbeError as exc:
             free1, swap1, growth = "?", "?", f"unknown ({exc})"
-        self.say(f"end: status {status} (job {child_status}) after {time.monotonic() - start:.0f}s, peak group RSS "
-                 f"{peak}KB, swap growth {growth}{', killed: ' + reason if reason else ''}")
-        self.snapshot("end", free1, swap1)
+        why = reason or (f"internal error: {internal}" if internal else "")
+        self.say_safe(f"end: status {status} (job {child_status}) after {time.monotonic() - start:.0f}s, peak group "
+                      f"RSS {peak}KB, swap growth {growth}{', killed: ' + why if why else ''}")
+        self.snapshot("end", free1, swap1, strict=False)
         return status
 
 
-def _pid_alive(pid: int) -> bool:
+def exec_after_gate(argv: list) -> int:
+    """Job wrapper: wait for the supervisor's go on the gate pipe, then exec CMD (127 if not found)."""
+    fd = int(argv[0])
+    data = os.read(fd, 1)
+    os.close(fd)
+    if data != b"g":
+        return EXIT_INTERNAL
+    cmd = argv[2:]
     try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    return True
+        os.execvp(cmd[0], cmd)
+    except OSError as exc:
+        print(f"macguard: cannot run {cmd[0]}: {exc}", file=sys.stderr)
+        return 127
 
 
 def main() -> int:
+    if sys.argv[1:2] == ["--exec-after-gate"]:
+        return exec_after_gate(sys.argv[2:])
     try:
         opts, cmd = parse(sys.argv[1:])
     except ValueError:
