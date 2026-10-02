@@ -1,0 +1,16 @@
+# Models, weights, audio and environments never enter Git (public repo).
+.venv/
+__pycache__/
+*.mlpackage/
+*.mlmodelc/
+*.mlpackage
+*.mlmodelc
+*.safetensors
+*.pt
+*.npz
+*.wav
+*.flac
+*.trace
+artifacts/
+.build/
+DerivedData/
