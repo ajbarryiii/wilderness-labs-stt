@@ -1,293 +1,489 @@
 # Parakeet-TDT 0.6B v2 on iPhone 15 Pro: inference pipeline and benchmarks
 
-Status: **under review, S0 approved by the user, nothing run** (2026-10-02).
+Status: **revision 2, after Codex design review r1 (2026-10-02). S0 approved
+by the user; nothing benchmarked yet.** Review findings and their resolution
+are listed at the end.
 
 ## Goal and scope
 
 Build the lowest-latency, lowest-energy inference pipeline for the Parakeet-TDT
 0.6B v2 architecture (English; the ternary QAT model from `../DESIGN.md`) on an
 iPhone 15 Pro (A17 Pro, 8 GB, iOS 26), and the benchmarks that measure it on the
-device. The workload is one push-to-talk utterance of 2-15 s.
+device. The workload is one foreground push-to-talk utterance of 2-15 s.
 
-- The architecture is fixed; the weights are not. Benchmarks use seeded random
-  weights with the exact architecture and the ternary structure of the QAT model,
-  so they can run before training finishes. They measure execution, not
-  recognition. The trained weights enter only in stage S4.
-- The deployment target may be iOS 26 or later; the pilot controls hardware and
+- **Surrogate models.** The architecture is fixed; the weights are not. Most
+  benchmarks use seeded random *surrogate* models. They have the exact
+  architecture and the ternary structure of the selected recipe's export, so
+  they can run before training finishes. Surrogate results describe execution
+  only, not recognition. They are reported separately from trained-model
+  results.
+- **Trained weights enter at S5.** Finalists are re-measured with the trained
+  weights, and their decoding is verified on the phone.
+- **Deployment target:** iOS 26 or later; the pilot controls hardware and
   software.
-- Out of scope here: wiring into tccc-bot (later step), recognition accuracy of
-  any random model, streaming decoding, the accuracy cost of activation
-  quantization (W8A8 is benchmarked for speed only), and Core AI / iOS 27.
+- **Out of scope:**
+  - wiring into tccc-bot (a later step);
+  - recognition accuracy of surrogates;
+  - streaming decoding;
+  - background or screen-locked operation (foreground only, by the user's
+    decision);
+  - Core AI / iOS 27.
+- **Exploratory arms** run and are reported but cannot win deployment. These
+  are encodings that are not exact for the trained weights (C2 aside as the
+  product baseline), and C5 (W8A8), whose accuracy needs its own QAT study.
 
 ## Workload
 
-Encoder: 2-D convolutional subsampling (8x, 80 ms frames), 24 FastConformer
-layers (d_model 1024, 8 heads, rel-pos attention, FF 4096, conv kernel 9).
-264 ternary modules (FF, attention incl. `linear_pos`, pointwise convs), about
-600M weights, one FP scale per output row; codes are about 33% each of -1/0/+1
-(pilot P3 export). About 15M parameters stay floating point (subsampling,
-depthwise convs, norms). Decoder: 2-layer LSTM prediction network (640), joint
-network (640 -> 1024 tokens + 5 durations).
+**Encoder.** Two-dimensional convolutional subsampling (8x, 80 ms frames), then
+24 FastConformer layers: d_model 1024, 8 heads, rel-pos attention, FF 4096,
+conv kernel 9.
 
-| Utterance | Mel frames | Encoder frames T | Encoder GFLOP |
-| ---: | ---: | ---: | ---: |
-| 2 s | 201 | 25 | 30 |
-| 4 s | 401 | 50 | 60 |
-| 8 s | 801 | 100 | 121 |
-| 15 s (current fixed window) | 1501 | 188 | 227 |
+- **Ternary modules:** 264 (FF, attention including `linear_pos`, pointwise
+  convs), about 600M weights. Each output row has one FP32 scale; the export
+  stores scales in FP32.
+- **Code mix:** about 33% each of -1, 0, +1 (pilot exports).
+- **Floating point:** about 15M parameters (subsampling, depthwise convs,
+  norms).
 
-Weight bytes read per encoder call: FP16 1.21 GB, int8 0.60 GB, 6-bit 0.45 GB,
-2-bit 0.15 GB.
+**Decoder.** A 2-layer LSTM prediction network (640 wide) and a joint network
+with 1,030 outputs: 1,024 tokens, blank, and 5 durations.
 
-**Estimate, not a measurement.** The A17 Pro has about 51 GB/s of LPDDR5
-bandwidth. Streaming FP16 weights then takes at least 24 ms per call. At a
-nominal 17 TFLOPS FP16 on the ANE (half of the 35 TOPS int8 figure), compute for
-a 4 s utterance takes about 4 ms. By this estimate the dense encoder is
-memory-bound on the phone at every length we care about. The shorter the input,
-the larger the share of time spent moving weights, and so the more compressed
-weights should help.
+**Encoder size per utterance length.** The model gets fixed-shape tensors, so
+some frames are only padding. Allocated frames are the encoder output frames
+for the padded input shape; valid frames are those that hold the utterance.
+Valid frames below are approximate (one per 80 ms). The GFLOP column is the
+matmul estimate 2 × 600M × allocated frames. S0 recomputes every row from the
+actual graph and records it.
 
-FluidAudio measured the opposite behaviour on M-series Macs, which have much
-more bandwidth than the phone. Which regime the A17 Pro is in is the central
-open question; the benchmarks decide it.
+| Bucket | Mel frames (allocated) | Encoder frames, allocated | Encoder frames, valid | Encoder GFLOP (est.) |
+| ---: | ---: | ---: | ---: | ---: |
+| 2 s | 201 | 26 | ≤ 25 | 31 |
+| 4 s | 401 | 51 | ≤ 50 | 61 |
+| 8 s | 801 | 101 | ≤ 100 | 121 |
+| 15 s (current fixed window) | 1501 | 188 | ≤ 188 | 226 |
 
-## Prior evidence
+**Hypothesis, not a conclusion.** Encoded weight sizes are FP16 1.21 GB, int8
+0.60 GB, 6-bit 0.45 GB, and 2-bit 0.15 GB. The A17 Pro has roughly 51 GB/s of
+DRAM bandwidth. If weights were streamed from DRAM once per call in their
+encoded form, the dense FP16 encoder would need at least 24 ms per call just to
+move weights. That would make short utterances bandwidth-limited and favour
+compressed weights.
 
-Sources are in the 2026-10-02 research notes (session summary); the key ones are listed here.
+That reasoning rests on unverified assumptions:
+- the ANE's FP16 throughput (Apple publishes only an int8 TOPS figure);
+- its achieved utilization;
+- whether decompression happens during execution or before it (this is
+  backend-dependent per Apple);
+- activation traffic;
+- the folded `linear_pos` constants.
 
-- FluidAudio/mobius `parakeet-redux` sweep (M-series Mac, one 15 s window):
+FluidAudio reported compute-bound behaviour on M-series Macs. No gain is
+attributed to bandwidth unless latency scales with encoded size across buckets
+in the measured way, with operator placement recorded.
 
-  | Encoding of a ternary encoder | ANE latency | First ANE load |
-  | --- | ---: | ---: |
-  | FP16 | 20.8 ms | 8.7 s |
-  | 2-bit LUT with one scale per row (our exact format) | 70.4 ms | 45 s |
-  | int8 per-channel (also exact for us) | 27.5 ms | ~14 s |
+## Prior evidence (with limits)
 
-  The ANE cost grows with the number of palettes. The same 2-bit weights ran on
-  the GPU in 21 ms with a 0.6 s load.
-- FluidAudio Phonon-2 used a sparse mask plus one FP16 palette per 8 output rows
-  (`constexpr_lut_to_sparse`). It ran in 18.6 ms on the ANE, faster than FP16.
-  Our zeros are about 33%, not 51%, and our scales are per row, so grouped scales
-  would need a retraining variant.
-- Core ML decompresses compressed weights just in time from iOS 17 on, and Apple
-  reports latency gains for memory-bound models on the ANE. W8A8 uses a faster
-  int8 path on A17 Pro and M4. The M1 Pro in our Mac does not have that path, so
-  W8A8 can only be judged on the phone.
-- The ANE runs fixed and enumerated shapes. Flexible (RangeDim) shapes fall back
-  to CPU or GPU. Multifunction models (iOS 18+) deduplicate shared weights.
-- With `cpuAndNeuralEngine`, Core ML still runs the TDT decoder and joint 100% on
-  the CPU. Per-call overhead is 0.1-0.5 ms. On a 7.8 s clip the decode loop
-  (89 calls) costs about as much as the encoder.
-- iOS does not allow GPU work while the app is in the background. CPU and ANE
-  work is allowed.
-- Repository precedent: `custom/cpu-inference` and `custom/inference-efficiency`.
-  Both used seeded random models, forced decoder replay, dense twins and
-  bit-exact parity, and the same rules apply here.
+Permalinks, artifact hashes and versions are committed in
+`ios/references.md` (S0). Summary:
 
-## Pipeline stages and arms
+- **FluidAudio/mobius `parakeet-redux`** (M-series Mac, 15 s window): FP16
+  ran at 20.8 ms on the ANE. A per-row 2-bit *diagnostic* encoding (not exact)
+  ran at 70.4 ms with a 45 s first load. int8 per-channel ran at 27.5 ms. The
+  GPU ran 2-bit weights at 21 ms.
+- **FluidAudio Phonon-2:** a grouped sparse-palette encoding ran at 18.6 ms
+  on the ANE. Its dense grouped-palette variant tied it, so the evidence
+  favours grouped palettes, not sparsity as such.
+- **coremltools 9:** `enable_per_channel_scale` with per-tensor granularity
+  produces one shared LUT plus `constexpr_blockwise_shift_scale`; it does
+  *not* produce one palette per row.
+- **Apple:** compressed weights are decompressed just in time on the ANE
+  (from iOS 17), with gains for memory-bound models. W8A8 uses faster int8
+  compute on A17 Pro and M4. Our M1 Pro has neither.
+- **Shapes:** fixed and enumerated shapes are compiled per shape. Flexible
+  shapes can run on the ANE from iOS 17.4 with `reshapeFrequency =
+  .infrequent`. No shape choice guarantees ANE placement, because
+  `cpuAndNeuralEngine` allows CPU fallback. Placement is therefore recorded
+  per arm and bucket with `MLComputePlan`.
+- **Decoder placement:** FluidAudio reports the decoder and joint running on
+  the CPU with 0.1-0.5 ms per call. This is to be confirmed with compute plans
+  and our own timings.
+- **Background:** iOS 26 can allow background GPU work through
+  continued-processing tasks, with an entitlement. This experiment is
+  foreground-only by scope.
+- **Repository precedent:** `custom/cpu-inference` and
+  `custom/inference-efficiency` used seeded random models, forced decoder
+  replay, dense twins, and bit-exact parity.
 
-Every arm is compared against **C0, the status quo**: FluidInference's
-published v2 Core ML conversion. It uses a fixed 15 s window, an encoder
-palettized with 6-bit k-means, FP16 compute, and decoder and joint as separate
-per-step Core ML calls. See "Implementation decisions".
+## Arms
 
-**A. Front end.** Log-mel features via the Core ML preprocessor (C0) versus
-Accelerate/vDSP on the CPU.
+**C0, the product baseline.** FluidInference's published
+`parakeet-tdt-0.6b-v2-coreml`, at a pinned revision and with its real weights:
+fixed 15 s window, encoder with 6-bit k-means palettes, FP16 compute, decoder
+and joint as separate per-step Core ML calls. It is what an app ships today.
+It is **not** a graph-only control (see G0).
 
-**B. Encoder length.** A fixed 15 s window (C0) versus a multifunction model with
-length buckets (initial set 2/4/8/15 s, padded up to the next bucket) that share
-weights. Things to check: weight residency when several functions are loaded,
-the per-bucket copy of the folded `linear_pos` table (~18 MB at 15 s), and that
-outputs match the 15 s window up to the masked tail.
+**G0, the graph control.** Our plain graph built from the real pinned v2 weights
+(B0), with the same 6-bit k-means settings as mobius `quantize_coreml.py`, the
+same shapes, precision, deployment target and runtime settings. G0 vs C0
+isolates graph differences; the remaining difference is k-means
+initialisation, which is reported.
 
-**C. Encoder weight format on the ANE.** All formats use FP16 activations except
-C5:
+**Encoder weight encodings (C).** All arms use FP16 activations except C5.
+"Exact" means that the weights the arm decompresses equal codes × FP16(scale)
+bit for bit. This is checked with coremltools' constexpr evaluation. Rounding
+the FP32 export scales to FP16 is measured as its own error term (see gates).
 
-- C1: FP16 dense
-- C2: 6-bit k-means. This is C0's weight format in our graph, so C2 vs C0 isolates graph differences.
-- C3: int8 per-channel, exact for ternary × row scale
-- C4: 2-bit LUT {-1,0,1} with one scale per row (`enable_per_channel_scale`), exact
-- C5: W8A8 (int8 activations, calibrated; speed only)
-- C6: sparse mask plus one palette per group of g rows (g = 8, 16). This needs
-  grouped-scale weights; a retraining variant is built only if C6 wins on device.
-- C7: per-row scale moved out of the weights. The weight is one per-tensor 2-bit
-  palette {-1, 0, +1}, so each tensor has a single LUT and no per-channel scale.
-  The scale is applied as an explicit per-channel multiply on the matmul output:
-  y = s ⊙ (C x). This needs no retraining. Risk: graph passes may fold the
-  multiply back into the constant weight. Check the compiled MIL for that.
-- C8: two binary planes. P = 1[w = +1] and N = 1[w = -1], each a per-tensor
-  1-bit palette {0, 1}, stacked into one [2·out, in] matmul, then split:
-  y = s ⊙ (P x − N x). This is the same arithmetic as C7 with twice the MACs.
-  It is included in case the ANE decodes 1-bit LUTs more cheaply than 2-bit ones.
+| Arm | Weight constexpr chain | LUT / index | Scale applied | Exact |
+| --- | --- | --- | --- | --- |
+| C1 | dense FP16 const (scale folded into weight) | none | in weight | FP16 product rounding |
+| C2 | `constexpr_lut_to_dense`, per-tensor 6-bit k-means | 1 LUT/tensor, 6-bit | in weight | no (product baseline format) |
+| C3 | `constexpr_blockwise_shift_scale`, int8 data = codes, per-row scale | none, int8 | at decompression | yes |
+| C4 | `constexpr_lut_to_dense` LUT {-1, 0, +1, 0} → `constexpr_blockwise_shift_scale` per-row | 1 LUT/tensor, 2-bit | at decompression | yes |
+| C7 | `constexpr_lut_to_dense` LUT {-1, 0, +1, 0}, then explicit `mul` by per-row scale on the matmul output | 1 LUT/tensor, 2-bit | after matmul | yes |
+| C8 | two planes P = [w = +1], N = [w = -1] stacked [2·out, in], `constexpr_lut_to_dense` LUT {0, 1}; output split, `sub`, `mul` | 1 LUT/tensor, 1-bit | after matmul | yes |
+| C6s(g) | `constexpr_lut_to_sparse` + `constexpr_sparse_to_dense`; per-grouped-channel LUT over g output rows holds the 2g values {±s_r}; zeros in the mask | 1 LUT per g rows; g = 2, 4, 8 → 2, 3, 4-bit | in LUT | yes |
+| C6d(g) | dense per-grouped-channel LUT {0, ±s_r}, 2g + 1 values | g = 4 → 4-bit, g = 8 → 6-bit | in LUT | yes |
+| C5 | C3 weights plus int8 activation quantization (calibrated) | int8 | — | exploratory only |
 
-**D. Encoder graph layout.** Our MIL graph comes in two layouts. The first is
-plain: it mirrors NeMo's ops, as C0's traced graph does. The second is laid out
-for the ANE: channels-first `(B, C, 1, T)`, linears as 1x1 conv2d, attention
-split per head, no rank-changing reshapes in the hot path. Arms C1-C8 use the
-plain layout. The ANE layout is crossed with the best two formats. Both layouts
-must pass the same parity gates against the FP32 reference.
+Notes on the encodings:
+- **C7/C8 numerics.** C7 and C8 change the numerics, not just the algebra.
+  Delaying the scale makes the intermediate sums larger, and C8 subtracts two
+  large sums. The FP16 ranges of those intermediates are recorded, and the
+  gates apply.
+- **C7 folding risk.** The C7 output multiply must survive conversion.
+  Tiny probes (one linear and one 1×1 conv) check, with a pinned pass
+  pipeline, whether `common::fuse_conv_scale` or another pass absorbs the
+  multiply into the weight. The serialized MIL is inspected. Folding inside
+  the device compiler cannot be observed; it is recorded as unresolved, and
+  timings speak for themselves.
 
-**E. Encoder on the GPU** (foreground only): Core ML GPU with 2-bit weights, and
-MLX Swift with 2-bit affine quantization (exact for ternary × row scale with
-q ∈ {0,1,2}, scale s, bias -s). A custom ternary Metal kernel is written only if
-the GPU arm beats the best ANE arm on device energy. Such a kernel (and G) would
-store two bit planes per weight, nonzero mask Z and sign S, with w = Z·(1 − 2S).
-With FP16 activations each weight then costs a sign-bit XOR, an AND with the
-mask, and one accumulate: y = s · Σ((x ⊕ S·0x8000) ∧ Z), with no multiplies and a
-single accumulator. The alternative planes P/N need two masks and two
-accumulators. For LUT-style CPU kernels the P/N split has its own advantage: one
-16-entry table of partial sums per group of 4 activations serves both planes,
-y = s · (Σ LUT[P nibble] − Σ LUT[N nibble]), which is T-MAC's bit-plane
-decomposition.
+**D. Graph layout.**
+- *Plain* mirrors NeMo's ops.
+- *ANE* uses channels-first `(B, C, 1, T)`, linears as 1×1 conv2d, attention
+  split per head, and no rank-changing reshapes in the hot path.
 
-**F. Decode loop.** Per-step Core ML decoder and joint calls (C0) versus a native
-CPU loop (Accelerate/BNNS or NEON, FP16/FP32). The native loop projects the
-encoder side of the joint for all T frames in one batched call before decoding,
-runs the prediction network only after a non-blank token, and fuses the
-prediction and joint steps.
+Every exact C arm is built in both layouts; Mac pruning only removes
+correctness or resource failures (see Stages).
 
-**G. Ternary CPU encoder kernel** (NEON dotprod/i8mm, T-MAC-style LUT). Deferred.
-The encoder is a GEMM over 25-188 rows, where published CPU LUT kernels lose
-their advantage. Revisit only if every ANE arm turns out to be compute-bound.
+**B. Encoder length.**
+- A fixed 15 s window (C0's contract).
+- A multifunction model with buckets of 2, 4, 8 and 15 s, sharing weights.
+- An enumerated-shape model with the same four shapes, as a control against
+  multifunction.
 
-## Benchmark weights and workload
+The padding and masking contract is specified in S0 and gated (see gates).
+Things to check:
+- that weights stay resident once when several functions are loaded;
+- the per-bucket copy of the folded `linear_pos` table.
 
-- **Random models.** A seeded generator draws ternary codes with the pilot export's
-  per-module code histogram and per-row scales from that export's scale
-  distribution. Floating-point modules use NeMo's initialisation, with norms and
-  biases drawn from the export's distribution. A grouped-scale variant is used
-  for C6. Each random model has a dense FP32 twin.
-- **Clips.** LibriSpeech dev-clean utterances bucketed by length (2/4/8/15 s, at
-  least 16 per bucket), fixed and hashed. Real speech keeps the front end and
-  padding realistic.
-- **Forced decoding.** The real pinned v2 model (B0) is run once per clip. Its
-  token and duration sequence is recorded, and every arm replays it. Every arm
-  therefore makes the same number of prediction and joint steps, whatever its
-  random weights would emit.
+**A. Front end.** Core ML preprocessor vs Accelerate/vDSP on the CPU. Both
+implement the complete NeMo feature contract for this model's config:
+- dither off at inference;
+- pre-emphasis;
+- STFT window and padding;
+- mel filterbank;
+- log guard;
+- per-feature normalization over **valid** frames only;
+- padding applied after normalization.
+
+**E. Encoder on the GPU** (foreground): Core ML on the GPU (C4 and C7
+encodings) and MLX Swift.
+- **MLX encoding.** MLX weights are built explicitly as q = C + 1 ∈ {0, 1, 2},
+  with scale s and bias -s repeated over every group of the row, at the
+  supported group size. The round trip to codes × scale must be exact; MLX's
+  own quantizer is not used.
+- **Custom Metal kernel.** Built only if a GPU arm beats the best ANE arm on
+  device energy.
+  - Planes: nonzero mask Z and sign S, with w = Z·(1 − 2S).
+  - Arithmetic per weight: reinterpret the FP16 activation's bits, XOR the
+    sign with S << 15, then AND with the mask expanded to 0x0000 or 0xFFFF.
+    Accumulate in FP32 and apply the row scale at the end.
+  - Unpacking, reductions and the final scaling count toward its cost; it is
+    not assumed free.
+  - A P/N LUT variant (T-MAC style, one 16-entry partial-sum table per 4
+    activations, shared by both planes) is the CPU-side alternative.
+
+**F. Decode loop.** The C0 contract (per-step Core ML decoder and joint calls),
+a fused decoder+joint Core ML call, and a native CPU loop (Accelerate/BNNS)
+that:
+- projects the encoder side of the joint for all frames in one batched call;
+- caches the prediction state;
+- fuses the prediction and joint steps.
+
+Arms share the same *logical* work, from the replay trace (below). Physical
+call counts differ by design and are reported.
+
+**G. Ternary CPU encoder kernel** (NEON dotprod/i8mm or LUT): deferred.
+Revisited only if the measured ANE and GPU placements make it plausible.
+
+## Surrogate models, clips and traces
+
+**Statistics.** Weight statistics come from the **selected recipe's** pilot
+export (P2, lr 5e-4): per-module code histograms, per-row FP32 scale
+quantiles, and per-tensor statistics for floating tensors. Normalization state
+is kept valid (positive BatchNorm variances, plausible LayerNorm gains).
+
+**Seeds.** Three surrogates (seeds 0, 1, 2) are generated deterministically on
+any machine, and per-tensor SHA-256 manifests are compared across Linux and
+macOS.
+
+**Limits.** Marginal statistics leave out spatial structure, inter-row
+correlations, and trained activation statistics. So surrogate rankings are
+confirmed with the trained export at S5, and C5 calibration on surrogates is
+for speed only.
+
+**Clips.** LibriSpeech dev-clean utterances:
+- 16 per bucket, plus boundary lengths placed just inside and outside each
+  bucket edge and around subsampling-stride boundaries;
+- a silence clip and an impulse clip;
+- selected by a committed manifest of IDs and SHA-256 hashes.
+
+**Replay trace.** The FP32 reference with the real B0 weights runs greedy TDT
+decoding on every clip and records the complete trace. Each step records:
+- the encoder frame index;
+- the prediction-net input token;
+- whether the step emitted blank or a token;
+- the duration;
+- the symbols-per-frame counter;
+- whether the prediction state was updated.
+
+Every arm replays this trace. Replay returns logits and LSTM states, so arms
+are compared before any decision is overridden. Each arm also decodes freely,
+reported separately.
 
 ## Correctness gates (before any timing)
 
-- **Format exactness.** For C3, C4 and the MLX format, the dequantized weights
-  equal the ternary codes × the FP16-rounded scales exactly.
-- **Arm vs FP32 twin.** On every clip, compare the encoder output's relative L2
-  and max-abs error. Tolerances are set from the FP16 dense arm's own error
-  against FP32 and recorded before the formats are compared. The replayed decode
-  steps produce the same argmax token and duration as the twin on at least 99.9%
-  of steps; the actual figure is reported.
-- **Rewrite vs NeMo.** The ANE-layout rewrite (D) matches NeMo FP32 to 1e-4
-  relative error, using random weights and B0 weights.
+Thresholds are fixed here, before any arm exists.
+
+1. **Reference vs NeMo.** Two comparisons, both on CPU in FP32:
+   - full depth with the real B0 weights;
+   - full depth with surrogate seed 0, using NeMo golden outputs saved on Linux.
+
+   Compared quantities: features; the subsampling output; every layer's
+   output; the encoder output; LSTM states; joint logits; and greedy tokens and
+   durations.
+
+   Ceilings for all of these: relative L2 ≤ 1e-5, max-abs ≤ 1e-4 × the tensor's
+   RMS, and identical greedy decisions.
+
+   Required: every output finite. An input-sensitivity check must change the
+   encoder output by at least 100× the parity error.
+2. **Exact encodings.** The decompressed weights equal codes × FP16(scale) bit
+   for bit. MLX: unpacked q − 1 == codes, with exact scale and bias.
+3. **FP16-scale term.** The FP32 reference is run with FP16-rounded scales, and
+   its encoder-output difference from the FP32-scale reference is reported.
+   This is the price of FP16 scales, separate from the encoding.
+4. **Arm vs FP32 reference** (same weights, FP16-rounded scales):
+   - Encoder output: relative L2 ≤ 2e-2 and max-abs ≤ 0.25 × RMS on every
+     clip and bucket.
+   - Replayed joint logits: relative L2 ≤ 2e-2. Argmax agreement on at least
+     99.5% of steps, with the distribution of logit margins reported so that
+     a degenerate model cannot pass on agreement alone.
+   - Every output finite; FP16 intermediate maxima recorded for C7 and C8.
+5. **Buckets vs full window.** On the valid frames, every bucket matches the
+   same arm's 15 s window output to within the gate-4 ceilings. This is
+   checked on the boundary-length, silence and impulse clips. Front end A
+   (vDSP) matches NeMo features to relative L2 ≤ 1e-5.
+6. **Graph and placement record.** For each arm and bucket the record holds:
+   the saved MIL (scale placement, constexpr chain); the `MLComputePlan`
+   device usage per operation; and the fallbacks.
 
 ## Measurements
 
-- **Latency:** per stage (front end, encoder, decode) and end to end, recorded
-  with `os_signpost` and `mach_absolute_time`. Report p50 and p95 per bucket after
-  warm-up.
-- **Load and size:** cold load (first load including ANE compilation, with the
-  Core ML cache cleared), warm load, first inference, peak `phys_footprint`, and
-  size on disk.
-- **Energy per utterance.** Workloads run in sustained windows (fixed number of
-  utterances, fixed cadence) alternating with idle windows in identical device
-  state. Energy per utterance = (P_run − P_idle) × window length / utterance
-  count, reported as the median over windows.
-  - Mac: from `macmon` (IOReport, no sudo) CPU/GPU/ANE/DRAM power.
-  - iPhone: system power from the Xcode Power Profiler over wireless debugging.
-    The phone must not be charging (charging makes system power read 0). The
-    profiler has no ANE track, so total system power is used. Settings: fixed
-    brightness, airplane mode, Low Power Mode off.
-- **Thermal state:** recorded per window; windows that are not in nominal thermal
-  state are flagged.
+**Timing boundary.** End to end runs from a 16 kHz PCM buffer in memory to the
+final token IDs on the CPU. It includes:
+- the front end;
+- all transfers;
+- the encoder, with its output materialized: `MLMultiArray` read, or
+  `mx.eval` plus synchronisation for MLX;
+- the joint pre-projection;
+- the decode loop.
+
+Per-stage times use `os_signpost` and `mach_absolute_time`.
+
+**Repetition and statistics** (fixed in advance):
+- 3 warm-up calls per clip and arm.
+- Timed calls: 10 per clip on the Mac, 5 on the phone.
+- Per clip, the median is taken. Per bucket, the median of clip medians
+  is reported.
+- p95 uses the Harrell–Davis estimator over the per-call pool. Confidence
+  intervals are 95% bootstrap intervals, clustered by clip and by session.
+- Gross and incremental values are both published.
+
+**Load.** Four separate quantities, per function and shape:
+1. Package compile time (`.mlpackage` to `.mlmodelc`).
+2. Uncached device specialization: the first load after a fresh install.
+   Verified: a second fresh install is uncached again, and a relaunch is not.
+3. Fresh-process cached load.
+4. First inference.
+
+Peak `phys_footprint` and size on disk are recorded too.
+
+**Energy, phone.** The instrument is validated in the S2 pilot before any
+comparison.
+- *Candidate instruments:*
+  - Power Profiler system power over wireless debugging, in % battery per
+    hour (a proxy, not watts);
+  - the battery gauge's instantaneous current and voltage, if they are
+    readable over the network via the diagnostics relay. To be verified; if
+    readable, it gives watts.
+- *Verification:* the export path, sampling resolution and units are
+  checked.
+- *Preregistered metric:* the incremental battery fraction per utterance,
+  converted to joules only if an absolute instrument is validated.
+- *Protocol:*
+  - a static black UI, fixed brightness, fixed radio settings;
+  - battery between 40 and 90% and not charging;
+  - randomized paired run/idle blocks, with idle blocks before and after;
+  - a fixed settling time;
+  - nominal thermal state only;
+  - a sham workload with identical cadence;
+  - one on-device Performance Trace check without the Mac attached.
+
+**Energy, Mac.** Not measured for claims. macmon 0.8.2 on macOS 27 / M1 Pro
+reports 0 W for the CPU while it is busy, and the Mac is shared. Only system
+power is logged, for information.
 
 ## Harness
 
 `ParakeetBench`, a Swift package with three parts:
-
-- a shared core: model loading, front end, decode loop, timing and energy-window
+- a shared core: model loading, front ends, decode loops, signposts, window
   scheduling;
-- a macOS command-line target, run on the M1 Pro over SSH, with no phone needed;
-- a minimal iOS app driven from the Mac with `xcrun devicectl` (install, launch
-  with arguments, copy the result JSON back) and `xcrun xctrace record` (Power
-  Profiler).
+- a macOS command-line target, run on the M1 Pro over SSH through `macguard`;
+- a minimal iOS app.
 
-Model generation and conversion run in Python (coremltools 9, PyTorch, NeMo) on
-the Mac, where models can be compiled and run. Results are committed; generated
-models stay outside Git.
+The phone is driven from the Mac with `xcrun devicectl` (install, launch with
+arguments, copy results back) and `xcrun xctrace record` (Power Profiler).
+
+Model generation, conversion and gates run in Python (`ios/pyenv`) on the Mac,
+one model or function at a time. Results and manifests are committed;
+models, weights and audio stay outside Git.
 
 ## Implementation decisions (S0)
 
-- **C0 is the real artifact.** It is FluidInference's published
-  `parakeet-tdt-0.6b-v2-coreml` at a pinned revision, unmodified, with real
-  weights. Execution cost does not depend on weight values (beyond C2's k-means
-  table, which is per-tensor either way), and forced replay equalises decoding.
-  This makes C0 exactly what an app would ship today, with no conversion work.
-- **Decode traces come from C0.** On each clip, C0 runs greedy TDT decoding with
-  real weights in our harness. The recorded token and duration sequence is the
-  replay trace for every arm. The trace only needs to be a realistic workload,
-  so B0 FP32 is not needed for it.
-- **Our arms are written directly as MIL programs** with coremltools' MIL
-  builder, from numpy weights. Nothing is traced from PyTorch. This keeps peak
-  memory near the size of the final weights rather than several FP32 copies,
-  which matters on a shared 16 GB Mac. It also makes the graph form explicit:
-  where C7's scale multiply sits, the layout for D, and the bucket shapes. Any
-  graph pass that would fold C7's scale into its weight is disabled and checked
-  in the saved MIL.
-- **FP32 reference model.** A pure-PyTorch implementation of the v2 architecture
-  (FastConformer with rel-pos attention, plus the TDT prediction and joint
-  networks). It is checked against NeMo on this machine at reduced depth
-  (2 layers, CPU, small enough not to count as a heavy job), with matching
-  outputs to 1e-5 relative. It then serves as the FP32 twin on the Mac. The MIL
-  arms are checked against it.
-- **Random-weight statistics** come from the pilot P3 export and are committed
-  as a small JSON file: per-module code histograms and the per-row scale
-  quantiles. Weights are regenerated from a seed on the Mac.
-- **Mac guard.** Every Mac job runs through `ios/macguard`, which:
-  - refuses to start if the system free-memory percentage is below 40% or
-    another guarded job holds the lock;
-  - runs the job under `nice`;
-  - kills the job's process tree if its total RSS exceeds a cap (default 6 GB);
-  - logs load average and the top CPU users for every timed window.
+- **C0** is the unmodified published artifact (pinned revision, hashed).
+- **Encoder arms are authored as MIL programs** from numpy weights with the
+  coremltools MIL builder, layer by layer. Before full models, one-layer
+  probes per encoding measure peak memory and conversion time, and the
+  probes are extrapolated to full depth before any full build.
+- **FP32 reference** (`ios/reference.py`): pure PyTorch, no NeMo, runs on
+  both machines.
+- **NeMo golden outputs** are made on Linux in a memory-capped CPU unit (the
+  GPU belongs to the training run).
+- **`ios/macguard`** wraps every Mac job:
+  - start conditions: system free memory at least 40% and no other guarded
+    job;
+  - runs under `nice`, with thread caps;
+  - kills the process tree when RSS goes over its cap or it runs past its
+    timeout;
+  - logs memory pressure and swap growth;
+  - records load average and the top CPU users per window.
 
-  The Mac is shared with other work, so Mac numbers are used only to check
-  function and prune arms, never for claims.
-- **Artifacts on the Mac** live in `/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/`,
-  outside any repository. LibriSpeech dev-clean is downloaded there from OpenSLR,
-  and clips are selected by a committed manifest of IDs and SHA-256 hashes.
-- **Python environment:** `ios/pyenv/` is a uv project with a committed
-  `uv.lock`, using Python 3.12, coremltools 9.0, PyTorch (CPU), numpy and
-  soundfile. MLX is added at stage S3 if E proceeds.
-- **Git:** branch `parakeet-ios` contains only `finetune/parakeet-ternary/ios/`.
-  The repository is public: no models, audio, credentials or tokens are
-  committed, and the Mac pulls the branch.
+  RSS polling can miss short peaks and system compiler services, so
+  conversions are sized from the probes with a 2× margin. A full FP32
+  reference and a converted arm are never held in memory at the same time.
+- **Artifacts on the Mac:** `/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/`.
+- **Python environment:** `ios/pyenv/`, a uv project with `uv.lock`: Python
+  3.12, coremltools 9.0, torch 2.7.0.
+- **Git:** branch `parakeet-ios`, containing only
+  `finetune/parakeet-ternary/ios/`. The repository is public, so nothing
+  committed may contain models, audio, credentials or tokens.
 
 ## Stages
 
-- **S0 Tooling (Mac only).** Set up the Python environment, the random-model
-  generator, decode traces, the harness skeleton and the correctness gates.
-- **S1 Mac sweep.** Run all arms on the M1 Pro. Use the results only to check
-  function and prune arms. The M1 Pro's ANE is a different generation, so no
-  claims are made from it.
-- **S2 Device session 1** (~30 min, phone untethered, user present and
-  approving). Run C0, C1, C3, C4, C5, C6 plus the best B/F combination, all four
-  buckets, latency and energy.
-- **S3 Kernel iteration** on whatever S2 shows (D rewrite, E GPU/MLX, C6 group
-  size), then device session 2.
-- **S4 Real weights.** Feed the M1 export through the chosen pipeline. Check that
-  transcripts are identical to the PyTorch export on the dev sets on the Mac, then
-  run a final device session.
+- **S0 Tooling (Mac and Linux).** Reference, golden outputs, surrogates,
+  clips and traces, macguard, one-layer probes (including the C7 folding
+  probe), the S0 recomputation of the workload table, and the harness
+  skeleton with C0 running.
+- **S1 Mac build and gates.** Every arm in C × D × B is built and gated. An
+  arm is dropped on the Mac only when it fails a correctness gate or a
+  resource limit (conversion over its memory cap, compile failure, or load
+  over 10 min). Mac latencies are recorded for information only.
+- **S2 Device pilot**, the first approved session, about 30 min. Goals:
+  - validate the energy instrument and the cold-load procedure;
+  - measure noise;
+  - smoke-test every surviving arm at the 4 s and 15 s buckets.
+- **S2b Preregistration.** Using the pilot's measured noise, commit the
+  confirmation matrix: arms, buckets, repetitions and number of sessions,
+  sized to the approved sessions. Every hypothesis the write-up claims gets
+  coverage on the phone; untested combinations are labelled.
+- **S3 Exploration.** Kernel and graph iteration (D, E, F, C6 group size) on
+  the Mac and in exploration sessions on the device. Results are reported as
+  exploration.
+- **S4 Confirmation.** Finalists are frozen, then the preregistered matrix
+  runs in fresh sessions. Selection uses only these data.
+- **S5 Trained weights.** The M1 export goes through the finalists. Free
+  decoding on the phone must match the PyTorch export's transcripts on the dev
+  clips (the gate-4 numerics, plus a transcript agreement rate that is
+  reported). The finalists are then measured again.
 
-## Decision rule
+## Decision rule (applied to S4 data only)
 
-Use the S2/S3 device numbers. Among arms that pass the correctness gates, choose
-the one with the lowest median energy per utterance, averaged equally over the
-four buckets. Its p95 end-to-end latency must not exceed C0's in any bucket, and
-its cold load must stay under 10 s after the first launch. Report every arm,
-including the losers.
+1. **Eligible:** exact encodings that pass every gate. C2-format arms other
+   than C0, C5, and any arm with an unresolved CPU fallback in the encoder
+   are exploratory.
+2. **Latency non-inferiority vs C0,** in every bucket: p50 end-to-end ≤ 1.05×
+   C0, and p95 ≤ 1.10× C0. Fresh-process cached load ≤ 5 s.
+3. **Energy improvement:** the incremental energy per utterance, averaged with
+   equal weight over the four buckets, must improve on C0 by at least 10%,
+   with the 95% clustered bootstrap CI of the improvement excluding zero.
+   Per-bucket results are always reported.
+4. **Selection:** among the arms that qualify, the lowest energy wins. If the
+   top arms' CIs overlap, the lower cached load wins, then the smaller size on
+   disk.
+5. **No qualifying arm:** C0 is retained and the result is reported as
+   inconclusive.
+6. **Reporting:** the full Pareto plot (energy vs p95 latency, per bucket),
+   including every losing arm.
+
+## Publication rules
+
+- Surrogate execution results are published separately from trained-model
+  quality and performance.
+- Each published result carries:
+  - source permalinks;
+  - artifact hashes;
+  - toolchain, OS and device versions;
+  - compression settings;
+  - the raw observations.
+- Exploration and confirmation are labelled.
 
 ## Open questions
 
-1. Resolved 2026-10-02: transcription runs only in the foreground with the screen
-   on. The GPU arms (E) stay in. The display draws power in every arm equally, so
-   it cancels in the run-minus-idle energy difference.
-2. Resolved 2026-10-02: push branches to GitHub and pull them on the Mac. The
-   Mac is shared with other work, so jobs there must stay light (see Mac guard).
-3. Resolved 2026-10-02: installing macmon (Homebrew) and a reproducible Python
-   environment is approved. sudo is not needed by any planned step.
+All resolved, 2026-10-02:
+1. **Background:** foreground only, screen on; the GPU arms stay in.
+2. **Code transfer:** push branches to GitHub and pull them on the Mac. The Mac
+   is shared with other work, so jobs there stay light.
+3. **Installs:** macmon (Homebrew) and the uv environment are approved; no
+   planned step needs sudo.
+
+## Review r1 (Codex gpt-6-astra xhigh, 2026-10-02): resolution
+
+The review is at `/mnt/hd/wilderness-labs-stt/parakeet-ios/reviews/design-r1.md`.
+
+| # | Finding | Resolution |
+| --- | --- | --- |
+| 1 | The parity chain could certify a shared bug | Gate 1: full-depth NeMo goldens (real and surrogate weights, intermediates), fixed ceilings, sensitivity check |
+| 2 | Eligibility contradicted the scope | Exploratory class; S5 decoding on the phone |
+| 3 | C2 vs C0 did not isolate the graph | G0 control; C0 kept as the product baseline |
+| 4 | Surrogate representativeness | P2 statistics, valid norms, 3 seeds, limits documented, S5 confirmation |
+| 5 | Incomplete replay trace | Full trace, logits and states compared, free decoding separate, logical vs physical work |
+| 6 | "Exact" vs FP32 scales | Gate 3 FP16-scale term; explicit C3 and MLX construction; exact round trips |
+| 7 | C4 is already one LUT | Constexpr chains in the arm table |
+| 8 | Exact grouped palettes are possible | C6s/C6d exact, no retraining |
+| 9 | C7 folding | Probes, pinned passes, MIL inspection; device folding labelled unresolved |
+| 10 | C7/C8 numerics; Metal formula | Intermediate ranges recorded; mask-expansion formula; costs counted |
+| 11 | Front-end and bucket gates | Full feature contract; gate 5 with boundary, silence and impulse clips |
+| 12 | Dimensions | Joint 1,030; allocated vs valid frames; S0 recomputation |
+| 13 | Categorical placement claims | Claims qualified; MLComputePlan record; enumerated-shape control |
+| 14 | Background GPU claim | Qualified; foreground by scope |
+| 15 | Roofline | Relabelled as a hypothesis with its assumptions |
+| 16 | Energy units | Instrument validation in S2; preregistered metric |
+| 17 | Subtraction confounds | Paired randomized blocks, bracketing, sham, settling, thermal and battery rules |
+| 18 | Timing boundaries and statistics | Boundary defined; repetitions and estimators fixed |
+| 19 | Cold-load definitions | Four separate quantities |
+| 20 | Pruning could drop the phone winner | Mac prunes only on failures; phone coverage rule |
+| 21 | Noise-driven selection | Non-inferiority, threshold, CI, ties, fallback to C0, confirmation only |
+| 22 | Mac guard bound | Probes first, one model at a time, swap and pressure monitoring, 2× margin |
+| 23 | Phone session budget | S2 pilot; matrix sized from noise in S2b |
+| 24 | Provenance | `references.md`; corrected readings of redux and Phonon-2 |
