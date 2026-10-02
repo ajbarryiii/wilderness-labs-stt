@@ -1,8 +1,8 @@
 # Parakeet-TDT 0.6B v2 on iPhone 15 Pro: inference pipeline and benchmarks
 
-Status: **revision 2, after Codex design review r1 (2026-10-02). S0 approved
-by the user; nothing benchmarked yet.** Review findings and their resolution
-are listed at the end.
+Status: **revision 3, after Codex reviews r1 and r2 (2026-10-02). S0 approved
+by the user and cleared by review r2; nothing benchmarked yet.** Review
+findings and their resolutions are listed at the end.
 
 ## Goal and scope
 
@@ -122,11 +122,13 @@ fixed 15 s window, encoder with 6-bit k-means palettes, FP16 compute, decoder
 and joint as separate per-step Core ML calls. It is what an app ships today.
 It is **not** a graph-only control (see G0).
 
-**G0, the graph control.** Our plain graph built from the real pinned v2 weights
-(B0), with the same 6-bit k-means settings as mobius `quantize_coreml.py`, the
-same shapes, precision, deployment target and runtime settings. G0 vs C0
-isolates graph differences; the remaining difference is k-means
-initialisation, which is reported.
+**G0, the graph control.** Our plain graph with **C0's own compressed encoder
+tensors**: the 6-bit LUTs and indices are taken from C0's compiled weight file.
+G0 uses the same shapes, precision, deployment target and runtime settings as
+C0, so G0 vs C0 isolates the graph.
+- *Fallback:* if extracting the tensors proves infeasible, G0 is built instead
+  from the real pinned v2 weights (B0) with mobius `quantize_coreml.py`'s
+  k-means settings. It is then labelled as differing in weights as well.
 
 **Encoder weight encodings (C).** All arms use FP16 activations except C5.
 "Exact" means that the weights the arm decompresses equal codes × FP16(scale)
@@ -135,7 +137,7 @@ the FP32 export scales to FP16 is measured as its own error term (see gates).
 
 | Arm | Weight constexpr chain | LUT / index | Scale applied | Exact |
 | --- | --- | --- | --- | --- |
-| C1 | dense FP16 const (scale folded into weight) | none | in weight | FP16 product rounding |
+| C1 | dense FP16 const (scale folded into weight) | none | in weight | yes (±FP16(s) is exact) |
 | C2 | `constexpr_lut_to_dense`, per-tensor 6-bit k-means | 1 LUT/tensor, 6-bit | in weight | no (product baseline format) |
 | C3 | `constexpr_blockwise_shift_scale`, int8 data = codes, per-row scale | none, int8 | at decompression | yes |
 | C4 | `constexpr_lut_to_dense` LUT {-1, 0, +1, 0} → `constexpr_blockwise_shift_scale` per-row | 1 LUT/tensor, 2-bit | at decompression | yes |
@@ -145,11 +147,24 @@ the FP32 export scales to FP16 is measured as its own error term (see gates).
 | C6d(g) | dense per-grouped-channel LUT {0, ±s_r}, 2g + 1 values | g = 4 → 4-bit, g = 8 → 6-bit | in LUT | yes |
 | C5 | C3 weights plus int8 activation quantization (calibrated) | int8 | — | exploratory only |
 
+Every arm declares, in its build manifest:
+- the MIL opset (iOS18 or later; all of these ops are available at the iOS26
+  target);
+- the literal shape and dtype of every constexpr input: LUT, indices, mask,
+  scale, offset;
+- for C6s, both outputs of `constexpr_lut_to_sparse` wired into
+  `constexpr_sparse_to_dense`;
+- the byte overhead of masks, LUTs and scales.
+
 Notes on the encodings:
 - **C7/C8 numerics.** C7 and C8 change the numerics, not just the algebra.
   Delaying the scale makes the intermediate sums larger, and C8 subtracts two
-  large sums. The FP16 ranges of those intermediates are recorded, and the
-  gates apply.
+  large sums.
+  - Core ML does not expose accumulation precision; it belongs to the backend
+    and is recorded as such.
+  - *Stress cases:* inputs scaled to 8× and 64× clip RMS, and adversarial
+    rows (all +1, and alternating long ±1 runs) in a one-layer probe. Any inf
+    or NaN fails the arm. The intermediate maxima are recorded.
 - **C7 folding risk.** The C7 output multiply must survive conversion.
   Tiny probes (one linear and one 1×1 conv) check, with a pinned pass
   pipeline, whether `common::fuse_conv_scale` or another pass absorbs the
@@ -239,10 +254,12 @@ for speed only.
 - selected by a committed manifest of IDs and SHA-256 hashes.
 
 **Replay trace.** The FP32 reference with the real B0 weights runs greedy TDT
-decoding on every clip and records the complete trace. Each step records:
+decoding on every clip and records the complete trace. Initialization matches
+NeMo GreedyTDTInfer: zero LSTM state and the blank/SOS input token, reset for
+every utterance. Each step records:
 - the encoder frame index;
 - the prediction-net input token;
-- whether the step emitted blank or a token;
+- whether the step emitted blank or a token, and the emitted token ID;
 - the duration;
 - the symbols-per-frame counter;
 - whether the prediction state was updated.
@@ -253,40 +270,72 @@ reported separately.
 
 ## Correctness gates (before any timing)
 
-Thresholds are fixed here, before any arm exists.
+Thresholds are fixed here, before any arm exists. **Error definitions,** for
+an output a and its reference r of n elements:
+- `rel(a, r) = ‖a − r‖₂ / max(‖r‖₂, τ·√n)`, where the floor τ is 1e-6 for
+  FP32 comparisons and 1e-3 for FP16 arms. This keeps zero-norm references
+  defined.
+- `abs(a, r) = max|a − r| / max(RMS(r), τ)`.
+- Both must pass.
 
 1. **Reference vs NeMo.** Two comparisons, both on CPU in FP32:
    - full depth with the real B0 weights;
    - full depth with surrogate seed 0, using NeMo golden outputs saved on Linux.
 
    Compared quantities: features; the subsampling output; every layer's
-   output; the encoder output; LSTM states; joint logits; and greedy tokens and
-   durations.
+   output; the encoder output; LSTM h and c; token and duration logits; and
+   greedy tokens and durations.
 
-   Ceilings for all of these: relative L2 ≤ 1e-5, max-abs ≤ 1e-4 × the tensor's
-   RMS, and identical greedy decisions.
+   Ceilings for all of these: rel ≤ 1e-5, abs ≤ 1e-4, identical decisions, and
+   every output finite.
 
-   Required: every output finite. An input-sensitivity check must change the
-   encoder output by at least 100× the parity error.
-2. **Exact encodings.** The decompressed weights equal codes × FP16(scale) bit
-   for bit. MLX: unpacked q − 1 == codes, with exact scale and bias.
+   *Sensitivity:* a fixed perturbation of the input (+1% white noise at a
+   fixed seed) must change the encoder output by rel ≥ 1e-2, and by at least
+   100× the measured parity error. A constant or degenerate model fails this.
+2. **Exact encodings.** Exactness is checked on the **effective matrix**
+   rebuilt from the arm's constexpr outputs:
+   - C3 and C4: the decompressed weights;
+   - C7: diag(FP16(s)) · C;
+   - C8: diag(FP16(s)) · (P − N);
+   - C6s and C6d: the decompressed grouped palette;
+   - MLX: (q − 1) · s.
+
+   Each must equal codes × FP16(s) bit for bit. Execution error is gated
+   separately (gate 4).
 3. **FP16-scale term.** The FP32 reference is run with FP16-rounded scales, and
-   its encoder-output difference from the FP32-scale reference is reported.
-   This is the price of FP16 scales, separate from the encoding.
-4. **Arm vs FP32 reference** (same weights, FP16-rounded scales):
-   - Encoder output: relative L2 ≤ 2e-2 and max-abs ≤ 0.25 × RMS on every
-     clip and bucket.
-   - Replayed joint logits: relative L2 ≤ 2e-2. Argmax agreement on at least
-     99.5% of steps, with the distribution of logit margins reported so that
-     a degenerate model cannot pass on agreement alone.
-   - Every output finite; FP16 intermediate maxima recorded for C7 and C8.
+   its difference from the FP32-scale reference is reported per output. This
+   is the price of FP16 scales, separate from the encoding.
+4. **Arm vs FP32 reference** (same weights, FP16-rounded scales, matched
+   replay):
+   - *Encoder output:* rel ≤ 2e-2 and abs ≤ 0.25, on every clip and bucket.
+   - *TDT heads,* gated separately, each with rel ≤ 2e-2:
+     - token logits, including blank;
+     - duration logits;
+     - LSTM h and c.
+   - *Decision agreement:* token argmax and duration argmax each agree on at
+     least 99.5% of the **decisive** steps. A step is decisive when the
+     reference's top-1 margin for that head exceeds 4× the arm's logit error
+     on that step. At least 50% of steps must be decisive per head, otherwise
+     the comparison fails as degenerate.
+   - Margin distributions are reported. Every output must be finite.
 5. **Buckets vs full window.** On the valid frames, every bucket matches the
    same arm's 15 s window output to within the gate-4 ceilings. This is
    checked on the boundary-length, silence and impulse clips. Front end A
-   (vDSP) matches NeMo features to relative L2 ≤ 1e-5.
-6. **Graph and placement record.** For each arm and bucket the record holds:
-   the saved MIL (scale placement, constexpr chain); the `MLComputePlan`
-   device usage per operation; and the fallbacks.
+   (vDSP) matches NeMo features to rel ≤ 1e-5.
+
+   The S0 masking contract fixes, and the gate checks:
+   - the real and padded lengths at every stage;
+   - the attention key mask;
+   - zeroing of padded frames before each depthwise conv;
+   - relative-position indexing relative to the padded length.
+6. **Placement.** For each arm and bucket the record holds:
+   - the saved MIL (scale placement, constexpr chain);
+   - the `MLComputePlan` device usage per operation;
+   - an execution trace from the Instruments Core ML template, showing actual
+     placement, transfers and fallbacks;
+   - the "prepare and cache" vs "cached" load events.
+
+   The compute plan alone does not establish placement.
 
 ## Measurements
 
@@ -304,16 +353,25 @@ Per-stage times use `os_signpost` and `mach_absolute_time`.
 **Repetition and statistics** (fixed in advance):
 - 3 warm-up calls per clip and arm.
 - Timed calls: 10 per clip on the Mac, 5 on the phone.
-- Per clip, the median is taken. Per bucket, the median of clip medians
-  is reported.
-- p95 uses the Harrell–Davis estimator over the per-call pool. Confidence
-  intervals are 95% bootstrap intervals, clustered by clip and by session.
+- Two estimands, reported separately:
+  - *typical latency:* the median over clips of each clip's median;
+  - *tail latency:* the Harrell–Davis p95 over the pooled calls of a bucket.
+- Comparisons with C0 are **paired**. On the phone, each arm's blocks are
+  interleaved with C0 blocks in the same session. Ratios and differences are
+  formed per clip (latency) and per block pair (energy).
+- Resampling is a bootstrap that keeps pairs together, clustered by session
+  and clip.
+- Device measurements use surrogate seed 0. The pilot repeats two arms with
+  seed 1. If the seed effect exceeds the pilot noise, seeds become a cluster
+  level and every arm is run with all three.
 - Gross and incremental values are both published.
 
 **Load.** Four separate quantities, per function and shape:
 1. Package compile time (`.mlpackage` to `.mlmodelc`).
 2. Uncached device specialization: the first load after a fresh install.
-   Verified: a second fresh install is uncached again, and a relaunch is not.
+   Each such load must show a "prepare and cache" event in the Instruments
+   Core ML trace, and each cached load a "cached" event. A reinstall alone is
+   not taken as proof that the cache was evicted.
 3. Fresh-process cached load.
 4. First inference.
 
@@ -335,7 +393,12 @@ comparison.
   - a static black UI, fixed brightness, fixed radio settings;
   - battery between 40 and 90% and not charging;
   - randomized paired run/idle blocks, with idle blocks before and after;
-  - a fixed settling time;
+  - 60 s settling before each block;
+  - post-run idle windows start 30 s after the run ends, and an idle window
+    is rejected if its power exceeds the session's pre-run idle mean by more
+    than 3 SD;
+  - device thermal state and battery temperature recorded per block; room
+    temperature 18-28 °C, noted by hand;
   - nominal thermal state only;
   - a sham workload with identical cadence;
   - one on-device Performance Trace check without the Mac attached.
@@ -379,6 +442,10 @@ models, weights and audio stay outside Git.
   - logs memory pressure and swap growth;
   - records load average and the top CPU users per window.
 
+  The guard **aborts** a job when system free memory falls below 25% or swap
+  grows by more than 1 GB during the job. Every job declares an RSS cap and a
+  timeout.
+
   RSS polling can miss short peaks and system compiler services, so
   conversions are sized from the probes with a 2× margin. A full FP32
   reference and a converted arm are never held in memory at the same time.
@@ -402,7 +469,12 @@ models, weights and audio stay outside Git.
 - **S2 Device pilot**, the first approved session, about 30 min. Goals:
   - validate the energy instrument and the cold-load procedure;
   - measure noise;
-  - smoke-test every surviving arm at the 4 s and 15 s buckets.
+  - measure C0, C1, C4, C7 and C6s(8) (plain layout) at the 4 s and 15 s
+    buckets, plus the seed-1 repeat;
+  - run every other surviving arm once, to check that it loads and gives a
+    result on the phone, with its compute plan.
+
+  Anything that does not fit is deferred and labelled.
 - **S2b Preregistration.** Using the pilot's measured noise, commit the
   confirmation matrix: arms, buckets, repetitions and number of sessions,
   sized to the approved sessions. Every hypothesis the write-up claims gets
@@ -410,30 +482,40 @@ models, weights and audio stay outside Git.
 - **S3 Exploration.** Kernel and graph iteration (D, E, F, C6 group size) on
   the Mac and in exploration sessions on the device. Results are reported as
   exploration.
-- **S4 Confirmation.** Finalists are frozen, then the preregistered matrix
-  runs in fresh sessions. Selection uses only these data.
-- **S5 Trained weights.** The M1 export goes through the finalists. Free
-  decoding on the phone must match the PyTorch export's transcripts on the dev
-  clips (the gate-4 numerics, plus a transcript agreement rate that is
-  reported). The finalists are then measured again.
+- **S4 Shortlist.** The preregistered matrix runs in fresh sessions with
+  surrogates and matched replay. It produces a shortlist of at most 3
+  finalists, the arms that meet the qualification criteria below on surrogate
+  data. It does not choose the deployment arm.
+- **S5 Trained weights.** The M1 export goes through the finalists and C0's
+  pipeline.
+  - *Acceptance on the phone:* gate 4 with the trained weights, plus free
+    decoding on the dev clips. Its WER may differ from the PyTorch export's
+    WER on the same clips by at most +0.2 points.
+  - *Final measurement:* an independent session, with production free
+    decoding.
+  - S5 results override S4.
 
-## Decision rule (applied to S4 data only)
+## Decision rule (applied to S5 data; S4 applies it to surrogates to shortlist)
 
-1. **Eligible:** exact encodings that pass every gate. C2-format arms other
-   than C0, C5, and any arm with an unresolved CPU fallback in the encoder
-   are exploratory.
-2. **Latency non-inferiority vs C0,** in every bucket: p50 end-to-end ≤ 1.05×
-   C0, and p95 ≤ 1.10× C0. Fresh-process cached load ≤ 5 s.
-3. **Energy improvement:** the incremental energy per utterance, averaged with
-   equal weight over the four buckets, must improve on C0 by at least 10%,
-   with the 95% clustered bootstrap CI of the improvement excluding zero.
-   Per-bucket results are always reported.
-4. **Selection:** among the arms that qualify, the lowest energy wins. If the
-   top arms' CIs overlap, the lower cached load wins, then the smaller size on
-   disk.
-5. **No qualifying arm:** C0 is retained and the result is reported as
+1. **Eligible:** exact encodings that pass every gate and the S5 acceptance
+   rule. Exploratory arms cannot win: C2-format arms other than C0, C5, and
+   any arm with an unresolved CPU fallback in the encoder.
+2. **Multiplicity:** with k finalists compared against C0, every bound below is
+   a one-sided (1 − 0.05/k) bootstrap bound (Bonferroni).
+3. **Latency non-inferiority vs C0,** in every bucket, using paired per-clip
+   ratios: the upper bound of the typical-latency ratio is at most 1.05, and
+   the upper bound of the p95 ratio is at most 1.10. Fresh-process cached load
+   is at most 5 s.
+4. **Energy:** the improvement over C0 in incremental energy per utterance,
+   averaged with equal weight over the four buckets. Its **lower** bound must
+   be at least 10%. Per-bucket results are always reported.
+5. **Selection:** among qualifying arms, the lowest point estimate of energy
+   wins, unless the paired difference with the runner-up lies entirely within
+   ±5% (equivalence). In that case the lower cached load wins, then the
+   smaller size on disk.
+6. **No qualifying arm:** C0 is retained and the result is reported as
    inconclusive.
-6. **Reporting:** the full Pareto plot (energy vs p95 latency, per bucket),
+7. **Reporting:** the full Pareto plot (energy vs p95 latency, per bucket),
    including every losing arm.
 
 ## Publication rules
@@ -456,6 +538,34 @@ All resolved, 2026-10-02:
    is shared with other work, so jobs there stay light.
 3. **Installs:** macmon (Homebrew) and the uv environment are approved; no
    planned step needs sudo.
+
+## Review r2 (2026-10-02): resolution
+
+Review file: `/mnt/hd/wilderness-labs-stt/parakeet-ios/reviews/design-r2.md`.
+- **Verdict:** S0 may proceed.
+- **r1 items marked partial:**
+  - 2: S5 overrides S4; S5 acceptance threshold set.
+  - 3: G0 uses C0's own tensors.
+  - 5: init/reset semantics and emitted IDs; state ceilings.
+  - 7: per-arm build manifest of opset, shapes and dtypes.
+  - 10: stress cases; accumulation is backend-defined.
+  - 11: masking contract listed.
+  - 13: Instruments execution traces.
+  - 17: settling, idle rejection, temperatures.
+  - 18: paired resampling, seeds, two estimands.
+  - 19: "prepare and cache" events.
+  - 21: bounds with Bonferroni, equivalence tie rule.
+  - 22: guard aborts.
+  - 23: pilot budget.
+  - 24: `references.md` is an S0 deliverable.
+- **New findings:**
+  - selection now rests on S5;
+  - gate 2 is defined on effective matrices (C1 is exact);
+  - degenerate thresholds fixed with norm floors and a positive sensitivity
+    floor;
+  - TDT token and duration heads gated separately;
+  - qualification uses paired bounds;
+  - the decision dataset is defined: S4 matched replay, S5 free decoding.
 
 ## Review r1 (Codex gpt-6-astra xhigh, 2026-10-02): resolution
 
