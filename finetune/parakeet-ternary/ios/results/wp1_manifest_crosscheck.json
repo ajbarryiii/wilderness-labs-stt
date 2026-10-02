@@ -1,0 +1,65 @@
+{
+ "seeds": {
+  "0": {
+   "tensors": 989,
+   "tensors_equal": 989,
+   "identical": true,
+   "weight_stats_sha256": "e4580c746c533b66d3e395ebba37ffb58d4bf0d6a3cfc1ccf1827963e8a2bd17",
+   "machines": [
+    {
+     "platform": "Linux-6.18.36-x86_64-with-glibc2.42",
+     "numpy": "2.4.4",
+     "python": "3.13.13",
+     "digest": "75e0503b99e43b8206f7e0882eebff1924e94fc68f0a13f17c25fab31ff861db"
+    },
+    {
+     "platform": "macOS-27.0-arm64-arm-64bit",
+     "numpy": "2.2.6",
+     "python": "3.12.14",
+     "digest": "75e0503b99e43b8206f7e0882eebff1924e94fc68f0a13f17c25fab31ff861db"
+    }
+   ]
+  },
+  "1": {
+   "tensors": 989,
+   "tensors_equal": 989,
+   "identical": true,
+   "weight_stats_sha256": "e4580c746c533b66d3e395ebba37ffb58d4bf0d6a3cfc1ccf1827963e8a2bd17",
+   "machines": [
+    {
+     "platform": "Linux-6.18.36-x86_64-with-glibc2.42",
+     "numpy": "2.4.4",
+     "python": "3.13.13",
+     "digest": "36eeab3b668bc38cb1ddf6726fd05349585a37715255136dea185c2ca0ac9b42"
+    },
+    {
+     "platform": "macOS-27.0-arm64-arm-64bit",
+     "numpy": "2.2.6",
+     "python": "3.12.14",
+     "digest": "36eeab3b668bc38cb1ddf6726fd05349585a37715255136dea185c2ca0ac9b42"
+    }
+   ]
+  },
+  "2": {
+   "tensors": 989,
+   "tensors_equal": 989,
+   "identical": true,
+   "weight_stats_sha256": "e4580c746c533b66d3e395ebba37ffb58d4bf0d6a3cfc1ccf1827963e8a2bd17",
+   "machines": [
+    {
+     "platform": "Linux-6.18.36-x86_64-with-glibc2.42",
+     "numpy": "2.4.4",
+     "python": "3.13.13",
+     "digest": "328667d61b3b62b5c85e97932a1afa4f122c2bf86ec44c4ed43bdf1e6b50c9a7"
+    },
+    {
+     "platform": "macOS-27.0-arm64-arm-64bit",
+     "numpy": "2.2.6",
+     "python": "3.12.14",
+     "digest": "328667d61b3b62b5c85e97932a1afa4f122c2bf86ec44c4ed43bdf1e6b50c9a7"
+    }
+   ]
+  }
+ },
+ "all_identical": true
+}
