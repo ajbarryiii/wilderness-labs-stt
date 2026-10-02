@@ -78,7 +78,10 @@ CUDA_VISIBLE_DEVICES= ./python ios/c0.py pin                    # writes ios/c0.
 ios/macguard --rss-cap 1G --timeout 3600 -- sh -c 'curl -fsSL -o $A/data/dev-clean.tar.gz https://www.openslr.org/resources/12/dev-clean.tar.gz \
     && ios/pyenv/.venv/bin/python ios/c0.py download --out $A/c0'
 ios/macguard --rss-cap 1G --timeout 600 -- ios/pyenv/.venv/bin/python ios/clips.py materialize --out $A/clips
-(cd ios/bench && ../macguard --rss-cap 4G --timeout 900 -- swift build -c release)
+# macguard runs under the /usr/bin/python3 shim, which exports SDKROOT = the Command Line Tools SDK (Swift 6.4 on
+# this Mac) into the job; pin Xcode's SDK so it matches Xcode's Swift 6.3.1 compiler
+S=$(xcrun --sdk macosx --show-sdk-path)
+(cd ios/bench && ../macguard --rss-cap 4G --timeout 900 -- env SDKROOT=$S swift build -c release)
 B=ios/bench/.build/release/parakeet-bench
 ios/macguard --rss-cap 4G --timeout 1800 -- $B run --mode free --models $A/c0 --clips ios/clips.json --pcm $A/clips \
     --kinds natural --warmups 3 --timed 1 --out $A/results/c0-free-natural.jsonl   # smoke; the protocol default is --timed 10
@@ -111,7 +114,15 @@ Results (2026-10-02; Mac = M1 Pro, macOS 27.0, Swift 6.3.1; Mac timings are info
   - Encoder: 1,379 of 1,385 placed ops prefer the ANE (99.95% of estimated cost). The 6 CPU ops are 4 `cast`, 1 `expand_dims` and 1 `less`, i.e. input and length handling.
   - Decoder (24 ops) and JointDecision (21 ops) prefer the CPU entirely, as does the preprocessor.
   - The plan is not proof of placement (DESIGN.md gate 6).
-- **Replay.** An early 3-clip replay smoke run was not retained as raw evidence, so it is not reported. It is superseded by the diagnostic replay smoke below.
+- **Replay, diagnostic smoke** (`results/smoke/c0_replay_diag_smoke.summary.json`; raw records and arrays in the artifact directories). Run on 2 clips, `n15-2412-153947-0005` and `b04-N32001`, with 3 warm-up calls, 1 timed call and the untimed diagnostic pass:
+  - All 82 traces validated before the run.
+  - Physical calls equal the trace's logical work: 129 joint calls = 129 steps, and 127 decoder calls = 127 prediction-net runs.
+  - Frame difference: C0's encoder_length is B0's frames + 1 for both clips, and the effective frames differ by 0 or 1, as allowed.
+  - Agreement of C0's own argmax with B0's decisions:
+    - natural 15 s clip: 98/99 tokens and 90/99 durations;
+    - `b04-N32001`, the crop that hits the max-symbols loop: 23/30 tokens and 23/30 durations.
+  - Diagnostic arrays: SHA-256 verified on NixOS, all finite, one distinct h state per decoder call.
+  - An early 3-clip replay smoke run was not kept as raw evidence; this run supersedes it.
 
 C0 deviates from NeMo/B0 in three places. These are properties of the published pipeline, reproduced here, not harness bugs:
 1. **One extra valid mel frame.** C0's preprocessor reports `mel_length = N // 160 + 1`, where NeMo has `N // 160`. With FluidAudio's `ceil(N / 1280)`, 5 of the 64 natural clips decode one more encoder frame than B0.
