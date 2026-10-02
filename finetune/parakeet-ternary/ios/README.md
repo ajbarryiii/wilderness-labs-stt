@@ -13,7 +13,7 @@ outputs and logs live outside Git (NixOS `/mnt/hd/wilderness-labs-stt/parakeet-i
 | `randomweights.py` | Seeded surrogate models from `weight_stats.json` (LayerNorm biases 0), bit-identical on Linux and macOS (per-tensor SHA-256 manifest), streamed to safetensors. |
 | `models.py` | The benchmark models by name as reference models: `b0` (NVIDIA's .nemo), `mp2` (M_P2, the pilot P2 export, the primary model), `seed0`-`seed2` (surrogates). |
 | `golden.py` | NeMo FP32 golden outputs of a full-depth benchmark model (`--model seed0` or `mp2`, NixOS) and the gate-1 comparison `compare()`. |
-| `macguard` | Wrapper for every Mac job (Python, the Mac's `/usr/bin/python3`, stdlib only): start conditions, flock lock held through cleanup, own session and process group, RSS cap, timeout, memory and swap aborts, fail-closed probes, TERM→KILL until the group is verifiably empty, logging. Exit: the job's status; 124 if the guard aborted it; 130 interrupted; 3 refused; 2 usage; 125 internal. |
+| `macguard` (sh front end) + `macguard.py` | Wrapper for every Mac job (Python, the Mac's `/usr/bin/python3`, stdlib only): start conditions, flock lock held through cleanup, a sentinel and a gated launch handshake (the job registers itself before it can run), own session and process group, RSS cap, timeout, memory and swap aborts, sentinel-loss abort, fail-closed probes and finalization, TERM→KILL until the group is verifiably empty, hand-over to a lock-holding watcher otherwise, logging. The job runs in the caller's exact environment (the front end undoes what the python3 shim injects, e.g. SDKROOT). Exit: the job's status; 124 if the guard aborted it; 130 interrupted; 3 refused; 2 usage; 125 machinery failure (never 0). **Accepted residual risk:** if both the supervisor and the sentinel are SIGKILLed and the job closes inherited descriptors, containment is lost. `tests/macguard_tests.sh` asserts every behaviour (exit status = number of failed checks), including fault injection via `MACGUARD_TEST_FAULT`. |
 | `artifacts.py` | Allowed artifact locations; every writer refuses paths off `/mnt/hd` (Linux), outside the artifacts directory (Mac) or inside the repository. |
 
 Commands (NixOS from `finetune/parakeet-ternary/`, one memory-capped unit at a time; `R` is the
@@ -78,10 +78,7 @@ CUDA_VISIBLE_DEVICES= ./python ios/c0.py pin                    # writes ios/c0.
 ios/macguard --rss-cap 1G --timeout 3600 -- sh -c 'curl -fsSL -o $A/data/dev-clean.tar.gz https://www.openslr.org/resources/12/dev-clean.tar.gz \
     && ios/pyenv/.venv/bin/python ios/c0.py download --out $A/c0'
 ios/macguard --rss-cap 1G --timeout 600 -- ios/pyenv/.venv/bin/python ios/clips.py materialize --out $A/clips
-# macguard runs under the /usr/bin/python3 shim, which exports SDKROOT = the Command Line Tools SDK (Swift 6.4 on
-# this Mac) into the job; pin Xcode's SDK so it matches Xcode's Swift 6.3.1 compiler
-S=$(xcrun --sdk macosx --show-sdk-path)
-(cd ios/bench && ../macguard --rss-cap 4G --timeout 900 -- env SDKROOT=$S swift build -c release)
+(cd ios/bench && ../macguard --rss-cap 4G --timeout 900 -- swift build -c release)  # job sees the caller's env
 B=ios/bench/.build/release/parakeet-bench
 ios/macguard --rss-cap 4G --timeout 1800 -- $B run --mode free --models $A/c0 --clips ios/clips.json --pcm $A/clips \
     --kinds natural --warmups 3 --timed 1 --out $A/results/c0-free-natural.jsonl   # smoke; the protocol default is --timed 10
