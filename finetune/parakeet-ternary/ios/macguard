@@ -24,4 +24,6 @@ here=$(cd -- "$(dirname -- "$0")" && pwd) || exit 2
 py=/usr/bin/python3
 [ -x "$py" ] || py=${MACGUARD_PYTHON:-}
 [ -n "$py" ] || { echo "macguard: no /usr/bin/python3; set MACGUARD_PYTHON" >&2; exit 2; }
+# The shim resolves python3 through the caller's SDKROOT (a non-SDK value breaks it); the job gets it back.
+unset SDKROOT
 exec "$py" "$here/macguard.py" "$@"
