@@ -1,0 +1,514 @@
+{
+ "schema": 1,
+ "label": "C0",
+ "description": "FluidInference's published Parakeet TDT 0.6B v2 Core ML export, the files FluidAudio 0.7.8 loads for v2 (see c0.py)",
+ "repo": "FluidInference/parakeet-tdt-0.6b-v2-coreml",
+ "revision": "ee09c569f73759e6d44c9bd16766f477b2b36d39",
+ "revision_last_modified": "2025-09-25T22:47:39.000Z",
+ "pinned_on": "2026-10-02",
+ "url": "https://huggingface.co/FluidInference/parakeet-tdt-0.6b-v2-coreml/tree/ee09c569f73759e6d44c9bd16766f477b2b36d39",
+ "fluidaudio": {
+  "version": "0.7.8",
+  "tag": "v0.7.8",
+  "commit": "8136bd0642e7c5ce1f6f5b2931890266aeecb08c",
+  "model_names": "https://github.com/FluidInference/FluidAudio/blob/8136bd0642e7c5ce1f6f5b2931890266aeecb08c/Sources/FluidAudio/ModelNames.swift",
+  "download_utils": "https://github.com/FluidInference/FluidAudio/blob/8136bd0642e7c5ce1f6f5b2931890266aeecb08c/Sources/FluidAudio/DownloadUtils.swift",
+  "compute_units": {
+   "Preprocessor": "cpuOnly (AsrModels.createModelSpecs)",
+   "Encoder": "configuration (default cpuAndNeuralEngine)",
+   "Decoder": "configuration (default cpuAndNeuralEngine)",
+   "JointDecision": "configuration (default cpuAndNeuralEngine)"
+  },
+  "allowLowPrecisionAccumulationOnGPU": true
+ },
+ "not_downloaded": [
+  "Melspectogram.mlmodelc",
+  "Melspectrogram_v2.mlmodelc",
+  "ParakeetDecoder.mlmodelc",
+  "ParakeetEncoder.mlmodelc",
+  "ParakeetEncoder_4bit_par.mlmodelc",
+  "ParakeetEncoder_v2.mlmodelc",
+  "RNNTJoint.mlmodelc"
+ ],
+ "total_bytes": 464413250,
+ "files": [
+  {
+   "path": "Decoder.mlmodelc/analytics/coremldata.bin",
+   "bytes": 243,
+   "lfs": true,
+   "git_oid": "7e6fa4eb79131e62089f252a08b860e723f5114f",
+   "sha256": "46de1a6fe2e49d19a2125bc91acf020df7f2aea84ba821532aade8427a440b05"
+  },
+  {
+   "path": "Decoder.mlmodelc/coremldata.bin",
+   "bytes": 554,
+   "lfs": true,
+   "git_oid": "79b160cb7e3eb3213fb22cde5fbf6ac7f324c91b",
+   "sha256": "d200ca07694a347f6d02a3886a062ae839831e094e443222f2e48a14945966a8"
+  },
+  {
+   "path": "Decoder.mlmodelc/metadata.json",
+   "bytes": 3427,
+   "lfs": false,
+   "git_oid": "e3a08d21a5d1577db2bedd1749ea0ddae5d21b73",
+   "sha256": "90a279b822496316458febc0ce761ab05954fadd9d66aa97bea077a35fc8f2b2"
+  },
+  {
+   "path": "Decoder.mlmodelc/model.mil",
+   "bytes": 13106,
+   "lfs": false,
+   "git_oid": "167cc9db34dd7828e0e61eab40d6a09f8a234d30",
+   "sha256": "7b95a5a6b672c652000348a67b6d4d92bb8e176b978c6666fe73c28a4d7ec579"
+  },
+  {
+   "path": "Decoder.mlmodelc/weights/weight.bin",
+   "bytes": 14429952,
+   "lfs": true,
+   "git_oid": "a895491b78de520abc21d90321ffd90c95483662",
+   "sha256": "27d26890221d82322c1092fd99d7b40578e435d5cf4b83c887c42603caf97aba"
+  },
+  {
+   "path": "Encoder.mlmodelc/analytics/coremldata.bin",
+   "bytes": 243,
+   "lfs": true,
+   "git_oid": "4738782a8e36389621ff4b3b90dd2a661b35146c",
+   "sha256": "42e638870d73f26b332918a3496ce36793fbb413a81cbd3d16ba01328637a105"
+  },
+  {
+   "path": "Encoder.mlmodelc/coremldata.bin",
+   "bytes": 485,
+   "lfs": true,
+   "git_oid": "e016ed32c20e1563399f15adad451a442644b3d7",
+   "sha256": "4def7aa848599ad0e17a8b9a982edcdbf33cf92e1f4b798de32e2ca0bc74b030"
+  },
+  {
+   "path": "Encoder.mlmodelc/metadata.json",
+   "bytes": 2926,
+   "lfs": false,
+   "git_oid": "c87f9eb24e76b8e518dc1fbead46c8c0029d3925",
+   "sha256": "58222fbc48c13c49d9715567803cd50cb9c23e4360462e0f8ffcea59a2c73c63"
+  },
+  {
+   "path": "Encoder.mlmodelc/model.mil",
+   "bytes": 959769,
+   "lfs": false,
+   "git_oid": "93d1301ccde7c2ca447af6c01ab05bfda5a5dd2c",
+   "sha256": "ed7b19156ca29fa7dfd6891deb9fda4b0e8893f68597c985d135736546a43808"
+  },
+  {
+   "path": "Encoder.mlmodelc/weights/weight.bin",
+   "bytes": 445187200,
+   "lfs": true,
+   "git_oid": "e6313f81d9d94af46347f28087f51a60eb28164c",
+   "sha256": "4adc7ad44f9d05e1bffeb2b06d3bb02861a5c7602dff63a6b494aed3bf8a6c3e"
+  },
+  {
+   "path": "JointDecision.mlmodelc/analytics/coremldata.bin",
+   "bytes": 243,
+   "lfs": true,
+   "git_oid": "5007841fb604e70990e535a2a002ee18f93e83e4",
+   "sha256": "f1183ba213bb94a918c8d2cad19ab045320618f97f6ca662245b3936d7b090f7"
+  },
+  {
+   "path": "JointDecision.mlmodelc/coremldata.bin",
+   "bytes": 534,
+   "lfs": true,
+   "git_oid": "72290f46bfb535192ed1ed5ca1fec941874efbca",
+   "sha256": "e2c6752f1c8cf2d3f6f26ec93195c9bfa759ad59edf9f806696a138154f96f11"
+  },
+  {
+   "path": "JointDecision.mlmodelc/metadata.json",
+   "bytes": 2936,
+   "lfs": false,
+   "git_oid": "db3b2bc33cfda6f7cd1073d21182446180e53f94",
+   "sha256": "ba8d309417b9acd4a175fdb15687de6a941db2f5b06666a60e7cf3cc8e2d3c3c"
+  },
+  {
+   "path": "JointDecision.mlmodelc/model.mil",
+   "bytes": 9722,
+   "lfs": false,
+   "git_oid": "339c35b303b074de7fe047bb099311a4cc08cf53",
+   "sha256": "93bf82042235127cb81ab537dcae47a1c2e7e242ce4ffdaf772981b45eedc4f0"
+  },
+  {
+   "path": "JointDecision.mlmodelc/weights/weight.bin",
+   "bytes": 3453388,
+   "lfs": true,
+   "git_oid": "8764a151a786b38079c36a409fe5144ddf8b95a9",
+   "sha256": "ca22a65903a05e64137677da608077578a8606090a598abf4875fa6199aaa19d"
+  },
+  {
+   "path": "Preprocessor.mlmodelc/analytics/coremldata.bin",
+   "bytes": 243,
+   "lfs": true,
+   "git_oid": "84e7c818c15d2650b6c55b20e618fba3e6289763",
+   "sha256": "03ab3c1327a054c54c07a40325db967ec574f2c91dcc8192bfa44aa561bcf2d8"
+  },
+  {
+   "path": "Preprocessor.mlmodelc/coremldata.bin",
+   "bytes": 494,
+   "lfs": true,
+   "git_oid": "b53fff2bc93fbe4b468811db15aa17767f3cb33c",
+   "sha256": "d88ea1fc349459c9e100d6a96688c5b29a1f0d865f544be103001724b986b6d6"
+  },
+  {
+   "path": "Preprocessor.mlmodelc/metadata.json",
+   "bytes": 2974,
+   "lfs": false,
+   "git_oid": "887f7d4adc6d7f933686f7b984e23a47b45f57e3",
+   "sha256": "fb16c581ff5e1b962e7cb2181ed892cd32f9f84c12b6e80ff3e089f28e35bcbb"
+  },
+  {
+   "path": "Preprocessor.mlmodelc/model.mil",
+   "bytes": 27166,
+   "lfs": false,
+   "git_oid": "e94cce4bc7fbf55e55788449bf067ffe09a5ca91",
+   "sha256": "3e06d16fd061294c8a75be68c43a3b1ed1f593d4a9c35249e9cdbccadc59721e"
+  },
+  {
+   "path": "Preprocessor.mlmodelc/weights/weight.bin",
+   "bytes": 298880,
+   "lfs": true,
+   "git_oid": "a9af1ac1e407ef336eebc2fd4da9de57e6d172ad",
+   "sha256": "a5f7df6c7f47147ae9486fe18cc7792f9a44d093ec3c6a11e91ef2dc363c48dc"
+  },
+  {
+   "path": "config.json",
+   "bytes": 3,
+   "lfs": false,
+   "git_oid": "0967ef424bce6791893e9a57bb952f80fd536e93",
+   "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+  },
+  {
+   "path": "parakeet_vocab.json",
+   "bytes": 18762,
+   "lfs": false,
+   "git_oid": "a111d3bd29d44781c4588447c3eac1ea549cb1f1",
+   "sha256": "57019fe3c745772ca83a1b048a4bb951cd51329504ea33d4d83316b96e279a97"
+  }
+ ],
+ "models": {
+  "Decoder": {
+   "shortDescription": "Parakeet decoder (RNNT prediction network)",
+   "storagePrecision": "Float16",
+   "computePrecision": "Mixed (Float16, Float32, Int16, Int32)",
+   "specificationVersion": 8,
+   "modelType": "MLModelType_mlProgram",
+   "availability": {
+    "macOS": "14.0",
+    "tvOS": "17.0",
+    "visionOS": "1.0",
+    "watchOS": "10.0",
+    "iOS": "17.0",
+    "macCatalyst": "17.0"
+   },
+   "userDefinedMetadata": {
+    "com.github.apple.coremltools.conversion_date": "2025-09-25",
+    "com.github.apple.coremltools.source": "torch==2.7.0",
+    "com.github.apple.coremltools.version": "9.0b1",
+    "com.github.apple.coremltools.source_dialect": "TorchScript"
+   },
+   "inputs": [
+    {
+     "name": "targets",
+     "dataType": "Int32",
+     "shape": "[1, 1]",
+     "hasShapeFlexibility": "0",
+     "formattedType": "MultiArray (Int32 1 \u00d7 1)"
+    },
+    {
+     "name": "target_length",
+     "dataType": "Int32",
+     "shape": "[1]",
+     "hasShapeFlexibility": "0",
+     "formattedType": "MultiArray (Int32 1)"
+    },
+    {
+     "name": "h_in",
+     "dataType": "Float32",
+     "shape": "[2, 1, 640]",
+     "hasShapeFlexibility": "0",
+     "formattedType": "MultiArray (Float32 2 \u00d7 1 \u00d7 640)"
+    },
+    {
+     "name": "c_in",
+     "dataType": "Float32",
+     "shape": "[2, 1, 640]",
+     "hasShapeFlexibility": "0",
+     "formattedType": "MultiArray (Float32 2 \u00d7 1 \u00d7 640)"
+    }
+   ],
+   "outputs": [
+    {
+     "name": "decoder",
+     "dataType": "Float32",
+     "shape": "[1, 640, 1]",
+     "hasShapeFlexibility": "0",
+     "formattedType": "MultiArray (Float32 1 \u00d7 640 \u00d7 1)"
+    },
+    {
+     "name": "h_out",
+     "dataType": "Float32",
+     "shape": "[2, 1, 640]",
+     "hasShapeFlexibility": "0",
+     "formattedType": "MultiArray (Float32 2 \u00d7 1 \u00d7 640)"
+    },
+    {
+     "name": "c_out",
+     "dataType": "Float32",
+     "shape": "[2, 1, 640]",
+     "hasShapeFlexibility": "0",
+     "formattedType": "MultiArray (Float32 2 \u00d7 1 \u00d7 640)"
+    }
+   ],
+   "mlProgramOperationTypeHistogram": {
+    "Select": 1,
+    "Ios17.squeeze": 4,
+    "Ios17.gather": 1,
+    "Ios17.cast": 8,
+    "Ios17.lstm": 2,
+    "Split": 2,
+    "Ios17.add": 1,
+    "Ios17.transpose": 2,
+    "Ios17.greaterEqual": 1,
+    "Identity": 1,
+    "Stack": 2
+   }
+  },
+  "Encoder": {
+   "shortDescription": "enc6bit-palettize quantized - encoder",
+   "storagePrecision": "Mixed (Float16, Palettized (6 bits))",
+   "computePrecision": "Mixed (Float16, Float32, Int32)",
+   "specificationVersion": 8,
+   "modelType": "MLModelType_mlProgram",
+   "availability": {
+    "macOS": "14.0",
+    "tvOS": "17.0",
+    "visionOS": "1.0",
+    "watchOS": "10.0",
+    "iOS": "17.0",
+    "macCatalyst": "17.0"
+   },
+   "userDefinedMetadata": {
+    "com.github.apple.coremltools.conversion_date": "2025-09-25",
+    "com.github.apple.coremltools.source": "torch==2.7.0",
+    "com.github.apple.coremltools.version": "9.0b1",
+    "com.github.apple.coremltools.source_dialect": "TorchScript"
+   },
+   "inputs": [
+    {
+     "name": "mel",
+     "dataType": "Float32",
+     "shape": "[1, 128, 1501]",
+     "hasShapeFlexibility": "0",
+     "formattedType": "MultiArray (Float32 1 \u00d7 128 \u00d7 1501)"
+    },
+    {
+     "name": "mel_length",
+     "dataType": "Int32",
+     "shape": "[1]",
+     "hasShapeFlexibility": "0",
+     "formattedType": "MultiArray (Int32 1)"
+    }
+   ],
+   "outputs": [
+    {
+     "name": "encoder",
+     "dataType": "Float32",
+     "shape": "[1, 1024, 188]",
+     "hasShapeFlexibility": "0",
+     "formattedType": "MultiArray (Float32 1 \u00d7 1024 \u00d7 188)"
+    },
+    {
+     "name": "encoder_length",
+     "dataType": "Int32",
+     "shape": "[1]",
+     "hasShapeFlexibility": "0",
+     "formattedType": "MultiArray (Int32 1)"
+    }
+   ],
+   "mlProgramOperationTypeHistogram": {
+    "Ios17.floor": 3,
+    "Ios17.logicalAnd": 2,
+    "Ios17.reshape": 145,
+    "Ios16.softmax": 24,
+    "Ios17.matmul": 72,
+    "Ios17.transpose": 172,
+    "Split": 24,
+    "Ios17.expandDims": 5,
+    "Select": 72,
+    "Ios17.add": 174,
+    "Tile": 1,
+    "Ios17.sliceByIndex": 48,
+    "Ios16.sigmoid": 24,
+    "Pad": 48,
+    "Ios17.logicalNot": 2,
+    "Ios17.layerNorm": 120,
+    "Ios16.silu": 72,
+    "Ios17.less": 1,
+    "Ios16.constexprLutToDense": 294,
+    "Ios17.conv": 77,
+    "Ios16.relu": 3,
+    "Ios17.linear": 193,
+    "Ios17.cast": 4,
+    "Ios17.mul": 99
+   }
+  },
+  "JointDecision": {
+   "shortDescription": "Parakeet single-step joint decision (current frame)",
+   "storagePrecision": "Float16",
+   "computePrecision": "Mixed (Float16, Float32, Int16, Int32)",
+   "specificationVersion": 8,
+   "modelType": "MLModelType_mlProgram",
+   "availability": {
+    "macOS": "14.0",
+    "tvOS": "17.0",
+    "visionOS": "1.0",
+    "watchOS": "10.0",
+    "iOS": "17.0",
+    "macCatalyst": "17.0"
+   },
+   "userDefinedMetadata": {
+    "com.github.apple.coremltools.conversion_date": "2025-09-25",
+    "com.github.apple.coremltools.source": "torch==2.7.0",
+    "com.github.apple.coremltools.version": "9.0b1",
+    "com.github.apple.coremltools.source_dialect": "TorchScript"
+   },
+   "inputs": [
+    {
+     "name": "encoder_step",
+     "dataType": "Float32",
+     "shape": "[1, 1024, 1]",
+     "hasShapeFlexibility": "0",
+     "formattedType": "MultiArray (Float32 1 \u00d7 1024 \u00d7 1)"
+    },
+    {
+     "name": "decoder_step",
+     "dataType": "Float32",
+     "shape": "[1, 640, 1]",
+     "hasShapeFlexibility": "0",
+     "formattedType": "MultiArray (Float32 1 \u00d7 640 \u00d7 1)"
+    }
+   ],
+   "outputs": [
+    {
+     "name": "token_id",
+     "dataType": "Int32",
+     "shape": "[1, 1, 1]",
+     "hasShapeFlexibility": "0",
+     "formattedType": "MultiArray (Int32 1 \u00d7 1 \u00d7 1)"
+    },
+    {
+     "name": "token_prob",
+     "dataType": "Float32",
+     "shape": "[1, 1, 1]",
+     "hasShapeFlexibility": "0",
+     "formattedType": "MultiArray (Float32 1 \u00d7 1 \u00d7 1)"
+    },
+    {
+     "name": "duration",
+     "dataType": "Int32",
+     "shape": "[1, 1, 1]",
+     "hasShapeFlexibility": "0",
+     "formattedType": "MultiArray (Int32 1 \u00d7 1 \u00d7 1)"
+    }
+   ],
+   "mlProgramOperationTypeHistogram": {
+    "Ios17.reduceArgmax": 2,
+    "Ios17.squeeze": 1,
+    "Ios17.cast": 4,
+    "Ios17.linear": 3,
+    "Ios17.transpose": 2,
+    "Ios17.sliceByIndex": 2,
+    "Ios17.add": 1,
+    "Ios16.relu": 1,
+    "Ios16.softmax": 1,
+    "Ios17.gatherAlongAxis": 1,
+    "Ios17.expandDims": 3
+   }
+  },
+  "Preprocessor": {
+   "shortDescription": "int8-linear quantized - preprocessor",
+   "storagePrecision": "Int8",
+   "computePrecision": "Mixed (Float16, Float32, Int32, UInt16)",
+   "specificationVersion": 8,
+   "modelType": "MLModelType_mlProgram",
+   "availability": {
+    "macOS": "14.0",
+    "tvOS": "17.0",
+    "visionOS": "1.0",
+    "watchOS": "10.0",
+    "iOS": "17.0",
+    "macCatalyst": "17.0"
+   },
+   "userDefinedMetadata": {
+    "com.github.apple.coremltools.conversion_date": "2025-09-25",
+    "com.github.apple.coremltools.source": "torch==2.7.0",
+    "com.github.apple.coremltools.version": "9.0b1",
+    "com.github.apple.coremltools.source_dialect": "TorchScript"
+   },
+   "inputs": [
+    {
+     "name": "audio_signal",
+     "dataType": "Float32",
+     "shape": "[1, 1]",
+     "hasShapeFlexibility": "1",
+     "shapeFlexibility": "1 \u00d7 1...240000",
+     "shapeRange": "[[1, 1], [1, 240000]]",
+     "formattedType": "MultiArray (Float32 1 \u00d7 1)"
+    },
+    {
+     "name": "audio_length",
+     "dataType": "Int32",
+     "shape": "[1]",
+     "hasShapeFlexibility": "0",
+     "formattedType": "MultiArray (Int32 1)"
+    }
+   ],
+   "outputs": [
+    {
+     "name": "mel",
+     "dataType": "Float32",
+     "shape": "[]",
+     "hasShapeFlexibility": "0",
+     "formattedType": "MultiArray (Float32)"
+    },
+    {
+     "name": "mel_length",
+     "dataType": "Int32",
+     "shape": "[1]",
+     "hasShapeFlexibility": "0",
+     "formattedType": "MultiArray (Int32 1)"
+    }
+   ],
+   "mlProgramOperationTypeHistogram": {
+    "Range1d": 2,
+    "Ios17.reshape": 2,
+    "Ios17.matmul": 1,
+    "Ios17.expandDims": 10,
+    "Select": 3,
+    "Ios17.add": 4,
+    "Tile": 2,
+    "Ios17.sliceByIndex": 3,
+    "Ios16.reduceSum": 4,
+    "Shape": 3,
+    "Ios17.gather": 3,
+    "Pad": 1,
+    "Ios17.log": 1,
+    "Ios16.constexprAffineDequantize": 3,
+    "Ios17.conv": 2,
+    "Ios17.sub": 4,
+    "Ios17.pow": 2,
+    "Ios17.cast": 10,
+    "Ios17.realDiv": 4,
+    "Stack": 1,
+    "Ios17.concat": 3,
+    "Ios17.floorDiv": 1,
+    "Ios17.less": 1,
+    "Ios17.sqrt": 1,
+    "Ios17.greaterEqual": 1,
+    "Ios17.mul": 1
+   }
+  }
+ }
+}
