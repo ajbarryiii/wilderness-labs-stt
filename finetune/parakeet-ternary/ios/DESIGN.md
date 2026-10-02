@@ -1,6 +1,6 @@
 # Parakeet-TDT 0.6B v2 on iPhone 15 Pro: inference pipeline and benchmarks
 
-Status: **revision 4 (2026-10-02): primary benchmark model changed to the pilot P2 export after WP1's
+Status: **revision 5 (2026-10-02): front-end gate amended (see gate 5). Revision 4: primary benchmark model changed to the pilot P2 export after WP1's
 sensitivity gate failed on random surrogates; revision 3 was after Codex reviews r1 and r2. S0 approved
 by the user and cleared by review r2; nothing benchmarked yet.** Review
 findings and their resolutions are listed at the end.
@@ -345,8 +345,18 @@ an output a and its reference r of n elements:
    - Margin distributions are reported. Every output must be finite.
 5. **Buckets vs full window.** On the valid frames, every bucket matches the
    same arm's 15 s window output to within the gate-4 ceilings. This is
-   checked on the boundary-length, silence and impulse clips. Front end A
-   (vDSP) matches NeMo features to rel ≤ 1e-5.
+   checked on the boundary-length, silence and impulse clips.
+
+   **Front end A (vDSP)** is gated against an **FP64** evaluation of the
+   reference front end: rel ≤ 1e-5 and abs ≤ 1e-3 on every clip. In addition,
+   the encoder output from A's features must meet the gate-4 ceilings against
+   the encoder output from the reference features.
+
+   *Amended in revision 5, after WP4's data:* the original gate compared
+   against the FP32 reference with abs ≤ 1e-4. That cannot be met, because the
+   FP32 reference itself differs from FP64 by up to 3.2e-4 (lowest mel band),
+   and on the silence clip it amplifies its own rounding of the mean by the
+   std guard. This amendment changes no comparison between arms.
 
    The S0 masking contract fixes, and the gate checks:
    - the real and padded lengths at every stage;
