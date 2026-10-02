@@ -50,6 +50,25 @@ GATE5_KINDS = ("boundary", "silence", "impulse")
 N_DUR = 5
 
 
+_START = time.time()
+
+
+def purge_cache() -> None:
+    """Delete the Core ML (e5rt) cache entries this process created (one device-specialized copy per load, GBs
+    each); call after a model is released. Guarded jobs are serialized, so newer entries are this job's."""
+    cache = Path.home() / "Library" / "Caches" / "python" / "com.apple.e5rt.e5bundlecache"
+    if not cache.is_dir():
+        return
+    import shutil
+
+    for entry in cache.glob("*/*"):
+        try:
+            if entry.stat().st_mtime >= _START - 1:
+                shutil.rmtree(entry, ignore_errors=True)
+        except FileNotFoundError:
+            pass
+
+
 def units_of(name: str):
     import coremltools as ct
 
@@ -230,6 +249,7 @@ def encoder_gate(args) -> dict:
             rows[f"{clip['id']}@{b}"] = row
         if args.variant != "enum" or b == buckets[-1]:
             del m
+            purge_cache()
         print(f"bucket {b} done at {time.time() - t0:.0f}s", flush=True)
     # TDT heads through our decoder/joint, fed with the arm's own-bucket encoder output
     dec, joint = load_decoders(args.model, args.units)
@@ -240,6 +260,7 @@ def encoder_gate(args) -> dict:
         a = coreml_replay(dec, joint, own[clip["id"]], traces[clip["id"]])
         heads[clip["id"]] = head_metrics(*a, ref["fp16s_logits"], ref["fp16s_h"], ref["fp16s_c"])
     del dec, joint
+    purge_cache()
     g4 = [r for r in rows.values()]
     g5 = [r for r in rows.values() if "vs_15s" in r]
     g5_gated = [r for r in g5 if r["kind"] in GATE5_KINDS]
@@ -312,6 +333,7 @@ def g0_gate(args) -> dict:
         pred = c0.predict({"mel": padded(ref["features"], 1501), "mel_length": np.array([ref["mel_length"]], dtype=np.int32)})
         c0_out[clip["id"]] = (np.asarray(pred["encoder"], dtype=np.float32)[0], int(np.asarray(pred["encoder_length"]).reshape(-1)[0]))
     del c0
+    purge_cache()
     g0 = ct.models.CompiledMLModel(str(arms_root() / "c0" / "G0" / "fixed.mlmodelc"), compute_units=cu)
     rows = {}
     for clip in clips:
