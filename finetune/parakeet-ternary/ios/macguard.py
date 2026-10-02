@@ -50,7 +50,8 @@ ended it); 124 the guard aborted the job (resource, timeout, sentinel lost, moni
 whatever CMD returned; 130 macguard was interrupted (SIGINT/SIGTERM/SIGHUP; the job is cleaned up first);
 125 the guard's own machinery failed: launch or handshake, cleanup errors, group not verified empty (the
 lock then stays with the sentinel or a watcher), a sentinel that ended abnormally, or a failure while
-finalizing (end probes or end log) — never 0 in any of these; 3 refused to start; 2 usage error.
+finalizing (end probes or end log) when the status would otherwise be the job's own (an abort or interrupt
+keeps 124/130) — never 0 in any of these; 3 refused to start; 2 usage error.
 
 Residual risk (accepted, not hardened further): containment rests on the supervisor, the sentinel and the
 inherited lock. If BOTH the supervisor and the sentinel are SIGKILLed, nothing monitors the job any more;
@@ -541,8 +542,9 @@ class Guard:
             self.say(f"end: status {status} (job {child_status}) after {time.monotonic() - start:.0f}s, peak group "
                      f"RSS {peak}KB, swap growth {swap1 - swap0}KB{', killed: ' + why if why else ''}")
             self.snapshot("end", free1, swap1, strict=True)
-        except Exception as exc:
-            status = EXIT_INTERNAL
+        except Exception as exc:  # a guard-decided status (124/125/130) already reports failure; keep its cause
+            if status not in (EXIT_ABORTED, EXIT_INTERNAL, EXIT_INTERRUPTED):
+                status = EXIT_INTERNAL
             self.say_safe(f"end: finalization failed ({exc!r}); status {status} (job {child_status})"
                           f"{', killed: ' + why if why else ''}")
         return status
