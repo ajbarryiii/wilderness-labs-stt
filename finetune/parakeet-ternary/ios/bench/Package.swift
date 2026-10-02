@@ -13,6 +13,7 @@ let package = Package(
     targets: [
         .target(name: "BenchCore", path: "Sources/BenchCore"),
         .executableTarget(name: "parakeet-bench", dependencies: ["BenchCore"], path: "Sources/parakeet-bench"),
+        .testTarget(name: "BenchCoreTests", dependencies: ["BenchCore"], path: "Tests/BenchCoreTests"),
     ],
     swiftLanguageModes: [.v5]
 )

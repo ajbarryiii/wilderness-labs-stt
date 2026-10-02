@@ -110,40 +110,6 @@ struct DecoderState {
     }
 }
 
-/// EncoderFrameView (FluidAudio): stride-aware access to frames of the encoder output [1, 1024, T] or [1, T, 1024].
-struct EncoderFrames {
-    let count: Int
-    let hiddenStride: Int
-    let timeStride: Int
-    let base: UnsafeMutablePointer<Float>
-    let array: MLMultiArray
-
-    init(_ output: MLMultiArray, validLength: Int) throws {
-        let shape = output.intShape, strides = output.intStrides
-        guard shape.count == 3, shape[0] == 1, shape[1] == 1024 || shape[2] == 1024, output.dataType == .float32 else {
-            throw BenchError.invalid("unexpected encoder output \(shape) \(output.dataType.rawValue)")
-        }
-        let hiddenAxis = shape[1] == 1024 ? 1 : 2
-        let timeAxis = 3 - hiddenAxis
-        hiddenStride = strides[hiddenAxis]
-        timeStride = strides[timeAxis]
-        count = min(validLength, shape[timeAxis])
-        guard count > 0, timeStride > 0 else { throw BenchError.invalid("encoder output has no frames") }
-        array = output
-        base = output.dataPointer.bindMemory(to: Float.self, capacity: output.count)
-    }
-
-    func copyFrame(_ t: Int, into dest: UnsafeMutablePointer<Float>, destStride: Int) throws {
-        guard t >= 0 && t < count else { throw BenchError.invalid("encoder frame \(t) out of range \(count)") }
-        let src = base.advanced(by: t * timeStride)
-        if hiddenStride == 1 && destStride == 1 {
-            dest.update(from: src, count: 1024)
-        } else {
-            cblas_scopy(1024, src, Int32(hiddenStride), dest, Int32(destStride))
-        }
-    }
-}
-
 public enum DecodeMode: Sendable {
     case free
     case replay(TraceClip)
@@ -162,6 +128,7 @@ public enum DecodeMode: Sendable {
 /// both modes (token and timestamp per emission, call counters); everything else is in `Diagnostics`, which only
 /// the untimed diagnostic pass collects.
 public struct CallResult: Encodable, Sendable {
+    public var bucket = 15
     public var tokens: [Int] = []
     public var timestamps: [Int] = []
     public var encoderLength = 0
@@ -172,6 +139,11 @@ public struct CallResult: Encodable, Sendable {
     public var decoderCalls = 0
     public var preprocessorCalls = 0
     public var encoderCalls = 0
+    /// Physical calls per decode-loop component (e.g. decoder_model, joint_model, fused_model, native_predict,
+    /// native_joint); the logical work (steps, prediction-net runs) is the trace's or the loop's.
+    public var physicalCalls: [String: Int] = [:]
+    /// Stages: preprocess (front end), encoder (incl. output materialization), preprojection (joint encoder-side
+    /// projection of all frames; 0 where the joint projects per step), decode, total, plus per-component model time.
     public var timesMs: [String: Double] = [:]
 }
 
@@ -328,7 +300,8 @@ public final class C0Pipeline {
 
         r.decoderCalls = decoderAcc.count
         r.jointCalls = jointAcc.count
-        r.timesMs = ["preprocess": Clock.ms(t0, t1), "encoder": Clock.ms(t1, t2), "decode": Clock.ms(t2, t3),
+        r.physicalCalls = ["decoder_model": decoderAcc.count, "joint_model": jointAcc.count]
+        r.timesMs = ["preprocess": Clock.ms(t0, t1), "encoder": Clock.ms(t1, t2), "preprojection": 0, "decode": Clock.ms(t2, t3),
                      "decoder_model": decoderAcc.totalMs, "joint_model": jointAcc.totalMs, "total": Clock.ms(t0, t3)]
         _ = touch
         if let diagnostics {  // after the clock stopped

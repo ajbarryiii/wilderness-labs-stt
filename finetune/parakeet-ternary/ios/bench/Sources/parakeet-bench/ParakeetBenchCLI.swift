@@ -4,17 +4,28 @@ import Foundation
 
 /// parakeet-bench: macOS command-line driver of BenchCore (run on the Mac through ios/macguard).
 ///
-///   parakeet-bench run  --models DIR --clips clips.json --pcm DIR --out results.jsonl [--mode free|replay]
-///                       [--traces traces.json] [--compute-units cpuAndNeuralEngine] [--preprocessor-units cpuOnly]
+///   parakeet-bench run  --clips clips.json --pcm DIR --out results.jsonl [--mode free|replay] [--traces traces.json]
 ///                       [--kinds natural,...] [--ids a,b] [--limit N] [--warmups 3] [--timed 10] [--emit-warmups]
-///                       [--diag-dir DIR]
+///                       [--diag-dir DIR] [--compute-units cpuAndNeuralEngine] [--preprocessor-units cpuOnly]
+///                       ARM
+///     ARM = --arm c0 --models C0DIR                                     (C0: FluidAudio 0.7.8's loop)
+///         | --arm custom [--arm-name NAME] --decode f0|f1|f2|f1native
+///                 ( --frontend vdsp --frontend-constants DIR | --frontend c0pre --models C0DIR )
+///                 --encoder PATH(.mlmodelc|.mlpackage) --encoder-variant fixed15|multifunction|enumerated
+///               | --encoder-input DIR                                   (gate mode: <id>.f32 [T, 1024])
+///                 f0: --decoder-models DIR (Decoder.mlmodelc + JointDecision.mlmodelc, C0's contract)
+///                 f1: --decoder-models DIR (DecoderJoint.mlmodelc or .mlpackage)
+///                 f2, f1native: --native-weights DIR (native.py weights)
+///                 [--vocab parakeet_vocab.json]  (default: C0DIR/parakeet_vocab.json if --models is given)
+///   parakeet-bench features --frontend-constants DIR --clips clips.json --pcm DIR --out DIR [--kinds/--ids]
+///                       front end A on every clip: <id>.mel.f32 [128, N // 160 + 1] and features.jsonl
 ///   parakeet-bench plan --models DIR --out DIR [--compute-units cpuAndNeuralEngine] [--preprocessor-units cpuOnly]
 ///   parakeet-bench info --models DIR
 ///
 /// run: per clip, `warmups` untimed calls, then `timed` calls (DESIGN.md "Repetition and statistics"); with
 /// --diag-dir, afterwards one separate untimed diagnostic call per clip (record "diagnostic", binary arrays in
-/// DIR; see BenchCore.Diagnostics). Replay validates every trace of traces.json against clips.json before any model is
-/// loaded. Every output path must lie under the Mac artifact root, outside Git (ArtifactPath).
+/// DIR). Replay validates every trace of traces.json against clips.json before any model is loaded. Every output
+/// path must lie under the Mac artifact root, outside Git (ArtifactPath).
 @main
 struct ParakeetBenchCLI {
     static func main() async {
@@ -24,6 +35,8 @@ struct ParakeetBenchCLI {
             args.removeFirst()
             switch command {
             case "run": try await run(try Options(args, allowed: runOptions, flags: ["--emit-warmups"]))
+            case "features": try await features(try Options(args, allowed: ["--frontend-constants", "--clips", "--pcm",
+                                                                             "--out", "--kinds", "--ids"], flags: []))
             case "plan": try await plan(try Options(args, allowed: ["--models", "--out", "--compute-units",
                                                                     "--preprocessor-units"], flags: []))
             case "info": try info(try Options(args, allowed: ["--models"], flags: []))
@@ -38,7 +51,9 @@ struct ParakeetBenchCLI {
     static let usage = "usage: parakeet-bench run|plan|info --models DIR ... (see ParakeetBenchCLI.swift)"
     static let runOptions: Set<String> = ["--models", "--clips", "--pcm", "--traces", "--mode", "--compute-units",
                                           "--preprocessor-units", "--kinds", "--ids", "--limit", "--warmups", "--timed",
-                                          "--out", "--diag-dir"]
+                                          "--out", "--diag-dir", "--arm", "--arm-name", "--decode", "--frontend",
+                                          "--frontend-constants", "--encoder", "--encoder-variant", "--encoder-input",
+                                          "--decoder-models", "--native-weights", "--vocab"]
 
     struct Options {
         var values: [String: String] = [:]
@@ -70,18 +85,7 @@ struct ParakeetBenchCLI {
         func url(_ key: String) throws -> URL { URL(fileURLWithPath: try string(key)) }
     }
 
-    static func run(_ o: Options) async throws {
-        // Everything that can be checked is checked before the models load.
-        let modeName = try o.string("--mode", "free")
-        guard DecodeMode.names.contains(modeName) else { throw BenchError.invalid("unknown --mode \(modeName)") }
-        let units = try ComputeUnitsName.parse(try o.string("--compute-units", "cpuAndNeuralEngine"))
-        let preUnits = try ComputeUnitsName.parse(try o.string("--preprocessor-units", "cpuOnly"))
-        let manifest = try ClipManifest.load(try o.url("--clips"))
-        let pcmDir = try o.url("--pcm")
-        let proto = RepetitionProtocol(warmups: try o.int("--warmups", 3), timed: try o.int("--timed", 10),
-                                       emitWarmups: o.flags.contains("--emit-warmups"))
-        let outURL = try ArtifactPath.check(try o.url("--out"))
-        let diagDir = try o.values["--diag-dir"].map { try ArtifactPath.check(URL(fileURLWithPath: $0)) }
+    static func selectClips(_ o: Options, _ manifest: ClipManifest) throws -> [Clip] {
         var clips = manifest.clips
         if let kinds = o.values["--kinds"] {
             let set = Set(kinds.split(separator: ",").map(String.init))
@@ -95,6 +99,47 @@ struct ParakeetBenchCLI {
         }
         if o.values["--limit"] != nil { clips = Array(clips.prefix(try o.int("--limit", clips.count))) }
         guard !clips.isEmpty else { throw BenchError.invalid("no clips selected") }
+        return clips
+    }
+
+    /// The arm to run: C0 (C0Pipeline) or a custom ArmPipeline, with its load record fields.
+    enum Runner {
+        case c0(C0Pipeline, C0Models)
+        case custom(ArmPipeline)
+    }
+
+    static func run(_ o: Options) async throws {
+        // Everything that can be checked is checked before the models load.
+        let modeName = try o.string("--mode", "free")
+        guard DecodeMode.names.contains(modeName) else { throw BenchError.invalid("unknown --mode \(modeName)") }
+        let armKind = try o.string("--arm", "c0")
+        guard ["c0", "custom"].contains(armKind) else { throw BenchError.invalid("unknown --arm \(armKind)") }
+        let decodeName = try o.string("--decode", armKind == "c0" ? "c0" : "f2")
+        if armKind == "custom" {
+            guard ["f0", "f1", "f2", "f1native"].contains(decodeName) else { throw BenchError.invalid("unknown --decode \(decodeName)") }
+            if o.values["--encoder-input"] == nil {
+                guard let fe = o.values["--frontend"], FrontEndKind(rawValue: fe) != nil else {
+                    throw BenchError.invalid("--frontend vdsp|c0pre is required (or --encoder-input)")
+                }
+                guard let v = o.values["--encoder-variant"], LengthVariant(rawValue: v) != nil, o.values["--encoder"] != nil else {
+                    throw BenchError.invalid("--encoder PATH and --encoder-variant fixed15|multifunction|enumerated are required")
+                }
+            }
+        } else {
+            for key in ["--decode", "--frontend", "--frontend-constants", "--encoder", "--encoder-variant", "--encoder-input",
+                        "--decoder-models", "--native-weights"] where o.values[key] != nil {
+                throw BenchError.invalid("\(key) applies to --arm custom only")
+            }
+        }
+        let units = try ComputeUnitsName.parse(try o.string("--compute-units", "cpuAndNeuralEngine"))
+        let preUnits = try ComputeUnitsName.parse(try o.string("--preprocessor-units", "cpuOnly"))
+        let manifest = try ClipManifest.load(try o.url("--clips"))
+        let pcmDir = try o.url("--pcm")
+        let proto = RepetitionProtocol(warmups: try o.int("--warmups", 3), timed: try o.int("--timed", 10),
+                                       emitWarmups: o.flags.contains("--emit-warmups"))
+        let outURL = try ArtifactPath.check(try o.url("--out"))
+        let diagDir = try o.values["--diag-dir"].map { try ArtifactPath.check(URL(fileURLWithPath: $0)) }
+        let clips = try selectClips(o, manifest)
         let probe = TdtConfig()
         var traces: [String: TraceClip] = [:]
         if modeName == "replay" {
@@ -109,12 +154,27 @@ struct ParakeetBenchCLI {
         let writer = try JSONLWriter(path: outURL.path)
 
         let footprint0 = physFootprint()
-        let models = try C0Models(directory: try o.url("--models"), computeUnits: units, preprocessorUnits: preUnits)
+        let runner: Runner
+        var load: [String: Any] = [:]
+        var vocabulary: [Int: String] = [:]
+        var armName = "C0"
+        if armKind == "c0" {
+            let models = try C0Models(directory: try o.url("--models"), computeUnits: units, preprocessorUnits: preUnits)
+            runner = .c0(C0Pipeline(models: models), models)
+            vocabulary = models.vocabulary
+            load = ["load_ms": models.loadMs, "decode": "c0 (FluidAudio 0.7.8 loop, per-step Decoder + JointDecision)"]
+        } else {
+            let arm = try await buildArm(o, decodeName: decodeName, units: units, preUnits: preUnits, load: &load)
+            armName = arm.name
+            runner = .custom(arm)
+            if let v = o.values["--vocab"] ?? o.values["--models"].map({ $0 + "/parakeet_vocab.json" }) {
+                vocabulary = try loadVocabulary(URL(fileURLWithPath: v))
+            }
+        }
         let footprintLoaded = physFootprint()
-        let pipeline = C0Pipeline(models: models)
-        try writer.writeObject([
-            "record": "load", "arm": "C0", "compute_units": ComputeUnitsName.name(units),
-            "preprocessor_units": ComputeUnitsName.name(preUnits), "load_ms": models.loadMs,
+        try writer.writeObject(load.merging([
+            "record": "load", "arm": armName, "compute_units": ComputeUnitsName.name(units),
+            "preprocessor_units": ComputeUnitsName.name(preUnits),
             "load_cache_evidence": "none: MLModel(contentsOf:) wall time only; prepare-and-cache vs cached load needs "
                 + "an Instruments Core ML trace (DESIGN.md Load)",
             "phys_footprint_mb_before": Double(footprint0.current) / 1_048_576,
@@ -123,25 +183,38 @@ struct ParakeetBenchCLI {
             "clip_ids": clips.map(\.id), "warmups": proto.warmups, "timed": proto.timed, "mode": modeName,
             "diagnostics": diagDir != nil,
             "clips_json_sha256": manifest.fileSHA256,
-        ])
+        ]) { _, new in new })
         let t0 = Clock.now()
         for (clip, pcm) in zip(clips, pcms) {
             let mode: DecodeMode = modeName == "replay" ? .replay(traces[clip.id]!) : .free
             for rep in 0..<(proto.warmups + proto.timed) {
                 let warm = rep < proto.warmups
-                let result = try await pipeline.run(pcm, mode: mode)
+                let result: CallResult
+                switch runner {
+                case .c0(let pipeline, _): result = try await pipeline.run(pcm, mode: mode)
+                case .custom(let arm): result = try await arm.run(clip: clip, pcm: pcm, mode: mode)
+                }
                 if !warm || proto.emitWarmups || rep == 0 {
-                    let text = detokenize(result.tokens, vocabulary: models.vocabulary)
-                    try writer.write(CallRecord(arm: "C0", mode: modeName, computeUnits: ComputeUnitsName.name(units),
+                    let text = detokenize(result.tokens, vocabulary: vocabulary)
+                    try writer.write(CallRecord(arm: armName, mode: modeName, computeUnits: ComputeUnitsName.name(units),
                                                 clip: clip, rep: rep, warmup: warm, text: text, result: result))
                 }
             }
             if let diagDir {
-                let diag = Diagnostics()
-                let result = try await pipeline.run(pcm, mode: mode, diagnostics: diag)
-                try writer.writeObject(try diagnosticRecord(clip: clip, mode: modeName, result: result, diag: diag,
-                                                            trace: traces[clip.id], dir: diagDir, pipeline: pipeline,
-                                                            vocabulary: models.vocabulary))
+                switch runner {
+                case .c0(let pipeline, let models):
+                    let diag = Diagnostics()
+                    let result = try await pipeline.run(pcm, mode: mode, diagnostics: diag)
+                    try writer.writeObject(try diagnosticRecord(clip: clip, mode: modeName, result: result, diag: diag,
+                                                                trace: traces[clip.id], dir: diagDir, pipeline: pipeline,
+                                                                vocabulary: models.vocabulary))
+                case .custom(let arm):
+                    let sink = DiagSink()
+                    let result = try await arm.run(clip: clip, pcm: pcm, mode: mode, diag: sink)
+                    try writer.writeObject(try customDiagnosticRecord(clip: clip, arm: arm, mode: modeName, result: result,
+                                                                      sink: sink, trace: traces[clip.id], dir: diagDir,
+                                                                      vocabulary: vocabulary))
+                }
             }
         }
         let end = physFootprint()
@@ -149,6 +222,113 @@ struct ParakeetBenchCLI {
             "record": "end", "seconds": Clock.ms(t0, Clock.now()) / 1000,
             "phys_footprint_mb": Double(end.current) / 1_048_576, "phys_footprint_peak_mb": Double(end.peak) / 1_048_576,
         ])
+    }
+
+    static func buildArm(_ o: Options, decodeName: String, units: MLComputeUnits, preUnits: MLComputeUnits,
+                         load: inout [String: Any]) async throws -> ArmPipeline {
+        let engine: DecodeEngine
+        var t0 = Clock.now()
+        switch decodeName {
+        case "f2", "f1native":
+            let weights = try NativeWeights(directory: try o.url("--native-weights"))
+            engine = decodeName == "f2" ? NativeEngine(weights: weights) : NativeFusedEngine(weights: weights)
+            load["native_weights"] = ["sha256": weights.manifest["sha256"] ?? "", "provenance": weights.manifest["provenance"] ?? [:]]
+        case "f0":
+            let dir = try o.url("--decoder-models")
+            let config = C0Models.configuration(units)
+            engine = try CoreMLStepEngine(decoder: try MLModel(contentsOf: dir.appendingPathComponent("Decoder.mlmodelc"), configuration: config),
+                                          joint: try MLModel(contentsOf: dir.appendingPathComponent("JointDecision.mlmodelc"), configuration: config))
+            load["decoder_models"] = dir.path
+        default:  // f1
+            let dir = try o.url("--decoder-models")
+            var url = dir.appendingPathComponent("DecoderJoint.mlmodelc")
+            if !FileManager.default.fileExists(atPath: url.path) {
+                let pkg = dir.appendingPathComponent("DecoderJoint.mlpackage")
+                let compiled = try await MLModel.compileModel(at: pkg)
+                url = compiled
+            }
+            engine = try CoreMLFusedEngine(model: try MLModel(contentsOf: url, configuration: C0Models.configuration(units)))
+            load["decoder_models"] = dir.path
+        }
+        load["decode_load_ms"] = Clock.ms(t0, Clock.now())
+        var mel: MelInput? = nil
+        var encoder: EncoderModel? = nil
+        var external: URL? = nil
+        var parts: [String] = []
+        if let ext = o.values["--encoder-input"] {
+            external = URL(fileURLWithPath: ext)
+            parts = ["external-encoder"]
+        } else {
+            let fe = FrontEndKind(rawValue: try o.string("--frontend"))!
+            mel = try MelInput(kind: fe, constantsDir: o.values["--frontend-constants"].map { URL(fileURLWithPath: $0) },
+                               c0Dir: o.values["--models"].map { URL(fileURLWithPath: $0) }, preprocessorUnits: preUnits)
+            let variant = LengthVariant(rawValue: try o.string("--encoder-variant"))!
+            t0 = Clock.now()
+            encoder = try await EncoderModel(url: try o.url("--encoder"), variant: variant, computeUnits: units,
+                                             compiledDir: try ArtifactPath.check(ArtifactPath.macRoot.appendingPathComponent("compiled")))
+            load["encoder"] = ["path": encoder!.url.path, "variant": variant.rawValue, "load_ms": encoder!.loadMs,
+                               "compile_ms": encoder!.compileMs as Any, "total_ms": Clock.ms(t0, Clock.now())]
+            parts = [fe.rawValue, (try o.string("--encoder") as NSString).lastPathComponent, variant.rawValue]
+        }
+        let name = o.values["--arm-name"] ?? (parts + [decodeName]).joined(separator: "+")
+        load["arm_spec"] = ["front_end": mel?.kind.rawValue ?? "external", "decode": decodeName,
+                            "encoder_input": external?.path as Any]
+        return try ArmPipeline(name: name, mel: mel, encoder: encoder, externalEncoderDir: external, engine: engine)
+    }
+
+    /// Untimed diagnostic record of a custom arm; float sections go to <dir>/<clip>.<arm>.<mode>.diag.f32.
+    static func customDiagnosticRecord(clip: Clip, arm: ArmPipeline, mode: String, result: CallResult, sink: DiagSink,
+                                       trace: TraceClip?, dir: URL, vocabulary: [Int: String]) throws -> [String: Any] {
+        let (data, index) = sink.binary()
+        let safe = arm.name.replacingOccurrences(of: "/", with: "_")
+        let file = dir.appendingPathComponent("\(clip.id).\(safe).\(mode).diag.f32")
+        try data.write(to: file)
+        var steps: [String: Any] = sink.ints
+        for (k, v) in sink.floats { steps[k] = v }
+        var record: [String: Any] = [
+            "record": "diagnostic", "arm": arm.name, "decode": arm.engine.name, "mode": mode, "clip": clip.id,
+            "kind": clip.kind, "bucket": result.bucket, "timed": false, "tokens": result.tokens,
+            "text": detokenize(result.tokens, vocabulary: vocabulary), "encoder_length": result.encoderLength,
+            "mel_length": result.melLength, "physical_calls": result.physicalCalls, "steps": steps,
+            "arrays": ["file": file.lastPathComponent, "bytes": data.count, "sha256": sha256Hex(data),
+                       "dtype": "float32 little-endian", "sections": index],
+        ]
+        if arm.engine is NativeEngine {
+            record["logits"] = "section logits [steps, 1030] (raw joint output: 1,025 token+blank, 5 duration)"
+        } else {
+            record["logits"] = NSNull()
+            record["logits_unavailable"] = "Core ML per-step models with C0's contract output only argmax decisions"
+        }
+        if let trace, let tok = sink.ints["argmax_token"], let dur = sink.ints["argmax_duration"] {
+            var ta = 0, da = 0
+            for i in 0..<min(tok.count, trace.steps) {
+                if tok[i] == trace.token[i] { ta += 1 }
+                if dur[i] == trace.duration[i] { da += 1 }
+            }
+            record["replay"] = ["steps": tok.count, "trace_steps": trace.steps, "token_agree": ta, "duration_agree": da]
+        }
+        return record
+    }
+
+    /// Front end A on every selected clip, for the gate against reference.Featurizer (native.py gate-frontend).
+    static func features(_ o: Options) async throws {
+        let fe = try VDSPFrontEnd(constantsDir: try o.url("--frontend-constants"))
+        let manifest = try ClipManifest.load(try o.url("--clips"))
+        let clips = try selectClips(o, manifest)
+        let out = try ArtifactPath.check(try o.url("--out"))
+        try FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
+        let writer = try JSONLWriter(path: out.appendingPathComponent("features.jsonl").path)
+        let pcmDir = try o.url("--pcm")
+        for clip in clips {
+            let pcm = try readPCM(directory: pcmDir, clip: clip)
+            let t0 = Clock.now()
+            let (features, frames, valid) = fe.compute(pcm)
+            let ms = Clock.ms(t0, Clock.now())
+            let data = features.withUnsafeBufferPointer { Data(buffer: $0) }
+            try data.write(to: out.appendingPathComponent("\(clip.id).mel.f32"))
+            try writer.writeObject(["clip": clip.id, "frames": frames, "mel_length": valid, "ms": ms,
+                                    "sha256": sha256Hex(data)])
+        }
     }
 
     /// The untimed diagnostic record of one clip; arrays go to <dir>/<clip>.<mode>.diag.f32.
