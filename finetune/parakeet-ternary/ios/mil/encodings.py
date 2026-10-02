@@ -42,6 +42,7 @@ CHAINS = {
     "C6d": "constexpr_lut_to_dense(uintB, fp16 grouped LUT {0, +-s_r})",
     "C5": "C3 weights; quantize(int8, per-tensor) -> dequantize on the activation",
     "G0": "C0's iOS16 constexpr_lut_to_dense (packed 6-bit uint8 indices, fp16 LUT[64]) verbatim",
+    "F32": "diagnostic: FP32 graph, dense FP32 const = codes x FP16(s)",
 }
 
 
@@ -105,6 +106,9 @@ def encode(arm: str, codes: np.ndarray, scale: np.ndarray, rank: int) -> Encoded
     if fam == "C1":
         enc.consts["weight"] = (codes.astype(np.float16) * s16[:, None]).reshape(w_shape)
         enc.bits["weight"] = 16
+    elif fam == "F32":  # diagnostic (mil/diag.py): FP32 graph, dense codes x FP16(s) in FP32
+        enc.consts["weight"] = (codes.astype(np.float32) * s16.astype(np.float32)[:, None]).reshape(w_shape)
+        enc.bits["weight"] = 32
     elif fam in ("C3", "C5"):
         enc.consts["data"] = codes.reshape(w_shape)
         enc.bits["data"] = 8
@@ -165,7 +169,7 @@ def weight_var(enc: Encoded, name: str):
 
     fam = family(enc.arm)
     c = enc.consts
-    if fam == "C1":
+    if fam in ("C1", "F32"):
         return mb.const(val=c["weight"], name=name)
     if fam in ("C3", "C5"):
         return mb.constexpr_blockwise_shift_scale(data=c["data"], scale=c["scale"], name=name)

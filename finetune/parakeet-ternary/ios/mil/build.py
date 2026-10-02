@@ -97,14 +97,15 @@ def make_program(P, variant: str):
     raise KeyError(variant)
 
 
-def convert(prog, opset: str, pipeline, inputs=None):
-    """Converted MLModel (not loaded) and the final pymil program."""
+def convert(prog, opset: str, pipeline, inputs=None, precision: str = "fp16"):
+    """Converted MLModel (not loaded) and the final pymil program (precision "fp32" only for the F32 diagnostic)."""
     import coremltools as ct
 
     tgt = target(opset)
+    cp = ct.precision.FLOAT32 if precision == "fp32" else ct.precision.FLOAT16
     if not prog.export_as_multifunction:
         model = ct.convert(prog, convert_to="mlprogram", minimum_deployment_target=tgt,
-                           compute_precision=ct.precision.FLOAT16, pass_pipeline=pipeline, inputs=inputs,
+                           compute_precision=cp, pass_pipeline=pipeline, inputs=inputs,
                            compute_units=ct.ComputeUnit.CPU_ONLY, skip_model_load=True)
         return model, model._mil_program
     from coremltools.converters.mil.converter import _mil_convert
@@ -115,7 +116,7 @@ def convert(prog, opset: str, pipeline, inputs=None):
 
     default_name = prog.default_function_name
     prog = ct.convert(prog, convert_to="milinternal", minimum_deployment_target=tgt,
-                      compute_precision=ct.precision.FLOAT16, pass_pipeline=pipeline)
+                      compute_precision=cp, pass_pipeline=pipeline)
     PassPipelineManager.apply_pipeline(prog, PassPipeline.get_pipeline("backend_mlprogram"))
     PASS_REGISTRY["common::const_deduplication"]._deduplicate_const_across_functions(prog)
     prog.default_function_name = default_name
@@ -263,7 +264,7 @@ def build_encoder(model: str, arm: str, variant: str, out_root: Path, layers: in
     pipe, excluded = pipeline_for(arm)
     prog, inputs = make_program(P, variant)
     t_built = time.time()
-    mlmodel, final = convert(prog, P.opset, pipe, inputs)
+    mlmodel, final = convert(prog, P.opset, pipe, inputs, precision=P.dt)
     t_conv = time.time()
     name = f"{variant}{tag}"
     package = out_dir / f"{name}.mlpackage"
