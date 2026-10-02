@@ -9,7 +9,7 @@ agree across machines (compare the files or their "digest"). Steps, in order:
 3. fidelity of seed 0 against weight_stats.json: per module the code fractions within 6 binomial
    standard deviations of the histogram; for every scale and float tensor the empirical CDF at the
    stored quantiles within the KS bound 2.7 / sqrt(n) (about 1e-6 false-alarm rate per tensor);
-   codes in {-1, 0, 1}, scales and BatchNorm variances positive, zero rows zero;
+   codes in {-1, 0, 1}, scales and BatchNorm variances positive, zero rows and LayerNorm biases zero;
 4. the reference at full depth on the written file: 2 s of seeded synthetic audio gives finite
    features, encoder output and joint logits, and replaying its own greedy trace reproduces the
    logits and decisions exactly.
@@ -90,6 +90,7 @@ class RandomWeights(unittest.TestCase):
     def test_3_fidelity(self) -> None:
         worst = {"codes_sigma": 0.0, "scale_ks": 0.0, "float_ks": 0.0}
         failures = []
+        layernorm_biases = 0
         for name, value in rw.generate(self.stats, 0):
             module = name.rsplit(".", 1)[0]
             if name.endswith(".codes") and module in self.stats["ternary"]:
@@ -108,6 +109,10 @@ class RandomWeights(unittest.TestCase):
                 worst["scale_ks"] = max(worst["scale_ks"], excess * np.sqrt(value.size))
                 if not ok or not (value > 0).all():
                     failures.append(f"{name}: scale distribution (excess {excess:.3g})")
+            elif rw.is_layernorm_bias(name):
+                layernorm_biases += 1
+                if value.any():
+                    failures.append(f"{name}: LayerNorm bias not zero")
             elif name in self.stats["float"]:
                 entry = self.stats["float"][name]
                 rows = entry.get("zero_rows", [])
@@ -122,8 +127,9 @@ class RandomWeights(unittest.TestCase):
                     failures.append(f"{name}: non-positive variance")
         common.report("random_fidelity", worst_code_sigma=worst["codes_sigma"],
                       worst_scale_ks_sqrt_n=worst["scale_ks"], worst_float_ks_sqrt_n=worst["float_ks"],
-                      ks_bound_sqrt_n=KS_C, failures=failures)
+                      ks_bound_sqrt_n=KS_C, zero_layernorm_biases=layernorm_biases, failures=failures)
         self.assertEqual(failures, [])
+        self.assertEqual(layernorm_biases, 5 * 24)
 
     def test_4_forward(self) -> None:
         torch.set_grad_enabled(False)

@@ -1,6 +1,7 @@
 """reference.py against NeMo 3.0 on CPU in FP32: DESIGN.md gate 1 (NixOS, NeMo env, through ../heavy; ~7 GB).
 
-FullDepthReal: the pinned v2 .nemo restored by NeMo. On three development clips, golden.run_clip
+FullDepthReal: the pinned v2 .nemo restored by NeMo, and the reference's own read of it (models.b0).
+On three development clips, golden.run_clip
 records NeMo's features, subsampling output, every layer, encoder output and its own greedy
 decode (GreedyBatchedTDTInfer, every step) with the per-step LSTM state and logits, and
 golden.compare gates the reference against them (rel <= 1e-5, abs <= 1e-4, identical decisions,
@@ -27,6 +28,7 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402  (puts ios/ and its parent on sys.path)
 import golden  # noqa: E402
+import models  # noqa: E402
 import randomweights as rw  # noqa: E402
 import reference  # noqa: E402
 
@@ -58,8 +60,8 @@ class FullDepthReal(GateMixin, unittest.TestCase):
         stats = rw.load_stats()
         cls.model = EncDecRNNTBPEModel.restore_from(str(paths.MODEL_FILE), map_location="cpu").float().eval()
         cls.nemo = golden.NemoModules.wrap(cls.model, stats["model_config"])
-        cls.ref = reference.build(reference.Config.from_model_config(stats["model_config"]))
-        cls.ref_load = reference.load_weights(cls.ref, cls.model.state_dict())
+        cls.ref = models.b0()  # the reference reads the .nemo itself, not NeMo's state_dict
+        cls.ref_load = cls.ref.provenance["load"]
         cls.records = common.dev_clips()
         cls.clips = [common.load_audio(r["audio_filepath"]) for r in cls.records]
         common.report("real_load", **cls.ref_load)

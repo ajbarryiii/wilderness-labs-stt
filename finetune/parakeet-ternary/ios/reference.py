@@ -49,7 +49,8 @@ decisions are overridden.
 
 Ternary modules may be supplied as int8 codes [out, in] in {-1, 0, 1} plus FP32 per-row scales
 [out]; they are dequantized in place into the model's single dense FP32 weight (one module at a
-time, no second dense copy).
+time, no second dense copy). ExportSource reads a ../export.py export directory (packed 2-bit
+codes, FP32 scales, FP16 tensors) in the same way.
 """
 from __future__ import annotations
 
@@ -57,7 +58,7 @@ import dataclasses
 import json
 import math
 from pathlib import Path
-from typing import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 
 import numpy as np
 import torch
@@ -543,6 +544,66 @@ class _Source:
         else:
             self.keys = set(source.keys())
             self.get = lambda k: torch.as_tensor(source[k])
+
+
+_SHIFTS = (0, 2, 4, 6)
+
+
+def unpack_codes(packed: Tensor, in_features: int) -> Tensor:
+    """export.py's 2-bit layout (code j at bits 2*(j % 4) of byte j // 4; 00 -> 0, 01 -> +1, 10 -> -1):
+    uint8 [out, ceil(in / 4)] -> int8 [out, in]; ValueError on the unused 11 pattern or nonzero padding."""
+    if packed.dtype != torch.uint8 or packed.dim() != 2 or packed.shape[1] != math.ceil(in_features / 4):
+        raise ValueError(f"expected uint8 [out, {math.ceil(in_features / 4)}], got {packed.dtype} {tuple(packed.shape)}")
+    fields = ((packed[..., None] >> torch.tensor(_SHIFTS, dtype=torch.uint8)) & 3).flatten(1)
+    if bool((fields == 3).any()) or bool(fields[:, in_features:].any()):
+        raise ValueError("invalid packed codes")
+    fields = fields[:, :in_features]
+    return (fields == 1).to(torch.int8) - (fields == 2).to(torch.int8)
+
+
+class ExportSource(Mapping):
+    """A "parakeet-ternary-v1" export directory (../export.py) as a lazy load_weights source.
+
+    "<module>.codes" are unpacked to int8 [out, in] on access (one module at a time), scales stay
+    FP32, the FP16 tensors are returned as FP32 (exact), the window and filterbank as stored. The
+    export file is checked against its manifest SHA-256 unless verify is False."""
+
+    FORMAT = "parakeet-ternary-v1"
+
+    def __init__(self, export_dir: str | Path, verify: bool = True) -> None:
+        import hashlib
+        from safetensors import safe_open
+
+        self.dir = Path(export_dir)
+        self.manifest = json.loads((self.dir / "manifest.json").read_text())
+        if self.manifest["format"] != self.FORMAT:
+            raise ValueError(f"unknown export format {self.manifest['format']!r}")
+        path = self.dir / self.manifest["file"]
+        if verify:
+            with open(path, "rb") as handle:
+                if hashlib.file_digest(handle, "sha256").hexdigest() != self.manifest["sha256"]:
+                    raise ValueError(f"{path} does not match its manifest SHA-256")
+        self._file = safe_open(str(path), framework="pt")
+        self._layers = self.manifest["quantized_layers"]
+        if any(layer["bias"] for layer in self._layers.values()):
+            raise ValueError("ternary module biases are not implemented")
+        self._keys = set(self._file.keys())
+
+    @property
+    def model_config(self) -> dict:
+        return self.manifest["config"]
+
+    def __getitem__(self, key: str) -> Tensor:
+        value = self._file.get_tensor(key)
+        if key.endswith(".codes") and key[:-len(".codes")] in self._layers:
+            return unpack_codes(value, self._layers[key[:-len(".codes")]]["shape"][1])
+        return value.float() if value.is_floating_point() else value
+
+    def __iter__(self):
+        return iter(sorted(self._keys))
+
+    def __len__(self) -> int:
+        return len(self._keys)
 
 
 @torch.no_grad()

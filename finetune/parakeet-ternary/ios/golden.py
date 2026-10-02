@@ -1,9 +1,10 @@
-"""NeMo FP32 golden outputs of a full-depth seeded random model, and the NeMo helpers the parity tests share.
+"""NeMo FP32 golden outputs of a full-depth benchmark model, and the NeMo helpers the parity tests share.
 
-NixOS only (NeMo env, CPU). The NeMo modules are instantiated from the pinned model config in
+NixOS only (NeMo env, CPU). --model seed<N>: a random surrogate; the NeMo modules are instantiated from the pinned model config in
 weight_stats.json (EncDecRNNTBPEModel.from_config_dict, optionally with fewer encoder layers) and
 filled from a randomweights tensor stream by reference.load_weights (ternary modules dequantized
-in place, one dense FP32 copy). Decoding is NeMo's own GreedyBatchedTDTInfer (the class the
+in place, one dense FP32 copy). --model mp2: M_P2, the pilot P2 export rebuilt by NeMo through
+../export.py's load_export. Decoding is NeMo's own GreedyBatchedTDTInfer (the class the
 config's strategy greedy_batch selects) with preserve_alignments and include_duration, so every
 joint evaluation (blank steps included) and its log-probabilities are recorded by NeMo itself.
 The per-step prediction-net input, LSTM state and raw joint logits are then recomputed by
@@ -11,19 +12,19 @@ driving NeMo's own decoder.predict / joint.project_* / joint.joint_net through r
 with NeMo's decisions; the result must reproduce NeMo's labels, durations, token timestamps and
 log-probabilities, else generation fails.
 
-Output (default /mnt/hd/wilderness-labs-stt/parakeet-ios/golden/seed0/): one <clip>.npz per
+Output (default /mnt/hd/wilderness-labs-stt/parakeet-ios/golden/<model>/): one <clip>.npz per
 development clip with audio, features + length, subsampling output + length, every layer's
 output [layers, 1, T, d_model], encoder output [1, d_model, T] + length, the decode trace
 (reference.Trace arrays, prefix trace_), per-step raw logits, NeMo log-probabilities, LSTM h and
-c [steps, layers, hidden], and NeMo's tokens, timestamps and durations; plus meta.json (seed,
-model digest, clips, versions).
+c [steps, layers, hidden], and NeMo's tokens, timestamps and durations; plus meta.json (model
+identity: surrogate digest or export SHA-256; clips, versions).
 
 compare() checks the reference against such outputs (DESIGN.md gate 1); tests/test_reference_nemo.py
 applies it to live NeMo outputs of the real weights, tests/test_reference_golden.py to the files.
 
 Run through the memory-capped wrapper (about 6 GB):
   ../heavy ios-wp1-golden --mem-max 12G --runtime 40min --wait -- env CUDA_VISIBLE_DEVICES= OMP_NUM_THREADS=4 \
-      MKL_NUM_THREADS=4 <repo>/finetune/parakeet-ternary/python <repo>/finetune/parakeet-ternary/ios/golden.py
+      MKL_NUM_THREADS=4 <repo>/finetune/parakeet-ternary/python <repo>/finetune/parakeet-ternary/ios/golden.py --model seed0
 """
 from __future__ import annotations
 
@@ -257,25 +258,41 @@ def compare(ref: reference.ParakeetReference, g: dict, noise_seed: int = 0) -> t
     return metrics, failures
 
 
+def nemo_model(name: str) -> tuple[NemoModules, dict]:
+    """NeMo FP32 modules of benchmark model `name` ("seed<N>" or "mp2") and the identity recorded in meta.json."""
+    if name.startswith("seed"):
+        stats = rw.load_stats()
+        seed = int(name.removeprefix("seed"))
+        tensors, digest = tensor_source(stats, seed)
+        nemo = NemoModules.from_config(stats["model_config"])
+        load = reference.load_weights(nemo, tensors)
+        return nemo, {"model": name, "seed": seed, "model_digest": digest, "weight_stats_sha256": stats["_sha256"],
+                      "load": load}
+    if name == "mp2":
+        import export
+        import models
+
+        export_dir = models._defaults()["mp2"]
+        manifest = json.loads((export_dir / export.MANIFEST).read_text())
+        model = export.load_export(export_dir)  # NeMo's own rebuild: export.unpack_codes + quant.dequantize
+        return NemoModules.wrap(model, manifest["config"]), {
+            "model": name, "export_dir": str(export_dir), "export_sha256": manifest["sha256"]}
+    raise KeyError(f"no golden outputs for model {name!r}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("--seed", type=int, default=common.GOLDEN_SEED)
+    parser.add_argument("--model", default=f"seed{common.GOLDEN_SEED}", help="seed0, seed1, seed2 or mp2")
     parser.add_argument("--out", type=Path, default=None)
     args = parser.parse_args()
     torch.set_grad_enabled(False)
-    out_dir = args.out or common.artifacts_dir() / "golden" / f"seed{args.seed}"
+    out_dir = args.out or common.artifacts_dir() / "golden" / args.model
     out_dir.mkdir(parents=True, exist_ok=True)
     start = time.time()
-    stats = rw.load_stats()
-    tensors, digest = tensor_source(stats, args.seed)
-    nemo = NemoModules.from_config(stats["model_config"])
-    load = reference.load_weights(nemo, tensors)
-    del tensors
+    nemo, meta = nemo_model(args.model)
     clips = common.dev_clips()
-    meta = {"seed": args.seed, "model_digest": digest, "weight_stats_sha256": stats["_sha256"], "load": load,
-            "layers": nemo.cfg.n_layers, "torch": torch.__version__, "clips": []}
     import nemo as nemo_pkg
-    meta["nemo"] = nemo_pkg.__version__
+    meta.update(layers=nemo.cfg.n_layers, torch=torch.__version__, nemo=nemo_pkg.__version__, clips=[])
     for record in clips:
         audio = common.load_audio(record["audio_filepath"])
         out = run_clip(nemo, audio)
@@ -289,7 +306,7 @@ def main() -> None:
     meta["seconds"] = round(time.time() - start, 1)
     meta["peak_rss_mb"] = common.peak_rss_mb()
     (out_dir / "meta.json").write_text(json.dumps(meta, indent=1) + "\n")
-    common.report("golden", out=str(out_dir), digest=digest, seconds=meta["seconds"], peak_rss_mb=meta["peak_rss_mb"])
+    common.report("golden", out=str(out_dir), model=args.model, seconds=meta["seconds"], peak_rss_mb=meta["peak_rss_mb"])
 
 
 if __name__ == "__main__":

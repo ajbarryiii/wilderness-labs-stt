@@ -17,6 +17,10 @@ Each tensor is generated on its own, independent of every other tensor and of --
   bits; the stored constants are checked against their SHA-256.
 - Ternary codes i.i.d. from the module's code histogram: u < P(-1) -> -1, u < P(-1) + P(0) -> 0,
   else +1. Per-row scales i.i.d. by inverse-CDF interpolation of the module's 257 scale quantiles.
+- LayerNorm biases are 0 (DESIGN.md "Surrogate models, clips and traces"): drawn i.i.d. per
+  element from the trained marginals they made the 24-layer encoder's output almost independent of
+  its input (1% input noise moved it by 2.8e-5 relative, decaying about 0.6x per layer; 0.089
+  with zero biases), which gate 1's sensitivity check rejects.
 - Other floating tensors i.i.d. from their 129 value quantiles; rows that are exactly zero in the
   export stay zero (the blank embedding row, NeMo's padding_idx); BatchNorm running_var is
   checked to be strictly positive (its quantiles are >= 0 and a draw lands exactly on 0 only for
@@ -131,6 +135,12 @@ def ternary_codes(rng: np.random.Generator, shape: tuple[int, int], counts: dict
     return ((u >= first).astype(np.int8) + (u >= second).astype(np.int8) - np.int8(1)).astype(np.int8)
 
 
+def is_layernorm_bias(name: str) -> bool:
+    """encoder.layers.N.norm_*.bias: the encoder's LayerNorm biases (all of the model's LayerNorms)."""
+    parts = name.split(".")
+    return parts[:2] == ["encoder", "layers"] and parts[-1] == "bias" and parts[-2].startswith("norm_")
+
+
 def _constant(name: str, stats: dict) -> np.ndarray:
     """The window or filterbank as weight_stats.json stores it (NVIDIA's buffer), checked by SHA-256."""
     entry = stats["constants"][name]
@@ -158,6 +168,8 @@ def generate(stats: dict, seed: int, layers: int | None = None) -> Iterator[tupl
                 value = inverse_cdf(u, decode_f32(entry["scale"]["quantiles"])).astype(np.float32)
                 if not (value > 0).all():
                     raise RuntimeError(f"{name}: non-positive scale")
+        elif is_layernorm_bias(name):
+            value = np.zeros(shape, dtype=np.float32)
         elif name in stats["float"]:
             entry = stats["float"][name]
             u = _rng(seed, 0, name).random(int(np.prod(shape, dtype=np.int64)))
