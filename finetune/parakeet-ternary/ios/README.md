@@ -59,7 +59,7 @@ version); re-run the comparison after changing either.
 | `c0.py` → `c0.json` | C0 pin: `FluidInference/parakeet-tdt-0.6b-v2-coreml` at `ee09c56`. Only the files FluidAudio 0.7.8 loads for v2: `Preprocessor`/`Encoder`/`Decoder`/`JointDecision` `.mlmodelc`, `parakeet_vocab.json`, `config.json`. SHA-256 and I/O schema of every file. |
 | `references.md` | Pinned permalinks and verbatim quotes behind DESIGN.md "Prior evidence", plus the C0 artifact table. |
 | `bench/` | `ParakeetBench` Swift package (tools 6.0; macOS 15+ / iOS 26+), with `BenchCore` and the `parakeet-bench` CLI. C0 pipeline: Preprocessor → Encoder → per-step Decoder/JointDecision calls replicating FluidAudio 0.7.8's `TdtDecoderV3` (cited in `C0Pipeline.swift`). Also free and replay modes, the warm-up/timed protocol, `mach_absolute_time` stage times, `os_signpost` intervals, and `MLComputePlan` per-op dumps. Timed calls keep the same minimal bookkeeping in both modes: tokens, timestamps and call counters. `--diag-dir` adds one separate **untimed** diagnostic call per clip; see "Replay diagnostics and C0's limits" below. Replay validates every trace against `clips.json` before loading models: hashes, lengths and all of the reference loop's invariants. Unknown modes or options, and output paths outside the Mac artifact root or inside Git, are refused. |
-| `c0report.py` | Scores `parakeet-bench` JSON lines against `clips.json` and the B0 traces, with the parent experiment's Whisper-normalized WER. It enforces repetition completeness per clip and reports, per bucket and stage, typical latency (median over clips of each clip's median) and the Harrell–Davis p95 over pooled calls. A run is labelled `baseline-eligible` only with at least 10 timed calls per clip (`--min-timed`); fewer requires `--smoke` and is labelled smoke. |
+| `c0report.py` (now `armreport.py`, WP4) | Scores `parakeet-bench` JSON lines against `clips.json` and the B0 traces, with the parent experiment's Whisper-normalized WER. It enforces repetition completeness per clip and reports, per bucket and stage, typical latency (median over clips of each clip's median) and the Harrell–Davis p95 over pooled calls. A run is labelled `baseline-eligible` only with at least 10 timed calls per clip (`--min-timed`); fewer requires `--smoke` and is labelled smoke. |
 | `g0probe.py` | G0 feasibility: parses C0's `Encoder.mlmodelc` (MIL text and blob file), cross-checks with coremltools, and fingerprints the tensors against B0. |
 | `results/smoke/c0_free_natural_smoke.summary.json`, `results/g0_probe.summary.json` | WP2 results. They hold no weights or audio. The C0 run is a **smoke** measurement: 1 timed call per clip. |
 
@@ -150,3 +150,79 @@ G0 feasibility: **practical.**
 - Two catches for G0's graph:
   - the 24 depthwise convolutions have BatchNorm folded in (with separate fp16 bias consts);
   - `linear_pos` is not stored. Each layer has a folded position table `[1, 8, 128, 375]` for the 188-frame window. Shorter buckets need the middle `2T - 1` columns, a slice that is exact because the projection has no bias.
+
+## WP4: generic arms, front end A, decode loops F0/F1/F2, paired reporting
+
+| File | What |
+| --- | --- |
+| `bench/Sources/BenchCore/Arm.swift` | `ArmPipeline`: an arm is {front end, encoder package and length variant, decode loop, compute units}. The bucket is the smallest of 2/4/8/15 s holding the clip. Stages: preprocess, encoder (output materialized), preprojection, decode, total, plus time and physical calls per decode component. Timed calls keep the same minimal bookkeeping. Gate mode reads the encoder output from `<id>.f32` files instead. |
+| `bench/Sources/BenchCore/Encoder.swift` | Encoder variants: `fixed15` (single function), `multifunction` (functions `b2`..`b15` via `MLModelConfiguration.functionName`) and `enumerated` (one model, input `[1, 128, F_b]`). WP3's contract: `mel` / `mel_length` → `encoder` / `encoder_length`, with F_b = 201/401/801/1501. A `.mlpackage` is compiled once into `<artifacts>/compiled/`, and its compile time is recorded. |
+| `bench/Sources/BenchCore/FrontEnd.swift` | Front end A (Accelerate) implements the full NeMo feature contract with the model's stored window and filterbank. Features are computed on the valid audio, normalized over the valid frames, and zero-padded to F_b, with `mel_length` = N // 160. The `c0pre` option uses C0's Core ML Preprocessor for comparison (its `mel_length` is one higher). |
+| `bench/Sources/BenchCore/Decode.swift` | `LabelLoop` follows NeMo's greedy_batch semantics, as `reference.run_steps` does, for free decoding and replay. Engines: <br>• F0: per-step `Decoder` + `JointDecision` Core ML calls with C0's contract. <br>• F1: fused `DecoderJoint`, with the pending token re-run from the state before it on each step. <br>• F2: native CPU loop in FP32. The encoder-side joint projection of all frames is one `cblas_sgemm`; the layer-0 input table is precomputed; the 2-layer LSTM uses `cblas_sgemv`; the prediction net runs only after a non-blank emission; one joint `sgemv` and the two-head argmax per step. <br>• `f1native`: a test double with F1's call structure on F2's math. <br>Untimed diagnostics: F2 exposes raw logits [1030] and h/c [2, 640] per step; F0/F1 expose their argmax outputs and states. |
+| `bench/Tests/BenchCoreTests` | XCTest checks: vDSP DFT vs a naive DFT; native LSTM and joint vs naive doubles; F2 vs the fused call structure (same decisions, expected physical calls); free-decode traces passing `TraceFile.validate`; replay of a decode's own trace; mutated traces rejected. |
+| `native.py` | Exports, under the artifact area: front-end constants, decoder/joint weights (with an exact FP16 transfer copy when possible), and the reference's encoder outputs, replay logits/states and greedy tokens (`reference`, heavy unit). Also runs `gate-frontend` and `gate-f2`. |
+| `macpush.py` | Copies artifacts NixOS → Mac through the SSH helper as hash-checked chunks of 90 KB; each call carries at most one 128 KiB argument. |
+| `armreport.py` | Arm-agnostic summary (renamed from `c0report.py`): completeness, typical latency and Harrell–Davis p95 per stage, physical calls, and token agreement with B0 or with the model's reference (`--ref`). `--baseline C0.jsonl` adds paired comparisons: per-clip median ratios, HD-p95 ratios, and a percentile bootstrap that resamples clips with each clip's pairs kept together. |
+| `results/wp4/` | Gate and smoke summaries, and the macguard suite outputs. Numbers and LibriSpeech texts only. |
+
+Commands:
+
+```sh
+# NixOS (heavy unit for the reference), then copy to the Mac
+CUDA_VISIBLE_DEVICES= ./python ios/native.py frontend --model mp2 --out $A/native/mp2
+CUDA_VISIBLE_DEVICES= ./python ios/native.py weights --model mp2 --out $A/native/mp2
+./heavy ios-wp4-reference --mem-max 10G --runtime 40min --wait -- env CUDA_VISIBLE_DEVICES= OMP_NUM_THREADS=4 \
+    $R/finetune/parakeet-ternary/python $R/finetune/parakeet-ternary/ios/native.py reference --model mp2 --out $A/native/mp2
+CUDA_VISIBLE_DEVICES= ./python ios/macpush.py $A/native/mp2/{frontend.json,frontend.f32bin,decoder_joint.json,decoder_joint.f16bin} \
+    --dest $MAC_A/native/mp2
+CUDA_VISIBLE_DEVICES= ./python ios/macpush.py $A/native/mp2/enc --dest $MAC_A/native/mp2/enc
+# Mac
+ios/macguard --rss-cap 1G --timeout 300 -- ios/pyenv/.venv/bin/python ios/native.py widen --dir $A/native/mp2
+(cd ios/bench && ../macguard --rss-cap 4G --timeout 1200 -- swift test)
+ios/macguard --rss-cap 2G --timeout 600 -- $B features --frontend-constants $A/native/mp2 --clips ios/clips.json --pcm $A/clips \
+    --out $A/results/frontend-a
+ios/macguard --rss-cap 3G --timeout 900 -- ios/pyenv/.venv/bin/python ios/native.py gate-frontend --frontend $A/native/mp2 \
+    --swift $A/results/frontend-a --pcm $A/clips
+F2="--arm custom --decode f2 --native-weights $A/native/mp2 --encoder-input $A/native/mp2/enc --vocab $A/c0/parakeet_vocab.json"
+ios/macguard --rss-cap 2G --timeout 900 -- $B run --clips ios/clips.json --pcm $A/clips --kinds natural $F2 --mode replay \
+    --traces ios/traces.json --warmups 1 --timed 1 --out $A/results/f2-gate/replay.jsonl --diag-dir $A/results/f2-gate/diag
+ios/macguard --rss-cap 2G --timeout 900 -- $B run --clips ios/clips.json --pcm $A/clips --kinds natural $F2 --mode free \
+    --warmups 1 --timed 1 --out $A/results/f2-gate/free.jsonl
+# an end-to-end arm: front end A + C0's encoder + F2 with B0's decoder/joint (native.py weights --model b0)
+ios/macguard --rss-cap 4G --timeout 900 -- $B run --clips ios/clips.json --pcm $A/clips --ids ... --arm custom --frontend vdsp \
+    --frontend-constants $A/native/b0 --encoder $A/c0/Encoder.mlmodelc --encoder-variant fixed15 --decode f2 \
+    --native-weights $A/native/b0 --models $A/c0 --out $A/results/wp4-smoke/vdsp-c0enc-f2.jsonl
+# NixOS
+CUDA_VISIBLE_DEVICES= ./python ios/native.py gate-f2 --ref $A/native/mp2 --results replay+free.jsonl --diag diag
+CUDA_VISIBLE_DEVICES= ./python ios/armreport.py ARM.jsonl --baseline C0.jsonl --smoke
+```
+
+Results (2026-10-02; Mac = M1 Pro, macOS 27.0, Swift 6.3.1, Mac shared; all latencies are smoke and informational):
+
+- **macguard** (sh front end + `macguard.py`) passes all of `tests/macguard_tests.sh`: 22 checks on Linux, 23 on the Mac (11b is Mac-only). That includes the job environment equalling the caller's, and the r3 fault cases (sentinel SIGKILL, cleanup PermissionError, supervisor death before the ACK, end-log failure). Under macguard, `swift build` no longer needs an SDKROOT pin.
+- **Unit tests:** 4/4 pass. The loop test hit 134 emissions and 8 forced advances.
+- **Front end A gate** vs `reference.Featurizer` (same stored constants, which are identical for B0 and M_P2) on all 82 clips (`results/wp4/frontend_a_gate.json`):
+  - **rel ≤ 1e-5 holds on all 81 non-silence clips** (max 7.5e-6, median 1.2e-6).
+  - **abs ≤ 1e-4 fails on 23 clips** (max 4.3e-4). An exact FP64 implementation of the reference algorithm is itself up to 3.2e-4 abs from the FP32 reference on 19 clips, worst in mel band 0, where pre-emphasis leaves little energy. FP32 front end A is a comparable distance from FP64 (4.8e-4 abs, 6.0e-6 rel). The abs ceiling is therefore below the FP32 reference's own rounding.
+  - **The silence clip fails by construction:** every feature is constant, and the std guard makes the reference amplify the rounding of its mean by 1e5. Front end A returns the exact answer, 0.
+  - These two outcomes are reported, not resolved; the gate definition is the design's to change.
+  - Front end A takes 0.4 ms (2 s) to 1.8 ms (15 s) per call, against 13.7–16.1 ms for C0's Core ML Preprocessor.
+- **F2 gate** for `mp2` on all 64 natural clips: the same FP32 reference encoder output is fed in, the B0 trace is replayed, and the result is compared with the reference's replay (`results/wp4/f2_gate_mp2.json`). **64/64 pass:**
+  - logits rel ≤ 1.4e-7, abs ≤ 8.9e-7 (duration logits 3.8e-7 / 3.0e-6);
+  - h rel 1.0e-6 / abs 2.9e-5, c rel 8.2e-7 / abs 3.4e-5;
+  - every token and duration argmax equals the reference's;
+  - free decoding: all 64 token sequences equal the reference's greedy tokens.
+
+  M_P2's FP32 WER on these 64 clips is 2.71% (B0: 1.77%).
+- **End-to-end smoke** (8 natural clips, 2 per bucket; 3 warm-ups + 3 timed calls; paired against C0 on the same clips, ratios with bootstrap 95% CI): arms that differ from C0 in front end and decode loop, all on C0's encoder.
+
+  | Arm | Total typical vs C0 | Notes |
+  | --- | --- | --- |
+  | vDSP + C0 encoder + F0 | 0.80× (0.79× / 0.81× / 0.82× / 0.77× for 2/4/8/15 s) | encoder 1.00×, decode 0.96× |
+  | vDSP + C0 encoder + F2 (B0 decoder/joint weights) | 0.77× | decode 0.80×, encoder 1.00× |
+  | c0pre + C0 encoder + F0 | 1.00× | |
+
+  - F2's FP32 prediction step costs 0.57 ms per call; Core ML's Decoder costs 0.51 ms. Its joint costs 0.069 ms per step, and the pre-projection 0.35 ms per 15 s utterance.
+  - Transcripts of all three arms: WER 0 on these 8 clips, as C0's.
+- **Replay smoke** of the custom F0 and F2 arms (2 clips, with diagnostics): physical calls equal the trace's logical work (129 joint steps, 127 prediction runs), and 97.7% of C0's own argmax tokens agree with the trace.
+- **Not exercised yet:** F1 and the multifunction/enumerated encoder variants, because WP3's models do not exist yet. Their code paths compile, and F1's call structure is unit-tested through its native test double.

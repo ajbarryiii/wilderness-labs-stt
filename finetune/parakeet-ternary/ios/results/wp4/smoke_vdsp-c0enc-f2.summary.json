@@ -1,0 +1,483 @@
+{
+ "label": "smoke",
+ "label_note": "3 timed call(s) per clip, fewer than the 10 DESIGN.md prescribes: a functional check, not a comparison baseline",
+ "results_file": "vdsp-c0enc-f2.jsonl",
+ "arm": "vdsp+Encoder.mlmodelc+fixed15+f2",
+ "arm_spec": {
+  "decode": "f2",
+  "encoder_input": null,
+  "front_end": "vdsp"
+ },
+ "mode": "free",
+ "compute_units": "cpuAndNeuralEngine",
+ "preprocessor_units": "cpuOnly",
+ "os": "Version 27.0 (Build 26A428)",
+ "load_ms": null,
+ "load_cache_evidence": "none: MLModel(contentsOf:) wall time only; prepare-and-cache vs cached load needs an Instruments Core ML trace (DESIGN.md Load)",
+ "completeness": {
+  "clips": 8,
+  "warmups": 3,
+  "timed_per_clip": 3,
+  "clip_ids_recorded": true
+ },
+ "timed_records": 24,
+ "phys_footprint_mb": {
+  "after_load": 121.1725845336914,
+  "end": 126.953857421875,
+  "peak": 126.953857421875
+ },
+ "wer_vs_reference": {
+  "wer": 0.0,
+  "substitutions": 0,
+  "deletions": 0,
+  "insertions": 0,
+  "ref_words": 97,
+  "hyp_words": 97,
+  "utterances": 8,
+  "excluded_empty_reference": 0
+ },
+ "wer_vs_b0": {
+  "wer": 0.0,
+  "substitutions": 0,
+  "deletions": 0,
+  "insertions": 0,
+  "ref_words": 97,
+  "hyp_words": 97,
+  "utterances": 8,
+  "excluded_empty_reference": 0
+ },
+ "b0_wer_vs_reference_same_clips": {
+  "wer": 0.0,
+  "substitutions": 0,
+  "deletions": 0,
+  "insertions": 0,
+  "ref_words": 97,
+  "hyp_words": 97,
+  "utterances": 8,
+  "excluded_empty_reference": 0
+ },
+ "per_bucket_wer_vs_reference": {
+  "2": {
+   "wer": 0.0,
+   "substitutions": 0,
+   "deletions": 0,
+   "insertions": 0,
+   "ref_words": 4,
+   "hyp_words": 4,
+   "utterances": 2,
+   "excluded_empty_reference": 0
+  },
+  "4": {
+   "wer": 0.0,
+   "substitutions": 0,
+   "deletions": 0,
+   "insertions": 0,
+   "ref_words": 16,
+   "hyp_words": 16,
+   "utterances": 2,
+   "excluded_empty_reference": 0
+  },
+  "8": {
+   "wer": 0.0,
+   "substitutions": 0,
+   "deletions": 0,
+   "insertions": 0,
+   "ref_words": 31,
+   "hyp_words": 31,
+   "utterances": 2,
+   "excluded_empty_reference": 0
+  },
+  "15": {
+   "wer": 0.0,
+   "substitutions": 0,
+   "deletions": 0,
+   "insertions": 0,
+   "ref_words": 46,
+   "hyp_words": 46,
+   "utterances": 2,
+   "excluded_empty_reference": 0
+  }
+ },
+ "token_sequence_equal_to_b0": {
+  "clips": 6,
+  "of": 8
+ },
+ "texts_differing_from_b0": [
+  {
+   "clip": "n02-174-50561-0014",
+   "b0": "The Ladies",
+   "arm": "The ladies."
+  },
+  {
+   "clip": "n15-1462-170142-0001",
+   "b0": "Emerging at Euston, at half past three o'clock in the afternoon, Alexander had his luggage sent to the Savoy, and drove at once to Bedford Square.",
+   "arm": "Emerging at Euston at half past three o'clock in the afternoon, Alexander had his luggage sent to the Savoy, and drove at once to Bedford Square."
+  }
+ ],
+ "tokens_identical_across_reps": true,
+ "per_bucket": {
+  "2": {
+   "clips": 2,
+   "pooled_calls": 6,
+   "preprocess_ms_typical": 0.411,
+   "preprocess_ms_p95_hd": 0.436,
+   "encoder_ms_typical": 41.809,
+   "encoder_ms_p95_hd": 42.213,
+   "preprojection_ms_typical": 0.225,
+   "preprojection_ms_p95_hd": 0.249,
+   "decode_ms_typical": 3.978,
+   "decode_ms_p95_hd": 4.498,
+   "total_ms_typical": 46.46,
+   "total_ms_p95_hd": 47.291,
+   "native_predict_ms_typical": 3.416,
+   "native_predict_ms_p95_hd": 3.864,
+   "native_joint_ms_typical": 0.554,
+   "native_joint_ms_p95_hd": 0.622,
+   "first_call_total_ms_median": 67.806,
+   "native_joint_calls_mean": 10.5,
+   "native_joint_ms_per_call": 0.0538,
+   "native_predict_calls_mean": 6,
+   "native_predict_ms_per_call": 0.5793
+  },
+  "4": {
+   "clips": 2,
+   "pooled_calls": 6,
+   "preprocess_ms_typical": 0.584,
+   "preprocess_ms_p95_hd": 0.64,
+   "encoder_ms_typical": 41.344,
+   "encoder_ms_p95_hd": 41.464,
+   "preprojection_ms_typical": 0.27,
+   "preprojection_ms_p95_hd": 0.284,
+   "decode_ms_typical": 9.738,
+   "decode_ms_p95_hd": 11.234,
+   "total_ms_typical": 52.058,
+   "total_ms_p95_hd": 53.446,
+   "native_predict_ms_typical": 8.602,
+   "native_predict_ms_p95_hd": 9.959,
+   "native_joint_ms_typical": 1.106,
+   "native_joint_ms_p95_hd": 1.285,
+   "first_call_total_ms_median": 51.704,
+   "native_joint_calls_mean": 16.5,
+   "native_joint_ms_per_call": 0.0689,
+   "native_predict_calls_mean": 15,
+   "native_predict_ms_per_call": 0.5829
+  },
+  "8": {
+   "clips": 2,
+   "pooled_calls": 6,
+   "preprocess_ms_typical": 1.009,
+   "preprocess_ms_p95_hd": 1.054,
+   "encoder_ms_typical": 41.357,
+   "encoder_ms_p95_hd": 41.426,
+   "preprojection_ms_typical": 0.269,
+   "preprojection_ms_p95_hd": 0.279,
+   "decode_ms_typical": 16.151,
+   "decode_ms_p95_hd": 19.349,
+   "total_ms_typical": 58.791,
+   "total_ms_p95_hd": 61.949,
+   "native_predict_ms_typical": 14.234,
+   "native_predict_ms_p95_hd": 17.084,
+   "native_joint_ms_typical": 1.9,
+   "native_joint_ms_p95_hd": 2.263,
+   "first_call_total_ms_median": 59.996,
+   "native_joint_calls_mean": 28,
+   "native_joint_ms_per_call": 0.0675,
+   "native_predict_calls_mean": 26,
+   "native_predict_ms_per_call": 0.5463
+  },
+  "15": {
+   "clips": 2,
+   "pooled_calls": 6,
+   "preprocess_ms_typical": 1.796,
+   "preprocess_ms_p95_hd": 1.939,
+   "encoder_ms_typical": 41.462,
+   "encoder_ms_p95_hd": 41.529,
+   "preprojection_ms_typical": 0.349,
+   "preprojection_ms_p95_hd": 0.353,
+   "decode_ms_typical": 33.861,
+   "decode_ms_p95_hd": 37.529,
+   "total_ms_typical": 77.457,
+   "total_ms_p95_hd": 81.246,
+   "native_predict_ms_typical": 29.886,
+   "native_predict_ms_p95_hd": 33.106,
+   "native_joint_ms_typical": 3.969,
+   "native_joint_ms_p95_hd": 4.399,
+   "first_call_total_ms_median": 80.115,
+   "native_joint_calls_mean": 58,
+   "native_joint_ms_per_call": 0.0686,
+   "native_predict_calls_mean": 53,
+   "native_predict_ms_per_call": 0.5665
+  }
+ },
+ "estimands": "typical = median over clips of each clip's median; p95_hd = Harrell-Davis p95 over the bucket's pooled timed calls",
+ "calls": {
+  "preprocessor_per_call": [
+   0
+  ],
+  "encoder_per_call": [
+   1
+  ],
+  "physical_totals": {
+   "native_joint": 226,
+   "native_predict": 200
+  },
+  "joint_calls_total": 226,
+  "b0_steps_total": 227,
+  "decoder_calls_total": 200,
+  "b0_prediction_runs_total": 200,
+  "encoder_length_minus_b0_frames": [
+   0
+  ],
+  "effective_minus_b0_frames": [
+   0
+  ]
+ },
+ "paired_vs_baseline": {
+  "baseline_file": "c0.jsonl",
+  "baseline_arm": "C0",
+  "baseline_completeness": {
+   "clips": 8,
+   "warmups": 3,
+   "timed_per_clip": 3,
+   "clip_ids_recorded": true
+  },
+  "method": "per-clip ratios arm/baseline; typical = median over clips; p95 = HD p95 ratio of pooled calls; percentile bootstrap (1000 resamples of clips, pairs kept together), seed 0",
+  "per_bucket": {
+   "2": {
+    "total": {
+     "clips": 2,
+     "typical_ratio": 0.773,
+     "typical_ratio_ci95": [
+      0.7584,
+      0.7876
+     ],
+     "p95_ratio": 0.7812,
+     "p95_ratio_ci95": [
+      0.7679,
+      0.791
+     ],
+     "arm_typical_ms": 46.46,
+     "baseline_typical_ms": 60.112
+    },
+    "encoder": {
+     "clips": 2,
+     "typical_ratio": 1.0101,
+     "typical_ratio_ci95": [
+      1.0013,
+      1.0189
+     ],
+     "p95_ratio": 1.0179,
+     "p95_ratio_ci95": [
+      1.0022,
+      1.0206
+     ],
+     "arm_typical_ms": 41.809,
+     "baseline_typical_ms": 41.391
+    },
+    "decode": {
+     "clips": 2,
+     "typical_ratio": 0.7904,
+     "typical_ratio_ci95": [
+      0.764,
+      0.8168
+     ],
+     "p95_ratio": 0.8747,
+     "p95_ratio_ci95": [
+      0.8574,
+      0.8765
+     ],
+     "arm_typical_ms": 3.978,
+     "baseline_typical_ms": 5.03
+    }
+   },
+   "4": {
+    "total": {
+     "clips": 2,
+     "typical_ratio": 0.7767,
+     "typical_ratio_ci95": [
+      0.7725,
+      0.7809
+     ],
+     "p95_ratio": 0.7688,
+     "p95_ratio_ci95": [
+      0.768,
+      0.7785
+     ],
+     "arm_typical_ms": 52.058,
+     "baseline_typical_ms": 67.02
+    },
+    "encoder": {
+     "clips": 2,
+     "typical_ratio": 0.9988,
+     "typical_ratio_ci95": [
+      0.9975,
+      1.0
+     ],
+     "p95_ratio": 0.9985,
+     "p95_ratio_ci95": [
+      0.9984,
+      1.0018
+     ],
+     "arm_typical_ms": 41.344,
+     "baseline_typical_ms": 41.396
+    },
+    "decode": {
+     "clips": 2,
+     "typical_ratio": 0.8416,
+     "typical_ratio_ci95": [
+      0.8171,
+      0.866
+     ],
+     "p95_ratio": 0.7871,
+     "p95_ratio_ci95": [
+      0.7819,
+      0.8905
+     ],
+     "arm_typical_ms": 9.738,
+     "baseline_typical_ms": 11.533
+    }
+   },
+   "8": {
+    "total": {
+     "clips": 2,
+     "typical_ratio": 0.7651,
+     "typical_ratio_ci95": [
+      0.7599,
+      0.7704
+     ],
+     "p95_ratio": 0.7439,
+     "p95_ratio_ci95": [
+      0.7245,
+      0.7439
+     ],
+     "arm_typical_ms": 58.791,
+     "baseline_typical_ms": 76.867
+    },
+    "encoder": {
+     "clips": 2,
+     "typical_ratio": 0.9982,
+     "typical_ratio_ci95": [
+      0.9981,
+      0.9983
+     ],
+     "p95_ratio": 0.9757,
+     "p95_ratio_ci95": [
+      0.9743,
+      0.9946
+     ],
+     "arm_typical_ms": 41.357,
+     "baseline_typical_ms": 41.431
+    },
+    "decode": {
+     "clips": 2,
+     "typical_ratio": 0.7697,
+     "typical_ratio_ci95": [
+      0.7563,
+      0.7831
+     ],
+     "p95_ratio": 0.7096,
+     "p95_ratio_ci95": [
+      0.6646,
+      0.7096
+     ],
+     "arm_typical_ms": 16.151,
+     "baseline_typical_ms": 21.059
+    }
+   },
+   "15": {
+    "total": {
+     "clips": 2,
+     "typical_ratio": 0.7344,
+     "typical_ratio_ci95": [
+      0.665,
+      0.8038
+     ],
+     "p95_ratio": 0.639,
+     "p95_ratio_ci95": [
+      0.6369,
+      0.7819
+     ],
+     "arm_typical_ms": 77.457,
+     "baseline_typical_ms": 106.776
+    },
+    "encoder": {
+     "clips": 2,
+     "typical_ratio": 0.9916,
+     "typical_ratio_ci95": [
+      0.985,
+      0.9982
+     ],
+     "p95_ratio": 0.9554,
+     "p95_ratio_ci95": [
+      0.9545,
+      0.9687
+     ],
+     "arm_typical_ms": 41.462,
+     "baseline_typical_ms": 41.815
+    },
+    "decode": {
+     "clips": 2,
+     "typical_ratio": 0.7375,
+     "typical_ratio_ci95": [
+      0.5941,
+      0.8809
+     ],
+     "p95_ratio": 0.5559,
+     "p95_ratio_ci95": [
+      0.5531,
+      0.8196
+     ],
+     "arm_typical_ms": 33.861,
+     "baseline_typical_ms": 48.429
+    }
+   }
+  },
+  "all_clips": {
+   "total": {
+    "clips": 8,
+    "typical_ratio": 0.7714,
+    "typical_ratio_ci95": [
+     0.7584,
+     0.7842
+    ],
+    "p95_ratio": 0.6562,
+    "p95_ratio_ci95": [
+     0.6383,
+     0.7905
+    ],
+    "arm_typical_ms": 54.638,
+    "baseline_typical_ms": 70.456
+   },
+   "encoder": {
+    "clips": 8,
+    "typical_ratio": 0.9982,
+    "typical_ratio_ci95": [
+     0.9975,
+     1.0007
+    ],
+    "p95_ratio": 0.9759,
+    "p95_ratio_ci95": [
+     0.9568,
+     1.0027
+    ],
+    "arm_typical_ms": 41.415,
+    "baseline_typical_ms": 41.436
+   },
+   "decode": {
+    "clips": 8,
+    "typical_ratio": 0.7999,
+    "typical_ratio_ci95": [
+     0.7563,
+     0.866
+    ],
+    "p95_ratio": 0.58,
+    "p95_ratio_ci95": [
+     0.555,
+     0.8478
+    ],
+    "arm_typical_ms": 12.14,
+    "baseline_typical_ms": 14.822
+   }
+  }
+ }
+}

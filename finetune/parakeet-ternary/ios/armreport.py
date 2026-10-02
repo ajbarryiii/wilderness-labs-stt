@@ -1,8 +1,10 @@
-"""Summarize parakeet-bench C0 records (JSON lines from the Mac) against clips.json and the B0 traces.
+"""Summarize parakeet-bench records of any arm (JSON lines from the Mac); optionally pair them with a C0 baseline.
 
 NixOS (the parent experiment's scorer: Whisper-normalized WER, evaluate.score / wer_summary):
-  CUDA_VISIBLE_DEVICES= ../python ios/c0report.py RESULTS.jsonl [--plan SUMMARY.json] [--out SUMMARY.json]
-      [--min-timed 10] [--smoke]
+  CUDA_VISIBLE_DEVICES= ../python ios/armreport.py RESULTS.jsonl [--baseline C0.jsonl] [--plan SUMMARY.json]
+      [--ref NATIVE_REF_DIR] [--out SUMMARY.json] [--min-timed 10] [--smoke] [--bootstrap 2000]
+
+(Renamed from c0report.py in WP4; the C0-only summaries in results/smoke/ were made by that version.)
 
 Repetition completeness is enforced. Every clip in the load record's clip_ids, or every clip seen if the run
 predates that field, must have exactly the timed calls with rep = warmups .. warmups + timed - 1, and its
@@ -14,14 +16,23 @@ calls per clip (DESIGN.md "Repetition and statistics": 10 on the Mac, 5 on the p
 
 Reports, over the timed records only:
 - WER of the natural clips vs the LibriSpeech transcripts and vs B0's transcripts (traces.json), and exact
-  token-sequence agreement with B0.
-- Per bucket, the two estimands for every stage: typical latency, the median over clips of each clip's median;
-  and tail latency, the Harrell-Davis p95 over the bucket's pooled calls.
+  token-sequence agreement with B0. With --ref, also agreement with that model's FP32 reference greedy
+  tokens (native.py reference).
+- Per bucket, the two estimands for every stage present (preprocess, encoder, preprojection, decode, total and
+  each decode-loop component): typical latency, the median over clips of each clip's median; and tail latency,
+  the Harrell-Davis p95 over the bucket's pooled calls.
 - First-call (warm-up rep 0) totals.
-- Physical model-call counts against the B0 trace's logical steps.
+- Physical model-call counts per component against the B0 trace's logical steps.
 
-Untimed "diagnostic" records (parakeet-bench --diag-dir) are summarized separately: C0's argmax agreement with
-the trace's decisions (replay) and the array files. Mac timings are informational: the Mac is shared.
+With --baseline (a C0 run of the same clips; DESIGN.md "Repetition and statistics": comparisons with C0 are
+paired), per bucket and over all clips:
+- the typical-latency ratio = median over clips of (arm clip median / C0 clip median);
+- the p95 ratio = HD p95 of the arm's pooled calls / HD p95 of C0's;
+- each with a percentile bootstrap 95% interval that resamples clips with replacement and keeps each clip's arm
+  and C0 calls together (cluster = clip; one session, so no session level), for total, encoder and decode.
+
+Untimed "diagnostic" records (parakeet-bench --diag-dir) are summarized separately. Mac timings are
+informational: the Mac is shared.
 """
 from __future__ import annotations
 
@@ -37,7 +48,9 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parent))
 
-STAGES = ("preprocess", "encoder", "decode", "decoder_model", "joint_model", "total")
+STAGES = ("preprocess", "encoder", "preprojection", "decode", "total", "decoder_model", "joint_model",
+          "fused_model", "native_predict", "native_joint", "native_fused")
+PAIRED_STAGES = ("total", "encoder", "decode")
 
 
 def harrell_davis(values, p: float = 0.95) -> float:
@@ -86,6 +99,46 @@ def per_clip_median(records: list[dict], key) -> dict[str, float]:
     return {c: statistics.median(v) for c, v in by_clip.items()}
 
 
+def load_run(path: str) -> tuple[dict, dict, list[dict], list[dict], dict]:
+    lines = [json.loads(l) for l in Path(path).read_text().splitlines() if l.strip()]
+    load = next((l for l in lines if l.get("record") == "load"), {})
+    end = next((l for l in lines if l.get("record") == "end"), {})
+    diagnostics = [l for l in lines if l.get("record") == "diagnostic"]
+    calls = [l for l in lines if "result" in l]
+    return load, end, diagnostics, calls, check_complete(load, calls)
+
+
+def stage_values(records: list[dict], stage: str) -> dict[str, list[float]]:
+    by_clip: dict[str, list[float]] = {}
+    for r in records:
+        by_clip.setdefault(r["clip"], []).append(r["result"]["times_ms"][stage])
+    return by_clip
+
+
+def paired(arm: list[dict], base: list[dict], stage: str, n_boot: int, seed: int = 0) -> dict:
+    """Typical-latency ratio (median over clips of per-clip median ratios) and HD-p95 ratio, arm / baseline, with
+    percentile bootstrap 95% intervals resampling clips (each clip's arm and baseline calls kept together)."""
+    a, b = stage_values(arm, stage), stage_values(base, stage)
+    ids = sorted(set(a) & set(b))
+    if not ids:
+        return {"clips": 0}
+
+    def stats(sample: list[str]) -> tuple[float, float]:
+        ratios = [statistics.median(a[i]) / statistics.median(b[i]) for i in sample]
+        pa = [v for i in sample for v in a[i]]
+        pb = [v for i in sample for v in b[i]]
+        return statistics.median(ratios), harrell_davis(pa) / harrell_davis(pb)
+
+    typ, p95 = stats(ids)
+    rng = np.random.default_rng(seed)
+    boots = np.array([stats([ids[k] for k in rng.integers(0, len(ids), len(ids))]) for _ in range(n_boot)])
+    lo, hi = np.percentile(boots, [2.5, 97.5], axis=0)
+    return {"clips": len(ids), "typical_ratio": round(typ, 4), "typical_ratio_ci95": [round(lo[0], 4), round(hi[0], 4)],
+            "p95_ratio": round(p95, 4), "p95_ratio_ci95": [round(lo[1], 4), round(hi[1], 4)],
+            "arm_typical_ms": round(statistics.median(statistics.median(a[i]) for i in ids), 3),
+            "baseline_typical_ms": round(statistics.median(statistics.median(b[i]) for i in ids), 3)}
+
+
 def main() -> None:
     import traces as tracemod
 
@@ -95,13 +148,11 @@ def main() -> None:
     parser.add_argument("--out", help="summary JSON: under ios/results/ (text, no audio or weights) or the artifact area")
     parser.add_argument("--min-timed", type=int, default=10, help="timed calls per clip for a baseline (Mac 10, phone 5)")
     parser.add_argument("--smoke", action="store_true", help="accept fewer timed calls and label the summary smoke")
+    parser.add_argument("--baseline", help="a C0 run of the same clips (JSON lines) for paired comparisons")
+    parser.add_argument("--ref", help="native.py reference output directory (ref/<id>.npz greedy tokens) of the arm's model")
+    parser.add_argument("--bootstrap", type=int, default=2000)
     args = parser.parse_args()
-    lines = [json.loads(l) for l in Path(args.results).read_text().splitlines() if l.strip()]
-    load = next((l for l in lines if l.get("record") == "load"), {})
-    end = next((l for l in lines if l.get("record") == "end"), {})
-    diagnostics = [l for l in lines if l.get("record") == "diagnostic"]
-    calls = [l for l in lines if "result" in l]
-    completeness = check_complete(load, calls)
+    load, end, diagnostics, calls, completeness = load_run(args.results)
     timed = [c for c in calls if not c["warmup"]]
     first = [c for c in calls if c["warmup"] and c["rep"] == 0]
     eligible = completeness["timed_per_clip"] >= args.min_timed
@@ -115,7 +166,8 @@ def main() -> None:
                  "label_note": None if eligible else (
                      f"{completeness['timed_per_clip']} timed call(s) per clip, fewer than the {args.min_timed} "
                      "DESIGN.md prescribes: a functional check, not a comparison baseline"),
-                 "results_file": Path(args.results).name, "mode": mode, "compute_units": load.get("compute_units"),
+                 "results_file": Path(args.results).name, "arm": load.get("arm"), "arm_spec": load.get("arm_spec"),
+                 "mode": mode, "compute_units": load.get("compute_units"),
                  "preprocessor_units": load.get("preprocessor_units"), "os": load.get("os"),
                  "load_ms": load.get("load_ms"),
                  "load_cache_evidence": load.get("load_cache_evidence", "none: MLModel load wall time only; "
@@ -136,8 +188,12 @@ def main() -> None:
             for b in sorted({clips[i]["bucket"] for i in one})}
         same = [i for i, r in one.items() if r["result"]["tokens"] == trace[i]["tokens"]]
         out["token_sequence_equal_to_b0"] = {"clips": len(same), "of": len(one)}
-        out["texts_differing_from_b0"] = [{"clip": i, "b0": trace[i]["text"], "c0": r["text"]}
+        out["texts_differing_from_b0"] = [{"clip": i, "b0": trace[i]["text"], "arm": r["text"]}
                                           for i, r in one.items() if r["result"]["tokens"] != trace[i]["tokens"]]
+        if args.ref:
+            refs_np = {i: np.load(Path(args.ref) / "ref" / f"{i}.npz")["greedy_tokens"].tolist() for i in one}
+            out["token_sequence_equal_to_model_reference"] = {
+                "reference": args.ref, "clips": sum(r["result"]["tokens"] == refs_np[i] for i, r in one.items()), "of": len(one)}
         out["tokens_identical_across_reps"] = all(
             len({json.dumps(c["result"]["tokens"]) for c in calls if c["clip"] == i}) == 1 for i in one)
 
@@ -145,19 +201,18 @@ def main() -> None:
     for b in sorted({c["bucket"] for c in timed}):
         recs = [c for c in timed if c["bucket"] == b]
         entry = {"clips": len({c["clip"] for c in recs}), "pooled_calls": len(recs)}
-        for s in STAGES:
+        for s in [x for x in STAGES if all(x in r["result"]["times_ms"] for r in recs)]:
             meds = per_clip_median(recs, lambda r: r["result"]["times_ms"][s])
             entry[f"{s}_ms_typical"] = round(statistics.median(meds.values()), 3)
             entry[f"{s}_ms_p95_hd"] = round(harrell_davis([r["result"]["times_ms"][s] for r in recs]), 3)
         firsts = [c["result"]["times_ms"]["total"] for c in first if c["bucket"] == b]
         if firsts:
             entry["first_call_total_ms_median"] = round(statistics.median(firsts), 3)
-        dec = [c["result"]["decoder_calls"] for c in recs]
-        joi = [c["result"]["joint_calls"] for c in recs]
-        entry["decoder_calls_mean"] = round(statistics.mean(dec), 2)
-        entry["joint_calls_mean"] = round(statistics.mean(joi), 2)
-        entry["decoder_ms_per_call"] = round(sum(c["result"]["times_ms"]["decoder_model"] for c in recs) / max(sum(dec), 1), 4)
-        entry["joint_ms_per_call"] = round(sum(c["result"]["times_ms"]["joint_model"] for c in recs) / max(sum(joi), 1), 4)
+        components = sorted({k for c in recs for k in c["result"].get("physical_calls", {})})
+        for comp in components:
+            n = [c["result"]["physical_calls"].get(comp, 0) for c in recs]
+            entry[f"{comp}_calls_mean"] = round(statistics.mean(n), 2)
+            entry[f"{comp}_ms_per_call"] = round(sum(c["result"]["times_ms"].get(comp, 0) for c in recs) / max(sum(n), 1), 4)
         buckets[str(b)] = entry
     out["per_bucket"] = buckets
     out["estimands"] = ("typical = median over clips of each clip's median; p95_hd = Harrell-Davis p95 over the "
@@ -171,7 +226,10 @@ def main() -> None:
                        "encoder_length": r["result"]["encoder_length"], "b0_frames": t["num_frames"],
                        "effective_frames": r["result"]["effective_frames"]}
     out["calls"] = {
-        "preprocessor_per_call": 1, "encoder_per_call": 1,
+        "preprocessor_per_call": sorted({c["result"]["preprocessor_calls"] for c in timed}),
+        "encoder_per_call": sorted({c["result"]["encoder_calls"] for c in timed}),
+        "physical_totals": {comp: sum(c["result"].get("physical_calls", {}).get(comp, 0) for c in {x["clip"]: x for x in timed}.values())
+                            for comp in sorted({k for c in timed for k in c["result"].get("physical_calls", {})})},
         "joint_calls_total": sum(v["joint_calls"] for v in per_clip.values()),
         "b0_steps_total": sum(v["b0_steps"] for v in per_clip.values()),
         "decoder_calls_total": sum(v["decoder_calls"] for v in per_clip.values()),
@@ -186,7 +244,7 @@ def main() -> None:
         rep = [d["replay"] for d in diagnostics if "replay" in d]
         out["diagnostics"] = {
             "records": len(diagnostics), "untimed": True,
-            "logits": "unavailable from C0 (JointDecision outputs argmax token, its probability and argmax duration bin)",
+            "logits": diagnostics[0].get("logits") or "unavailable (argmax-only joint outputs)",
             "arrays": [d["arrays"]["file"] for d in diagnostics]}
         if rep:
             steps = sum(r["steps"] for r in rep)
@@ -194,6 +252,17 @@ def main() -> None:
                 "steps": steps, "token_agree": sum(r["token_agree"] for r in rep) / max(steps, 1),
                 "duration_agree": sum(r["duration_agree"] for r in rep) / max(steps, 1),
                 "all_steps_executed": all(r["steps"] == r["trace_steps"] for r in rep)}
+    if args.baseline:
+        bload, _, _, bcalls, bcomp = load_run(args.baseline)
+        btimed = [c for c in bcalls if not c["warmup"]]
+        out["paired_vs_baseline"] = {
+            "baseline_file": Path(args.baseline).name, "baseline_arm": bload.get("arm"), "baseline_completeness": bcomp,
+            "method": "per-clip ratios arm/baseline; typical = median over clips; p95 = HD p95 ratio of pooled calls; "
+                      f"percentile bootstrap ({args.bootstrap} resamples of clips, pairs kept together), seed 0",
+            "per_bucket": {str(b): {s: paired([c for c in timed if c["bucket"] == b], [c for c in btimed if c["bucket"] == b],
+                                              s, args.bootstrap) for s in PAIRED_STAGES}
+                           for b in sorted({c["bucket"] for c in timed})},
+            "all_clips": {s: paired(timed, btimed, s, args.bootstrap) for s in PAIRED_STAGES}}
     if args.plan:
         out["compute_plan"] = json.loads(Path(args.plan).read_text())
     text = json.dumps(out, indent=1)

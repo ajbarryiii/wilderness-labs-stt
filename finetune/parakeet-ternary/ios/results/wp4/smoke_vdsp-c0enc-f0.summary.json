@@ -1,0 +1,478 @@
+{
+ "label": "smoke",
+ "label_note": "3 timed call(s) per clip, fewer than the 10 DESIGN.md prescribes: a functional check, not a comparison baseline",
+ "results_file": "vdsp-c0enc-f0.jsonl",
+ "arm": "vdsp+Encoder.mlmodelc+fixed15+f0",
+ "arm_spec": {
+  "decode": "f0",
+  "encoder_input": null,
+  "front_end": "vdsp"
+ },
+ "mode": "free",
+ "compute_units": "cpuAndNeuralEngine",
+ "preprocessor_units": "cpuOnly",
+ "os": "Version 27.0 (Build 26A428)",
+ "load_ms": null,
+ "load_cache_evidence": "none: MLModel(contentsOf:) wall time only; prepare-and-cache vs cached load needs an Instruments Core ML trace (DESIGN.md Load)",
+ "completeness": {
+  "clips": 8,
+  "warmups": 3,
+  "timed_per_clip": 3,
+  "clip_ids_recorded": true
+ },
+ "timed_records": 24,
+ "phys_footprint_mb": {
+  "after_load": 32.46941375732422,
+  "end": 39.71941375732422,
+  "peak": 39.78191375732422
+ },
+ "wer_vs_reference": {
+  "wer": 0.0,
+  "substitutions": 0,
+  "deletions": 0,
+  "insertions": 0,
+  "ref_words": 97,
+  "hyp_words": 97,
+  "utterances": 8,
+  "excluded_empty_reference": 0
+ },
+ "wer_vs_b0": {
+  "wer": 0.0,
+  "substitutions": 0,
+  "deletions": 0,
+  "insertions": 0,
+  "ref_words": 97,
+  "hyp_words": 97,
+  "utterances": 8,
+  "excluded_empty_reference": 0
+ },
+ "b0_wer_vs_reference_same_clips": {
+  "wer": 0.0,
+  "substitutions": 0,
+  "deletions": 0,
+  "insertions": 0,
+  "ref_words": 97,
+  "hyp_words": 97,
+  "utterances": 8,
+  "excluded_empty_reference": 0
+ },
+ "per_bucket_wer_vs_reference": {
+  "2": {
+   "wer": 0.0,
+   "substitutions": 0,
+   "deletions": 0,
+   "insertions": 0,
+   "ref_words": 4,
+   "hyp_words": 4,
+   "utterances": 2,
+   "excluded_empty_reference": 0
+  },
+  "4": {
+   "wer": 0.0,
+   "substitutions": 0,
+   "deletions": 0,
+   "insertions": 0,
+   "ref_words": 16,
+   "hyp_words": 16,
+   "utterances": 2,
+   "excluded_empty_reference": 0
+  },
+  "8": {
+   "wer": 0.0,
+   "substitutions": 0,
+   "deletions": 0,
+   "insertions": 0,
+   "ref_words": 31,
+   "hyp_words": 31,
+   "utterances": 2,
+   "excluded_empty_reference": 0
+  },
+  "15": {
+   "wer": 0.0,
+   "substitutions": 0,
+   "deletions": 0,
+   "insertions": 0,
+   "ref_words": 46,
+   "hyp_words": 46,
+   "utterances": 2,
+   "excluded_empty_reference": 0
+  }
+ },
+ "token_sequence_equal_to_b0": {
+  "clips": 7,
+  "of": 8
+ },
+ "texts_differing_from_b0": [
+  {
+   "clip": "n02-174-50561-0014",
+   "b0": "The Ladies",
+   "arm": "The ladies."
+  }
+ ],
+ "tokens_identical_across_reps": true,
+ "per_bucket": {
+  "2": {
+   "clips": 2,
+   "pooled_calls": 6,
+   "preprocess_ms_typical": 0.405,
+   "preprocess_ms_p95_hd": 0.444,
+   "encoder_ms_typical": 41.91,
+   "encoder_ms_p95_hd": 42.57,
+   "preprojection_ms_typical": 0.009,
+   "preprojection_ms_p95_hd": 0.011,
+   "decode_ms_typical": 4.947,
+   "decode_ms_p95_hd": 5.314,
+   "total_ms_typical": 47.219,
+   "total_ms_p95_hd": 47.82,
+   "decoder_model_ms_typical": 3.315,
+   "decoder_model_ms_p95_hd": 3.666,
+   "joint_model_ms_typical": 1.33,
+   "joint_model_ms_p95_hd": 1.452,
+   "first_call_total_ms_median": 67.762,
+   "decoder_model_calls_mean": 6,
+   "decoder_model_ms_per_call": 0.5572,
+   "joint_model_calls_mean": 10.5,
+   "joint_model_ms_per_call": 0.1257
+  },
+  "4": {
+   "clips": 2,
+   "pooled_calls": 6,
+   "preprocess_ms_typical": 0.573,
+   "preprocess_ms_p95_hd": 0.577,
+   "encoder_ms_typical": 41.727,
+   "encoder_ms_p95_hd": 42.916,
+   "preprojection_ms_typical": 0.009,
+   "preprojection_ms_p95_hd": 0.011,
+   "decode_ms_typical": 11.158,
+   "decode_ms_p95_hd": 13.609,
+   "total_ms_typical": 53.974,
+   "total_ms_p95_hd": 56.312,
+   "decoder_model_ms_typical": 8.192,
+   "decoder_model_ms_p95_hd": 10.525,
+   "joint_model_ms_typical": 2.315,
+   "joint_model_ms_p95_hd": 2.666,
+   "first_call_total_ms_median": 52.786,
+   "decoder_model_calls_mean": 15,
+   "decoder_model_ms_per_call": 0.5632,
+   "joint_model_calls_mean": 16.5,
+   "joint_model_ms_per_call": 0.1463
+  },
+  "8": {
+   "clips": 2,
+   "pooled_calls": 6,
+   "preprocess_ms_typical": 0.966,
+   "preprocess_ms_p95_hd": 1.046,
+   "encoder_ms_typical": 41.503,
+   "encoder_ms_p95_hd": 41.691,
+   "preprojection_ms_typical": 0.01,
+   "preprojection_ms_p95_hd": 0.012,
+   "decode_ms_typical": 20.62,
+   "decode_ms_p95_hd": 28.884,
+   "total_ms_typical": 63.174,
+   "total_ms_p95_hd": 71.441,
+   "decoder_model_ms_typical": 14.94,
+   "decoder_model_ms_p95_hd": 21.127,
+   "joint_model_ms_typical": 4.754,
+   "joint_model_ms_p95_hd": 6.48,
+   "first_call_total_ms_median": 60.854,
+   "decoder_model_calls_mean": 26,
+   "decoder_model_ms_per_call": 0.5812,
+   "joint_model_calls_mean": 28,
+   "joint_model_ms_per_call": 0.1623
+  },
+  "15": {
+   "clips": 2,
+   "pooled_calls": 6,
+   "preprocess_ms_typical": 1.789,
+   "preprocess_ms_p95_hd": 1.856,
+   "encoder_ms_typical": 41.392,
+   "encoder_ms_p95_hd": 46.848,
+   "preprojection_ms_typical": 0.009,
+   "preprojection_ms_p95_hd": 0.01,
+   "decode_ms_typical": 36.507,
+   "decode_ms_p95_hd": 44.982,
+   "total_ms_typical": 81.163,
+   "total_ms_p95_hd": 88.203,
+   "decoder_model_ms_typical": 27.38,
+   "decoder_model_ms_p95_hd": 33.275,
+   "joint_model_ms_typical": 7.61,
+   "joint_model_ms_p95_hd": 9.62,
+   "first_call_total_ms_median": 83.446,
+   "decoder_model_calls_mean": 53.5,
+   "decoder_model_ms_per_call": 0.5137,
+   "joint_model_calls_mean": 58,
+   "joint_model_ms_per_call": 0.1358
+  }
+ },
+ "estimands": "typical = median over clips of each clip's median; p95_hd = Harrell-Davis p95 over the bucket's pooled timed calls",
+ "calls": {
+  "preprocessor_per_call": [
+   0
+  ],
+  "encoder_per_call": [
+   1
+  ],
+  "physical_totals": {
+   "decoder_model": 201,
+   "joint_model": 226
+  },
+  "joint_calls_total": 226,
+  "b0_steps_total": 227,
+  "decoder_calls_total": 201,
+  "b0_prediction_runs_total": 200,
+  "encoder_length_minus_b0_frames": [
+   0
+  ],
+  "effective_minus_b0_frames": [
+   0
+  ]
+ },
+ "paired_vs_baseline": {
+  "baseline_file": "c0.jsonl",
+  "baseline_arm": "C0",
+  "baseline_completeness": {
+   "clips": 8,
+   "warmups": 3,
+   "timed_per_clip": 3,
+   "clip_ids_recorded": true
+  },
+  "method": "per-clip ratios arm/baseline; typical = median over clips; p95 = HD p95 ratio of pooled calls; percentile bootstrap (1000 resamples of clips, pairs kept together), seed 0",
+  "per_bucket": {
+   "2": {
+    "total": {
+     "clips": 2,
+     "typical_ratio": 0.7856,
+     "typical_ratio_ci95": [
+      0.7726,
+      0.7986
+     ],
+     "p95_ratio": 0.79,
+     "p95_ratio_ci95": [
+      0.7735,
+      0.7996
+     ],
+     "arm_typical_ms": 47.219,
+     "baseline_typical_ms": 60.112
+    },
+    "encoder": {
+     "clips": 2,
+     "typical_ratio": 1.0125,
+     "typical_ratio_ci95": [
+      0.9991,
+      1.026
+     ],
+     "p95_ratio": 1.0265,
+     "p95_ratio_ci95": [
+      0.9987,
+      1.0294
+     ],
+     "arm_typical_ms": 41.91,
+     "baseline_typical_ms": 41.391
+    },
+    "decode": {
+     "clips": 2,
+     "typical_ratio": 0.9836,
+     "typical_ratio_ci95": [
+      0.9745,
+      0.9927
+     ],
+     "p95_ratio": 1.0333,
+     "p95_ratio_ci95": [
+      0.9672,
+      1.0387
+     ],
+     "arm_typical_ms": 4.947,
+     "baseline_typical_ms": 5.03
+    }
+   },
+   "4": {
+    "total": {
+     "clips": 2,
+     "typical_ratio": 0.8051,
+     "typical_ratio_ci95": [
+      0.7958,
+      0.8145
+     ],
+     "p95_ratio": 0.8101,
+     "p95_ratio_ci95": [
+      0.7833,
+      0.8101
+     ],
+     "arm_typical_ms": 53.974,
+     "baseline_typical_ms": 67.02
+    },
+    "encoder": {
+     "clips": 2,
+     "typical_ratio": 1.008,
+     "typical_ratio_ci95": [
+      0.998,
+      1.018
+     ],
+     "p95_ratio": 1.0335,
+     "p95_ratio_ci95": [
+      1.005,
+      1.0391
+     ],
+     "arm_typical_ms": 41.727,
+     "baseline_typical_ms": 41.396
+    },
+    "decode": {
+     "clips": 2,
+     "typical_ratio": 0.9703,
+     "typical_ratio_ci95": [
+      0.9461,
+      0.9945
+     ],
+     "p95_ratio": 0.9535,
+     "p95_ratio_ci95": [
+      0.9459,
+      0.9538
+     ],
+     "arm_typical_ms": 11.158,
+     "baseline_typical_ms": 11.533
+    }
+   },
+   "8": {
+    "total": {
+     "clips": 2,
+     "typical_ratio": 0.8205,
+     "typical_ratio_ci95": [
+      0.7963,
+      0.8447
+     ],
+     "p95_ratio": 0.8578,
+     "p95_ratio_ci95": [
+      0.7708,
+      0.8597
+     ],
+     "arm_typical_ms": 63.174,
+     "baseline_typical_ms": 76.867
+    },
+    "encoder": {
+     "clips": 2,
+     "typical_ratio": 1.0017,
+     "typical_ratio_ci95": [
+      0.9989,
+      1.0046
+     ],
+     "p95_ratio": 0.9819,
+     "p95_ratio_ci95": [
+      0.9748,
+      1.0028
+     ],
+     "arm_typical_ms": 41.503,
+     "baseline_typical_ms": 41.431
+    },
+    "decode": {
+     "clips": 2,
+     "typical_ratio": 0.9683,
+     "typical_ratio_ci95": [
+      0.9149,
+      1.0217
+     ],
+     "p95_ratio": 1.0593,
+     "p95_ratio_ci95": [
+      0.8587,
+      1.064
+     ],
+     "arm_typical_ms": 20.62,
+     "baseline_typical_ms": 21.059
+    }
+   },
+   "15": {
+    "total": {
+     "clips": 2,
+     "typical_ratio": 0.7663,
+     "typical_ratio_ci95": [
+      0.7187,
+      0.8139
+     ],
+     "p95_ratio": 0.6937,
+     "p95_ratio_ci95": [
+      0.6918,
+      0.8184
+     ],
+     "arm_typical_ms": 81.163,
+     "baseline_typical_ms": 106.776
+    },
+    "encoder": {
+     "clips": 2,
+     "typical_ratio": 0.9899,
+     "typical_ratio_ci95": [
+      0.9828,
+      0.9971
+     ],
+     "p95_ratio": 1.0778,
+     "p95_ratio_ci95": [
+      0.9838,
+      1.1011
+     ],
+     "arm_typical_ms": 41.392,
+     "baseline_typical_ms": 41.815
+    },
+    "decode": {
+     "clips": 2,
+     "typical_ratio": 0.7752,
+     "typical_ratio_ci95": [
+      0.6952,
+      0.8553
+     ],
+     "p95_ratio": 0.6663,
+     "p95_ratio_ci95": [
+      0.6643,
+      0.8494
+     ],
+     "arm_typical_ms": 36.507,
+     "baseline_typical_ms": 48.429
+    }
+   }
+  },
+  "all_clips": {
+   "total": {
+    "clips": 8,
+    "typical_ratio": 0.7975,
+    "typical_ratio_ci95": [
+     0.7726,
+     0.8145
+    ],
+    "p95_ratio": 0.7087,
+    "p95_ratio_ci95": [
+     0.6931,
+     0.8559
+    ],
+    "arm_typical_ms": 56.726,
+    "baseline_typical_ms": 70.456
+   },
+   "encoder": {
+    "clips": 8,
+    "typical_ratio": 0.999,
+    "typical_ratio_ci95": [
+     0.9971,
+     1.018
+    ],
+    "p95_ratio": 1.0482,
+    "p95_ratio_ci95": [
+     0.9849,
+     1.0963
+    ],
+    "arm_typical_ms": 41.405,
+    "baseline_typical_ms": 41.436
+   },
+   "decode": {
+    "clips": 8,
+    "typical_ratio": 0.9603,
+    "typical_ratio_ci95": [
+     0.8553,
+     0.9945
+    ],
+    "p95_ratio": 0.6827,
+    "p95_ratio_ci95": [
+     0.6657,
+     1.054
+    ],
+    "arm_typical_ms": 13.761,
+    "baseline_typical_ms": 14.822
+   }
+  }
+ }
+}

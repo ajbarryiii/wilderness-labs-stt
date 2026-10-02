@@ -1,0 +1,27 @@
+PASS 1 harmless (own group, nice 10, threads 4): True 10 4 exit=0
+PASS 2 rss cap: 124 killed: rss
+PASS 3 job status passes through: 7
+PASS 4 timeout: 124
+PASS 5 TERM handler exiting 0 is still an abort: 124
+PASS 6 second invocation during escalation refused: 3
+PASS 6 TERM-ignoring grandchild: guard aborts, grandchild gone: 124 no
+PASS 7 concurrent invocations: one runs, one refused: 0 3 1
+PASS 8 min-free refusal, usage error: 3 2
+PASS 9 supervisor got SIGTERM: 130
+ios/tests/macguard_tests.sh: line 37: 74470 Killed: 9               $G --rss-cap 1G --timeout 300 -- sh -c "$PY -c 'import os,signal,time; open(\"$P\",\"w\").write(str(os.getpid())); signal.signal(signal.SIGTERM, signal.SIG_IGN); time.sleep(300)' & sleep 300" 2> /dev/null
+PASS 10 supervisor SIGKILLed: lock kept while the grandchild lives: 3 yes
+PASS 10 after the sentinel's cleanup: grandchild gone, lock free: no 0
+PASS 11 malformed ps aborts, job dead: 124 no malformed ps row
+PASS 11b malformed memory_pressure aborts, job dead: 124 no
+ios/tests/macguard_tests.sh: line 57: 74848 Killed: 9               $G --rss-cap 1G --timeout 300 -- sh -c "echo \$\$ > $P; exec sleep 300" 2> /dev/null
+PASS 12 supervisor and sentinel SIGKILLed: job alive, holds the lock: yes 3
+PASS 12 after killing the job: lock free: no 0
+PASS 13 job environment == caller environment: same
+PASS 13b caller SDKROOT kept: /caller/sdk
+PASS 14 sentinel SIGKILLed: abort, job dead, lock free: 124 no sentinel 0
+PASS 15 cleanup PermissionError: 125, job alive, lock retained: 125 yes 3
+PASS 15 after the group is gone: lock released: no 0
+ios/tests/macguard_tests.sh: line 83: 75381 Killed: 9               env MACGUARD_TEST_FAULT=die-before-ack $G --rss-cap 200M --timeout 30 -- sh -c "echo RAN > $W/ran16; sleep 3016" 2> /dev/null
+PASS 16 supervisor dead before ACK: killed, CMD never ran, no wrapper left, lock free: 137 no 0 0
+PASS 17 end-log failure: 125: 125
+failed checks: 0

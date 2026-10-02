@@ -1,0 +1,116 @@
+{
+ "label": "smoke",
+ "label_note": "1 timed call(s) per clip, fewer than the 10 DESIGN.md prescribes: a functional check, not a comparison baseline",
+ "results_file": "replay-f2.jsonl",
+ "arm": "vdsp+Encoder.mlmodelc+fixed15+f2",
+ "arm_spec": {
+  "decode": "f2",
+  "encoder_input": null,
+  "front_end": "vdsp"
+ },
+ "mode": "replay",
+ "compute_units": "cpuAndNeuralEngine",
+ "preprocessor_units": "cpuOnly",
+ "os": "Version 27.0 (Build 26A428)",
+ "load_ms": null,
+ "load_cache_evidence": "none: MLModel(contentsOf:) wall time only; prepare-and-cache vs cached load needs an Instruments Core ML trace (DESIGN.md Load)",
+ "completeness": {
+  "clips": 2,
+  "warmups": 1,
+  "timed_per_clip": 1,
+  "clip_ids_recorded": true
+ },
+ "timed_records": 2,
+ "phys_footprint_mb": {
+  "after_load": 119.9225845336914,
+  "end": 132.156982421875,
+  "peak": 132.156982421875
+ },
+ "per_bucket": {
+  "4": {
+   "clips": 1,
+   "pooled_calls": 1,
+   "preprocess_ms_typical": 0.443,
+   "preprocess_ms_p95_hd": 0.443,
+   "encoder_ms_typical": 41.416,
+   "encoder_ms_p95_hd": 41.416,
+   "preprojection_ms_typical": 0.234,
+   "preprojection_ms_p95_hd": 0.234,
+   "decode_ms_typical": 17.392,
+   "decode_ms_p95_hd": 17.392,
+   "total_ms_typical": 59.485,
+   "total_ms_p95_hd": 59.485,
+   "native_predict_ms_typical": 15.4,
+   "native_predict_ms_p95_hd": 15.4,
+   "native_joint_ms_typical": 1.975,
+   "native_joint_ms_p95_hd": 1.975,
+   "first_call_total_ms_median": 61.564,
+   "native_joint_calls_mean": 30,
+   "native_joint_ms_per_call": 0.0658,
+   "native_predict_calls_mean": 30,
+   "native_predict_ms_per_call": 0.5133
+  },
+  "15": {
+   "clips": 1,
+   "pooled_calls": 1,
+   "preprocess_ms_typical": 3.238,
+   "preprocess_ms_p95_hd": 3.238,
+   "encoder_ms_typical": 52.887,
+   "encoder_ms_p95_hd": 52.887,
+   "preprojection_ms_typical": 0.302,
+   "preprojection_ms_p95_hd": 0.302,
+   "decode_ms_typical": 51.511,
+   "decode_ms_p95_hd": 51.511,
+   "total_ms_typical": 107.938,
+   "total_ms_p95_hd": 107.938,
+   "native_predict_ms_typical": 45.503,
+   "native_predict_ms_p95_hd": 45.503,
+   "native_joint_ms_typical": 5.99,
+   "native_joint_ms_p95_hd": 5.99,
+   "first_call_total_ms_median": 146.46,
+   "native_joint_calls_mean": 99,
+   "native_joint_ms_per_call": 0.0605,
+   "native_predict_calls_mean": 97,
+   "native_predict_ms_per_call": 0.4691
+  }
+ },
+ "estimands": "typical = median over clips of each clip's median; p95_hd = Harrell-Davis p95 over the bucket's pooled timed calls",
+ "calls": {
+  "preprocessor_per_call": [
+   0
+  ],
+  "encoder_per_call": [
+   1
+  ],
+  "physical_totals": {
+   "native_joint": 129,
+   "native_predict": 127
+  },
+  "joint_calls_total": 129,
+  "b0_steps_total": 129,
+  "decoder_calls_total": 127,
+  "b0_prediction_runs_total": 127,
+  "encoder_length_minus_b0_frames": [
+   0
+  ],
+  "effective_minus_b0_frames": [
+   0
+  ],
+  "replay_calls_equal_trace": true
+ },
+ "diagnostics": {
+  "records": 2,
+  "untimed": true,
+  "logits": "section logits [steps, 1030] (raw joint output: 1,025 token+blank, 5 duration)",
+  "arrays": [
+   "n15-2412-153947-0005.vdsp+Encoder.mlmodelc+fixed15+f2.replay.diag.f32",
+   "b04-N32001.vdsp+Encoder.mlmodelc+fixed15+f2.replay.diag.f32"
+  ],
+  "replay": {
+   "steps": 129,
+   "token_agree": 0.9767441860465116,
+   "duration_agree": 0.9147286821705426,
+   "all_steps_executed": true
+  }
+ }
+}

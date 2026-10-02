@@ -1,0 +1,233 @@
+{
+ "label": "smoke",
+ "label_note": "3 timed call(s) per clip, fewer than the 10 DESIGN.md prescribes: a functional check, not a comparison baseline",
+ "results_file": "c0.jsonl",
+ "arm": "C0",
+ "arm_spec": null,
+ "mode": "free",
+ "compute_units": "cpuAndNeuralEngine",
+ "preprocessor_units": "cpuOnly",
+ "os": "Version 27.0 (Build 26A428)",
+ "load_ms": {
+  "Decoder": 10.374166666666666,
+  "Encoder": 205.5595,
+  "JointDecision": 9.877583333333334,
+  "Preprocessor": 104.00733333333334
+ },
+ "load_cache_evidence": "none: MLModel(contentsOf:) wall time only; prepare-and-cache vs cached load needs an Instruments Core ML trace (DESIGN.md Load)",
+ "completeness": {
+  "clips": 8,
+  "warmups": 3,
+  "timed_per_clip": 3,
+  "clip_ids_recorded": true
+ },
+ "timed_records": 24,
+ "phys_footprint_mb": {
+  "after_load": 33.063140869140625,
+  "end": 57.23503875732422,
+  "peak": 57.32878875732422
+ },
+ "wer_vs_reference": {
+  "wer": 0.0,
+  "substitutions": 0,
+  "deletions": 0,
+  "insertions": 0,
+  "ref_words": 97,
+  "hyp_words": 97,
+  "utterances": 8,
+  "excluded_empty_reference": 0
+ },
+ "wer_vs_b0": {
+  "wer": 0.0,
+  "substitutions": 0,
+  "deletions": 0,
+  "insertions": 0,
+  "ref_words": 97,
+  "hyp_words": 97,
+  "utterances": 8,
+  "excluded_empty_reference": 0
+ },
+ "b0_wer_vs_reference_same_clips": {
+  "wer": 0.0,
+  "substitutions": 0,
+  "deletions": 0,
+  "insertions": 0,
+  "ref_words": 97,
+  "hyp_words": 97,
+  "utterances": 8,
+  "excluded_empty_reference": 0
+ },
+ "per_bucket_wer_vs_reference": {
+  "2": {
+   "wer": 0.0,
+   "substitutions": 0,
+   "deletions": 0,
+   "insertions": 0,
+   "ref_words": 4,
+   "hyp_words": 4,
+   "utterances": 2,
+   "excluded_empty_reference": 0
+  },
+  "4": {
+   "wer": 0.0,
+   "substitutions": 0,
+   "deletions": 0,
+   "insertions": 0,
+   "ref_words": 16,
+   "hyp_words": 16,
+   "utterances": 2,
+   "excluded_empty_reference": 0
+  },
+  "8": {
+   "wer": 0.0,
+   "substitutions": 0,
+   "deletions": 0,
+   "insertions": 0,
+   "ref_words": 31,
+   "hyp_words": 31,
+   "utterances": 2,
+   "excluded_empty_reference": 0
+  },
+  "15": {
+   "wer": 0.0,
+   "substitutions": 0,
+   "deletions": 0,
+   "insertions": 0,
+   "ref_words": 46,
+   "hyp_words": 46,
+   "utterances": 2,
+   "excluded_empty_reference": 0
+  }
+ },
+ "token_sequence_equal_to_b0": {
+  "clips": 7,
+  "of": 8
+ },
+ "texts_differing_from_b0": [
+  {
+   "clip": "n02-174-50561-0014",
+   "b0": "The Ladies",
+   "arm": "The ladies."
+  }
+ ],
+ "tokens_identical_across_reps": true,
+ "per_bucket": {
+  "2": {
+   "clips": 2,
+   "pooled_calls": 6,
+   "preprocess_ms_typical": 13.68,
+   "preprocess_ms_p95_hd": 14.074,
+   "encoder_ms_typical": 41.391,
+   "encoder_ms_p95_hd": 41.471,
+   "preprojection_ms_typical": 0.0,
+   "preprojection_ms_p95_hd": 0.0,
+   "decode_ms_typical": 5.03,
+   "decode_ms_p95_hd": 5.143,
+   "total_ms_typical": 60.112,
+   "total_ms_p95_hd": 60.533,
+   "decoder_model_ms_typical": 3.454,
+   "decoder_model_ms_p95_hd": 3.539,
+   "joint_model_ms_typical": 1.294,
+   "joint_model_ms_p95_hd": 1.344,
+   "first_call_total_ms_median": 105.137,
+   "decoder_model_calls_mean": 6,
+   "decoder_model_ms_per_call": 0.5752,
+   "joint_model_calls_mean": 10,
+   "joint_model_ms_per_call": 0.1272
+  },
+  "4": {
+   "clips": 2,
+   "pooled_calls": 6,
+   "preprocess_ms_typical": 14.03,
+   "preprocess_ms_p95_hd": 14.664,
+   "encoder_ms_typical": 41.396,
+   "encoder_ms_p95_hd": 41.527,
+   "preprojection_ms_typical": 0.0,
+   "preprojection_ms_p95_hd": 0.0,
+   "decode_ms_typical": 11.533,
+   "decode_ms_p95_hd": 14.273,
+   "total_ms_typical": 67.02,
+   "total_ms_p95_hd": 69.516,
+   "decoder_model_ms_typical": 8.53,
+   "decoder_model_ms_p95_hd": 10.469,
+   "joint_model_ms_typical": 2.419,
+   "joint_model_ms_p95_hd": 3.061,
+   "first_call_total_ms_median": 67.259,
+   "decoder_model_calls_mean": 15,
+   "decoder_model_ms_per_call": 0.5802,
+   "joint_model_calls_mean": 16.5,
+   "joint_model_ms_per_call": 0.1514
+  },
+  "8": {
+   "clips": 2,
+   "pooled_calls": 6,
+   "preprocess_ms_typical": 14.589,
+   "preprocess_ms_p95_hd": 14.923,
+   "encoder_ms_typical": 41.431,
+   "encoder_ms_p95_hd": 42.458,
+   "preprojection_ms_typical": 0.0,
+   "preprojection_ms_p95_hd": 0.0,
+   "decode_ms_typical": 21.059,
+   "decode_ms_p95_hd": 27.267,
+   "total_ms_typical": 76.867,
+   "total_ms_p95_hd": 83.28,
+   "decoder_model_ms_typical": 15.556,
+   "decoder_model_ms_p95_hd": 20.115,
+   "joint_model_ms_typical": 4.461,
+   "joint_model_ms_p95_hd": 5.848,
+   "first_call_total_ms_median": 76.735,
+   "decoder_model_calls_mean": 26,
+   "decoder_model_ms_per_call": 0.619,
+   "joint_model_calls_mean": 28,
+   "joint_model_ms_per_call": 0.1633
+  },
+  "15": {
+   "clips": 2,
+   "pooled_calls": 6,
+   "preprocess_ms_typical": 16.13,
+   "preprocess_ms_p95_hd": 17.077,
+   "encoder_ms_typical": 41.815,
+   "encoder_ms_p95_hd": 43.466,
+   "preprojection_ms_typical": 0.0,
+   "preprojection_ms_p95_hd": 0.0,
+   "decode_ms_typical": 48.429,
+   "decode_ms_p95_hd": 67.515,
+   "total_ms_typical": 106.776,
+   "total_ms_p95_hd": 127.153,
+   "decoder_model_ms_typical": 36.717,
+   "decoder_model_ms_p95_hd": 47.555,
+   "joint_model_ms_typical": 9.983,
+   "joint_model_ms_p95_hd": 17.214,
+   "first_call_total_ms_median": 110.308,
+   "decoder_model_calls_mean": 53.5,
+   "decoder_model_ms_per_call": 0.6845,
+   "joint_model_calls_mean": 57.5,
+   "joint_model_ms_per_call": 0.1837
+  }
+ },
+ "estimands": "typical = median over clips of each clip's median; p95_hd = Harrell-Davis p95 over the bucket's pooled timed calls",
+ "calls": {
+  "preprocessor_per_call": [
+   1
+  ],
+  "encoder_per_call": [
+   1
+  ],
+  "physical_totals": {
+   "decoder_model": 201,
+   "joint_model": 224
+  },
+  "joint_calls_total": 224,
+  "b0_steps_total": 227,
+  "decoder_calls_total": 201,
+  "b0_prediction_runs_total": 200,
+  "encoder_length_minus_b0_frames": [
+   0,
+   1
+  ],
+  "effective_minus_b0_frames": [
+   0,
+   1
+  ]
+ }
+}

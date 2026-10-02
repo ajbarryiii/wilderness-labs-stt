@@ -15,3 +15,5 @@ artifacts/
 .build/
 DerivedData/
 *.f32
+*.f32bin
+*.f16bin

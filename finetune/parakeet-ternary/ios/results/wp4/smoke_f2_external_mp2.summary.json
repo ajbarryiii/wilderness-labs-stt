@@ -1,0 +1,320 @@
+{
+ "label": "smoke",
+ "label_note": "1 timed call(s) per clip, fewer than the 10 DESIGN.md prescribes: a functional check, not a comparison baseline",
+ "results_file": "free.jsonl",
+ "arm": "external-encoder+f2",
+ "arm_spec": {
+  "decode": "f2",
+  "encoder_input": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/native/mp2/enc",
+  "front_end": "external"
+ },
+ "mode": "free",
+ "compute_units": "cpuAndNeuralEngine",
+ "preprocessor_units": "cpuOnly",
+ "os": "Version 27.0 (Build 26A428)",
+ "load_ms": null,
+ "load_cache_evidence": "none: MLModel(contentsOf:) wall time only; prepare-and-cache vs cached load needs an Instruments Core ML trace (DESIGN.md Load)",
+ "completeness": {
+  "clips": 64,
+  "warmups": 1,
+  "timed_per_clip": 1,
+  "clip_ids_recorded": true
+ },
+ "timed_records": 64,
+ "phys_footprint_mb": {
+  "after_load": 120.03191375732422,
+  "end": 128.4225616455078,
+  "peak": 128.4225616455078
+ },
+ "wer_vs_reference": {
+  "wer": 0.027111574556830033,
+  "substitutions": 22,
+  "deletions": 2,
+  "insertions": 2,
+  "ref_words": 959,
+  "hyp_words": 959,
+  "utterances": 64,
+  "excluded_empty_reference": 0
+ },
+ "wer_vs_b0": {
+  "wer": 0.013541666666666667,
+  "substitutions": 12,
+  "deletions": 1,
+  "insertions": 0,
+  "ref_words": 960,
+  "hyp_words": 959,
+  "utterances": 64,
+  "excluded_empty_reference": 0
+ },
+ "b0_wer_vs_reference_same_clips": {
+  "wer": 0.017726798748696558,
+  "substitutions": 14,
+  "deletions": 1,
+  "insertions": 2,
+  "ref_words": 959,
+  "hyp_words": 960,
+  "utterances": 64,
+  "excluded_empty_reference": 0
+ },
+ "per_bucket_wer_vs_reference": {
+  "2": {
+   "wer": 0.06451612903225806,
+   "substitutions": 3,
+   "deletions": 0,
+   "insertions": 1,
+   "ref_words": 62,
+   "hyp_words": 63,
+   "utterances": 16,
+   "excluded_empty_reference": 0
+  },
+  "4": {
+   "wer": 0.007633587786259542,
+   "substitutions": 1,
+   "deletions": 0,
+   "insertions": 0,
+   "ref_words": 131,
+   "hyp_words": 131,
+   "utterances": 16,
+   "excluded_empty_reference": 0
+  },
+  "8": {
+   "wer": 0.030508474576271188,
+   "substitutions": 8,
+   "deletions": 1,
+   "insertions": 0,
+   "ref_words": 295,
+   "hyp_words": 294,
+   "utterances": 16,
+   "excluded_empty_reference": 0
+  },
+  "15": {
+   "wer": 0.025477707006369428,
+   "substitutions": 10,
+   "deletions": 1,
+   "insertions": 1,
+   "ref_words": 471,
+   "hyp_words": 471,
+   "utterances": 16,
+   "excluded_empty_reference": 0
+  }
+ },
+ "token_sequence_equal_to_b0": {
+  "clips": 46,
+  "of": 64
+ },
+ "texts_differing_from_b0": [
+  {
+   "clip": "n02-174-50561-0014",
+   "b0": "The Ladies",
+   "arm": "THE LADES"
+  },
+  {
+   "clip": "n02-1919-142785-0048",
+   "b0": "French force meat,",
+   "arm": "French force meat"
+  },
+  {
+   "clip": "n02-1988-24833-0006",
+   "b0": "Pop, it's a course.",
+   "arm": "Pop, it's of course."
+  },
+  {
+   "clip": "n02-7976-105575-0017",
+   "b0": "I could not help my friend.",
+   "arm": "I could not help my friend,"
+  },
+  {
+   "clip": "n02-8842-304647-0007",
+   "b0": "Most wonderful",
+   "arm": "Most wonderful,"
+  },
+  {
+   "clip": "n04-1919-142785-0024",
+   "b0": "ILUSTRATION GINGER.",
+   "arm": "ILUSRATION GINGER"
+  },
+  {
+   "clip": "n04-2428-83699-0026",
+   "b0": "here we be. That might be so.",
+   "arm": "Here we be. That might be so."
+  },
+  {
+   "clip": "n04-3752-4943-0016",
+   "b0": "Do him good curse him",
+   "arm": "Do him good curse him."
+  },
+  {
+   "clip": "n08-2086-149220-0016",
+   "b0": "Miss Hepzibah, I suppose, will interweave the fact with her other traditions, and set it down that the fowls know you to be a pynchon.",
+   "arm": "Miss Hepseba, I suppose, will interweave the fact with her other traditions, and set it down that the fowls know you to be a pinchion."
+  },
+  {
+   "clip": "n08-2803-154320-0010",
+   "b0": "We would fight to the death, of course. But after that",
+   "arm": "We would fight to the death, of course. But after that,"
+  },
+  {
+   "clip": "n08-5338-284437-0029",
+   "b0": "Yes, it was wet and sticky, all right, agreed the sailor but the big frog helped us, and we got through all right.",
+   "arm": "Yes, it was wet and sticky, all right, agreed the sailor. But the big frog helped us, and we got through all right."
+  },
+  {
+   "clip": "n08-5694-64025-0020",
+   "b0": "Mule did not desire to cross, while I was trying to persuade him with a big stick, a rock in his ear, and a twister on his nose.",
+   "arm": "Muell did not desire to cross, while I was trying to persuade him with a big stick, a rock in his ear, and a twister on his nose."
+  },
+  {
+   "clip": "n08-6345-93306-0019",
+   "b0": "You see, papa's so very rich, and at home they expect me to to get acquainted with dukes and things, and she stopped.",
+   "arm": "You see, papa's so very rich, and at home they expect me to to get acquainted with dukes and things, and She stopped."
+  },
+  {
+   "clip": "n08-652-130726-0027",
+   "b0": "Put into the oven again and cook for half an hour, basting frequently with the original brine.",
+   "arm": "put into the oven again and cook for half an hour, basting frequently with the original brine."
+  },
+  {
+   "clip": "n08-8842-302201-0007",
+   "b0": "To her I wend along, In whose much strength my weakness is made strong,",
+   "arm": "To her I wend along, In whose much strength my weakness is made strong"
+  },
+  {
+   "clip": "n15-2277-149874-0014",
+   "b0": "She asked Minnie for ink and paper, which were upon the mantel in the dining room, and when the latter had gone to bed at ten, got out Drew's card and wrote him.",
+   "arm": "She asked many for ink and paper, which were upon the mantle in the dining room, and when the latter had gone to bed at ten, God outdrew his card and wrote him."
+  },
+  {
+   "clip": "n15-3752-4944-0027",
+   "b0": "Before the two clergymen had got half way down the steep path that led from the commandant's house to the flat on which the cottages of the doctor and chaplain were built, McIlwain rejoined them,",
+   "arm": "Before the two clergymen had got half way down the steep path that led from the commandant's house to the flat on which the cottages of the doctor and chaplain were built, Mackelwane rejoined them."
+  },
+  {
+   "clip": "n15-84-121550-0029",
+   "b0": "Therefore my answer is with greater care that he may hear me who is weeping yonder, so that the sin and dole be of one measure.",
+   "arm": "Therefore my answer is with greater care, that He may hear me who is weeping yonder, so that the sin and dole be of one measure."
+  }
+ ],
+ "token_sequence_equal_to_model_reference": {
+  "reference": "/mnt/hd/wilderness-labs-stt/parakeet-ios/native/mp2",
+  "clips": 64,
+  "of": 64
+ },
+ "tokens_identical_across_reps": true,
+ "per_bucket": {
+  "2": {
+   "clips": 16,
+   "pooled_calls": 16,
+   "preprocess_ms_typical": 0.0,
+   "preprocess_ms_p95_hd": 0.0,
+   "encoder_ms_typical": 0.0,
+   "encoder_ms_p95_hd": 0.0,
+   "preprojection_ms_typical": 0.246,
+   "preprojection_ms_p95_hd": 0.361,
+   "decode_ms_typical": 5.484,
+   "decode_ms_p95_hd": 9.764,
+   "total_ms_typical": 5.734,
+   "total_ms_p95_hd": 10.119,
+   "native_predict_ms_typical": 4.799,
+   "native_predict_ms_p95_hd": 8.577,
+   "native_joint_ms_typical": 0.761,
+   "native_joint_ms_p95_hd": 1.174,
+   "first_call_total_ms_median": 5.885,
+   "native_joint_calls_mean": 12.94,
+   "native_joint_ms_per_call": 0.0598,
+   "native_predict_calls_mean": 9.81,
+   "native_predict_ms_per_call": 0.5289
+  },
+  "4": {
+   "clips": 16,
+   "pooled_calls": 16,
+   "preprocess_ms_typical": 0.0,
+   "preprocess_ms_p95_hd": 0.0,
+   "encoder_ms_typical": 0.0,
+   "encoder_ms_p95_hd": 0.0,
+   "preprojection_ms_typical": 0.256,
+   "preprojection_ms_p95_hd": 0.308,
+   "decode_ms_typical": 9.648,
+   "decode_ms_p95_hd": 14.048,
+   "total_ms_typical": 9.917,
+   "total_ms_p95_hd": 14.331,
+   "native_predict_ms_typical": 8.471,
+   "native_predict_ms_p95_hd": 12.384,
+   "native_joint_ms_typical": 1.156,
+   "native_joint_ms_p95_hd": 1.669,
+   "first_call_total_ms_median": 10.153,
+   "native_joint_calls_mean": 19.06,
+   "native_joint_ms_per_call": 0.0627,
+   "native_predict_calls_mean": 16.81,
+   "native_predict_ms_per_call": 0.5124
+  },
+  "8": {
+   "clips": 16,
+   "pooled_calls": 16,
+   "preprocess_ms_typical": 0.0,
+   "preprocess_ms_p95_hd": 0.0,
+   "encoder_ms_typical": 0.0,
+   "encoder_ms_p95_hd": 0.0,
+   "preprojection_ms_typical": 0.296,
+   "preprojection_ms_p95_hd": 0.419,
+   "decode_ms_typical": 18.782,
+   "decode_ms_p95_hd": 26.131,
+   "total_ms_typical": 19.162,
+   "total_ms_p95_hd": 26.468,
+   "native_predict_ms_typical": 16.52,
+   "native_predict_ms_p95_hd": 22.967,
+   "native_joint_ms_typical": 2.254,
+   "native_joint_ms_p95_hd": 3.151,
+   "first_call_total_ms_median": 19.253,
+   "native_joint_calls_mean": 36.88,
+   "native_joint_ms_per_call": 0.0621,
+   "native_predict_calls_mean": 34.12,
+   "native_predict_ms_per_call": 0.4916
+  },
+  "15": {
+   "clips": 16,
+   "pooled_calls": 16,
+   "preprocess_ms_typical": 0.0,
+   "preprocess_ms_p95_hd": 0.0,
+   "encoder_ms_typical": 0.0,
+   "encoder_ms_p95_hd": 0.0,
+   "preprojection_ms_typical": 0.343,
+   "preprojection_ms_p95_hd": 0.396,
+   "decode_ms_typical": 32.29,
+   "decode_ms_p95_hd": 51.475,
+   "total_ms_typical": 32.668,
+   "total_ms_p95_hd": 51.844,
+   "native_predict_ms_typical": 28.413,
+   "native_predict_ms_p95_hd": 45.44,
+   "native_joint_ms_typical": 3.864,
+   "native_joint_ms_p95_hd": 6.015,
+   "first_call_total_ms_median": 33.964,
+   "native_joint_calls_mean": 64.88,
+   "native_joint_ms_per_call": 0.0622,
+   "native_predict_calls_mean": 61.56,
+   "native_predict_ms_per_call": 0.4846
+  }
+ },
+ "estimands": "typical = median over clips of each clip's median; p95_hd = Harrell-Davis p95 over the bucket's pooled timed calls",
+ "calls": {
+  "preprocessor_per_call": [
+   0
+  ],
+  "encoder_per_call": [
+   0
+  ],
+  "physical_totals": {
+   "native_joint": 2140,
+   "native_predict": 1957
+  },
+  "joint_calls_total": 2140,
+  "b0_steps_total": 2159,
+  "decoder_calls_total": 1957,
+  "b0_prediction_runs_total": 1955,
+  "encoder_length_minus_b0_frames": [
+   0
+  ],
+  "effective_minus_b0_frames": [
+   0
+  ]
+ }
+}
