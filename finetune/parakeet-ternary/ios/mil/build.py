@@ -166,51 +166,42 @@ def compile_model(package: Path, dest: Path) -> dict:
     return {"compile_s": round(time.time() - t0, 2), "mlmodelc": str(compiled), "mlmodelc_bytes": dir_bytes(Path(compiled))}
 
 
-def compute_plan(path: Path, units: str = "cpuAndNeuralEngine") -> dict:
-    """MLComputePlan per-op device usage of a compiled model (all functions), summarized (gate 6 record)."""
-    import coremltools as ct
-    from coremltools.models.compute_plan import MLComputePlan
+def computeplan_tool() -> Path:
+    """The standalone Swift MLComputePlan tool (mil/computeplan.swift), built on first use into <artifacts>/bin."""
+    import artifacts
 
-    cu = {"cpuAndNeuralEngine": ct.ComputeUnit.CPU_AND_NE, "cpuOnly": ct.ComputeUnit.CPU_ONLY,
-          "all": ct.ComputeUnit.ALL, "cpuAndGPU": ct.ComputeUnit.CPU_AND_GPU}[units]
-    t0 = time.time()
-    plan = MLComputePlan.load_from_path(path=str(path), compute_units=cu)
-    load_s = time.time() - t0
-    program = plan.model_structure.program
-    if program is None:
-        raise ValueError("not an ML program")
-    functions = {}
-    for fname, func in program.functions.items():
-        by_dev, cost_by_dev, ops_by_dev, no_usage = Counter(), Counter(), {}, Counter()
-        cpu_ops = []
+    src = Path(__file__).resolve().parent / "computeplan.swift"
+    exe = artifacts.root() / "bin" / "computeplan"
+    if not exe.exists() or exe.stat().st_mtime < src.stat().st_mtime:
+        exe.parent.mkdir(parents=True, exist_ok=True)
+        import subprocess
 
-        def walk(block):
-            for op in block.operations:
-                usage = plan.get_compute_device_usage_for_mlprogram_operation(op)
-                cost = plan.get_estimated_cost_for_mlprogram_operation(op)
-                if usage is None:
-                    no_usage[op.operator_name] += 1
-                else:
-                    dev = type(usage.preferred_compute_device).__name__
-                    dev = {"MLCPUComputeDevice": "cpu", "MLGPUComputeDevice": "gpu",
-                           "MLNeuralEngineComputeDevice": "ane"}.get(dev, dev)
-                    by_dev[dev] += 1
-                    cost_by_dev[dev] += cost.weight if cost else 0.0
-                    ops_by_dev.setdefault(dev, Counter())[op.operator_name] += 1
-                    if dev == "cpu":
-                        cpu_ops.append({"op": op.operator_name, "outputs": [o.name for o in op.outputs][:2],
-                                        "cost": cost.weight if cost else None})
-                for inner in op.blocks:
-                    walk(inner)
+        subprocess.run(["xcrun", "swiftc", "-O", "-parse-as-library", "-o", str(exe), str(src)], check=True)
+    return exe
 
-        walk(func.block)
-        total = sum(cost_by_dev.values())
-        functions[fname] = {"ops_with_usage_by_preferred_device": dict(by_dev),
-                            "estimated_cost_share_by_preferred_device": {k: (v / total if total else 0.0)
-                                                                         for k, v in cost_by_dev.items()},
-                            "operators_by_preferred_device": {k: dict(v) for k, v in ops_by_dev.items()},
-                            "ops_without_usage": dict(no_usage), "cpu_ops": cpu_ops[:50]}
-    return {"compute_units": units, "plan_load_s": round(load_s, 2), "functions": functions}
+
+def compute_plan(path: Path, units: str = "cpuAndNeuralEngine", functions: list[str] | None = None) -> dict:
+    """MLComputePlan per-op device usage of every function of a compiled model, summarized (gate 6 record).
+
+    macOS: the Swift tool, one function at a time (MLModelConfiguration.functionName); coremltools' Python
+    MLComputePlan reports usage for the default function only."""
+    import subprocess
+
+    exe = computeplan_tool()
+    out = {"compute_units": units, "tool": "mil/computeplan.swift (MLComputePlan, functionName set)", "functions": {}}
+    for fn in functions or [None]:
+        cmd = [str(exe), "--model", str(path), "--units", units] + (["--function", fn] if fn else [])
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        if proc.returncode != 0:
+            out["functions"][fn or "main"] = {"error": proc.stderr[-1000:]}
+            continue
+        res = json.loads(proc.stdout)
+        out["functions"][res.pop("function")] = res
+    return out
+
+
+def function_names(variant: str) -> list[str]:
+    return ["b2", "b4", "b8", "b15"] if variant == "multi" else ["main"]
 
 
 def load_times(path: Path, functions: list[str | None], units: str = "cpuAndNeuralEngine") -> dict:
@@ -312,7 +303,7 @@ def build_encoder(model: str, arm: str, variant: str, out_root: Path, layers: in
         manifest["compile"] = compile_model(package, out_dir / f"{name}.mlmodelc")
         manifest["paths"]["mlmodelc"] = manifest["compile"]["mlmodelc"]
         if plan:
-            manifest["compute_plan"] = {u: compute_plan(Path(manifest["compile"]["mlmodelc"]), u)
+            manifest["compute_plan"] = {u: compute_plan(Path(manifest["compile"]["mlmodelc"]), u, function_names(variant))
                                         for u in ("cpuAndNeuralEngine", "cpuOnly")}
         manifest["peak_rss_mb_after_compile"] = peak_rss_mb()
     if not keep_package:
@@ -368,6 +359,27 @@ def build_decoder(model: str, out_root: Path, plan: bool = True) -> dict:
     return manifest
 
 
+def replan(model: str, arm: str, variant: str) -> None:
+    """Recompute compute plans (both unit settings, every function) and rewrite the manifest and its results copy."""
+    base = default_out() / model / arm
+    units = ("cpuAndNeuralEngine", "cpuOnly")
+    if arm == "decoder":
+        path = base / "manifest.json"
+        m = json.loads(path.read_text())
+        for name, entry in m["models"].items():
+            entry["compute_plan"] = {u: compute_plan(base / f"{name}.mlmodelc", u) for u in units}
+        text = json.dumps(m, indent=1, default=str) + "\n"
+        path.write_text(text)
+        (RESULTS / f"{model}-decoder.json").write_text(text)
+        return
+    path = base / f"manifest-{variant}.json"
+    m = json.loads(path.read_text())
+    m["compute_plan"] = {u: compute_plan(base / f"{variant}.mlmodelc", u, function_names(variant)) for u in units}
+    save_manifest(m, base, model, arm, variant)
+    print(json.dumps({fn: v.get("ops_with_usage_by_preferred_device") for fn, v in
+                      m["compute_plan"]["cpuAndNeuralEngine"]["functions"].items()}))
+
+
 def default_out() -> Path:
     import artifacts
 
@@ -392,6 +404,11 @@ def main() -> None:
     p = sub.add_parser("plan")
     p.add_argument("--path", required=True)
     p.add_argument("--units", default="cpuAndNeuralEngine")
+    p.add_argument("--functions", default="")
+    p = sub.add_parser("replan", help="recompute the compute plans of a built encoder/decoder and update its manifest")
+    p.add_argument("--model", required=True)
+    p.add_argument("--arm", required=True, help="encoder arm or 'decoder'")
+    p.add_argument("--variant", default="fixed")
     p = sub.add_parser("loadtimes")
     p.add_argument("--path", required=True)
     p.add_argument("--functions", default="")
@@ -408,7 +425,10 @@ def main() -> None:
         print(json.dumps({k: {"mlpackage_bytes": v["mlpackage_bytes"], "compile": v.get("compile")}
                           for k, v in m["models"].items()} | {"peak_rss_mb": m["peak_rss_mb"]}))
     elif args.cmd == "plan":
-        print(json.dumps(compute_plan(Path(args.path), args.units), indent=1))
+        fns = [f for f in args.functions.split(",") if f] or None
+        print(json.dumps(compute_plan(Path(args.path), args.units, fns), indent=1))
+    elif args.cmd == "replan":
+        replan(args.model, args.arm, args.variant)
     elif args.cmd == "loadtimes":
         fns = [f or None for f in args.functions.split(",")] if args.functions else [None]
         print(json.dumps(load_times(Path(args.path), fns, args.units)))
