@@ -1,0 +1,127 @@
+#!/bin/sh
+# macguard: run one job on the shared Mac under memory, time and load guards. See DESIGN.md "Implementation decisions".
+#
+#   macguard --rss-cap 6G --timeout SECONDS [--min-free 40] [--abort-free 25] [--max-swap-growth 1G]
+#            [--threads 4] -- CMD ARGS...
+#
+# Refuses to start if the system-wide free memory percentage (memory_pressure -Q) is below
+# --min-free or another macguard job holds the lock (a directory under the artifacts dir; a lock
+# whose owner pid is gone is stale and removed). Runs CMD under nice -n 10 in its own process group
+# with OMP/BLAS/vecLib thread caps. A watchdog polls the summed RSS of the process group every
+# second and kills the group (TERM, KILL after 3 s) when it exceeds --rss-cap or the job runs past
+# --timeout; every 5 s it also aborts the job if system free memory falls below --abort-free percent
+# or swap use has grown by more than --max-swap-growth since the start. Logs start and end, peak
+# group RSS, exit status, kill reason, free memory, swap growth, load average and the top 5 CPU
+# processes at start and end to $MACGUARD_DIR/logs/macguard.log
+# (default /Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios). Exits with CMD's status
+# (128 + signal if it was killed); 3 if it refused to start, 2 on a usage error.
+# RSS polling can miss short peaks and memory used by system services on the job's behalf.
+set -u
+
+dir=${MACGUARD_DIR:-/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios}
+log=$dir/logs/macguard.log
+lock=$dir/macguard.lock
+cap="" timeout="" min_free=40 abort_free=25 swap_growth=1G threads=4
+
+usage() { echo "usage: macguard --rss-cap SIZE --timeout SECONDS [--min-free PCT] [--abort-free PCT] [--max-swap-growth SIZE] [--threads N] -- CMD ..." >&2; exit 2; }
+while [ $# -gt 0 ] && [ "$1" != "--" ]; do
+  [ $# -ge 2 ] || usage
+  case "$1" in
+    --rss-cap) cap=$2;; --timeout) timeout=$2;; --min-free) min_free=$2;; --abort-free) abort_free=$2;;
+    --max-swap-growth) swap_growth=$2;; --threads) threads=$2;; *) usage;;
+  esac
+  shift 2
+done
+[ "${1:-}" = "--" ] && shift
+[ $# -gt 0 ] && [ -n "$cap" ] && [ -n "$timeout" ] || usage
+
+to_kb() {  # SIZE with optional K/M/G suffix (binary units; no suffix = bytes) -> KB
+  case "$1" in
+    *[kK]) echo $(( ${1%?} ));; *[mM]) echo $(( ${1%?} * 1024 ));; *[gG]) echo $(( ${1%?} * 1024 * 1024 ));;
+    *) echo $(( $1 / 1024 ));;
+  esac
+}
+for n in "$timeout" "$min_free" "$abort_free" "$threads"; do case "$n" in ''|*[!0-9]*) usage;; esac; done
+cap_kb=$(to_kb "$cap") && growth_kb=$(to_kb "$swap_growth") || usage
+
+now() { date '+%Y-%m-%dT%H:%M:%S'; }
+say() { printf '%s [%s] %s\n' "$(now)" "$$" "$*" >> "$log"; printf 'macguard: %s\n' "$*" >&2; }
+free_pct() { memory_pressure -Q 2>/dev/null | awk -F': ' '/free percentage/ { sub("%", "", $2); print $2 + 0 }'; }
+swap_used_kb() { sysctl -n vm.swapusage | awk '{ for (i = 1; i <= NF; i++) if ($i == "used") { v = $(i + 2); u = substr(v, length(v)); sub("[A-Za-z]$", "", v); print int(v * (u == "G" ? 1048576 : u == "M" ? 1024 : 1)) } }'; }
+group_rss_kb() { ps -A -o pgid=,rss= | awk -v g="$1" '$1 == g { s += $2; n++ } END { print (n ? s : -1) }'; }
+snapshot() {
+  say "$1: free ${2}% swap_used ${3}KB load $(sysctl -n vm.loadavg)"
+  ps -A -r -o pid=,pcpu=,rss=,comm= | head -5 | while IFS= read -r line; do say "$1: top $line"; done
+}
+
+mkdir -p "$dir/logs" || exit 3
+free0=$(free_pct)
+swap0=$(swap_used_kb)
+case "$free0" in ''|*[!0-9]*) say "refused: cannot read memory_pressure"; exit 3;; esac
+if [ "$free0" -lt "$min_free" ]; then say "refused: free memory ${free0}% < ${min_free}%: $*"; exit 3; fi
+if ! mkdir "$lock" 2>/dev/null; then
+  owner=$(cat "$lock/pid" 2>/dev/null || echo "")
+  if [ -n "$owner" ] && kill -0 "$owner" 2>/dev/null; then say "refused: lock held by pid $owner: $*"; exit 3; fi
+  say "removing stale lock of pid ${owner:-unknown}"
+  rm -rf "$lock"
+  mkdir "$lock" 2>/dev/null || { say "refused: lock race"; exit 3; }
+fi
+echo $$ > "$lock/pid"
+state=$lock/state
+pgid=""
+cleanup() { [ -n "$pgid" ] && kill -TERM -- "-$pgid" 2>/dev/null; rm -rf "$lock"; }
+trap cleanup EXIT
+trap 'say "macguard interrupted"; exit 130' INT TERM HUP
+
+say "start: cap ${cap} (${cap_kb}KB) timeout ${timeout}s threads ${threads} min_free ${min_free}% abort_free ${abort_free}% max_swap_growth ${swap_growth}: $*"
+snapshot start "$free0" "$swap0"
+export OMP_NUM_THREADS="$threads" VECLIB_MAXIMUM_THREADS="$threads" MKL_NUM_THREADS="$threads" \
+       OPENBLAS_NUM_THREADS="$threads" NUMEXPR_NUM_THREADS="$threads"
+start=$(date +%s)
+set -m                         # job control: the background job gets its own process group (pgid = pid)
+nice -n 10 "$@" &
+pgid=$!
+set +m
+
+(
+  peak=0 tick=0 reason=""
+  while :; do
+    rss=$(group_rss_kb "$pgid")
+    [ "$rss" -lt 0 ] && break
+    [ "$rss" -gt "$peak" ] && peak=$rss && echo "$peak" > "$state.peak"
+    elapsed=$(( $(date +%s) - start ))
+    if [ "$rss" -gt "$cap_kb" ]; then reason="rss ${rss}KB > cap ${cap_kb}KB"
+    elif [ "$elapsed" -gt "$timeout" ]; then reason="timeout ${elapsed}s > ${timeout}s"
+    elif [ $(( tick % 5 )) -eq 0 ]; then
+      free=$(free_pct); swap=$(swap_used_kb)
+      if [ -n "$free" ] && [ "$free" -lt "$abort_free" ]; then reason="system free memory ${free}% < ${abort_free}%"
+      elif [ -n "$swap" ] && [ $(( swap - swap0 )) -gt "$growth_kb" ]; then reason="swap grew $(( swap - swap0 ))KB > ${growth_kb}KB"
+      fi
+    fi
+    if [ -n "$reason" ]; then
+      echo "$reason" > "$state.reason"
+      kill -TERM -- "-$pgid" 2>/dev/null
+      sleep 3
+      kill -KILL -- "-$pgid" 2>/dev/null
+      break
+    fi
+    tick=$(( tick + 1 ))
+    sleep 1
+  done
+) &
+watchdog=$!
+
+wait "$pgid"
+status=$?
+kill "$watchdog" 2>/dev/null
+wait "$watchdog" 2>/dev/null
+left=$(group_rss_kb "$pgid")
+if [ "$left" -ge 0 ]; then say "job left processes behind in group $pgid; terminating them"; kill -TERM -- "-$pgid" 2>/dev/null; fi
+pgid=""
+peak=$(cat "$state.peak" 2>/dev/null || echo 0)
+reason=$(cat "$state.reason" 2>/dev/null || echo "")
+free1=$(free_pct)
+swap1=$(swap_used_kb)
+say "end: status ${status} after $(( $(date +%s) - start ))s, peak group RSS ${peak}KB, swap growth $(( swap1 - swap0 ))KB${reason:+, killed: $reason}"
+snapshot end "$free1" "$swap1"
+exit "$status"
