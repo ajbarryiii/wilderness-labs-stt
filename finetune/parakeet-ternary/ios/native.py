@@ -10,8 +10,10 @@ only under the machine's artifact area (artifacts.check).
   python native.py reference --model mp2 --out DIR [--kinds natural]
         # per clip: the reference's encoder output (enc/<id>.f32 [T, 1024], the F2 gate's input), its replay of
         # the B0 trace (logits [S, 1030], h, c [S, 2, 640]) and its own greedy decode (tokens) -> ref/<id>.npz
-  python native.py gate-frontend --frontend DIR --swift DIR [--clips-dir PCM]
-        # parakeet-bench `features` output vs reference.Featurizer with the same constants (DESIGN.md errors)
+  python native.py gate-frontend --frontend DIR --swift DIR --pcm DIR [--write-ref DIR]
+        # gate 5 (rev. 5): parakeet-bench `features` output vs the FP64 reference front end (fp64_features)
+  python native.py gate-frontend-encoder --encoded DIR
+        # gate 5 (rev. 5): encoder output from front end A's features vs from the reference features
   python native.py gate-f2 --ref DIR --results JSONL --diag DIR
         # parakeet-bench F2 diagnostic replay vs ref/<id>.npz; F2 free decoding vs the reference's greedy tokens
 
@@ -237,8 +239,39 @@ def load_blob(d: Path, stem: str) -> dict[str, np.ndarray]:
             for t in m["tensors"]}
 
 
+FE_REL, FE_ABS = 1e-5, 1e-3          # DESIGN.md revision 5, gate 5: front end A vs the FP64 reference front end
+ENC_REL, ENC_ABS, ENC_TAU = 2e-2, 0.25, 1e-3   # gate-4 ceilings (FP16 arm floor tau)
+
+
+def fp64_features(pcm: np.ndarray, window: np.ndarray, fb: np.ndarray) -> np.ndarray:
+    """The reference front end (reference.Featurizer) evaluated in float64 with the same stored constants:
+    pre-emphasis within the valid samples, centred constant-padded STFT (n_fft 512, hop 160, the 400-sample window
+    centred), |X|^2, mel filterbank, log(x + 2^-24), per-feature normalization over the valid frames with the
+    unbiased std + 1e-5, frames >= N // 160 set to 0. The mean is refined in a second pass (m + mean(x - m)), so a
+    constant feature row gives exactly 0, as exact arithmetic does. Returns [128, N // 160 + 1]."""
+    x = pcm.astype(np.float64)
+    n = len(x)
+    valid, frames = n // 160, n // 160 + 1
+    y = np.concatenate([x[:1], x[1:] - 0.97 * x[:-1]]) if n else x
+    y = np.pad(y, 256)
+    w = np.zeros(512)
+    w[56:456] = window.astype(np.float64)
+    power = np.stack([np.abs(np.fft.rfft(y[f * 160:f * 160 + 512] * w)) ** 2 for f in range(frames)], 1)
+    mel = np.log(fb.astype(np.float64) @ power + 2.0 ** -24)
+    v = mel[:, :valid]
+    m = v.mean(1, keepdims=True)
+    m = m + (v - m).mean(1, keepdims=True)
+    std = np.sqrt(((v - m) ** 2).sum(1, keepdims=True) / (valid - 1)) + 1e-5
+    out = (mel - m) / std
+    out[:, valid:] = 0
+    return out
+
+
 def cmd_gate_frontend(args) -> None:
-    """Swift features (<id>.mel.f32 [128, frames] + features.jsonl) vs reference.Featurizer, same constants."""
+    """DESIGN.md gate 5 (revision 5), feature part: Swift front end A (<id>.mel.f32 [128, frames] + features.jsonl)
+    vs the FP64 evaluation of the reference front end (fp64_features), rel <= 1e-5 and abs <= 1e-3 on every clip;
+    the FP32 reference.Featurizer comparison is reported for information. --write-ref DIR also writes both
+    references' features (<id>.ref64.mel.f32, <id>.ref32.mel.f32, float32) for the encoder part."""
     import torch
 
     import clips as clipmod
@@ -251,36 +284,95 @@ def cmd_gate_frontend(args) -> None:
     feat.fb = torch.from_numpy(consts["fb"].copy())[None]
     sw = Path(args.swift)
     records = {json.loads(l)["clip"]: json.loads(l) for l in (sw / "features.jsonl").read_text().splitlines() if l.strip()}
-    rows, worst = [], None
+    write = None
+    if args.write_ref:
+        import artifacts
+        write = artifacts.check(args.write_ref)
+        write.mkdir(parents=True, exist_ok=True)
+    rows = []
     for clip in clipmod.load_manifest()["clips"]:
         if clip["id"] not in records:
             continue
         pcm = clipmod.read_pcm(Path(args.pcm), clip)
         with torch.no_grad():
-            ref, ref_len = feat(torch.from_numpy(pcm.astype(np.float32))[None], torch.tensor([len(pcm)]))
-        ref = ref[0].numpy()
+            ref32, ref_len = feat(torch.from_numpy(pcm.astype(np.float32))[None], torch.tensor([len(pcm)]))
+        ref32 = ref32[0].numpy()
+        ref64 = fp64_features(pcm, consts["window"], consts["fb"])
         r = records[clip["id"]]
         mine = np.fromfile(sw / f"{clip['id']}.mel.f32", "<f4").reshape(128, -1)
-        rel, ab = errors(mine, ref)
-        row = {"clip": clip["id"], "kind": clip["kind"], "frames": int(ref.shape[1]), "mel_length": r["mel_length"],
-               "mel_length_ok": r["mel_length"] == int(ref_len[0]), "rel": rel, "abs": ab,
-               "pass": rel <= REL_CEILING and ab <= ABS_CEILING and r["mel_length"] == int(ref_len[0])
-               and bool(np.isfinite(mine).all())}
+        rel, ab = errors(mine, ref64)
+        row = {"clip": clip["id"], "kind": clip["kind"], "frames": int(ref64.shape[1]), "mel_length": r["mel_length"],
+               "mel_length_ok": r["mel_length"] == int(ref_len[0]) == pcm.size // 160, "rel": rel, "abs": ab,
+               "vs_fp32_reference": errors(mine, ref32), "fp32_reference_vs_fp64": errors(ref32, ref64)}
+        row["pass"] = rel <= FE_REL and ab <= FE_ABS and row["mel_length_ok"] and bool(np.isfinite(mine).all())
         rows.append(row)
-        if worst is None or rel > worst["rel"]:
-            worst = row
-    summary = {"gate": "front end A (vDSP) vs reference.Featurizer, same stored constants",
-               "ceilings": {"rel": REL_CEILING, "abs": ABS_CEILING}, "clips": len(rows),
-               "passed": sum(r["pass"] for r in rows), "max_rel": max(r["rel"] for r in rows),
-               "max_abs": max(r["abs"] for r in rows), "median_rel": float(np.median([r["rel"] for r in rows])),
-               "worst": worst, "failures": [r for r in rows if not r["pass"]]}
+        if write is not None:
+            ref64.astype("<f4").tofile(write / f"{clip['id']}.ref64.mel.f32")
+            ref32.astype("<f4").tofile(write / f"{clip['id']}.ref32.mel.f32")
+    summary = {"gate": "DESIGN.md gate 5 (rev. 5), features: front end A (vDSP, FP32) vs the FP64 reference front end, "
+                       "same stored constants",
+               "ceilings": {"rel": FE_REL, "abs": FE_ABS}, "clips": len(rows), "passed": sum(r["pass"] for r in rows),
+               "max_rel": max(r["rel"] for r in rows), "max_abs": max(r["abs"] for r in rows),
+               "median_rel": float(np.median([r["rel"] for r in rows])),
+               "silence": next((r for r in rows if r["kind"] == "silence"), None),
+               "info_vs_fp32_reference": {"max_rel": max(r["vs_fp32_reference"][0] for r in rows if r["kind"] != "silence"),
+                                          "max_abs": max(r["vs_fp32_reference"][1] for r in rows if r["kind"] != "silence"),
+                                          "note": "non-silence clips; for silence the FP32 reference is rounding noise"},
+               "failures": [r for r in rows if not r["pass"]]}
     print(json.dumps(summary, indent=1))
-    if args.out:
-        import artifacts
-        dest = Path(args.out).resolve()
-        if not dest.is_relative_to((HERE / "results").resolve()):
-            dest = artifacts.check(dest)
-        dest.write_text(json.dumps({**summary, "rows": rows}, indent=1) + "\n")
+    write_summary(args.out, {**summary, "rows": rows})
+
+
+def write_summary(out, doc: dict) -> None:
+    if not out:
+        return
+    import artifacts
+    dest = Path(out).resolve()
+    if not dest.is_relative_to((HERE / "results").resolve()):
+        dest = artifacts.check(dest)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(json.dumps(doc, indent=1) + "\n")
+
+
+def cmd_gate_frontend_encoder(args) -> None:
+    """DESIGN.md gate 5 (rev. 5), encoder part: the encoder output from front end A's features vs the encoder output
+    from the reference features (parakeet-bench `encode` outputs <id>.<tag>.enc.f32 [L, 1024] on the valid frames),
+    gate-4 ceilings rel <= 2e-2, abs <= 0.25 (tau 1e-3), finite. Reference = the FP64 reference front end (the
+    amended gate's reference); the FP32 reference.Featurizer's features are compared for information."""
+    import clips as clipmod
+
+    d = Path(args.encoded)
+    meta = {json.loads(l)["id"]: json.loads(l) for l in (d / "encode.jsonl").read_text().splitlines() if l.strip()}
+    rows = []
+    for clip in clipmod.load_manifest()["clips"]:
+        keys = {tag: f"{clip['id']}.{tag}" for tag in ("vdsp", "ref64", "ref32")}
+        if not all(k in meta for k in keys.values()):
+            continue
+        enc = {tag: np.fromfile(d / f"{k}.enc.f32", "<f4").reshape(-1, 1024) for tag, k in keys.items()}
+        lengths = {tag: meta[k]["encoder_length"] for tag, k in keys.items()}
+        rel, ab = errors(enc["vdsp"], enc["ref64"], tau=ENC_TAU) if enc["vdsp"].shape == enc["ref64"].shape else (np.inf, np.inf)
+        row = {"clip": clip["id"], "kind": clip["kind"], "encoder_length": lengths, "rel": rel, "abs": ab,
+               "info_vs_fp32_reference_features": errors(enc["vdsp"], enc["ref32"], tau=ENC_TAU)
+               if enc["vdsp"].shape == enc["ref32"].shape else None,
+               "info_fp32_vs_fp64_reference_features": errors(enc["ref32"], enc["ref64"], tau=ENC_TAU)
+               if enc["ref32"].shape == enc["ref64"].shape else None}
+        row["pass"] = (rel <= ENC_REL and ab <= ENC_ABS and len(set(lengths.values())) == 1
+                       and all(bool(np.isfinite(e).all()) for e in enc.values()))
+        rows.append(row)
+    nonsil = [r for r in rows if r["kind"] != "silence"]
+    summary = {"gate": "DESIGN.md gate 5 (rev. 5), encoder: C0's encoder (cpuAndNeuralEngine) on front end A's "
+                       "features vs on the FP64 reference front end's features, valid frames",
+               "encoder": args.encoder_label, "ceilings": {"rel": ENC_REL, "abs": ENC_ABS, "tau": ENC_TAU},
+               "clips": len(rows), "passed": sum(r["pass"] for r in rows),
+               "max_rel": max(r["rel"] for r in rows), "max_abs": max(r["abs"] for r in rows),
+               "median_rel": float(np.median([r["rel"] for r in rows])),
+               "info_vs_fp32_reference_features": {
+                   "max_rel_non_silence": max(r["info_vs_fp32_reference_features"][0] for r in nonsil),
+                   "max_abs_non_silence": max(r["info_vs_fp32_reference_features"][1] for r in nonsil),
+                   "silence": next((r["info_vs_fp32_reference_features"] for r in rows if r["kind"] == "silence"), None)},
+               "failures": [r for r in rows if not r["pass"]]}
+    print(json.dumps(summary, indent=1))
+    write_summary(args.out, {**summary, "rows": rows})
 
 
 def cmd_gate_f2(args) -> None:
@@ -349,7 +441,11 @@ def main() -> None:
     p.add_argument("--pcm", default="/mnt/hd/wilderness-labs-stt/parakeet-ios/clips"); p.add_argument("--kinds", default="natural")
     p.set_defaults(func=cmd_reference)
     p = sub.add_parser("gate-frontend"); p.add_argument("--frontend", required=True); p.add_argument("--swift", required=True)
-    p.add_argument("--pcm", required=True); p.add_argument("--out"); p.set_defaults(func=cmd_gate_frontend)
+    p.add_argument("--pcm", required=True); p.add_argument("--out"); p.add_argument("--write-ref")
+    p.set_defaults(func=cmd_gate_frontend)
+    p = sub.add_parser("gate-frontend-encoder"); p.add_argument("--encoded", required=True); p.add_argument("--out")
+    p.add_argument("--encoder-label", default="C0 Encoder.mlmodelc (c0.json), fixed 15 s window, cpuAndNeuralEngine")
+    p.set_defaults(func=cmd_gate_frontend_encoder)
     p = sub.add_parser("gate-f2"); p.add_argument("--ref", required=True); p.add_argument("--results", required=True)
     p.add_argument("--diag", required=True); p.add_argument("--out"); p.set_defaults(func=cmd_gate_f2)
     args = parser.parse_args()

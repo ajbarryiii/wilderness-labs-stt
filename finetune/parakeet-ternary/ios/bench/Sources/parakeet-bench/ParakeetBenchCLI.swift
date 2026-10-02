@@ -19,6 +19,11 @@ import Foundation
 ///                 [--vocab parakeet_vocab.json]  (default: C0DIR/parakeet_vocab.json if --models is given)
 ///   parakeet-bench features --frontend-constants DIR --clips clips.json --pcm DIR --out DIR [--kinds/--ids]
 ///                       front end A on every clip: <id>.mel.f32 [128, N // 160 + 1] and features.jsonl
+///   parakeet-bench encode --encoder PATH --encoder-variant fixed15 --clips clips.json --features DIR --tags vdsp,ref64
+///                       --out DIR [--compute-units cpuAndNeuralEngine]
+///                       the encoder on given features (<DIR>/<id>.mel.f32 for tag vdsp, <id>.<tag>.mel.f32 otherwise,
+///                       [128, N // 160 + 1]) zero-padded to the bucket, mel_length = N // 160: <id>.<tag>.enc.f32
+///                       [encoder_length, 1024] time-major + encode.jsonl (gate 5, rev. 5)
 ///   parakeet-bench plan --models DIR --out DIR [--compute-units cpuAndNeuralEngine] [--preprocessor-units cpuOnly]
 ///   parakeet-bench info --models DIR
 ///
@@ -37,6 +42,9 @@ struct ParakeetBenchCLI {
             case "run": try await run(try Options(args, allowed: runOptions, flags: ["--emit-warmups"]))
             case "features": try await features(try Options(args, allowed: ["--frontend-constants", "--clips", "--pcm",
                                                                              "--out", "--kinds", "--ids"], flags: []))
+            case "encode": try await encode(try Options(args, allowed: ["--encoder", "--encoder-variant", "--compute-units",
+                                                                         "--clips", "--features", "--tags", "--out", "--kinds",
+                                                                         "--ids"], flags: []))
             case "plan": try await plan(try Options(args, allowed: ["--models", "--out", "--compute-units",
                                                                     "--preprocessor-units"], flags: []))
             case "info": try info(try Options(args, allowed: ["--models"], flags: []))
@@ -308,6 +316,48 @@ struct ParakeetBenchCLI {
             record["replay"] = ["steps": tok.count, "trace_steps": trace.steps, "token_agree": ta, "duration_agree": da]
         }
         return record
+    }
+
+    /// Gate 5 (rev. 5), encoder part: the encoder on externally computed features (untimed).
+    static func encode(_ o: Options) async throws {
+        let units = try ComputeUnitsName.parse(try o.string("--compute-units", "cpuAndNeuralEngine"))
+        guard let variant = LengthVariant(rawValue: try o.string("--encoder-variant", "fixed15")) else {
+            throw BenchError.invalid("unknown --encoder-variant")
+        }
+        let manifest = try ClipManifest.load(try o.url("--clips"))
+        let clips = try selectClips(o, manifest)
+        let featDir = try o.url("--features")
+        let tags = try o.string("--tags", "vdsp").split(separator: ",").map(String.init)
+        let out = try ArtifactPath.check(try o.url("--out"))
+        try FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
+        let encoder = try await EncoderModel(url: try o.url("--encoder"), variant: variant, computeUnits: units,
+                                             compiledDir: try ArtifactPath.check(ArtifactPath.macRoot.appendingPathComponent("compiled")))
+        let writer = try JSONLWriter(path: out.appendingPathComponent("encode.jsonl").path)
+        let options = MLPredictionOptions()
+        for clip in clips {
+            let bucket = try encoder.bucket(forSamples: clip.length)
+            let fB = Buckets.melFrames(bucket), frames = clip.length / 160 + 1
+            for tag in tags {
+                let name = tag == "vdsp" ? "\(clip.id).mel.f32" : "\(clip.id).\(tag).mel.f32"
+                let data = try Data(contentsOf: featDir.appendingPathComponent(name))
+                guard data.count == 128 * frames * 4, frames <= fB else { throw BenchError.invalid("\(name): size") }
+                let mel = try MLMultiArray(shape: [1, 128, NSNumber(value: fB)], dataType: .float32)
+                let dst = mel.dataPointer.bindMemory(to: Float.self, capacity: 128 * fB)
+                dst.initialize(repeating: 0, count: 128 * fB)
+                data.withUnsafeBytes { raw in
+                    let src = raw.bindMemory(to: Float.self).baseAddress!
+                    for c in 0..<128 { (dst + c * fB).update(from: src + c * frames, count: frames) }
+                }
+                let (enc, length) = try await encoder.predict(mel: mel, melLength: clip.melFrames, bucket: bucket, options: options)
+                let view = try EncoderFrames(enc, validLength: length)
+                let values = try view.timeMajor()
+                let bytes = values.withUnsafeBufferPointer { Data(buffer: $0) }
+                try bytes.write(to: out.appendingPathComponent("\(clip.id).\(tag).enc.f32"))
+                try writer.writeObject(["id": "\(clip.id).\(tag)", "clip": clip.id, "tag": tag, "bucket": bucket,
+                                        "mel_length": clip.melFrames, "encoder_length": view.count,
+                                        "sha256": sha256Hex(bytes)])
+            }
+        }
     }
 
     /// Front end A on every selected clip, for the gate against reference.Featurizer (native.py gate-frontend).
