@@ -1,0 +1,64 @@
+{
+ "schema": 1,
+ "description": "I/O contract of the WP3 Core ML models (mil/build.py) for the Swift harness. Encoder, Decoder and JointDecision follow C0's contract (c0.json) so they load like C0; JointLogits and DecoderJoint are new.",
+ "layout": {
+  "root": "<artifacts>/arms (macOS: /Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms)",
+  "encoder": "<root>/<model>/<arm>/<variant>.mlmodelc with <variant> in fixed, multi, enum; <model> in mp2, seed0 (G0: <root>/c0/G0/fixed.mlmodelc)",
+  "decoder": "<root>/<model>/decoder/{Decoder,JointDecision,JointLogits,DecoderJoint}.mlmodelc",
+  "manifests": "<root>/<model>/<arm>/manifest-<variant>.json, <root>/<model>/decoder/manifest.json (copies in ios/results/builds/)"
+ },
+ "arms": {
+  "exact": ["C1", "C3", "C4", "C7", "C8", "C6s2", "C6s4", "C6s8", "C6d4", "C6d8"],
+  "exploratory": ["C5"],
+  "graph_control": ["G0"]
+ },
+ "deployment_target": {"C arms, decoder models": "iOS26 (iOS18 op definitions; macOS 26+)", "G0": "iOS17 (as C0)"},
+ "encoder": {
+  "inputs": {
+   "mel": {"dtype": "Float32", "shape": [1, 128, "F_b"], "note": "log-mel, NeMo feature contract; frames >= mel_length must be 0"},
+   "mel_length": {"dtype": "Int32", "shape": [1], "note": "valid mel frames M = N // 160 (NeMo). C0's preprocessor reports N // 160 + 1."}
+  },
+  "outputs": {
+   "encoder": {"dtype": "Float32", "shape": [1, 1024, "T_b"], "note": "frames >= encoder_length unspecified"},
+   "encoder_length": {"dtype": "Int32", "shape": [1], "note": "ceil(ceil(ceil(M / 2) / 2) / 2)"}
+  },
+  "buckets": {"2": {"F": 201, "T": 26}, "4": {"F": 401, "T": 51}, "8": {"F": 801, "T": 101}, "15": {"F": 1501, "T": 188}},
+  "bucket_rule": "an utterance of N samples uses the smallest bucket b with N <= 16000 b (clips.py bucket_of)",
+  "variants": {
+   "fixed": {"functions": ["main"], "mel_frames": 1501, "note": "C0's fixed 15 s window"},
+   "multi": {"functions": ["b2", "b4", "b8", "b15"], "default_function": "b15", "mel_frames_by_function": {"b2": 201, "b4": 401, "b8": 801, "b15": 1501},
+             "note": "load with MLModelConfiguration.functionName; weights shared between functions in weight.bin"},
+   "enum": {"functions": ["main"], "enumerated_mel_shapes": [[1, 128, 201], [1, 128, 401], [1, 128, 801], [1, 128, 1501]], "default_shape": [1, 128, 1501]}
+  },
+  "masking": "mil/MASKING.md",
+  "compute_precision": "FP16 (C5: int8 activations at the ternary matmul inputs, exploratory)"
+ },
+ "decoder_models": {
+  "Decoder": {
+   "inputs": {"targets": ["Int32", [1, 1]], "target_length": ["Int32", [1], "unused; kept for C0's contract"],
+              "h_in": ["Float32", [2, 1, 640]], "c_in": ["Float32", [2, 1, 640]]},
+   "outputs": {"decoder": ["Float32", [1, 640, 1], "LSTM output (before joint.pred), as C0"],
+               "h_out": ["Float32", [2, 1, 640]], "c_out": ["Float32", [2, 1, 640]]},
+   "start": "zero h/c and targets = 1024 (blank/SOS; its embedding row is zero), reset per utterance"
+  },
+  "JointDecision": {
+   "inputs": {"encoder_step": ["Float32", [1, 1024, 1]], "decoder_step": ["Float32", [1, 640, 1]]},
+   "outputs": {"token_id": ["Int32", [1, 1, 1], "argmax over 1,025 token+blank logits (1024 = blank)"],
+               "token_prob": ["Float32", [1, 1, 1], "softmax over the same 1,025, at token_id"],
+               "duration": ["Int32", [1, 1, 1], "argmax bin of the 5 duration logits; frames = durations[bin], durations = [0, 1, 2, 3, 4]"]}
+  },
+  "JointLogits": {
+   "inputs": {"encoder_step": ["Float32", [1, 1024, 1]], "decoder_step": ["Float32", [1, 640, 1]]},
+   "outputs": {"token_logits": ["Float32", [1, 1025], "raw"], "duration_logits": ["Float32", [1, 5], "raw"]},
+   "use": "diagnostics and gate 4 (replay); not for timing"
+  },
+  "DecoderJoint": {
+   "inputs": {"targets": ["Int32", [1, 1]], "h_in": ["Float32", [2, 1, 640]], "c_in": ["Float32", [2, 1, 640]],
+              "encoder_step": ["Float32", [1, 1024, 1]]},
+   "outputs": {"token_id": ["Int32", [1, 1, 1]], "token_prob": ["Float32", [1, 1, 1]], "duration": ["Int32", [1, 1, 1]],
+               "h_out": ["Float32", [2, 1, 640]], "c_out": ["Float32", [2, 1, 640]]},
+   "semantics": "runs the prediction network on targets from (h_in, c_in), then the joint on (encoder_step, its output). Keep (targets, h_in, c_in) = (last emitted token or 1024 at start, the state before that token was consumed). After a blank: same (targets, h_in, c_in), next encoder_step. After emitting token k: targets = k, (h_in, c_in) = the h_out/c_out of this call. One call per joint step; the prediction network is recomputed on blank steps (its cost is part of the fused arm)."
+  }
+ },
+ "decoding": {"strategy": "NeMo greedy_batch label looping (reference.run_steps): blank with duration 0 advances 1 frame; max_symbols 10 per frame", "blank": 1024, "durations": [0, 1, 2, 3, 4]}
+}
