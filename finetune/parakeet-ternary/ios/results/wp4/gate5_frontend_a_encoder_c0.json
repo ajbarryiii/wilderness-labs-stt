@@ -1,0 +1,1739 @@
+{
+ "gate": "DESIGN.md gate 5 (rev. 5), encoder: C0's encoder (cpuAndNeuralEngine) on front end A's features vs on the FP64 reference front end's features, valid frames",
+ "encoder": "C0 Encoder.mlmodelc (c0.json), fixed 15 s window, cpuAndNeuralEngine",
+ "ceilings": {
+  "rel": 0.02,
+  "abs": 0.25,
+  "tau": 0.001
+ },
+ "clips": 82,
+ "passed": 79,
+ "max_rel": 0.025762070586037362,
+ "max_abs": 0.6747505630968064,
+ "median_rel": 0.001991213661333278,
+ "info_vs_fp32_reference_features": {
+  "max_rel_non_silence": 0.09328443084170106,
+  "max_abs_non_silence": 3.1908377984864864,
+  "silence": [
+   0.6930791484189043,
+   6.492295205548646
+  ]
+ },
+ "failures": [
+  {
+   "clip": "n08-6345-93306-0019",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 96,
+    "ref64": 96,
+    "ref32": 96
+   },
+   "rel": 0.012289701936135421,
+   "abs": 0.40160371014000895,
+   "info_vs_fp32_reference_features": [
+    0.09328443084170106,
+    3.1908377984864864
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.08593929993765546,
+    2.9690546664047353
+   ],
+   "pass": false
+  },
+  {
+   "clip": "n15-1673-143396-0001",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 176,
+    "ref64": 176,
+    "ref32": 176
+   },
+   "rel": 0.01645434213002338,
+   "abs": 0.6747505630968064,
+   "info_vs_fp32_reference_features": [
+    0.012315900567615064,
+    0.48987866930344187
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.004722299522332277,
+    0.18486316797172775
+   ],
+   "pass": false
+  },
+  {
+   "clip": "n15-174-168635-0010",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 126,
+    "ref64": 126,
+    "ref32": 126
+   },
+   "rel": 0.025762070586037362,
+   "abs": 0.5597101312319154,
+   "info_vs_fp32_reference_features": [
+    0.027241541439874777,
+    0.48801840562661
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0031379102863090765,
+    0.07177961988317692
+   ],
+   "pass": false
+  }
+ ],
+ "rows": [
+  {
+   "clip": "n02-1272-141231-0016",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 24,
+    "ref64": 24,
+    "ref32": 24
+   },
+   "rel": 0.007568577107032809,
+   "abs": 0.14036728988482117,
+   "info_vs_fp32_reference_features": [
+    0.00207437035170914,
+    0.020035444072200308
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.006743681729066871,
+    0.1203148199012753
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n02-174-50561-0014",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 23,
+    "ref64": 23,
+    "ref32": 23
+   },
+   "rel": 0.003139560000557464,
+   "abs": 0.03954618500864531,
+   "info_vs_fp32_reference_features": [
+    0.0021639249641560105,
+    0.025163371124530872
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0022130780057451143,
+    0.025165754096410652
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n02-1919-142785-0048",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 23,
+    "ref64": 23,
+    "ref32": 23
+   },
+   "rel": 0.0017853891847730433,
+   "abs": 0.019780118480842535,
+   "info_vs_fp32_reference_features": [
+    0.0018383239427528365,
+    0.01318648626948989
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0017863315582453444,
+    0.01648343206736878
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n02-1988-24833-0006",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 25,
+    "ref64": 25,
+    "ref32": 25
+   },
+   "rel": 0.002164436491559035,
+   "abs": 0.023284055626550084,
+   "info_vs_fp32_reference_features": [
+    0.0018379055501190251,
+    0.019958563846507366
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.002107126869074494,
+    0.019957761965614357
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n02-2078-142845-0023",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 22,
+    "ref64": 22,
+    "ref32": 22
+   },
+   "rel": 0.00170762702419465,
+   "abs": 0.012327658880122086,
+   "info_vs_fp32_reference_features": [
+    0.0017733275149503552,
+    0.015412788878887172
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0016951814859559172,
+    0.012327658880122086
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n02-2277-149896-0004",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 25,
+    "ref64": 25,
+    "ref32": 25
+   },
+   "rel": 0.0017354197960278985,
+   "abs": 0.013845306052673126,
+   "info_vs_fp32_reference_features": [
+    0.0017683411942861092,
+    0.017310515314975575
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0017242296314704433,
+    0.013845306052673126
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n02-2428-83699-0004",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 24,
+    "ref64": 24,
+    "ref32": 24
+   },
+   "rel": 0.0019393883479550957,
+   "abs": 0.02090685108200286,
+   "info_vs_fp32_reference_features": [
+    0.0018927988901026955,
+    0.01741830529943696
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0016955025694032155,
+    0.01742237590166905
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n02-251-136532-0022",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 20,
+    "ref64": 20,
+    "ref32": 20
+   },
+   "rel": 0.0017629396284665848,
+   "abs": 0.01723261801639928,
+   "info_vs_fp32_reference_features": [
+    0.001891531956424803,
+    0.02154319015659979
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.001835102712749771,
+    0.015078540764349368
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n02-3081-166546-0073",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 18,
+    "ref64": 18,
+    "ref32": 18
+   },
+   "rel": 0.0017668845211187387,
+   "abs": 0.019360609733474397,
+   "info_vs_fp32_reference_features": [
+    0.002081031593430638,
+    0.03871191045296155
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0019824934754730573,
+    0.023232731680169278
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n02-3752-4944-0046",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 24,
+    "ref64": 24,
+    "ref32": 24
+   },
+   "rel": 0.0018618139339310795,
+   "abs": 0.01894834947407305,
+   "info_vs_fp32_reference_features": [
+    0.0017605730212390375,
+    0.018950303094598255
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0017888160656390352,
+    0.01894834947407305
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n02-6313-66129-0032",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 24,
+    "ref64": 24,
+    "ref32": 24
+   },
+   "rel": 0.002127087907834085,
+   "abs": 0.022193780188384898,
+   "info_vs_fp32_reference_features": [
+    0.0019295182793393796,
+    0.01902500597168992
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0016916731436315716,
+    0.01902324016147277
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n02-6345-93302-0028",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 25,
+    "ref64": 25,
+    "ref32": 25
+   },
+   "rel": 0.002144001786188556,
+   "abs": 0.021638668225990955,
+   "info_vs_fp32_reference_features": [
+    0.0028038468679654413,
+    0.023307812495485716
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0024055380573423193,
+    0.02663220704737348
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n02-777-126732-0081",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 19,
+    "ref64": 19,
+    "ref32": 19
+   },
+   "rel": 0.008187773379579861,
+   "abs": 0.13469345411578854,
+   "info_vs_fp32_reference_features": [
+    0.004455278357562141,
+    0.07163365697083668
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.01212078400244619,
+    0.2064007606234745
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n02-7976-105575-0017",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 25,
+    "ref64": 25,
+    "ref32": 25
+   },
+   "rel": 0.002948732283656875,
+   "abs": 0.0555601374768299,
+   "info_vs_fp32_reference_features": [
+    0.0027695315476583475,
+    0.05191310367664467
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0017502954659200435,
+    0.016394794665294067
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n02-84-121123-0007",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 25,
+    "ref64": 25,
+    "ref32": 25
+   },
+   "rel": 0.0018104408143226787,
+   "abs": 0.013008973732867553,
+   "info_vs_fp32_reference_features": [
+    0.0019017597025798544,
+    0.013007334652408989
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0019853735111066443,
+    0.019513460599301327
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n02-8842-304647-0007",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 22,
+    "ref64": 22,
+    "ref32": 22
+   },
+   "rel": 0.0016821949916754606,
+   "abs": 0.019755214881964345,
+   "info_vs_fp32_reference_features": [
+    0.0018006915358701559,
+    0.016458142656962656
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0018849271203329834,
+    0.019755214881964345
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n04-1462-170142-0035",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 34,
+    "ref64": 34,
+    "ref32": 34
+   },
+   "rel": 0.001995041517689748,
+   "abs": 0.018291405508609318,
+   "info_vs_fp32_reference_features": [
+    0.0017511004742797182,
+    0.018291309070580727
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0022298332107502507,
+    0.022864256885761648
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n04-174-50561-0017",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 36,
+    "ref64": 36,
+    "ref32": 36
+   },
+   "rel": 0.003993421023001001,
+   "abs": 0.05832917004013679,
+   "info_vs_fp32_reference_features": [
+    0.0020135315266474577,
+    0.024021575420410588
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.003278803342692006,
+    0.05832917004013679
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n04-1919-142785-0024",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 36,
+    "ref64": 36,
+    "ref32": 36
+   },
+   "rel": 0.008525904246673708,
+   "abs": 0.22413590167595593,
+   "info_vs_fp32_reference_features": [
+    0.03177493730051849,
+    0.8805130404603742
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.023578369435287808,
+    0.6617016758260887
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n04-1988-24833-0000",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 42,
+    "ref64": 42,
+    "ref32": 42
+   },
+   "rel": 0.0019257175989415357,
+   "abs": 0.023328072032334772,
+   "info_vs_fp32_reference_features": [
+    0.0036565642204239644,
+    0.07998340783385303
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0029713989629837722,
+    0.059986470940289416
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n04-2035-147961-0034",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 35,
+    "ref64": 35,
+    "ref32": 35
+   },
+   "rel": 0.0016595033124824328,
+   "abs": 0.027310712740559365,
+   "info_vs_fp32_reference_features": [
+    0.0020376437599320127,
+    0.020483978080239666
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.002165170389752777,
+    0.027310712740559365
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n04-2277-149874-0009",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 42,
+    "ref64": 42,
+    "ref32": 42
+   },
+   "rel": 0.001969272407433312,
+   "abs": 0.023699747264548154,
+   "info_vs_fp32_reference_features": [
+    0.0019826259632088356,
+    0.02539599657406966
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0019275342967471057,
+    0.020314069083898417
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n04-2428-83699-0026",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 40,
+    "ref64": 40,
+    "ref32": 40
+   },
+   "rel": 0.001923686694079688,
+   "abs": 0.01735883621179826,
+   "info_vs_fp32_reference_features": [
+    0.0017944808049811768,
+    0.01735819389484255
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0019252385323544174,
+    0.017426644165750595
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n04-3081-166546-0060",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 35,
+    "ref64": 35,
+    "ref32": 35
+   },
+   "rel": 0.0018787484859310545,
+   "abs": 0.018853432368965313,
+   "info_vs_fp32_reference_features": [
+    0.002071566738051251,
+    0.01885828935717105
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0019399097253874847,
+    0.025137909825287085
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n04-3576-138058-0031",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 36,
+    "ref64": 36,
+    "ref32": 36
+   },
+   "rel": 0.001952161545761257,
+   "abs": 0.01813762786088277,
+   "info_vs_fp32_reference_features": [
+    0.0018362409916683716,
+    0.018134678249406816
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0016567452765514764,
+    0.015114689884068975
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n04-3752-4943-0016",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 31,
+    "ref64": 31,
+    "ref32": 31
+   },
+   "rel": 0.0017430182269079476,
+   "abs": 0.019010469511240278,
+   "info_vs_fp32_reference_features": [
+    0.0017120733179794411,
+    0.01900887730383331
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0017501554851429406,
+    0.015842057926033565
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n04-5536-43358-0012",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 43,
+    "ref64": 43,
+    "ref32": 43
+   },
+   "rel": 0.002144739054911564,
+   "abs": 0.022150007510728778,
+   "info_vs_fp32_reference_features": [
+    0.0019469792339749713,
+    0.025313625692469297
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.002189682945557134,
+    0.04113572823421059
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n04-5694-64029-0003",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 50,
+    "ref64": 50,
+    "ref32": 50
+   },
+   "rel": 0.002420886541075684,
+   "abs": 0.023108466585761767,
+   "info_vs_fp32_reference_features": [
+    0.002281518032820543,
+    0.023932801144474842
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.001849042642499277,
+    0.016506047561258404
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n04-6241-61943-0022",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 38,
+    "ref64": 38,
+    "ref32": 38
+   },
+   "rel": 0.0018807898291036966,
+   "abs": 0.020681311172200838,
+   "info_vs_fp32_reference_features": [
+    0.001930966272151524,
+    0.02068113694180169
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0018505186050687887,
+    0.01723442597683403
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n04-6313-66125-0014",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 48,
+    "ref64": 48,
+    "ref32": 48
+   },
+   "rel": 0.00245058668588025,
+   "abs": 0.057838185911690404,
+   "info_vs_fp32_reference_features": [
+    0.0021523451221522084,
+    0.0429681860226453
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0020374676836121706,
+    0.026440313559629898
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n04-6319-57405-0007",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 44,
+    "ref64": 44,
+    "ref32": 44
+   },
+   "rel": 0.0022822592701742385,
+   "abs": 0.02533155798490291,
+   "info_vs_fp32_reference_features": [
+    0.00201085722652978,
+    0.02216252145232709
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.001692829218980272,
+    0.018998668488677182
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n04-8297-275154-0024",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 46,
+    "ref64": 46,
+    "ref32": 46
+   },
+   "rel": 0.0017582408315542219,
+   "abs": 0.019987297862839155,
+   "info_vs_fp32_reference_features": [
+    0.0018228303491643894,
+    0.01832194553921026
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0018725105818773386,
+    0.01665608155236596
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n08-1272-141231-0019",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 59,
+    "ref64": 59,
+    "ref32": 59
+   },
+   "rel": 0.006810974315895713,
+   "abs": 0.12309231300465479,
+   "info_vs_fp32_reference_features": [
+    0.0036245708051028907,
+    0.055067922389236926
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.003977331136898956,
+    0.07288360638433507
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n08-1462-170142-0020",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 62,
+    "ref64": 62,
+    "ref32": 62
+   },
+   "rel": 0.0022049830635806297,
+   "abs": 0.03956065795324695,
+   "info_vs_fp32_reference_features": [
+    0.003993015825015968,
+    0.07665476954755668
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.004015158700916393,
+    0.08056363156103936
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n08-174-84280-0003",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 93,
+    "ref64": 93,
+    "ref32": 93
+   },
+   "rel": 0.0018406926497750488,
+   "abs": 0.025776011777491788,
+   "info_vs_fp32_reference_features": [
+    0.0022053847090494484,
+    0.03363003989117597
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0024736250652142677,
+    0.04309426969049408
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n08-1919-142785-0038",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 74,
+    "ref64": 74,
+    "ref32": 74
+   },
+   "rel": 0.0018767596498621799,
+   "abs": 0.027044140570070842,
+   "info_vs_fp32_reference_features": [
+    0.0038284030422952183,
+    0.09999606108643465
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.003990917854791185,
+    0.0999813681681407
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n08-1993-147965-0003",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 93,
+    "ref64": 93,
+    "ref32": 93
+   },
+   "rel": 0.0017308611500965814,
+   "abs": 0.02247432625298446,
+   "info_vs_fp32_reference_features": [
+    0.0019135949115731594,
+    0.02768962041732501
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0019877800307154,
+    0.027691580561712992
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n08-2086-149220-0016",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 94,
+    "ref64": 94,
+    "ref32": 94
+   },
+   "rel": 0.0020747858254301847,
+   "abs": 0.03390634435179416,
+   "info_vs_fp32_reference_features": [
+    0.0025987049038262698,
+    0.05834792254654566
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.002040868822176538,
+    0.03469486398788239
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n08-2277-149897-0033",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 64,
+    "ref64": 64,
+    "ref32": 64
+   },
+   "rel": 0.0019711207193331723,
+   "abs": 0.024458440096548965,
+   "info_vs_fp32_reference_features": [
+    0.0019842453661558733,
+    0.027513911370194533
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.001741877551498243,
+    0.018343830072411724
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n08-2412-153948-0009",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 75,
+    "ref64": 75,
+    "ref32": 75
+   },
+   "rel": 0.0018845169172891387,
+   "abs": 0.024227133699737537,
+   "info_vs_fp32_reference_features": [
+    0.0020004820868766995,
+    0.024229278649486576
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0017446029441049058,
+    0.02076611459977503
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n08-2803-154320-0010",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 51,
+    "ref64": 51,
+    "ref32": 51
+   },
+   "rel": 0.0022107434374554536,
+   "abs": 0.022210881895783505,
+   "info_vs_fp32_reference_features": [
+    0.0017737833690029759,
+    0.01903803219975855
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.001942847367195075,
+    0.019037898767814435
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n08-3853-163249-0041",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 90,
+    "ref64": 90,
+    "ref32": 90
+   },
+   "rel": 0.001837737073412634,
+   "abs": 0.01863833301141218,
+   "info_vs_fp32_reference_features": [
+    0.002235439772114912,
+    0.03727611945473474
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.002084402332007436,
+    0.027957499517118272
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n08-5338-284437-0029",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 95,
+    "ref64": 95,
+    "ref32": 95
+   },
+   "rel": 0.0026474688814949045,
+   "abs": 0.06349572906079708,
+   "info_vs_fp32_reference_features": [
+    0.0023146463509647014,
+    0.041047065234284745
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0026068920260822943,
+    0.04607312047704178
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n08-5694-64025-0020",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 92,
+    "ref64": 92,
+    "ref32": 92
+   },
+   "rel": 0.0020185681205537372,
+   "abs": 0.02485461479329155,
+   "info_vs_fp32_reference_features": [
+    0.0018617362882188343,
+    0.018640095156714494
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0018864795367894806,
+    0.02485461479329155
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n08-6313-76958-0016",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 55,
+    "ref64": 55,
+    "ref32": 55
+   },
+   "rel": 0.0020404354089261566,
+   "abs": 0.022245567534301965,
+   "info_vs_fp32_reference_features": [
+    0.002542264091634899,
+    0.05243100130975431
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0022935054129042728,
+    0.04290216595901093
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n08-6345-93306-0019",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 96,
+    "ref64": 96,
+    "ref32": 96
+   },
+   "rel": 0.012289701936135421,
+   "abs": 0.40160371014000895,
+   "info_vs_fp32_reference_features": [
+    0.09328443084170106,
+    3.1908377984864864
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.08593929993765546,
+    2.9690546664047353
+   ],
+   "pass": false
+  },
+  {
+   "clip": "n08-652-130726-0027",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 66,
+    "ref64": 66,
+    "ref32": 66
+   },
+   "rel": 0.0018810066413563887,
+   "abs": 0.018461712800672075,
+   "info_vs_fp32_reference_features": [
+    0.002336873773834493,
+    0.027693360550233154
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0024294196277428663,
+    0.03230799740117613
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n08-8842-302201-0007",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 61,
+    "ref64": 61,
+    "ref32": 61
+   },
+   "rel": 0.002407741547659762,
+   "abs": 0.03187928908120451,
+   "info_vs_fp32_reference_features": [
+    0.0025126489726413504,
+    0.043640969842287346
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.001774490273901531,
+    0.018216736617831148
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n15-1272-141231-0025",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 109,
+    "ref64": 109,
+    "ref32": 109
+   },
+   "rel": 0.001987385804976808,
+   "abs": 0.03783517002584933,
+   "info_vs_fp32_reference_features": [
+    0.002369786097674876,
+    0.03704954053097774
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0027536943426718606,
+    0.05517628962103028
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n15-1462-170142-0001",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 120,
+    "ref64": 120,
+    "ref32": 120
+   },
+   "rel": 0.001721497231457665,
+   "abs": 0.03126283798266841,
+   "info_vs_fp32_reference_features": [
+    0.0016737373397437267,
+    0.01875622115129955
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0017264793527203004,
+    0.04376797317573577
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n15-1673-143396-0001",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 176,
+    "ref64": 176,
+    "ref32": 176
+   },
+   "rel": 0.01645434213002338,
+   "abs": 0.6747505630968064,
+   "info_vs_fp32_reference_features": [
+    0.012315900567615064,
+    0.48987866930344187
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.004722299522332277,
+    0.18486316797172775
+   ],
+   "pass": false
+  },
+  {
+   "clip": "n15-174-168635-0010",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 126,
+    "ref64": 126,
+    "ref32": 126
+   },
+   "rel": 0.025762070586037362,
+   "abs": 0.5597101312319154,
+   "info_vs_fp32_reference_features": [
+    0.027241541439874777,
+    0.48801840562661
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0031379102863090765,
+    0.07177961988317692
+   ],
+   "pass": false
+  },
+  {
+   "clip": "n15-2277-149874-0014",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 108,
+    "ref64": 108,
+    "ref32": 108
+   },
+   "rel": 0.001907071845467735,
+   "abs": 0.023107123326951057,
+   "info_vs_fp32_reference_features": [
+    0.0023172529867537344,
+    0.054470917823268475
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0020289562008719802,
+    0.034660684990426585
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n15-2412-153947-0005",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 171,
+    "ref64": 171,
+    "ref32": 171
+   },
+   "rel": 0.001978416065029522,
+   "abs": 0.018877474347013874,
+   "info_vs_fp32_reference_features": [
+    0.0021757405689463356,
+    0.0346075445829117
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0022049509670307214,
+    0.038541510125153326
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n15-3000-15664-0011",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 135,
+    "ref64": 135,
+    "ref32": 135
+   },
+   "rel": 0.0021837856106683203,
+   "abs": 0.0367635965912908,
+   "info_vs_fp32_reference_features": [
+    0.0021473844184697927,
+    0.03196803358317425
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0024983618958281614,
+    0.06393668972398399
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n15-3536-23268-0008",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 117,
+    "ref64": 117,
+    "ref32": 117
+   },
+   "rel": 0.0018692195358436193,
+   "abs": 0.0251625460374093,
+   "info_vs_fp32_reference_features": [
+    0.0017895578761832726,
+    0.020130687986236816
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0017942328938860904,
+    0.02013003682992744
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n15-3752-4944-0027",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 143,
+    "ref64": 143,
+    "ref32": 143
+   },
+   "rel": 0.0020177684265878597,
+   "abs": 0.034125581820223676,
+   "info_vs_fp32_reference_features": [
+    0.002226109258234121,
+    0.04032976721851345
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0020325872718025572,
+    0.03141104690270588
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n15-3853-163249-0022",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 107,
+    "ref64": 107,
+    "ref32": 107
+   },
+   "rel": 0.002131418491953193,
+   "abs": 0.06665501035224608,
+   "info_vs_fp32_reference_features": [
+    0.0037939606729803683,
+    0.17461124007212325
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.005012138887083885,
+    0.24122765651289058
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n15-422-122949-0008",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 117,
+    "ref64": 117,
+    "ref32": 117
+   },
+   "rel": 0.0020402110441542546,
+   "abs": 0.03438770976301195,
+   "info_vs_fp32_reference_features": [
+    0.0019215750990643908,
+    0.02696391488710029
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0017514441650990952,
+    0.02500924346400869
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n15-6241-61943-0008",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 102,
+    "ref64": 102,
+    "ref32": 102
+   },
+   "rel": 0.0017404155981052731,
+   "abs": 0.019216946573223013,
+   "info_vs_fp32_reference_features": [
+    0.0017564230753501326,
+    0.01921545209994041
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0017347611424832874,
+    0.019216946573223013
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n15-6313-76958-0013",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 148,
+    "ref64": 148,
+    "ref32": 148
+   },
+   "rel": 0.002246551867375758,
+   "abs": 0.0814344015573549,
+   "info_vs_fp32_reference_features": [
+    0.0027314287604072807,
+    0.1289560103500091
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0022716450059841456,
+    0.047503400908457026
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n15-652-129742-0001",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 109,
+    "ref64": 109,
+    "ref32": 109
+   },
+   "rel": 0.0017055870078461013,
+   "abs": 0.023447209042806925,
+   "info_vs_fp32_reference_features": [
+    0.0017103505522148676,
+    0.014654134444002737
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0017273909068492633,
+    0.01758540678210519
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n15-8297-275155-0005",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 102,
+    "ref64": 102,
+    "ref32": 102
+   },
+   "rel": 0.0016565893009429648,
+   "abs": 0.015976315233232754,
+   "info_vs_fp32_reference_features": [
+    0.0016605427414113805,
+    0.022365432756471054
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0016281779544610273,
+    0.022366841326525857
+   ],
+   "pass": true
+  },
+  {
+   "clip": "n15-84-121550-0029",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 105,
+    "ref64": 105,
+    "ref32": 105
+   },
+   "rel": 0.0017966226250485068,
+   "abs": 0.02316770839786375,
+   "info_vs_fp32_reference_features": [
+    0.0017991871824550771,
+    0.016549578372714535
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.001764612713685549,
+    0.0198580357695975
+   ],
+   "pass": true
+  },
+  {
+   "clip": "b02-N31840",
+   "kind": "boundary",
+   "encoder_length": {
+    "vdsp": 25,
+    "ref64": 25,
+    "ref32": 25
+   },
+   "rel": 0.0024276936892051095,
+   "abs": 0.02920657722831303,
+   "info_vs_fp32_reference_features": [
+    0.0019380618425535302,
+    0.014603375039019552
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.001979056705252273,
+    0.02190493292123477
+   ],
+   "pass": true
+  },
+  {
+   "clip": "b02-N32000",
+   "kind": "boundary",
+   "encoder_length": {
+    "vdsp": 25,
+    "ref64": 25,
+    "ref32": 25
+   },
+   "rel": 0.0020895573127319347,
+   "abs": 0.020122354468367736,
+   "info_vs_fp32_reference_features": [
+    0.002301726983067679,
+    0.02414765671825516
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0020349218615055473,
+    0.014085648127857417
+   ],
+   "pass": true
+  },
+  {
+   "clip": "b04-N32001",
+   "kind": "boundary",
+   "encoder_length": {
+    "vdsp": 25,
+    "ref64": 25,
+    "ref32": 25
+   },
+   "rel": 0.0022369259951921265,
+   "abs": 0.014928780023175495,
+   "info_vs_fp32_reference_features": [
+    0.0019975964873359424,
+    0.018659889342271432
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.002026242529037076,
+    0.01866097502896937
+   ],
+   "pass": true
+  },
+  {
+   "clip": "b04-N32160",
+   "kind": "boundary",
+   "encoder_length": {
+    "vdsp": 26,
+    "ref64": 26,
+    "ref32": 26
+   },
+   "rel": 0.006772244427600178,
+   "abs": 0.11264904548434261,
+   "info_vs_fp32_reference_features": [
+    0.009847858204500747,
+    0.17361153773677185
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.016131875471888282,
+    0.28623937787005094
+   ],
+   "pass": true
+  },
+  {
+   "clip": "b04-N63840",
+   "kind": "boundary",
+   "encoder_length": {
+    "vdsp": 50,
+    "ref64": 50,
+    "ref32": 50
+   },
+   "rel": 0.002377494846948128,
+   "abs": 0.04390413410333477,
+   "info_vs_fp32_reference_features": [
+    0.0018050157530194299,
+    0.016886909871067852
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0027307756532732805,
+    0.05741309844282239
+   ],
+   "pass": true
+  },
+  {
+   "clip": "b04-N64000",
+   "kind": "boundary",
+   "encoder_length": {
+    "vdsp": 50,
+    "ref64": 50,
+    "ref32": 50
+   },
+   "rel": 0.0018645045872043877,
+   "abs": 0.02596579289287438,
+   "info_vs_fp32_reference_features": [
+    0.002768787054785161,
+    0.04058543634224402
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.003018839151168203,
+    0.04219441345092087
+   ],
+   "pass": true
+  },
+  {
+   "clip": "b08-N64001",
+   "kind": "boundary",
+   "encoder_length": {
+    "vdsp": 50,
+    "ref64": 50,
+    "ref32": 50
+   },
+   "rel": 0.002792678064336053,
+   "abs": 0.036908982309938825,
+   "info_vs_fp32_reference_features": [
+    0.002405523945727563,
+    0.03209579880776418
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0021134926617978854,
+    0.020861598696921942
+   ],
+   "pass": true
+  },
+  {
+   "clip": "b08-N64160",
+   "kind": "boundary",
+   "encoder_length": {
+    "vdsp": 51,
+    "ref64": 51,
+    "ref32": 51
+   },
+   "rel": 0.0021085759650511923,
+   "abs": 0.02314542979554539,
+   "info_vs_fp32_reference_features": [
+    0.0019737734765695797,
+    0.01683398210390596
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0021011696358920516,
+    0.02104129981413217
+   ],
+   "pass": true
+  },
+  {
+   "clip": "b08-N127840",
+   "kind": "boundary",
+   "encoder_length": {
+    "vdsp": 100,
+    "ref64": 100,
+    "ref32": 100
+   },
+   "rel": 0.001865080240469831,
+   "abs": 0.022252516092517768,
+   "info_vs_fp32_reference_features": [
+    0.0019124787410547898,
+    0.0286098077953288
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.001847235279895476,
+    0.022252516092517768
+   ],
+   "pass": true
+  },
+  {
+   "clip": "b08-N128000",
+   "kind": "boundary",
+   "encoder_length": {
+    "vdsp": 100,
+    "ref64": 100,
+    "ref32": 100
+   },
+   "rel": 0.0018038317425815647,
+   "abs": 0.01994514935414793,
+   "info_vs_fp32_reference_features": [
+    0.0023733929429483797,
+    0.04820183554441889
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.002539783186036885,
+    0.056926780448297215
+   ],
+   "pass": true
+  },
+  {
+   "clip": "b15-N128001",
+   "kind": "boundary",
+   "encoder_length": {
+    "vdsp": 100,
+    "ref64": 100,
+    "ref32": 100
+   },
+   "rel": 0.00295043013435409,
+   "abs": 0.08848453290294483,
+   "info_vs_fp32_reference_features": [
+    0.010943705593174856,
+    0.2282626747772007
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.011003988853384997,
+    0.2571581737491834
+   ],
+   "pass": true
+  },
+  {
+   "clip": "b15-N128160",
+   "kind": "boundary",
+   "encoder_length": {
+    "vdsp": 101,
+    "ref64": 101,
+    "ref32": 101
+   },
+   "rel": 0.0017999539143902401,
+   "abs": 0.02596485345968808,
+   "info_vs_fp32_reference_features": [
+    0.001834995116314105,
+    0.022719533971951908
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0017928302726986632,
+    0.02596485345968808
+   ],
+   "pass": true
+  },
+  {
+   "clip": "b15-N239200",
+   "kind": "boundary",
+   "encoder_length": {
+    "vdsp": 187,
+    "ref64": 187,
+    "ref32": 187
+   },
+   "rel": 0.004334515868182547,
+   "abs": 0.11253727781562377,
+   "info_vs_fp32_reference_features": [
+    0.005157578117640039,
+    0.14336150911245107
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.006819782422056317,
+    0.2559066865396376
+   ],
+   "pass": true
+  },
+  {
+   "clip": "b15-N239360",
+   "kind": "boundary",
+   "encoder_length": {
+    "vdsp": 187,
+    "ref64": 187,
+    "ref32": 187
+   },
+   "rel": 0.001896079446450012,
+   "abs": 0.025450086986876196,
+   "info_vs_fp32_reference_features": [
+    0.001805515266117627,
+    0.022267644131156897
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.002041863492853099,
+    0.039765760916994054
+   ],
+   "pass": true
+  },
+  {
+   "clip": "b15-N239520",
+   "kind": "boundary",
+   "encoder_length": {
+    "vdsp": 188,
+    "ref64": 188,
+    "ref32": 188
+   },
+   "rel": 0.0020651913272797776,
+   "abs": 0.029865638523027576,
+   "info_vs_fp32_reference_features": [
+    0.0021740143442829933,
+    0.0512005927590295
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0026961379016526184,
+    0.07509074828646933
+   ],
+   "pass": true
+  },
+  {
+   "clip": "b15-N240000",
+   "kind": "boundary",
+   "encoder_length": {
+    "vdsp": 188,
+    "ref64": 188,
+    "ref32": 188
+   },
+   "rel": 0.0019655084359746218,
+   "abs": 0.03498875246120096,
+   "info_vs_fp32_reference_features": [
+    0.0020401645459833537,
+    0.019528587765533893
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.00209881718640123,
+    0.0358024443789033
+   ],
+   "pass": true
+  },
+  {
+   "clip": "silence-3s",
+   "kind": "silence",
+   "encoder_length": {
+    "vdsp": 38,
+    "ref64": 38,
+    "ref32": 38
+   },
+   "rel": 0.0,
+   "abs": 0.0,
+   "info_vs_fp32_reference_features": [
+    0.6930791484189043,
+    6.492295205548646
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.7363347318424899,
+    6.897484161982836
+   ],
+   "pass": true
+  },
+  {
+   "clip": "impulse-3s",
+   "kind": "impulse",
+   "encoder_length": {
+    "vdsp": 38,
+    "ref64": 38,
+    "ref32": 38
+   },
+   "rel": 0.002026927655891899,
+   "abs": 0.020163276508623627,
+   "info_vs_fp32_reference_features": [
+    0.001678131197662107,
+    0.016801279043773678
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.002019879676856955,
+    0.026884368678164836
+   ],
+   "pass": true
+  }
+ ],
+ "determinism_check": {
+  "clips": [
+   "n08-6345-93306-0019",
+   "n15-1673-143396-0001",
+   "n15-174-168635-0010"
+  ],
+  "tags": [
+   "ref64",
+   "vdsp"
+  ],
+  "result": "bit-identical encoder outputs on a second run (6 of 6)"
+ },
+ "note": "The 3 failures (rel 1.2e-2..2.6e-2, abs 0.40..0.67) come from feature differences of rel <= 6e-6 that C0's FP16 encoder amplifies; it casts the mel input to FP16 before running on the ANE. On the same clips, the two reference evaluations themselves (FP32 reference.Featurizer vs FP64) give encoder outputs differing by up to rel 8.6e-2 / abs 3.0, and over all non-silence clips by up to rel 9.3e-2 / abs 3.2 vs front end A. The encoder is deterministic. Rerun with the M_P2 arms once WP3's models exist."
+}
