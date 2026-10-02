@@ -77,6 +77,10 @@ def fingerprint_positions(size: int) -> np.ndarray:
 
 
 def cmd_extract(args) -> None:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import artifacts
+
+    out = artifacts.check(args.out)  # holds weight excerpts (fingerprints): artifact area only
     from coremltools.converters.mil.mil.ops.defs.iOS16.constexpr_ops import constexpr_lut_to_dense
     from coremltools.libmilstoragepython import _BlobStorageReader
     import coremltools
@@ -133,7 +137,8 @@ def cmd_extract(args) -> None:
         "example_mil_line": next(line.strip() for line in mil.splitlines() if "constexpr_lut_to_dense" in line)[:600],
         "seconds": round(time.time() - t0, 1), "tensors": tensors,
     }
-    Path(args.out).write_text(json.dumps(result) + "\n")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(result) + "\n")
     summary = {k: v for k, v in result.items() if k != "tensors"}
     print(json.dumps(summary, indent=1))
 

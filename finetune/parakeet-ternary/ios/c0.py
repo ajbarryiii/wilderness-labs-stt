@@ -27,6 +27,7 @@ import urllib.request
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
 C0_JSON = HERE / "c0.json"
 REPO = "FluidInference/parakeet-tdt-0.6b-v2-coreml"
 REVISION = "ee09c569f73759e6d44c9bd16766f477b2b36d39"
@@ -128,7 +129,9 @@ def sha256_file(path: Path) -> str:
 
 def cmd_download(args) -> None:
     doc = json.loads(C0_JSON.read_text())
-    out = Path(args.out)
+    import artifacts
+
+    out = artifacts.check(args.out)  # model files: only under the machine's artifact area, never in Git
     t0, fetched = time.time(), 0
     for f in doc["files"]:
         dest = out / f["path"]

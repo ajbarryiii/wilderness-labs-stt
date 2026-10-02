@@ -10,6 +10,10 @@ public enum BenchError: Error, CustomStringConvertible {
     }
 }
 
+public func sha256Hex(_ data: Data) -> String {
+    SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+}
+
 /// One entry of clips.json (written by ios/clips.py).
 public struct Clip: Decodable, Sendable {
     public let id: String
@@ -30,17 +34,23 @@ public struct Clip: Decodable, Sendable {
 
 public struct ClipManifest: Decodable, Sendable {
     public let clips: [Clip]
+    /// SHA-256 of the clips.json bytes this manifest was read from (traces.json records the one it was made with).
+    public private(set) var fileSHA256 = ""
+
+    enum CodingKeys: String, CodingKey { case clips }
 
     public static func load(_ url: URL) throws -> ClipManifest {
-        try JSONDecoder().decode(ClipManifest.self, from: Data(contentsOf: url))
+        let data = try Data(contentsOf: url)
+        var manifest = try JSONDecoder().decode(ClipManifest.self, from: data)
+        manifest.fileSHA256 = sha256Hex(data)
+        return manifest
     }
 }
 
 /// 16 kHz float32 PCM of a clip (<dir>/<id>.f32, written by `clips.py materialize`), SHA-256 checked.
 public func readPCM(directory: URL, clip: Clip) throws -> [Float] {
     let data = try Data(contentsOf: directory.appendingPathComponent("\(clip.id).f32"))
-    let digest = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
-    guard digest == clip.sha256, data.count == clip.length * 4 else {
+    guard sha256Hex(data) == clip.sha256, data.count == clip.length * 4 else {
         throw BenchError.invalid("\(clip.id): PCM SHA-256 or length differs from clips.json")
     }
     return data.withUnsafeBytes { Array($0.bindMemory(to: Float.self)) }
@@ -49,6 +59,9 @@ public func readPCM(directory: URL, clip: Clip) throws -> [Float] {
 /// One clip of traces.json (ios/traces.py): the B0 FP32 reference's complete greedy TDT trace.
 public struct TraceClip: Decodable, Sendable {
     public let id: String
+    public let sha256: String
+    public let samples: Int
+    public let melFrames: Int
     public let numFrames: Int
     public let steps: Int
     public let frame: [Int]
@@ -57,21 +70,101 @@ public struct TraceClip: Decodable, Sendable {
     public let duration: [Int]
     public let emitted: [Int]
     public let predUpdated: [Int]
+    public let symbolsAtFrame: [Int]
+    public let forcedAdvance: [Int]
+    public let advance: [Int]
     public let tokens: [Int]
     public let text: String
 
     enum CodingKeys: String, CodingKey {
-        case id, steps, frame, token, duration, emitted, tokens, text
-        case numFrames = "num_frames", predInput = "pred_input", predUpdated = "pred_updated"
+        case id, sha256, samples, steps, frame, token, duration, emitted, advance, tokens, text
+        case melFrames = "mel_frames", numFrames = "num_frames", predInput = "pred_input", predUpdated = "pred_updated"
+        case symbolsAtFrame = "symbols_at_frame", forcedAdvance = "forced_advance"
     }
 }
 
+public struct TraceDecoding: Decodable, Sendable {
+    public let maxSymbols: Int
+    public let durations: [Int]
+    public let blank: Int
+    enum CodingKeys: String, CodingKey { case durations, blank; case maxSymbols = "max_symbols" }
+}
+
 public struct TraceFile: Decodable, Sendable {
+    public let clipsJSONSHA256: String
+    public let decoding: TraceDecoding
     public let clips: [TraceClip]
 
-    public static func load(_ url: URL) throws -> [String: TraceClip] {
-        let file = try JSONDecoder().decode(TraceFile.self, from: Data(contentsOf: url))
-        return Dictionary(uniqueKeysWithValues: file.clips.map { ($0.id, $0) })
+    enum CodingKeys: String, CodingKey { case decoding, clips; case clipsJSONSHA256 = "clips_json_sha256" }
+
+    public static func load(_ url: URL) throws -> TraceFile {
+        try JSONDecoder().decode(TraceFile.self, from: Data(contentsOf: url))
+    }
+
+    /// Traces of `clips`, each validated by `validate` against this manifest; throws on the first problem.
+    public func validated(for clips: [Clip], manifest: ClipManifest, blank: Int, durations: [Int],
+                          maxSymbols: Int) throws -> [String: TraceClip] {
+        guard clipsJSONSHA256 == manifest.fileSHA256 else {
+            throw BenchError.invalid("traces.json was made from clips.json \(clipsJSONSHA256), not \(manifest.fileSHA256)")
+        }
+        guard decoding.blank == blank, decoding.durations == durations, decoding.maxSymbols == maxSymbols else {
+            throw BenchError.invalid("traces.json decoding constants differ from the harness's")
+        }
+        let byID = Dictionary(uniqueKeysWithValues: self.clips.map { ($0.id, $0) })
+        var out: [String: TraceClip] = [:]
+        for clip in clips {
+            guard let trace = byID[clip.id] else { throw BenchError.invalid("no trace for \(clip.id)") }
+            try Self.validate(trace, clip: clip, blank: blank, durations: durations, maxSymbols: maxSymbols)
+            out[clip.id] = trace
+        }
+        return out
+    }
+
+    /// Provenance, lengths and every invariant of the reference's label-looping step sequence
+    /// (reference.run_steps): the trace must be exactly what that loop produces from its own decisions.
+    public static func validate(_ t: TraceClip, clip: Clip, blank: Int, durations: [Int], maxSymbols: Int) throws {
+        func fail(_ what: String) -> BenchError { BenchError.invalid("trace \(t.id): \(what)") }
+        guard t.sha256 == clip.sha256, t.samples == clip.length, t.melFrames == clip.melFrames,
+              t.numFrames == clip.encoderFrames else { throw fail("provenance/length differs from clips.json") }
+        let n = t.steps
+        for (name, a) in [("frame", t.frame), ("pred_input", t.predInput), ("token", t.token), ("duration", t.duration),
+                          ("emitted", t.emitted), ("pred_updated", t.predUpdated), ("symbols_at_frame", t.symbolsAtFrame),
+                          ("forced_advance", t.forcedAdvance), ("advance", t.advance)] where a.count != n {
+            throw fail("\(name) has \(a.count) entries, steps = \(n)")
+        }
+        let length = t.numFrames
+        guard length > 0 else { throw fail("no frames") }
+        var time = 0, lastNB = -1, lasts = 0, predInput = blank
+        var tokens: [Int] = []
+        for i in 0..<n {
+            guard time < length else { throw fail("step \(i) after the last frame") }
+            guard t.frame[i] == time else { throw fail("step \(i): frame \(t.frame[i]) != \(time)") }
+            guard t.predInput[i] == predInput else { throw fail("step \(i): pred_input") }
+            guard t.token[i] >= 0 && t.token[i] <= blank else { throw fail("step \(i): token out of range") }
+            guard durations.contains(t.duration[i]) else { throw fail("step \(i): duration \(t.duration[i])") }
+            let emitted = t.token[i] != blank
+            guard t.emitted[i] == (emitted ? 1 : 0), t.predUpdated[i] == t.emitted[i] else {
+                throw fail("step \(i): emitted/pred_updated")
+            }
+            var advance = (!emitted && t.duration[i] == 0) ? 1 : t.duration[i]
+            var forced = false
+            if emitted {
+                lasts = lastNB == time ? lasts + 1 : 1
+                lastNB = time
+                if time + advance < length && lasts >= maxSymbols && lastNB == time + advance {
+                    advance += 1
+                    forced = true
+                }
+                tokens.append(t.token[i])
+                predInput = t.token[i]
+            }
+            guard t.symbolsAtFrame[i] == lasts, t.forcedAdvance[i] == (forced ? 1 : 0), t.advance[i] == advance else {
+                throw fail("step \(i): symbols_at_frame/forced_advance/advance")
+            }
+            time += advance
+        }
+        guard time >= length else { throw fail("ends at frame \(time) before \(length)") }
+        guard tokens == t.tokens else { throw fail("tokens differ from the emitted steps") }
     }
 }
 
@@ -92,4 +185,26 @@ public func detokenize(_ tokens: [Int], vocabulary: [Int: String]) -> String {
         return piece
     }
     return pieces.joined().replacingOccurrences(of: "▁", with: " ").trimmingCharacters(in: .whitespaces)
+}
+
+/// Where the macOS CLI may write (mirrors ios/artifacts.py check()): under the Mac artifact root and
+/// outside any Git work tree. Audio, weights and weight excerpts never land in the repository.
+public enum ArtifactPath {
+    public static let macRoot = URL(fileURLWithPath: "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios")
+
+    public static func check(_ url: URL) throws -> URL {
+        let resolved = url.standardizedFileURL.resolvingSymlinksInPath()
+        let root = macRoot.standardizedFileURL.resolvingSymlinksInPath().path
+        guard resolved.path == root || resolved.path.hasPrefix(root + "/") else {
+            throw BenchError.invalid("refusing to write \(resolved.path): artifacts must live under \(root)")
+        }
+        var dir = resolved
+        while dir.path != "/" {
+            if FileManager.default.fileExists(atPath: dir.appendingPathComponent(".git").path) {
+                throw BenchError.invalid("refusing to write \(resolved.path): inside a Git work tree")
+            }
+            dir = dir.deletingLastPathComponent()
+        }
+        return resolved
+    }
 }

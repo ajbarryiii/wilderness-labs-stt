@@ -61,6 +61,7 @@ from pathlib import Path
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
 MANIFEST = HERE / "clips.json"
 SEED = 20261002
 SAMPLE_RATE = 16000
@@ -347,7 +348,9 @@ def cmd_materialize(args) -> None:
     archive = find_archive(args.archive)
     t0 = time.time()
     hashes = verify_archive(archive, manifest["archive"])
-    out = Path(args.out)
+    import artifacts
+
+    out = artifacts.check(args.out)  # PCM is audio: only under the machine's artifact area, never in Git
     out.mkdir(parents=True, exist_ok=True)
     mismatches, written = [], 0
     for c, pcm in build_pcm(manifest["clips"], archive):

@@ -50,7 +50,7 @@ macOS 27 arm64 (NumPy 2.2.6), recorded in `results/wp1_manifest_crosscheck.json`
 or NumPy versions are not covered by that check (NumPy's Generator stream is only guaranteed per
 version); re-run the comparison after changing either.
 
-## WP2: clips, replay traces, C0 baseline, harness
+## WP2: clips, replay traces, C0 pipeline, harness
 
 | File | What |
 | --- | --- |
@@ -58,10 +58,12 @@ version); re-run the comparison after changing either.
 | `traces.py` → `traces.json` | B0 (`models.b0`, the FP32 reference) decodes every clip. Records the complete greedy TDT trace: frame, prediction input, token, duration, emitted, pred_updated, symbols_at_frame, forced_advance, advance. Also the transcript and WER. 114 KB. |
 | `c0.py` → `c0.json` | C0 pin: `FluidInference/parakeet-tdt-0.6b-v2-coreml` at `ee09c56`. Only the files FluidAudio 0.7.8 loads for v2: `Preprocessor`/`Encoder`/`Decoder`/`JointDecision` `.mlmodelc`, `parakeet_vocab.json`, `config.json`. SHA-256 and I/O schema of every file. |
 | `references.md` | Pinned permalinks and verbatim quotes behind DESIGN.md "Prior evidence", plus the C0 artifact table. |
-| `bench/` | `ParakeetBench` Swift package (tools 6.0; macOS 15+ / iOS 26+), with `BenchCore` and the `parakeet-bench` CLI. C0 pipeline: Preprocessor → Encoder → per-step Decoder/JointDecision calls replicating FluidAudio 0.7.8's `TdtDecoderV3` (cited in `C0Pipeline.swift`). Also free and replay modes, the warm-up/timed protocol, `mach_absolute_time` stage times, `os_signpost` intervals, and `MLComputePlan` per-op dumps. |
-| `c0report.py` | Scores `parakeet-bench` JSON lines against `clips.json` and the B0 traces, with the parent experiment's Whisper-normalized WER. |
+| `bench/` | `ParakeetBench` Swift package (tools 6.0; macOS 15+ / iOS 26+), with `BenchCore` and the `parakeet-bench` CLI. C0 pipeline: Preprocessor → Encoder → per-step Decoder/JointDecision calls replicating FluidAudio 0.7.8's `TdtDecoderV3` (cited in `C0Pipeline.swift`). Also free and replay modes, the warm-up/timed protocol, `mach_absolute_time` stage times, `os_signpost` intervals, and `MLComputePlan` per-op dumps. Timed calls keep the same minimal bookkeeping in both modes: tokens, timestamps and call counters. `--diag-dir` adds one separate **untimed** diagnostic call per clip; see "Replay diagnostics and C0's limits" below. Replay validates every trace against `clips.json` before loading models: hashes, lengths and all of the reference loop's invariants. Unknown modes or options, and output paths outside the Mac artifact root or inside Git, are refused. |
+| `c0report.py` | Scores `parakeet-bench` JSON lines against `clips.json` and the B0 traces, with the parent experiment's Whisper-normalized WER. It enforces repetition completeness per clip and reports, per bucket and stage, typical latency (median over clips of each clip's median) and the Harrell–Davis p95 over pooled calls. A run is labelled `baseline-eligible` only with at least 10 timed calls per clip (`--min-timed`); fewer requires `--smoke` and is labelled smoke. |
 | `g0probe.py` | G0 feasibility: parses C0's `Encoder.mlmodelc` (MIL text and blob file), cross-checks with coremltools, and fingerprints the tensors against B0. |
-| `results/c0_free_natural.summary.json`, `results/g0_probe.summary.json` | WP2 results. They hold no weights or audio. |
+| `results/smoke/c0_free_natural_smoke.summary.json`, `results/g0_probe.summary.json` | WP2 results. They hold no weights or audio. The C0 run is a **smoke** measurement: 1 timed call per clip. |
+
+Every artifact writer refuses paths outside the machine's artifact area or inside the repository: `artifacts.check()` in `clips.py materialize`, `c0.py download`, `g0probe.py extract`, and `traces.py`/`c0report.py` when `--out` is not their committed text output; `ArtifactPath.check` in the Swift CLI. Raw `*.f32` files are git-ignored.
 
 Commands (`A` is the machine's artifact directory, `R` the repository root):
 
@@ -79,13 +81,16 @@ ios/macguard --rss-cap 1G --timeout 600 -- ios/pyenv/.venv/bin/python ios/clips.
 (cd ios/bench && ../macguard --rss-cap 4G --timeout 900 -- swift build -c release)
 B=ios/bench/.build/release/parakeet-bench
 ios/macguard --rss-cap 4G --timeout 1800 -- $B run --mode free --models $A/c0 --clips ios/clips.json --pcm $A/clips \
-    --kinds natural --warmups 3 --timed 1 --out $A/results/c0-free-natural.jsonl   # --mode replay --traces ios/traces.json
+    --kinds natural --warmups 3 --timed 1 --out $A/results/c0-free-natural.jsonl   # smoke; the protocol default is --timed 10
+ios/macguard --rss-cap 4G --timeout 900 -- $B run --mode replay --traces ios/traces.json --models $A/c0 \
+    --clips ios/clips.json --pcm $A/clips --ids ID1,ID2 --warmups 1 --timed 1 \
+    --out $A/results/c0-replay-diag-smoke.jsonl --diag-dir $A/results/diag   # untimed diagnostic pass per clip
 ios/macguard --rss-cap 4G --timeout 900 -- $B plan --models $A/c0 --out $A/results/computeplan-c0
 ios/macguard --rss-cap 4G --timeout 900 -- ios/pyenv/.venv/bin/python ios/g0probe.py extract \
     --model $A/c0/Encoder.mlmodelc --out $A/results/g0probe.json
 # NixOS, on copies of the Mac outputs
-CUDA_VISIBLE_DEVICES= ./python ios/c0report.py c0-free-natural.jsonl --plan summary.cpuAndNeuralEngine.json \
-    --out ios/results/c0_free_natural.summary.json
+CUDA_VISIBLE_DEVICES= ./python ios/c0report.py c0-free-natural.jsonl --smoke --plan summary.cpuAndNeuralEngine.json \
+    --out ios/results/smoke/c0_free_natural_smoke.summary.json
 ./heavy ios-wp2-g0 --mem-max 8G --runtime 10min --wait -- env CUDA_VISIBLE_DEVICES= \
     $R/finetune/parakeet-ternary/python $R/finetune/parakeet-ternary/ios/g0probe.py compare --probe g0probe.json
 ```
@@ -94,24 +99,40 @@ Results (2026-10-02; Mac = M1 Pro, macOS 27.0, Swift 6.3.1; Mac timings are info
 
 - **Clips.** The PCM of all 82 clips is bit-identical on NixOS and the Mac. Both machines report `all_sha256_match`, and the Mac's own OpenSLR download has the same MD5.
 - **B0 traces.** 3,025 steps and 2,624 tokens. The max-symbols rule fires once (`b04-N32001`, a crop that ends mid-word and loops). Replaying the trace on the same model reproduces every decision. Whisper-normalized WER on the 64 natural clips is **1.77%** (17 errors / 959 words).
-- **C0 free decoding**, 64 natural clips, `cpuAndNeuralEngine` (preprocessor `cpuOnly`):
+- **C0 free decoding: smoke run**, 64 natural clips, 3 warm-up and **1 timed call per clip**, `cpuAndNeuralEngine` (preprocessor `cpuOnly`). This is a functional check, not the comparison baseline. The baseline (10 timed calls per clip, typical and Harrell–Davis p95 latency) runs in S1, alongside every arm.
   - WER **1.67%** vs LibriSpeech (16 / 959) and **0.21%** vs B0's transcripts. 53 of 64 token sequences equal B0's.
-  - Median total latency per bucket, 2/4/8/15 s: 62.1 / 67.6 / 80.1 / 99.4 ms.
+  - Typical total latency per bucket, 2/4/8/15 s: 62.1 / 67.6 / 80.1 / 99.4 ms. These come from one timed call per clip; Harrell–Davis p95 over 16 calls per bucket is in the summary.
   - Encoder 41.3-42.7 ms in every bucket (fixed 15 s window).
   - Preprocessor 13.8-16.5 ms.
   - Decoder 0.51-0.54 ms per call, joint 0.136 ms per call.
   - Physical calls: 1 preprocessor + 1 encoder per utterance. Decoder 1,951 calls and joint 2,147 calls, against B0's 1,955 prediction-net runs and 2,159 logical steps.
-- **Load.** The first Encoder load took 29.4 s (device compilation); cached, it takes 109 ms. `phys_footprint` stays at 28-62 MB, because the model memory is not attributed to the process. The macguard group RSS peak was 0.5 GB.
+- **Load.** The first Encoder load took 29.4 s and later loads 109 ms. This is only `MLModel(contentsOf:)` wall time. It is consistent with device compilation followed by cache hits, but is **not established**: that needs the Instruments Core ML trace's "prepare and cache" vs "cached" events (DESIGN.md "Load"), which S1 records. `phys_footprint` stays at 28-62 MB, because the model memory is not attributed to the process. The macguard group RSS peak was 0.5 GB.
 - **Compute plan** (`cpuAndNeuralEngine`):
   - Encoder: 1,379 of 1,385 placed ops prefer the ANE (99.95% of estimated cost). The 6 CPU ops are 4 `cast`, 1 `expand_dims` and 1 `less`, i.e. input and length handling.
   - Decoder (24 ops) and JointDecision (21 ops) prefer the CPU entirely, as does the preprocessor.
   - The plan is not proof of placement (DESIGN.md gate 6).
-- **Replay** works. On a 3-clip smoke test, C0's own argmax matched the trace on 98/99 token and 90/99 duration decisions of a natural 15 s clip.
+- **Replay.** An early 3-clip replay smoke run was not retained as raw evidence, so it is not reported. It is superseded by the diagnostic replay smoke below.
 
 C0 deviates from NeMo/B0 in three places. These are properties of the published pipeline, reproduced here, not harness bugs:
 1. **One extra valid mel frame.** C0's preprocessor reports `mel_length = N // 160 + 1`, where NeMo has `N // 160`. With FluidAudio's `ceil(N / 1280)`, 5 of the 64 natural clips decode one more encoder frame than B0.
 2. **Final token dropped at the end.** FluidAudio emits a token only if `t + duration` is still inside the utterance. This drops a final token whose duration reaches the end: 2 of 3 clips lose final punctuation this way, and the third is a decision difference.
 3. **Different joint model.** JointDecision is FP16 with an in-model argmax and per-step encoder projection, so durations differ more often than tokens.
+
+### Replay diagnostics and C0's limits
+
+DESIGN.md's replay returns logits and LSTM states. For C0 (the product baseline, not a gated arm), **raw logits cannot be obtained from the published models**. FluidAudio 0.7.8 uses `JointDecision.mlmodelc`, which computes the 1,030 logits internally and outputs only three values (see its `model.mil`):
+- `token_id`: argmax over the 1,025 token and blank logits;
+- `token_prob`: softmax probability of that token over the same 1,025;
+- `duration`: argmax bin of the 5 duration logits.
+
+So C0 cannot go through gate 4's logit and margin checks. The untimed diagnostic pass (`--diag-dir`) exposes what is obtainable:
+- per joint step: frame, token id, token probability, duration bin, and which decoder call fed it;
+- per decoder call: input token, the `decoder` output (640), and copies of `h_out`/`c_out` [2, 1, 640] taken right after the call;
+- the encoder output [encoder_length, 1024].
+
+Arrays go to `<clip>.<mode>.diag.f32`, whose layout and SHA-256 are in the `diagnostic` JSON record. Replay diagnostics also record C0's argmax agreement with the trace's decisions.
+
+Allowed frame difference: C0's effective frames, `min(encoder_length, ceil(N / 1280))`, may exceed the trace's `num_frames` by 0 or 1 (deviation 1 below). Replay follows the trace's frames; any other difference is an error.
 
 G0 feasibility: **practical.**
 - `model.mil` holds 294 `constexpr_lut_to_dense` ops. Each has `indices` = packed 6-bit uint8 blob and `lut` = fp16[64], one LUT per tensor, plus 320 dense fp16 consts. That accounts for all 908 blobs in `weight.bin`.

@@ -148,6 +148,8 @@ public enum DecodeMode: Sendable {
     case free
     case replay(TraceClip)
 
+    public static let names = ["free", "replay"]
+
     public var name: String {
         switch self {
         case .free: return "free"
@@ -156,7 +158,9 @@ public enum DecodeMode: Sendable {
     }
 }
 
-/// One end-to-end call: PCM in memory -> token IDs.
+/// One end-to-end call: PCM in memory -> token IDs. Timed calls carry only this minimal bookkeeping, identical in
+/// both modes (token and timestamp per emission, call counters); everything else is in `Diagnostics`, which only
+/// the untimed diagnostic pass collects.
 public struct CallResult: Encodable, Sendable {
     public var tokens: [Int] = []
     public var timestamps: [Int] = []
@@ -169,15 +173,77 @@ public struct CallResult: Encodable, Sendable {
     public var preprocessorCalls = 0
     public var encoderCalls = 0
     public var timesMs: [String: Double] = [:]
-    /// free mode: every joint evaluation (frame, token, duration value) in FluidAudio's order.
-    public var stepFrames: [Int] = []
-    public var stepTokens: [Int] = []
-    public var stepDurations: [Int] = []
-    /// replay mode: agreement of C0's own argmax decisions with the trace's.
-    public var replaySteps = 0
-    public var replayTokenAgree = 0
-    public var replayDurationAgree = 0
-    public var replayFirstDisagreements: [[Int]] = []  // [step, frame, trace token, C0 token, trace duration, C0 duration]
+}
+
+/// Untimed diagnostic outputs of one call (DESIGN.md "Replay trace": replay returns logits and LSTM states).
+///
+/// Limitation of C0 (the product baseline, not a gated arm): the published JointDecision.mlmodelc computes the
+/// 1,030 joint logits internally and outputs only token_id (argmax over the 1,025 token+blank logits), token_prob
+/// (softmax probability of that token over the same 1,025) and duration (argmax bin of the 5 duration logits);
+/// see its model.mil. Raw token and duration logits are therefore not obtainable from the four models FluidAudio
+/// 0.7.8 uses, and C0 cannot be put through the logit/margin parts of gate 4. What is exposed per joint step:
+/// frame, token id, token probability, duration bin, and the index of the decoder call whose output fed it; per
+/// decoder call: input token, the `decoder` output (prediction-net output, 640) and copies of h_out and c_out
+/// [2, 1, 640] taken right after the call (the state that produced that output, as reference.StepOutputs); and
+/// the encoder output's frames [encoderLength, 1024].
+public final class Diagnostics {
+    public var frames: [Int] = []
+    public var tokenIds: [Int] = []
+    public var tokenProbs: [Float] = []
+    public var durationBins: [Int] = []
+    public var stepDecoderCall: [Int] = []
+    public var decoderTokens: [Int] = []
+    public var decoderOut: [Float] = []   // [calls, 640]
+    public var h: [Float] = []            // [calls, 2, 640]
+    public var c: [Float] = []            // [calls, 2, 640]
+    public var encoder: [Float] = []      // [encoderFrames, 1024]
+    public var encoderFrames = 0
+    public init() {}
+
+    func step(_ t: Int, _ d: C0Pipeline.Decision, decoderCall: Int) {
+        frames.append(t); tokenIds.append(d.token); tokenProbs.append(d.probability); durationBins.append(d.durationBin)
+        stepDecoderCall.append(decoderCall)
+    }
+
+    func decoderCall(token: Int, output: MLMultiArray, state: DecoderState) {
+        decoderTokens.append(token)
+        decoderOut += copyFloats(output)
+        h += copyFloats(state.hidden)
+        c += copyFloats(state.cell)
+    }
+
+    /// Little-endian float32: encoder [encoderFrames, 1024], then per decoder call decoder[640], h[1280], c[1280].
+    public func binary() -> Data {
+        var data = Data()
+        encoder.withUnsafeBufferPointer { data.append(Data(buffer: $0)) }
+        for k in 0..<decoderTokens.count {
+            decoderOut[(k * 640)..<((k + 1) * 640)].withUnsafeBufferPointer { data.append(Data(buffer: $0)) }
+            h[(k * 1280)..<((k + 1) * 1280)].withUnsafeBufferPointer { data.append(Data(buffer: $0)) }
+            c[(k * 1280)..<((k + 1) * 1280)].withUnsafeBufferPointer { data.append(Data(buffer: $0)) }
+        }
+        return data
+    }
+}
+
+/// Logical-order float copy of any float32 MLMultiArray (honours strides).
+func copyFloats(_ a: MLMultiArray) -> [Float] {
+    let shape = a.intShape, strides = a.intStrides
+    let base = a.dataPointer.bindMemory(to: Float.self, capacity: 1)
+    var out = [Float](repeating: 0, count: shape.reduce(1, *))
+    var index = [Int](repeating: 0, count: shape.count)
+    for i in 0..<out.count {
+        var offset = 0
+        for d in 0..<shape.count { offset += index[d] * strides[d] }
+        out[i] = base[offset]
+        var d = shape.count - 1
+        while d >= 0 {
+            index[d] += 1
+            if index[d] < shape[d] { break }
+            index[d] = 0
+            d -= 1
+        }
+    }
+    return out
 }
 
 public final class C0Pipeline {
@@ -188,7 +254,9 @@ public final class C0Pipeline {
         let o = MLPredictionOptions(); o.outputBackings = [:]; return o
     }()
     public static let windowSamples = 240_000
-    public var recordSteps = true
+    public var blank: Int { tdt.blankId }
+    public var durations: [Int] { tdt.durationBins }
+    public var maxSymbols: Int { tdt.maxSymbolsPerStep }
 
     public init(models: C0Models) { self.models = models }
 
@@ -207,7 +275,8 @@ public final class C0Pipeline {
         ])
     }
 
-    public func run(_ pcm: [Float], mode: DecodeMode) async throws -> CallResult {
+    /// One call. `diagnostics` nil = the timed path; non-nil only in the untimed diagnostic pass.
+    public func run(_ pcm: [Float], mode: DecodeMode, diagnostics: Diagnostics? = nil) async throws -> CallResult {
         var r = CallResult()
         let callID = Signposts.poi.makeSignpostID()
         let callState = Signposts.poi.beginInterval("call", id: callID, "\(mode.name)")
@@ -236,6 +305,7 @@ public final class C0Pipeline {
         }
         r.encoderLength = encoderLength[0].intValue
         r.actualAudioFrames = (pcm.count + 1279) / 1280  // ASRConstants.calculateEncoderFrames
+        r.effectiveFrames = min(r.encoderLength, r.actualAudioFrames)
         let frames = try EncoderFrames(encoder, validLength: r.encoderLength)
         var touch: Float = 0
         vDSP_sve(frames.base, 1, &touch, vDSP_Length(min(encoder.count, 1024)))
@@ -247,9 +317,10 @@ public final class C0Pipeline {
         var decoderAcc = Accumulator(), jointAcc = Accumulator()
         switch mode {
         case .free:
-            try decodeFree(frames: frames, result: &r, decoderAcc: &decoderAcc, jointAcc: &jointAcc)
+            try decodeFree(frames: frames, result: &r, decoderAcc: &decoderAcc, jointAcc: &jointAcc, diag: diagnostics)
         case .replay(let trace):
-            try decodeReplay(frames: frames, trace: trace, result: &r, decoderAcc: &decoderAcc, jointAcc: &jointAcc)
+            try decodeReplay(frames: frames, trace: trace, result: &r, decoderAcc: &decoderAcc, jointAcc: &jointAcc,
+                             diag: diagnostics)
         }
         let t3 = Clock.now()
         Signposts.stages.endInterval("decode", sDec)
@@ -260,6 +331,15 @@ public final class C0Pipeline {
         r.timesMs = ["preprocess": Clock.ms(t0, t1), "encoder": Clock.ms(t1, t2), "decode": Clock.ms(t2, t3),
                      "decoder_model": decoderAcc.totalMs, "joint_model": jointAcc.totalMs, "total": Clock.ms(t0, t3)]
         _ = touch
+        if let diagnostics {  // after the clock stopped
+            diagnostics.encoderFrames = frames.count
+            diagnostics.encoder.reserveCapacity(frames.count * 1024)
+            var row = [Float](repeating: 0, count: 1024)
+            for t in 0..<frames.count {
+                try row.withUnsafeMutableBufferPointer { try frames.copyFrame(t, into: $0.baseAddress!, destStride: 1) }
+                diagnostics.encoder += row
+            }
+        }
         return r
     }
 
@@ -327,8 +407,8 @@ public final class C0Pipeline {
 
     struct Decision { let token: Int; let probability: Float; let durationBin: Int }
 
-    func runDecoder(token: Int, state: DecoderState, buffers b: StepBuffers,
-                    acc: inout Accumulator) throws -> (output: MLFeatureProvider, newState: DecoderState) {
+    func runDecoder(token: Int, state: DecoderState, buffers b: StepBuffers, acc: inout Accumulator,
+                    diag: Diagnostics?) throws -> (output: MLFeatureProvider, newState: DecoderState) {
         b.target[0] = NSNumber(value: token)
         let input = try MLDictionaryFeatureProvider(dictionary: [
             "targets": MLFeatureValue(multiArray: b.target), "target_length": MLFeatureValue(multiArray: b.targetLength),
@@ -338,6 +418,9 @@ public final class C0Pipeline {
         let output = try acc.measure { try models.decoder.prediction(from: input, options: b.options) }
         var newState = state
         newState.update(from: output)
+        if let diag, let out = output.featureValue(for: "decoder")?.multiArrayValue {
+            diag.decoderCall(token: token, output: out, state: newState)  // copies: h/c are overwritten in place later
+        }
         return (output, newState)
     }
 
@@ -385,7 +468,7 @@ public final class C0Pipeline {
     // MARK: - free decoding: TdtDecoderV3.decodeWithTimings for one fresh utterance (first and only chunk)
 
     func decodeFree(frames: EncoderFrames, result r: inout CallResult, decoderAcc: inout Accumulator,
-                    jointAcc: inout Accumulator) throws {
+                    jointAcc: inout Accumulator, diag: Diagnostics?) throws {
         let encoderSequenceLength = r.encoderLength
         guard encoderSequenceLength > 1 else { return }  // "Early exit for very short audio"
         let blank = tdt.blankId
@@ -394,8 +477,7 @@ public final class C0Pipeline {
         var hypLastToken: Int? = decoderState.lastToken
 
         var timeIndices = 0                                // first chunk, contextFrameAdjustment 0
-        let effective = min(encoderSequenceLength, r.actualAudioFrames)
-        r.effectiveFrames = effective
+        let effective = r.effectiveFrames                  // min(encoderSequenceLength, actualAudioFrames)
         var safeTimeIndices = min(timeIndices, effective - 1)
         var timeIndicesCurrentLabels = timeIndices
         var activeMask = timeIndices < effective
@@ -405,7 +487,7 @@ public final class C0Pipeline {
         let b = try StepBuffers()
         // decoderState.lastToken == nil && predictorOutput == nil: zero the state (already zero).
         // Prime with SOS = blank.
-        let primed = try runDecoder(token: blank, state: decoderState, buffers: b, acc: &decoderAcc)
+        let primed = try runDecoder(token: blank, state: decoderState, buffers: b, acc: &decoderAcc, diag: diag)
         guard let primedProj = primed.output.featureValue(for: "decoder")?.multiArrayValue else {
             throw BenchError.invalid("decoder output missing")
         }
@@ -416,10 +498,6 @@ public final class C0Pipeline {
         var emissionsAtThisTimestamp = 0
         var tokensProcessedThisChunk = 0
 
-        func record(_ t: Int, _ token: Int, _ duration: Int) {
-            if recordSteps { r.stepFrames.append(t); r.stepTokens.append(token); r.stepDurations.append(duration) }
-        }
-
         while activeMask {
             var label = hypLastToken ?? blank
             let stateToUse = hypDecState ?? decoderState
@@ -428,7 +506,7 @@ public final class C0Pipeline {
                 decoderResult = (try MLDictionaryFeatureProvider(dictionary: ["decoder": MLFeatureValue(multiArray: cached)]),
                                  stateToUse)
             } else {
-                decoderResult = try runDecoder(token: label, state: stateToUse, buffers: b, acc: &decoderAcc)
+                decoderResult = try runDecoder(token: label, state: stateToUse, buffers: b, acc: &decoderAcc, diag: diag)
             }
             guard let projection = decoderResult.output.featureValue(for: "decoder")?.multiArrayValue else {
                 throw BenchError.invalid("decoder output missing")
@@ -436,9 +514,9 @@ public final class C0Pipeline {
             try populateDecoderStep(projection, into: b.decoderStep)
 
             let decision = try runJoint(frames: frames, t: safeTimeIndices, buffers: b, acc: &jointAcc)
+            diag?.step(safeTimeIndices, decision, decoderCall: decoderAcc.count - 1)
             label = decision.token
             var duration = try durationValue(decision.durationBin)
-            record(safeTimeIndices, label, duration)
             var blankMask = label == blank
             if blankMask && duration == 0 { duration = 1 }
 
@@ -451,9 +529,9 @@ public final class C0Pipeline {
             while advanceMask {  // inner blank loop: decoder output reused
                 timeIndicesCurrentLabels = timeIndices
                 let inner = try runJoint(frames: frames, t: safeTimeIndices, buffers: b, acc: &jointAcc)
+                diag?.step(safeTimeIndices, inner, decoderCall: decoderAcc.count - 1)
                 label = inner.token
                 duration = try durationValue(inner.durationBin)
-                record(safeTimeIndices, label, duration)
                 blankMask = label == blank
                 if blankMask && duration == 0 { duration = 1 }
                 timeIndices += duration
@@ -468,7 +546,8 @@ public final class C0Pipeline {
                 r.tokens.append(label)
                 r.timestamps.append(timeIndicesCurrentLabels)
                 hypLastToken = label
-                let step = try runDecoder(token: label, state: decoderResult.newState, buffers: b, acc: &decoderAcc)
+                let step = try runDecoder(token: label, state: decoderResult.newState, buffers: b, acc: &decoderAcc,
+                                          diag: diag)
                 hypDecState = step.newState
                 decoderState.predictorOutput = step.output.featureValue(for: "decoder")?.multiArrayValue
                 if timeIndicesCurrentLabels == lastEmissionTimestamp {
@@ -490,37 +569,37 @@ public final class C0Pipeline {
 
     // MARK: - replay: the trace's decisions drive the same per-step decoder and joint calls
 
+    /// The trace (validated by TraceFile.validated before any call) is B0's: num_frames = ceil((N // 160) / 8).
+    /// C0's documented frame-count difference is allowed explicitly: its effective frames
+    /// min(encoder_length, ceil(N / 1280)) may exceed num_frames by exactly 0 or 1 (its preprocessor reports
+    /// mel_length = N // 160 + 1, and FluidAudio's ceil(N / 1280)); replay follows the trace's frames, so the
+    /// logical work is the trace's. Anything else is an error.
     func decodeReplay(frames: EncoderFrames, trace: TraceClip, result r: inout CallResult,
-                      decoderAcc: inout Accumulator, jointAcc: inout Accumulator) throws {
-        let blank = tdt.blankId
-        r.effectiveFrames = min(r.encoderLength, r.actualAudioFrames)
+                      decoderAcc: inout Accumulator, jointAcc: inout Accumulator, diag: Diagnostics?) throws {
+        let extra = r.effectiveFrames - trace.numFrames
+        guard extra == 0 || extra == 1 else {
+            throw BenchError.invalid("\(trace.id): C0 effective frames \(r.effectiveFrames) vs trace \(trace.numFrames)")
+        }
         let b = try StepBuffers()
-        let state = try DecoderState.make()
-        var current = try runDecoder(token: blank, state: state, buffers: b, acc: &decoderAcc)
+        var current = try runDecoder(token: tdt.blankId, state: try DecoderState.make(), buffers: b, acc: &decoderAcc,
+                                     diag: diag)
         guard let primedProj = current.output.featureValue(for: "decoder")?.multiArrayValue else {
             throw BenchError.invalid("decoder output missing")
         }
         try populateDecoderStep(primedProj, into: b.decoderStep)
         for i in 0..<trace.steps {
             let d = try runJoint(frames: frames, t: trace.frame[i], buffers: b, acc: &jointAcc)
-            let dur = try durationValue(d.durationBin)
-            r.replaySteps += 1
-            let tokenOK = d.token == trace.token[i], durOK = dur == trace.duration[i]
-            if tokenOK { r.replayTokenAgree += 1 }
-            if durOK { r.replayDurationAgree += 1 }
-            if (!tokenOK || !durOK) && r.replayFirstDisagreements.count < 20 {
-                r.replayFirstDisagreements.append([i, trace.frame[i], trace.token[i], d.token, trace.duration[i], dur])
-            }
+            diag?.step(trace.frame[i], d, decoderCall: decoderAcc.count - 1)
             if trace.predUpdated[i] != 0 {
-                current = try runDecoder(token: trace.token[i], state: current.newState, buffers: b, acc: &decoderAcc)
+                r.tokens.append(trace.token[i])
+                r.timestamps.append(trace.frame[i])
+                current = try runDecoder(token: trace.token[i], state: current.newState, buffers: b, acc: &decoderAcc,
+                                         diag: diag)
                 guard let proj = current.output.featureValue(for: "decoder")?.multiArrayValue else {
                     throw BenchError.invalid("decoder output missing")
                 }
                 try populateDecoderStep(proj, into: b.decoderStep)
-                r.tokens.append(trace.token[i])
-                r.timestamps.append(trace.frame[i])
             }
         }
-        _ = blank
     }
 }

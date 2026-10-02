@@ -172,7 +172,11 @@ def main() -> None:
                         "python": platform.python_version()},
         "clips": records,
     }
-    size = write_traces(doc, Path(args.out))
+    out = Path(args.out).resolve()
+    if out != TRACES.resolve():  # the committed trace file (text, no audio or weights) or the artifact area
+        import artifacts
+        out = artifacts.check(out)
+    size = write_traces(doc, out)
     peak_mb = __import__("resource").getrusage(__import__("resource").RUSAGE_SELF).ru_maxrss / 1024
     print(json.dumps({"traces_bytes": size, "wer": wer["natural"], "replay_ok": replay_ok, "totals": doc["totals"],
                       "peak_rss_mb": round(peak_mb), "seconds": round(time.time() - t0, 1)}), flush=True)

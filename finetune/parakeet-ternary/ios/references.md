@@ -200,8 +200,11 @@ DESIGN.md: "W8A8 uses faster int8 compute on A17 Pro and M4."
   recommendations".
 - Source 14: "in iOS 17, 8-bit activation quantized models can also be executed."
 
-Verdict: **confirmed** (Neural Engine, as of iOS18/macOS15). The sources do not cover the M1 Pro remark in DESIGN.md
-("Our M1 Pro has neither"). It follows only because the M1 Pro is not on Apple's list.
+Verdict: **confirmed** for the positive examples (Neural Engine, A17 Pro and M4, as of iOS18/macOS15). The M1 Pro
+remark in DESIGN.md ("Our M1 Pro has neither") is **unverified**. No listed source states that the M1 Pro lacks the
+faster int8-int8 path or just-in-time decompression; the M1 Pro is merely absent from Apple's examples, and absence
+from a list of examples is not evidence of absence. Treat it as an open assumption until measured, e.g. a W8A8 vs
+FP16 probe on the Mac.
 
 ### 9. Shapes: per-shape compilation; flexible shapes on the ANE from iOS 17.4 with `reshapeFrequency = .infrequent`
 
