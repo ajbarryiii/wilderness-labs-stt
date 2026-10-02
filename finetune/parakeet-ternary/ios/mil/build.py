@@ -198,6 +198,12 @@ def compute_plan(path: Path, units: str = "cpuAndNeuralEngine", functions: list[
             continue
         res = json.loads(proc.stdout)
         out["functions"][res.pop("function")] = res
+        # Core ML caches a device-specialized copy per load under the tool's name (GBs per model); only this
+        # tool writes there, so the cache is emptied after every plan (keeps the shared Mac's disk > 60 GB)
+        cache = Path.home() / "Library" / "Caches" / "computeplan" / "com.apple.e5rt.e5bundlecache"
+        if cache.is_dir():
+            for entry in cache.glob("*/*"):
+                shutil.rmtree(entry, ignore_errors=True)
     return out
 
 
