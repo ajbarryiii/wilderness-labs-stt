@@ -14,8 +14,11 @@ weight_stats.json (no raw weights):
   quantiles, all-zero rows (2-D tensors), whether every value is positive and the count of exact
   zeros (the P2 export has one BatchNorm running_var entry stored as 0: a tiny positive variance
   underflowed in FP16; the generator draws strictly positive variances regardless);
-- constants: window and filterbank shape, SHA-256 of reference.py's computed values (what the
-  generator writes) and of the export's stored values, with their max difference;
+- constants: the window and filterbank exactly as the export (NVIDIA's checkpoint) stores them
+  (base64 float32; the filterbank as nonzero indices + values), their SHA-256, and for information
+  the SHA-256 of reference.py's numpy computation and its difference from the stored values
+  (at most one float32 ulp in a few entries; a portable numpy computation is not bit-identical
+  across x86-64 and arm64, so the generator writes the stored values, not computed ones);
 - integer: integer buffers and their (single) value.
 Quantiles are base64 little-endian float32 (randomweights.encode_f32).
 
@@ -126,11 +129,17 @@ def collect(export_dir: Path) -> dict:
                             else reference.mel_filterbank(cfg.sample_rate, cfg.n_fft, cfg.features)[None])
                 if computed.shape != stored.shape:
                     raise ValueError(f"{name}: computed shape {computed.shape} != stored {stored.shape}")
-                stats["constants"][name] = {
-                    "shape": list(stored.shape), "computed_sha256": rw.sha256_bytes(computed.astype("<f4").tobytes()),
-                    "export_sha256": rw.sha256_bytes(stored.astype("<f4").tobytes()),
-                    "max_abs_diff": float(np.abs(computed - stored).max()),
-                    "entries_differing": int((computed != stored).sum())}
+                flat = stored.ravel()
+                nonzero = np.flatnonzero(flat.view(np.uint32))  # by bit pattern: keeps any -0.0
+                entry = {"shape": list(stored.shape), "sha256": rw.sha256_bytes(stored.astype("<f4").tobytes()),
+                         "computed_sha256": rw.sha256_bytes(computed.astype("<f4").tobytes()),
+                         "max_abs_diff_vs_computed": float(np.abs(computed - stored).max()),
+                         "entries_differing_from_computed": int((computed != stored).sum())}
+                if len(nonzero) < flat.size // 4:  # the filterbank is sparse
+                    entry.update(nonzero_index=nonzero.tolist(), values=rw.encode_f32(flat[nonzero]))
+                else:
+                    entry["values"] = rw.encode_f32(flat)
+                stats["constants"][name] = entry
             else:
                 array = value.float().numpy()
                 entry = {"shape": list(value.shape), "export_dtype": str(value.dtype).removeprefix("torch."),

@@ -14,14 +14,15 @@ Each tensor is generated on its own, independent of every other tensor and of --
   for codes and values, 1 for scales. Only Generator.random() doubles are drawn, and they are
   mapped with comparisons and single exactly-rounded IEEE operations (one numpy ufunc each: no
   FMA contraction, no transcendental functions), so Linux x86-64 and macOS arm64 produce identical
-  bits; reference.hann_window / mel_filterbank are checked against SHA-256s in the stats file.
+  bits; the stored constants are checked against their SHA-256.
 - Ternary codes i.i.d. from the module's code histogram: u < P(-1) -> -1, u < P(-1) + P(0) -> 0,
   else +1. Per-row scales i.i.d. by inverse-CDF interpolation of the module's 257 scale quantiles.
 - Other floating tensors i.i.d. from their 129 value quantiles; rows that are exactly zero in the
   export stay zero (the blank embedding row, NeMo's padding_idx); BatchNorm running_var is
   checked to be strictly positive (its quantiles are >= 0 and a draw lands exactly on 0 only for
-  u == 0). The window and mel filterbank are computed, not drawn;
-  integer buffers (BatchNorm num_batches_tracked) are copied.
+  u == 0). The window and mel filterbank are not drawn: they are the export's stored values
+  (weight_stats.json; reference.py's numpy computation agrees to one float32 ulp but is not
+  bit-identical across x86-64 and arm64); integer buffers (num_batches_tracked) are copied.
 Memory: one tensor at a time (largest 4096 x 1024: 32 MB of doubles), written as it is generated.
 
 CLI: python randomweights.py --stats weight_stats.json --seed 0 --out DIR [--layers N] [--manifest-only]
@@ -131,18 +132,16 @@ def ternary_codes(rng: np.random.Generator, shape: tuple[int, int], counts: dict
 
 
 def _constant(name: str, stats: dict) -> np.ndarray:
-    import reference
-
-    cfg = reference.Config.from_model_config(stats["model_config"])
-    if name.endswith(".window"):
-        value = reference.hann_window(cfg.win_length)
-    elif name.endswith(".fb"):
-        value = reference.mel_filterbank(cfg.sample_rate, cfg.n_fft, cfg.features)[None]
-    else:
-        raise KeyError(name)
+    """The window or filterbank as weight_stats.json stores it (NVIDIA's buffer), checked by SHA-256."""
     entry = stats["constants"][name]
-    if list(value.shape) != entry["shape"] or sha256_bytes(value.astype("<f4").tobytes()) != entry["computed_sha256"]:
-        raise RuntimeError(f"{name}: this platform computes a different constant than weight_stats.json records")
+    values = decode_f32(entry["values"])
+    if "nonzero_index" in entry:
+        flat = np.zeros(int(np.prod(entry["shape"])), dtype=np.float32)
+        flat[np.asarray(entry["nonzero_index"], dtype=np.int64)] = values
+        values = flat
+    value = values.reshape(entry["shape"])
+    if sha256_bytes(value.astype("<f4").tobytes()) != entry["sha256"]:
+        raise RuntimeError(f"{name}: decoded constant does not match its SHA-256")
     return value
 
 
