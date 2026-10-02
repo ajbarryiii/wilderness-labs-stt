@@ -6,11 +6,12 @@ filled from a randomweights tensor stream by reference.load_weights (ternary mod
 in place, one dense FP32 copy). --model mp2: M_P2, the pilot P2 export rebuilt by NeMo through
 ../export.py's load_export. Decoding is NeMo's own GreedyBatchedTDTInfer (the class the
 config's strategy greedy_batch selects) with preserve_alignments and include_duration, so every
-joint evaluation (blank steps included) and its log-probabilities are recorded by NeMo itself.
-The per-step prediction-net input, LSTM state and raw joint logits are then recomputed by
-driving NeMo's own decoder.predict / joint.project_* / joint.joint_net through reference.run_steps
-with NeMo's decisions; the result must reproduce NeMo's labels, durations, token timestamps and
-log-probabilities, else generation fails.
+joint evaluation (blank steps included) and its log-probabilities are recorded by NeMo itself;
+instrumented_decode additionally captures, during that same NeMo run, every prediction-net call
+(input token, h, c) and every joint evaluation (projected encoder row, prediction input, raw
+logits), and observed_steps turns them into the per-step golden record without using
+reference.py's decoding code. Generation fails unless the capture reproduces NeMo's labels,
+log-probabilities, tokens, timestamps and durations.
 
 Output (default /mnt/hd/wilderness-labs-stt/parakeet-ios/golden/<model>/): one <clip>.npz per
 development clip with audio, features + length, subsampling output + length, every layer's
@@ -30,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 import time
 from pathlib import Path
@@ -117,50 +119,136 @@ def as_list(x) -> list[int]:
 
 
 @torch.no_grad()
-def nemo_driven(nemo: NemoModules, encoder_output: torch.Tensor, length: int, hyp
-                ) -> tuple[reference.Trace, reference.StepOutputs, torch.Tensor]:
-    """NeMo's decisions replayed through NeMo's own prediction and joint networks via reference.run_steps.
+def instrumented_decode(nemo: NemoModules, encoder_output: torch.Tensor, lengths: torch.Tensor) -> tuple[list, dict]:
+    """Run NeMo's GreedyBatchedTDTInfer and record what its label-looping loop actually executes.
 
-    Returns the trace, the per-step outputs (raw logits, LSTM state, argmax) and NeMo's recorded
-    log-probabilities; RuntimeError unless the replay reproduces NeMo's hypothesis exactly."""
-    cfg, decoder, joint = nemo.cfg, nemo.decoder, nemo.joint
+    The decoder's predict and the joint's project_encoder / project_prednet / joint_after_projection
+    are wrapped on the instances for the duration of the call (and the raw joint_net output hooked),
+    so every prediction-net call (input labels, output h and c, projected output) and every joint
+    evaluation (its projected encoder row, prediction input and raw logits) is captured in call
+    order. Returns (hypotheses, {"encoder_projected", "events"})."""
+    decoder, joint = nemo.decoder, nemo.joint
+    events: list[dict] = []
+    captured: dict = {"encoder_projected": None, "events": events, "raw": []}
+    predict, project_prednet = decoder.predict, joint.project_prednet
+    project_encoder, after_projection = joint.project_encoder, joint.joint_after_projection
+
+    def wrapped_predict(y=None, state=None, add_sos=True, batch_size=None):
+        g, hid = predict(y, state, add_sos, batch_size)
+        events.append({"kind": "predict", "input": None if y is None else y.clone(), "h": hid[0].clone(),
+                       "c": hid[1].clone(), "projected": None})
+        return g, hid
+
+    def wrapped_project_prednet(g):
+        out = project_prednet(g)
+        if not events or events[-1]["kind"] != "predict" or events[-1]["projected"] is not None:
+            raise RuntimeError("project_prednet without a preceding predict call")
+        events[-1]["projected"] = out.clone()
+        return out
+
+    def wrapped_project_encoder(f):
+        out = project_encoder(f)
+        if captured["encoder_projected"] is not None:
+            raise RuntimeError("project_encoder called twice")
+        captured["encoder_projected"] = out.clone()
+        return out
+
+    def wrapped_after_projection(f, g):
+        before = len(captured["raw"])
+        out = after_projection(f, g)
+        if len(captured["raw"]) != before + 1:
+            raise RuntimeError("joint_net did not run exactly once in joint_after_projection")
+        events.append({"kind": "joint", "f": f.clone(), "g": g.clone(), "raw": captured["raw"][-1]})
+        return out
+
+    hook = joint.joint_net.register_forward_hook(lambda m, i, o: captured["raw"].append(o.clone()))
+    decoder.predict, joint.project_prednet = wrapped_predict, wrapped_project_prednet
+    joint.project_encoder, joint.joint_after_projection = wrapped_project_encoder, wrapped_after_projection
+    try:
+        hyps = greedy_infer(nemo)(encoder_output=encoder_output, encoded_lengths=lengths)[0]
+    finally:
+        hook.remove()
+        for module, name in ((decoder, "predict"), (joint, "project_prednet"), (joint, "project_encoder"),
+                             (joint, "joint_after_projection")):
+            delattr(module, name)
+    return hyps, captured
+
+
+def observed_steps(cfg: reference.Config, captured: dict, hyp, length: int) -> tuple[dict, list[str]]:
+    """The per-step golden record of one utterance (batch of one) from NeMo's captured execution.
+
+    Observed: frame (the projected encoder row the joint received, matched exactly and uniquely),
+    prediction-net input token and its h and c (the predict call whose projected output the joint
+    received), raw logits (joint_net output), token and duration (NeMo's recorded per-step labels and
+    log-probabilities, preserve_alignments), pred_updated (a predict call on a non-blank token
+    follows the step and feeds the next step, or for the last step follows it), advance (next frame
+    minus this frame; for the last step NeMo's final time index, T + dec_state.time_jump).
+    Derived from these by the TDT rules: forced_advance (advance exceeds the duration rule by 1) and
+    symbols_at_frame (consecutive emissions at one frame). Returns (record, inconsistencies)."""
+    problems: list[str] = []
+    enc = captured["encoder_projected"][0]  # [T, H]
     labels, log_probs = hyp_steps(hyp)
-    durations = [cfg.durations[int(i)] for i in log_probs[:, -len(cfg.durations):].argmax(dim=-1)] if labels else []
-
-    def decide(i: int, t: int, tok: int, dur: int) -> tuple[int, int]:
-        if i >= len(labels):
-            raise RuntimeError("NeMo recorded fewer steps than the frame rules need")
-        return labels[i], durations[i]
-
-    def predict(token: int, state):
-        g, state = decoder.predict(torch.full((1, 1), token, dtype=torch.long), state, add_sos=False, batch_size=1)
-        return joint.project_prednet(g), state
-
-    def joint_step(f: torch.Tensor, g: torch.Tensor) -> torch.Tensor:
-        return joint.joint_net(f.unsqueeze(2) + g.unsqueeze(1)).squeeze(1).squeeze(1)
-
-    enc_proj = joint.project_encoder(encoder_output.transpose(1, 2))
-    trace, steps = reference.run_steps(cfg, enc_proj, length, decoder.initialize_state(enc_proj), predict,
-                                       joint_step, decide, record=True)
-    checks = {
-        "step count": len(trace) == len(labels),
-        "labels": trace.token == labels,
-        "tokens": trace.tokens == as_list(hyp.y_sequence),
-        "timestamps": trace.timestamps == as_list(hyp.timestamp),
-        "durations": trace.token_durations == as_list(hyp.token_duration),
-        "argmax tokens": as_list(steps.argmax_token) == labels,
-        "argmax durations": as_list(steps.argmax_duration) == durations,
-        "log-probabilities": len(trace) == len(labels) and bool(
-            (steps.logits.log_softmax(dim=-1) - log_probs).abs().max() <= 1e-5),
-    }
-    if not all(checks.values()):
-        raise RuntimeError(f"NeMo-driven replay does not reproduce NeMo's decode: {checks}")
-    return trace, steps, log_probs
+    blank, durations, num_d = cfg.blank, cfg.durations, len(cfg.durations)
+    predicts: list[dict] = []
+    rows: list[dict] = []
+    for event in captured["events"]:
+        if event["kind"] == "predict":
+            predicts.append(event)
+            continue
+        f, g = event["f"].reshape(-1), event["g"].reshape(-1)
+        frames = [t for t in range(enc.shape[0]) if torch.equal(enc[t], f)]
+        source = [i for i in range(len(predicts) - 1, -1, -1) if torch.equal(predicts[i]["projected"].reshape(-1), g)]
+        if len(frames) != 1 or not source:
+            problems.append(f"step {len(rows)}: frame matches {frames}, prediction matches {source[:1]}")
+            frames, source = frames or [-1], source or [0]
+        rows.append({"frame": frames[0], "predict": source[0], "raw": event["raw"].reshape(-1),
+                     "after": len(predicts)})
+    if len(rows) != len(labels):
+        problems.append(f"{len(rows)} joint calls, NeMo recorded {len(labels)} steps")
+        return {}, problems
+    final_t = length + int(hyp.dec_state.time_jump)
+    record = {k: [] for k in reference.TRACE_FIELDS}
+    h, c, raw = [], [], []
+    last_frame, run = -1, 0
+    for i, (row, label) in enumerate(zip(rows, labels)):
+        p = predicts[row["predict"]]
+        pred_input = blank if p["input"] is None else int(p["input"].reshape(-1)[0])
+        duration = durations[int(log_probs[i, -num_d:].argmax())]
+        emitted = label != blank
+        nxt = rows[i + 1] if i + 1 < len(rows) else None
+        later = predicts[row["after"]:(nxt["after"] if nxt else len(predicts))]
+        fed = [q for q in later if q["input"] is not None and int(q["input"].reshape(-1)[0]) == label]
+        if nxt is not None:
+            updated = nxt["predict"] > row["predict"] and nxt["predict"] >= row["after"]
+        else:
+            updated = bool(fed) and emitted
+        advance = (nxt["frame"] if nxt else final_t) - row["frame"]
+        rule = 1 if (not emitted and duration == 0) else duration
+        if emitted:
+            run = run + 1 if row["frame"] == last_frame else 1
+            last_frame = row["frame"]
+        if advance - rule not in (0, 1) or (advance != rule and not emitted) or updated != emitted:
+            problems.append(f"step {i}: advance {advance}, duration {duration}, emitted {emitted}, updated {updated}")
+        for key, value in (("frame", row["frame"]), ("pred_input", pred_input), ("token", label),
+                           ("duration", duration), ("emitted", emitted), ("pred_updated", updated),
+                           ("symbols_at_frame", run), ("forced_advance", advance == rule + 1), ("advance", advance)):
+            record[key].append(value)
+        h.append(p["h"][:, 0]); c.append(p["c"][:, 0]); raw.append(row["raw"])
+    raw_t = torch.stack(raw)
+    lp_err = float((raw_t.log_softmax(dim=-1) - log_probs).abs().max())
+    if lp_err > 1e-5:
+        problems.append(f"log_softmax(raw logits) differs from NeMo's recorded log-probabilities by {lp_err}")
+    trace = reference.Trace(num_frames=length, **record)
+    if (trace.tokens != as_list(hyp.y_sequence) or trace.timestamps != as_list(hyp.timestamp)
+            or trace.token_durations != as_list(hyp.token_duration)):
+        problems.append("observed steps do not reproduce NeMo's hypothesis")
+    return {"trace": trace, "step_logits": raw_t, "step_log_probs": log_probs, "step_h": torch.stack(h),
+            "step_c": torch.stack(c)}, problems
 
 
 @torch.no_grad()
 def run_clip(nemo: NemoModules, audio: np.ndarray) -> dict[str, np.ndarray]:
-    """Every golden output of one clip (batch of one)."""
+    """Every golden output of one clip (batch of one), all from NeMo's own execution."""
     hidden: dict = {"layers": []}
     hooks = [nemo.encoder.pre_encode.register_forward_hook(lambda m, i, o: hidden.__setitem__("pre_encode", o))]
     hooks += [layer.register_forward_hook(lambda m, i, o: hidden["layers"].append(o)) for layer in nemo.encoder.layers]
@@ -172,35 +260,38 @@ def run_clip(nemo: NemoModules, audio: np.ndarray) -> dict[str, np.ndarray]:
     finally:
         for hook in hooks:
             hook.remove()
-    (hyp,) = greedy_infer(nemo)(encoder_output=encoded, encoded_lengths=enc_len)[0]
-    trace, steps, log_probs = nemo_driven(nemo, encoded, int(enc_len[0]), hyp)
+    (hyp,), captured = instrumented_decode(nemo, encoded, enc_len)
+    steps, problems = observed_steps(nemo.cfg, captured, hyp, int(enc_len[0]))
+    if problems:
+        raise RuntimeError(f"NeMo decode capture is inconsistent: {problems[:5]}")
     pre, pre_len = hidden["pre_encode"]
     out = {"audio": audio, "features": features, "feature_length": feat_len, "pre_encode": pre,
            "pre_encode_length": pre_len, "layers": torch.stack(hidden["layers"]), "encoder": encoded,
-           "encoder_length": enc_len, "step_logits": steps.logits, "step_log_probs": log_probs,
-           "step_h": steps.h, "step_c": steps.c, "nemo_tokens": torch.as_tensor(as_list(hyp.y_sequence)),
+           "encoder_length": enc_len, "step_logits": steps["step_logits"], "step_log_probs": steps["step_log_probs"],
+           "step_h": steps["step_h"], "step_c": steps["step_c"], "nemo_tokens": torch.as_tensor(as_list(hyp.y_sequence)),
            "nemo_timestamps": torch.as_tensor(as_list(hyp.timestamp)),
            "nemo_durations": torch.as_tensor(as_list(hyp.token_duration))}
     out = {k: (v.numpy() if torch.is_tensor(v) else np.asarray(v)) for k, v in out.items()}
-    out.update({f"trace_{k}": v for k, v in trace.to_arrays().items()})
+    out.update({f"trace_{k}": v for k, v in steps["trace"].to_arrays().items()})
     return out
 
 
 def compare(ref: reference.ParakeetReference, g: dict, noise_seed: int = 0) -> tuple[dict, list[str]]:
     """The reference on one clip against golden outputs g (run_clip's dict or a loaded npz): DESIGN.md gate 1.
 
-    Each compared output must be finite with rel <= REL_CEILING and abs <= ABS_CEILING (common.errors):
-    features (reference front end on the golden audio), subsampling output, every layer, encoder
-    output (encoder on the golden features), and on the golden trace replayed through the reference
-    the token logits (incl. blank) and duration logits separately and LSTM h and c separately.
-    Decisions must be identical: the reference's own greedy trace equals the golden trace in every
-    field, and the replay's argmax equals the golden decisions. Sensitivity: 1% white noise (RMS 1%
-    of the clip's RMS, torch.Generator seed noise_seed) added to the audio must move the
-    reference's encoder output by rel >= 1e-2 and >= 100x the measured encoder parity error.
-    Returns (metrics, failures)."""
+    End to end: the reference front end on the golden audio, its encoder on its own features (the
+    subsampling output, every layer and the encoder output gated), greedy decoding of that encoder
+    output, and replay of the golden trace on it. Each gated output must be finite with rel <=
+    REL_CEILING and abs <= ABS_CEILING (common.errors): features, subsampling output, every layer,
+    encoder output, token logits (incl. blank) and duration logits separately, LSTM h and c
+    separately; the encoder fed the golden features is gated as well. Decisions must be identical:
+    the reference's own greedy trace equals the golden trace in every field, and the replay's argmax
+    equals the golden decisions. Sensitivity: 1% white noise (RMS 1% of the clip's RMS,
+    torch.Generator seed noise_seed) added to the audio must move the reference's encoder output,
+    relative to its own unperturbed output, by a finite rel >= 1e-2 and >= 100x the encoder parity
+    error. Returns (metrics, failures)."""
     t = {k: torch.from_numpy(np.asarray(v)) for k, v in g.items()}
-    cfg = ref.cfg
-    split = cfg.vocab_size + 1
+    split = ref.cfg.vocab_size + 1
     metrics: dict = {}
     failures: list[str] = []
 
@@ -218,18 +309,19 @@ def compare(ref: reference.ParakeetReference, g: dict, noise_seed: int = 0) -> t
         audio, length = t["audio"][None], torch.tensor([t["audio"].numel()])
         feats, flen = ref.preprocessor(audio, length)
         gate("features", feats, t["features"])
-        enc, elen, hidden = ref.encoder(t["features"], t["feature_length"], return_hidden=True)
-        lengths_equal = (torch.equal(flen, t["feature_length"]) and torch.equal(elen, t["encoder_length"])
-                         and torch.equal(t["pre_encode_length"].long(), elen))
-        if not lengths_equal:
+        enc, elen, hidden = ref.encoder(feats, flen, return_hidden=True)
+        if not (torch.equal(flen, t["feature_length"]) and torch.equal(elen, t["encoder_length"])
+                and torch.equal(t["pre_encode_length"].long(), elen)):
             failures.append("lengths differ")
         gate("pre_encode", hidden["pre_encode"], t["pre_encode"])
+        if len(hidden["layers"]) != t["layers"].shape[0]:
+            failures.append(f"{len(hidden['layers'])} layers, golden {t['layers'].shape[0]}")
         layer_errors = [gate(f"layer{i}", x, t["layers"][i], store=False) for i, x in enumerate(hidden["layers"])]
         metrics["layers_max"] = {"rel": max(e[0] for e in layer_errors), "abs": max(e[1] for e in layer_errors),
                                  "count": len(layer_errors)}
         enc_rel, _ = gate("encoder", enc, t["encoder"])
-        e2e, _ = ref.encoder(feats, flen)
-        metrics["encoder_end_to_end"] = dict(zip(("rel", "abs"), common.errors(e2e, t["encoder"])))
+        enc_golden_feats, _ = ref.encoder(t["features"], t["feature_length"])
+        gate("encoder_from_golden_features", enc_golden_feats, t["encoder"])
         golden_trace = reference.Trace.from_arrays(g, "trace_")
         trace = reference.greedy_decode(ref, enc, elen)[0]
         differing = [k for k in reference.TRACE_FIELDS if getattr(trace, k) != getattr(golden_trace, k)]
@@ -248,10 +340,11 @@ def compare(ref: reference.ParakeetReference, g: dict, noise_seed: int = 0) -> t
         gen = torch.Generator().manual_seed(noise_seed)
         noise = torch.randn(audio.shape, generator=gen) * (0.01 * float(audio.pow(2).mean().sqrt()))
         perturbed, _ = ref(audio + noise, length)
-        sensitivity, _ = common.errors(perturbed, t["encoder"])
+        sensitivity, _ = common.errors(perturbed, enc)
         metrics["sensitivity_rel"] = sensitivity
-        metrics["sensitivity_over_parity"] = sensitivity / max(enc_rel, 1e-30)
-        if not (sensitivity >= 1e-2 and sensitivity >= 100 * enc_rel):
+        metrics["sensitivity_over_parity"] = sensitivity / enc_rel if enc_rel > 0 else None
+        if not (math.isfinite(sensitivity) and common.finite(perturbed) and sensitivity >= 1e-2
+                and sensitivity >= 100 * enc_rel):
             failures.append(f"sensitivity {sensitivity:.3g} vs encoder parity {enc_rel:.3g}")
     metrics.update(steps=len(trace), tokens=len(trace.tokens), forced_advances=sum(trace.forced_advance),
                    decisions_identical=not differing, encoder_frames=int(elen[0]))
@@ -268,6 +361,14 @@ def nemo_model(name: str) -> tuple[NemoModules, dict]:
         load = reference.load_weights(nemo, tensors)
         return nemo, {"model": name, "seed": seed, "model_digest": digest, "weight_stats_sha256": stats["_sha256"],
                       "load": load}
+    if name == "b0":
+        import paths
+        from nemo.collections.asr.models import EncDecRNNTBPEModel
+
+        model = EncDecRNNTBPEModel.restore_from(str(paths.MODEL_FILE), map_location="cpu").float().eval()
+        lock = json.loads((paths.MODEL_DIR / "lock.json").read_text())
+        return NemoModules.wrap(model, rw.load_stats()["model_config"]), {
+            "model": name, "nemo_file": str(paths.MODEL_FILE), "nemo_sha256": lock["files"][paths.MODEL_FILE.name]}
     if name == "mp2":
         import export
         import models
@@ -282,11 +383,13 @@ def nemo_model(name: str) -> tuple[NemoModules, dict]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("--model", default=f"seed{common.GOLDEN_SEED}", help="seed0, seed1, seed2 or mp2")
+    parser.add_argument("--model", default=f"seed{common.GOLDEN_SEED}", help="seed0, seed1, seed2, mp2 or b0")
     parser.add_argument("--out", type=Path, default=None)
     args = parser.parse_args()
     torch.set_grad_enabled(False)
-    out_dir = args.out or common.artifacts_dir() / "golden" / args.model
+    import artifacts
+
+    out_dir = artifacts.check(args.out or common.artifacts_dir() / "golden" / args.model)
     out_dir.mkdir(parents=True, exist_ok=True)
     start = time.time()
     nemo, meta = nemo_model(args.model)

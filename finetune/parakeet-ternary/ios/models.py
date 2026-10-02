@@ -1,12 +1,13 @@
 """The benchmark models by name, as FP32 reference models. See DESIGN.md "Surrogate models, clips and traces".
 
 - "b0": NVIDIA's pinned parakeet-tdt-0.6b-v2 (.nemo), dense FP32. Its model_weights.ckpt is
-  extracted once to a cache file next to the artifacts and memory-mapped, so loading holds one
-  dense copy plus file-backed pages.
+  extracted once to a cache keyed by the .nemo's SHA-256 (checkpoint SHA-256 re-verified on every
+  load) and memory-mapped, so loading holds one dense copy plus file-backed pages.
 - "mp2": M_P2, the primary benchmark model: the pilot P2 export (runs/pilot-P2-lr5e-4/export),
   read as packed codes + FP32 scales (reference.ExportSource), dequantized in place.
 - "seed0", "seed1", "seed2": random surrogates from weight_stats.json (randomweights.py),
-  generated in memory, or read from a written model.safetensors if a path is given.
+  generated in memory, or read from a written model.safetensors if a path is given (file,
+  per-tensor and digest hashes verified against its manifest first).
 
 Each function returns an eval-mode reference.ParakeetReference with a `provenance` dict
 (file hashes or the surrogate's manifest digest). Default locations: NixOS
@@ -36,39 +37,68 @@ _LINUX = Path("/mnt/hd/wilderness-labs-stt")
 
 
 def _defaults() -> dict[str, Path]:
+    import artifacts
+
     if sys.platform == "darwin":
         return {"nemo": _MAC / "models" / "parakeet-tdt-0.6b-v2.nemo", "mp2": _MAC / "models" / "pilot-P2-lr5e-4-export",
-                "cache": _MAC / "cache"}
-    if not os.path.ismount("/mnt/hd"):
-        raise RuntimeError("/mnt/hd is not mounted")
+                "cache": artifacts.root() / "cache", "lock": None}
     art = _LINUX / "parakeet-ternary"
     return {"nemo": art / "models" / "parakeet-tdt-0.6b-v2" / "parakeet-tdt-0.6b-v2.nemo",
-            "mp2": art / "runs" / "pilot-P2-lr5e-4" / "export", "cache": _LINUX / "parakeet-ios" / "cache"}
+            "mp2": art / "runs" / "pilot-P2-lr5e-4" / "export", "cache": artifacts.root() / "cache",
+            "lock": art / "models" / "parakeet-tdt-0.6b-v2" / "lock.json"}
 
 
 def _config() -> reference.Config:
     return reference.Config.from_model_config(rw.load_stats()["model_config"])
 
 
+def _sha256_file(path: Path) -> str:
+    import hashlib
+
+    with open(path, "rb") as handle:
+        return hashlib.file_digest(handle, "sha256").hexdigest()
+
+
 def b0(nemo_file: str | Path | None = None) -> reference.ParakeetReference:
-    """NVIDIA's original FP32 weights from the pinned .nemo."""
+    """NVIDIA's original FP32 weights from the pinned .nemo.
+
+    The .nemo is hashed (and checked against lock.json where present); its model_weights.ckpt is
+    cached under cache/b0/<.nemo SHA-256>/ with the checkpoint's own SHA-256 recorded at extraction
+    and re-verified on every load, so a different or modified file is never served from the cache."""
+    import artifacts
+
     defaults = _defaults()
     nemo_file = Path(nemo_file or defaults["nemo"])
-    cache = defaults["cache"] / "b0" / "model_weights.ckpt"
-    if not cache.exists() or cache.stat().st_mtime < nemo_file.stat().st_mtime:
+    nemo_sha = _sha256_file(nemo_file)
+    if defaults["lock"] is not None and Path(nemo_file) == defaults["nemo"]:
+        pinned = json.loads(defaults["lock"].read_text())["files"][nemo_file.name]
+        if nemo_sha != pinned:
+            raise ValueError(f"{nemo_file} SHA-256 {nemo_sha} != pinned {pinned}")
+    cache = artifacts.check(defaults["cache"] / "b0" / nemo_sha / "model_weights.ckpt")
+    digest_file = cache.with_name("model_weights.ckpt.sha256")
+    if not cache.exists() or not digest_file.exists():
+        import hashlib
+
         cache.parent.mkdir(parents=True, exist_ok=True)
         tmp = cache.with_name(cache.name + f".tmp{os.getpid()}")
+        digest = hashlib.sha256()
         with tarfile.open(nemo_file, "r:*") as tar:
             member = next(m for m in tar.getmembers() if Path(m.name).name == "model_weights.ckpt")
             with tar.extractfile(member) as src, open(tmp, "wb") as dst:
                 while chunk := src.read(1 << 24):
+                    digest.update(chunk)
                     dst.write(chunk)
         os.replace(tmp, cache)
+        digest_file.write_text(digest.hexdigest() + "\n")
+    ckpt_sha = digest_file.read_text().strip()
+    if _sha256_file(cache) != ckpt_sha:
+        raise ValueError(f"cached {cache} does not match its recorded SHA-256; delete the cache directory")
     state = torch.load(cache, map_location="cpu", weights_only=True, mmap=True)
     model = reference.build(_config())
     report = reference.load_weights(model, state)
     del state
-    model.provenance = {"name": "b0", "nemo_file": str(nemo_file), "load": report}
+    model.provenance = {"name": "b0", "nemo_file": str(nemo_file), "nemo_sha256": nemo_sha,
+                        "checkpoint_sha256": ckpt_sha, "load": report}
     return model
 
 
@@ -87,9 +117,11 @@ def surrogate(seed: int, path: str | Path | None = None) -> reference.ParakeetRe
     stats = rw.load_stats()
     model = reference.build(reference.Config.from_model_config(stats["model_config"]))
     if path is not None:
-        manifest = json.loads((Path(path).parent / rw.MANIFEST_FILE).read_text())
+        path = Path(path)
+        manifest = json.loads((path.parent / rw.MANIFEST_FILE).read_text())
         if manifest["seed"] != seed or manifest["weight_stats_sha256"] != stats["_sha256"]:
             raise ValueError(f"{path} is not surrogate seed {seed} of this weight_stats.json")
+        _verify_surrogate_file(path, manifest)
         report, digest = reference.load_weights(model, path), manifest["digest"]
     else:
         tensors, hashes = {}, {}
@@ -100,6 +132,24 @@ def surrogate(seed: int, path: str | Path | None = None) -> reference.ParakeetRe
     model.provenance = {"name": f"seed{seed}", "seed": seed, "digest": digest,
                         "weight_stats_sha256": stats["_sha256"], "load": report}
     return model
+
+
+def _verify_surrogate_file(path: Path, manifest: dict) -> None:
+    """The file's SHA-256, every tensor's bytes and the manifest digest, against the manifest."""
+    from safetensors import safe_open
+
+    if _sha256_file(path) != manifest.get("file_sha256"):
+        raise ValueError(f"{path} does not match its manifest's file SHA-256")
+    with safe_open(str(path), framework="numpy") as f:
+        names = set(f.keys())
+        if names != set(manifest["tensors"]):
+            raise ValueError(f"{path}: tensor names differ from the manifest")
+        for name in names:
+            if rw.sha256_bytes(f.get_tensor(name).tobytes()) != manifest["tensors"][name]["sha256"]:
+                raise ValueError(f"{path}: tensor {name} does not match the manifest")
+    lines = "".join(f"{n} {t['dtype']} {t['shape']} {t['sha256']}\n" for n, t in sorted(manifest["tensors"].items()))
+    if rw.sha256_bytes(lines.encode()) != manifest["digest"]:
+        raise ValueError(f"{path}: manifest digest does not match its tensor entries")
 
 
 def seed0(path: str | Path | None = None) -> reference.ParakeetReference:

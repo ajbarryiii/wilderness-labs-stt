@@ -22,18 +22,15 @@ GOLDEN_SEED = 0
 CLIP_SET = "librispeech_dev_clean"
 CLIP_COUNT = 3
 CLIP_SECONDS = (2.0, 6.0)
+# dev_clips() on the NixOS manifests; recorded so golden checks on any machine know what to expect
+EXPECTED_CLIP_IDS = ("librispeech:1272-128104-0000", "librispeech:1272-128104-0001", "librispeech:1272-128104-0006")
 
 
 def artifacts_dir() -> Path:
-    """The machine's artifact directory (Mac: outside any repository; NixOS: on the mounted data disk)."""
-    if sys.platform == "darwin":
-        root = MAC_ARTIFACTS
-    else:
-        if not os.path.ismount("/mnt/hd"):
-            raise RuntimeError("/mnt/hd is not mounted; refusing artifact writes.")
-        root = NIXOS_ARTIFACTS
-    root.mkdir(parents=True, exist_ok=True)
-    return root
+    """The machine's artifact directory (artifacts.root(): Mac outside any repository; NixOS on the mounted disk)."""
+    import artifacts
+
+    return artifacts.root()
 
 
 def dev_clips() -> list[dict]:
@@ -44,8 +41,8 @@ def dev_clips() -> list[dict]:
         records = [json.loads(line) for line in handle if line.strip()]
     lo, hi = CLIP_SECONDS
     chosen = sorted((r for r in records if lo <= r["duration"] <= hi), key=lambda r: r["id"])[:CLIP_COUNT]
-    if len(chosen) != CLIP_COUNT:
-        raise RuntimeError("not enough development clips")
+    if tuple(r["id"] for r in chosen) != EXPECTED_CLIP_IDS:
+        raise RuntimeError(f"development clip selection changed: {[r['id'] for r in chosen]}")
     return chosen
 
 

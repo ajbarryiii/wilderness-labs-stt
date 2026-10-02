@@ -1,11 +1,13 @@
 """reference.py against saved NeMo FP32 golden outputs at full depth (golden.py): DESIGN.md gate 1.
 
-No NeMo import. For each benchmark model with goldens (surrogate seed0, M_P2), the reference is
-built by models.load (seed0 regenerated from weight_stats.json, M_P2 read from the export as codes +
-FP32 scales); its identity must equal the one golden.py recorded (surrogate manifest digest, export
-SHA-256), and golden.compare gates every clip: features, subsampling output, every layer, encoder
-output, token and duration logits, LSTM h and c (rel <= 1e-5 and abs <= 1e-4), identical greedy
-decisions, finite outputs, and input sensitivity (rel >= 1e-2 and >= 100x the encoder parity
+No NeMo import. For each benchmark model with goldens (B0, M_P2, surrogate seed0), the reference
+is built by models.load (B0 from the .nemo, M_P2 from the export as codes + FP32 scales, seed0
+regenerated from weight_stats.json); its identity must equal the one golden.py recorded (.nemo
+SHA-256, export SHA-256, surrogate manifest digest), the clip list and depth must be the expected
+ones, and golden.compare gates every clip end to end: features, subsampling output, every layer,
+encoder output (also fed the golden features), token and duration logits, LSTM h and c (rel <=
+1e-5 and abs <= 1e-4), identical greedy decisions, finite outputs, and input sensitivity against
+the reference's own unperturbed output (finite rel >= 1e-2 and >= 100x the encoder parity
 error). Golden root: $PARAKEET_IOS_GOLDEN or <artifacts>/golden. Full depth (about 4 GB per model,
 one at a time), so on NixOS through ../heavy:
 
@@ -47,11 +49,17 @@ class GoldenGate:
         prov = self.ref.provenance
         if self.name == "mp2":
             self.assertEqual(prov["export_sha256"], self.meta["export_sha256"])
+        elif self.name == "b0":
+            self.assertEqual(prov["nemo_sha256"], self.meta["nemo_sha256"])
         else:
             self.assertEqual(prov["digest"], self.meta["model_digest"])
-        self.assertEqual(prov["load"]["ternary_modules"], 264)
+        self.assertEqual(prov["load"]["ternary_modules"], 0 if self.name == "b0" else 264)
 
     def test_gate(self) -> None:
+        self.assertEqual(tuple(c["id"] for c in self.meta["clips"]), common.EXPECTED_CLIP_IDS)
+        self.assertEqual(self.meta["layers"], 24)
+        self.assertEqual(self.ref.cfg.n_layers, 24)
+        checked = 0
         for clip in self.meta["clips"]:
             with np.load(self.dir / clip["file"]) as data:
                 g = {k: data[k] for k in data.files}
@@ -59,6 +67,12 @@ class GoldenGate:
             metrics, failures = golden.compare(self.ref, g)
             common.report(f"golden_{self.name}_gate", clip=clip["id"], failures=failures, **metrics)
             self.assertEqual(failures, [], clip["id"])
+            checked += 1
+        self.assertEqual(checked, len(common.EXPECTED_CLIP_IDS))
+
+
+class B0(GoldenGate, unittest.TestCase):
+    name = "b0"
 
 
 class MP2(GoldenGate, unittest.TestCase):

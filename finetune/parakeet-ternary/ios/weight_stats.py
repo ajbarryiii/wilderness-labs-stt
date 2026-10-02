@@ -161,6 +161,9 @@ def main() -> None:
     parser.add_argument("--export", type=Path, default=DEFAULT_EXPORT)
     parser.add_argument("--out", type=Path, default=rw.STATS_FILE)
     args = parser.parse_args()
+    if args.out.resolve() != rw.STATS_FILE.resolve():  # the committed stats file, or an artifact location
+        import artifacts
+        args.out = artifacts.check(args.out)
     stats = collect(args.export)
     text = json.dumps(stats, indent=1, sort_keys=True) + "\n"
     args.out.write_text(text)

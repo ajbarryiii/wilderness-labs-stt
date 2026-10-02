@@ -110,6 +110,18 @@ class ReducedDepth(GateMixin, unittest.TestCase):
     def test_gate(self) -> None:
         self.gate_clips("reduced_gate")
 
+    def test_gate_max_symbols(self) -> None:
+        """2 s of seeded noise drives this surrogate into the max-symbols rule; NeMo's captured decode
+        (golden.run_clip) must show forced advances and the reference must pass the gate on it."""
+        noise = (0.1 * torch.randn(32000, generator=torch.Generator().manual_seed(0))).numpy()
+        golden_outputs = golden.run_clip(self.nemo, noise)
+        metrics, failures = golden.compare(self.ref, golden_outputs)
+        common.report("reduced_gate_max_symbols", failures=failures, **metrics)
+        self.assertGreater(int(golden_outputs["trace_forced_advance"].sum()), 0)
+        # 1% noise on white noise barely changes its spectrum, so the sensitivity criterion (meant for
+        # speech; checked on the dev clips) is not applied to this decoding-rule input.
+        self.assertEqual([f for f in failures if not f.startswith("sensitivity")], [])
+
     def test_padded_batch(self) -> None:
         """The three clips plus 2 s of seeded white noise (which drives this random model into the
         max-symbols rule) as one zero-padded batch."""

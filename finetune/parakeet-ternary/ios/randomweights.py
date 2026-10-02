@@ -205,8 +205,12 @@ def manifest_only(stats: dict, seed: int, layers: int | None = None) -> dict:
 
 
 def write(stats: dict, seed: int, out_dir: Path, layers: int | None = None) -> dict:
-    """Stream the model to out_dir/model.safetensors (temporary name, then renamed) and write manifest.json."""
-    out_dir = Path(out_dir)
+    """Stream the model to out_dir/model.safetensors (temporary name, then renamed) and write manifest.json.
+
+    out_dir must be an allowed artifact location (artifacts.check)."""
+    import artifacts
+
+    out_dir = artifacts.check(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     specs = tensor_specs(stats, layers)
     header, offset = {}, 0
@@ -255,6 +259,9 @@ def main() -> None:
     args = parser.parse_args()
     stats = load_stats(args.stats)
     if args.manifest_only:
+        import artifacts
+
+        args.out = artifacts.check(args.out)
         manifest = manifest_only(stats, args.seed, args.layers)
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n")
