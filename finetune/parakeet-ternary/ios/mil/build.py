@@ -385,6 +385,7 @@ def main() -> None:
     p.add_argument("--out-dir")
     p.add_argument("--no-compile", action="store_true")
     p.add_argument("--no-plan", action="store_true")
+    p.add_argument("--drop-package", action="store_true", help="delete the .mlpackage after compiling (disk)")
     p = sub.add_parser("decoder")
     p.add_argument("--model", required=True)
     p.add_argument("--out-dir")
@@ -398,7 +399,8 @@ def main() -> None:
     args = parser.parse_args()
     if args.cmd == "encoder":
         m = build_encoder(args.model, args.arm, args.variant, Path(args.out_dir) if args.out_dir else default_out(),
-                          args.layers, compile_=not args.no_compile, plan=not args.no_plan)
+                          args.layers, compile_=not args.no_compile, plan=not args.no_plan,
+                          keep_package=not args.drop_package)
         print(json.dumps({k: m[k] for k in ("model", "arm", "variant", "sizes", "timing_s", "peak_rss_mb_after_save")}
                          | {"compile": m.get("compile"), "peak_rss_mb_after_compile": m.get("peak_rss_mb_after_compile")}))
     elif args.cmd == "decoder":

@@ -486,6 +486,7 @@ def main() -> None:
         r = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         res["peak_rss_mb"] = round(r / 2 ** 20 if sys.platform == "darwin" else r / 1024)
         if args.out:
+            Path(args.out).parent.mkdir(parents=True, exist_ok=True)
             Path(args.out).write_text(json.dumps(res, indent=1) + "\n")
         print(json.dumps(res))
     elif args.cmd == "folding":
