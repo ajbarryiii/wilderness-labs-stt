@@ -1,6 +1,7 @@
 # Parakeet-TDT 0.6B v2 on iPhone 15 Pro: inference pipeline and benchmarks
 
-Status: **revision 3, after Codex reviews r1 and r2 (2026-10-02). S0 approved
+Status: **revision 4 (2026-10-02): primary benchmark model changed to the pilot P2 export after WP1's
+sensitivity gate failed on random surrogates; revision 3 was after Codex reviews r1 and r2. S0 approved
 by the user and cleared by review r2; nothing benchmarked yet.** Review
 findings and their resolutions are listed at the end.
 
@@ -11,12 +12,15 @@ Build the lowest-latency, lowest-energy inference pipeline for the Parakeet-TDT
 iPhone 15 Pro (A17 Pro, 8 GB, iOS 26), and the benchmarks that measure it on the
 device. The workload is one foreground push-to-talk utterance of 2-15 s.
 
-- **Surrogate models.** The architecture is fixed; the weights are not. Most
-  benchmarks use seeded random *surrogate* models. They have the exact
-  architecture and the ternary structure of the selected recipe's export, so
-  they can run before training finishes. Surrogate results describe execution
-  only, not recognition. They are reported separately from trained-model
-  results.
+- **Benchmark models.** The architecture is fixed; the weights are not
+  final. The **primary benchmark model, M_P2,** is the pilot export of the
+  selected recipe (P2, lr 5e-4, 12,000 steps, dev mean WER 6.85%). It is a
+  trained ternary model in exactly the final format, available before the
+  main run finishes.
+- **Random surrogates** (seeds 0-2) check that execution cost does not depend
+  on weight values, and that runs are reproducible across machines.
+- Results on M_P2 and on the surrogates describe execution, and are reported
+  separately from the final model's results.
 - **Trained weights enter at S5.** Finalists are re-measured with the trained
   weights, and their decoding is verified on the phone.
 - **Deployment target:** iOS 26 or later; the pilot controls hardware and
@@ -233,19 +237,35 @@ Revisited only if the measured ANE and GPU placements make it plausible.
 
 ## Surrogate models, clips and traces
 
-**Statistics.** Weight statistics come from the **selected recipe's** pilot
-export (P2, lr 5e-4): per-module code histograms, per-row FP32 scale
-quantiles, and per-tensor statistics for floating tensors. Normalization state
-is kept valid (positive BatchNorm variances, plausible LayerNorm gains).
+**Primary model M_P2.** The pilot P2 export
+(`runs/pilot-P2-lr5e-4/export`, SHA-256 in its manifest), read as codes plus
+FP32 scales.
+
+**Surrogate statistics.** These come from the same export: per-module code
+histograms, per-row FP32 scale quantiles, and per-tensor statistics for
+floating tensors. Normalization state is kept valid: strictly positive
+BatchNorm variances, and LayerNorm gains drawn from their statistics.
+
+**LayerNorm biases are set to 0** in the surrogates. WP1 found that drawing
+them independently per element produced a 24-layer model whose output barely
+depended on its input. Input sensitivity was 2.8e-5 relative, against a gate
+of 1e-2, decaying about 0.6× per layer. With zero biases it is 0.089. Gate 1's
+sensitivity check applies to every benchmark model.
 
 **Seeds.** Three surrogates (seeds 0, 1, 2) are generated deterministically on
 any machine, and per-tensor SHA-256 manifests are compared across Linux and
 macOS.
 
 **Limits.** Marginal statistics leave out spatial structure, inter-row
-correlations, and trained activation statistics. So surrogate rankings are
-confirmed with the trained export at S5, and C5 calibration on surrogates is
-for speed only.
+correlations, and trained activation statistics. That is why M_P2 is the
+primary model. The **weight-independence check:**
+- *Comparison:* M_P2 vs surrogate seed 0, same arm and bucket.
+- *Measured on:* the Mac for every arm, and the phone in the S2 pilot for two
+  arms.
+- *Outcome:* any gap larger than the pilot's noise is reported as a weight
+  dependence of that encoding.
+
+C5 is calibrated on M_P2 activations.
 
 **Clips.** LibriSpeech dev-clean utterances:
 - 16 per bucket, plus boundary lengths placed just inside and outside each
@@ -256,7 +276,10 @@ for speed only.
 **Replay trace.** The FP32 reference with the real B0 weights runs greedy TDT
 decoding on every clip and records the complete trace. Initialization matches
 NeMo GreedyTDTInfer: zero LSTM state and the blank/SOS input token, reset for
-every utterance. Each step records:
+every utterance.
+
+Decoding follows the model config's strategy, `greedy_batch` (NeMo's
+label-looping TDT decoder), including its max-symbols rule. Each step records:
 - the encoder frame index;
 - the prediction-net input token;
 - whether the step emitted blank or a token, and the emitted token ID;
@@ -280,6 +303,8 @@ an output a and its reference r of n elements:
 
 1. **Reference vs NeMo.** Two comparisons, both on CPU in FP32:
    - full depth with the real B0 weights;
+   - full depth with M_P2 (rebuilt in NeMo by `export.load_export`), using
+     NeMo golden outputs saved on Linux;
    - full depth with surrogate seed 0, using NeMo golden outputs saved on Linux.
 
    Compared quantities: features; the subsampling output; every layer's
@@ -483,7 +508,7 @@ models, weights and audio stay outside Git.
   the Mac and in exploration sessions on the device. Results are reported as
   exploration.
 - **S4 Shortlist.** The preregistered matrix runs in fresh sessions with
-  surrogates and matched replay. It produces a shortlist of at most 3
+  M_P2 and matched replay. It produces a shortlist of at most 3
   finalists, the arms that meet the qualification criteria below on surrogate
   data. It does not choose the deployment arm.
 - **S5 Trained weights.** The M1 export goes through the finalists and C0's
