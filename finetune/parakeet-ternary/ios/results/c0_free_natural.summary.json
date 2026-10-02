@@ -1,0 +1,398 @@
+{
+ "results_file": "c0-free-natural.jsonl",
+ "mode": "free",
+ "compute_units": "cpuAndNeuralEngine",
+ "preprocessor_units": "cpuOnly",
+ "os": "Version 27.0 (Build 26A428)",
+ "load_ms": {
+  "Decoder": 10.352958333333333,
+  "Encoder": 108.606875,
+  "JointDecision": 8.976791666666665,
+  "Preprocessor": 68.21779166666667
+ },
+ "timed_records": 64,
+ "clips": 64,
+ "warmups": 3,
+ "timed_per_clip": 1,
+ "phys_footprint_mb": {
+  "after_load": 27.76624298095703,
+  "end": 55.15693664550781,
+  "peak": 55.86006164550781
+ },
+ "wer_vs_reference": {
+  "wer": 0.016684045881126174,
+  "substitutions": 13,
+  "deletions": 1,
+  "insertions": 2,
+  "ref_words": 959,
+  "hyp_words": 960,
+  "utterances": 64,
+  "excluded_empty_reference": 0
+ },
+ "wer_vs_b0": {
+  "wer": 0.0020833333333333333,
+  "substitutions": 2,
+  "deletions": 0,
+  "insertions": 0,
+  "ref_words": 960,
+  "hyp_words": 960,
+  "utterances": 64,
+  "excluded_empty_reference": 0
+ },
+ "b0_wer_vs_reference_same_clips": {
+  "wer": 0.017726798748696558,
+  "substitutions": 14,
+  "deletions": 1,
+  "insertions": 2,
+  "ref_words": 959,
+  "hyp_words": 960,
+  "utterances": 64,
+  "excluded_empty_reference": 0
+ },
+ "per_bucket_wer_vs_reference": {
+  "2": {
+   "wer": 0.03225806451612903,
+   "substitutions": 1,
+   "deletions": 0,
+   "insertions": 1,
+   "ref_words": 62,
+   "hyp_words": 63,
+   "utterances": 16,
+   "excluded_empty_reference": 0
+  },
+  "4": {
+   "wer": 0.007633587786259542,
+   "substitutions": 1,
+   "deletions": 0,
+   "insertions": 0,
+   "ref_words": 131,
+   "hyp_words": 131,
+   "utterances": 16,
+   "excluded_empty_reference": 0
+  },
+  "8": {
+   "wer": 0.020338983050847456,
+   "substitutions": 5,
+   "deletions": 1,
+   "insertions": 0,
+   "ref_words": 295,
+   "hyp_words": 294,
+   "utterances": 16,
+   "excluded_empty_reference": 0
+  },
+  "15": {
+   "wer": 0.014861995753715499,
+   "substitutions": 6,
+   "deletions": 0,
+   "insertions": 1,
+   "ref_words": 471,
+   "hyp_words": 472,
+   "utterances": 16,
+   "excluded_empty_reference": 0
+  }
+ },
+ "token_sequence_equal_to_b0": {
+  "clips": 53,
+  "of": 64
+ },
+ "texts_differing_from_b0": [
+  {
+   "clip": "n02-174-50561-0014",
+   "b0": "The Ladies",
+   "c0": "The ladies."
+  },
+  {
+   "clip": "n02-1919-142785-0048",
+   "b0": "French force meat,",
+   "c0": "French force meat"
+  },
+  {
+   "clip": "n02-2078-142845-0023",
+   "b0": "HOT ROLLS",
+   "c0": "Hot rolls."
+  },
+  {
+   "clip": "n02-251-136532-0022",
+   "b0": "Lectures",
+   "c0": "Lectures,"
+  },
+  {
+   "clip": "n04-2035-147961-0034",
+   "b0": "Wherever they went the story followed them,",
+   "c0": "Wherever they went the story followed them."
+  },
+  {
+   "clip": "n08-2086-149220-0016",
+   "b0": "Miss Hepzibah, I suppose, will interweave the fact with her other traditions, and set it down that the fowls know you to be a pynchon.",
+   "c0": "Miss Hepzibah, I suppose, will interweave the fact with her other traditions, and set it down that the fowls know you to be a pynchon"
+  },
+  {
+   "clip": "n08-3853-163249-0041",
+   "b0": "We will. What can I do for you, Davy? asked Christy, wonderfully supported by the thought that she was going to.",
+   "c0": "We will. What can I do for you, Davy? asked Christie, wonderfully supported by the thought that she was going to."
+  },
+  {
+   "clip": "n08-652-130726-0027",
+   "b0": "Put into the oven again and cook for half an hour, basting frequently with the original brine.",
+   "c0": "put into the oven again and cook for half an hour, basting frequently with the original brine."
+  },
+  {
+   "clip": "n08-8842-302201-0007",
+   "b0": "To her I wend along, In whose much strength my weakness is made strong,",
+   "c0": "To her I wend along, In whose much strength my weakness is made strong"
+  },
+  {
+   "clip": "n15-3752-4944-0027",
+   "b0": "Before the two clergymen had got half way down the steep path that led from the commandant's house to the flat on which the cottages of the doctor and chaplain were built, McIlwain rejoined them,",
+   "c0": "Before the two clergymen had got half way down the steep path that led from the commandant's house to the flat on which the cottages of the doctor and chaplain were built, McIlwain rejoined them."
+  },
+  {
+   "clip": "n15-6241-61943-0008",
+   "b0": "On the eleventh day we sighted Cape Portland, over which towered Mount Midrell's Yokel, which, the weather being clear, we made out very readily.",
+   "c0": "On the eleventh day we sighted Cape Portland, over which towered Mount Midrill's Yokel, which, the weather being clear, we made out very readily."
+  }
+ ],
+ "tokens_identical_across_reps": true,
+ "per_bucket": {
+  "2": {
+   "clips": 16,
+   "preprocess_ms_median": 13.792,
+   "encoder_ms_median": 41.371,
+   "decode_ms_median": 6.939,
+   "decoder_model_ms_median": 4.96,
+   "joint_model_ms_median": 1.706,
+   "total_ms_median": 62.093,
+   "first_call_total_ms_median": 63.047,
+   "decoder_calls_mean": 9.5,
+   "joint_calls_mean": 12.12,
+   "decoder_ms_per_call": 0.5429,
+   "joint_ms_per_call": 0.1356
+  },
+  "4": {
+   "clips": 16,
+   "preprocess_ms_median": 14.417,
+   "encoder_ms_median": 41.312,
+   "decode_ms_median": 12.0,
+   "decoder_model_ms_median": 8.713,
+   "joint_model_ms_median": 2.52,
+   "total_ms_median": 67.647,
+   "first_call_total_ms_median": 66.829,
+   "decoder_calls_mean": 16.81,
+   "joint_calls_mean": 19.25,
+   "decoder_ms_per_call": 0.535,
+   "joint_ms_per_call": 0.1364
+  },
+  "8": {
+   "clips": 16,
+   "preprocess_ms_median": 15.187,
+   "encoder_ms_median": 41.341,
+   "decode_ms_median": 23.424,
+   "decoder_model_ms_median": 17.51,
+   "joint_model_ms_median": 4.87,
+   "total_ms_median": 80.052,
+   "first_call_total_ms_median": 80.853,
+   "decoder_calls_mean": 33.94,
+   "joint_calls_mean": 37.06,
+   "decoder_ms_per_call": 0.5226,
+   "joint_ms_per_call": 0.1365
+  },
+  "15": {
+   "clips": 16,
+   "preprocess_ms_median": 16.516,
+   "encoder_ms_median": 42.67,
+   "decode_ms_median": 40.757,
+   "decoder_model_ms_median": 30.348,
+   "joint_model_ms_median": 8.549,
+   "total_ms_median": 99.441,
+   "first_call_total_ms_median": 97.768,
+   "decoder_calls_mean": 61.69,
+   "joint_calls_mean": 65.75,
+   "decoder_ms_per_call": 0.511,
+   "joint_ms_per_call": 0.1356
+  }
+ },
+ "calls": {
+  "preprocessor_per_call": 1,
+  "encoder_per_call": 1,
+  "joint_calls_total": 2147,
+  "b0_steps_total": 2159,
+  "decoder_calls_total": 1951,
+  "b0_prediction_runs_total": 1955,
+  "encoder_length_minus_b0_frames": [
+   0,
+   1
+  ],
+  "effective_minus_b0_frames": [
+   0,
+   1
+  ]
+ },
+ "compute_plan": {
+  "Decoder": {
+   "compute_units": "cpuAndNeuralEngine",
+   "model": "Decoder.mlmodelc",
+   "plan_load_ms": 28.688208333333332,
+   "structure": "program",
+   "summary": {
+    "estimated_cost_share_by_preferred_device": {
+     "cpu": 1
+    },
+    "operators_by_preferred_device": {
+     "cpu": {
+      "ios17.add": 1,
+      "ios17.cast": 8,
+      "ios17.gather": 1,
+      "ios17.greater_equal": 1,
+      "ios17.lstm": 2,
+      "ios17.squeeze": 4,
+      "ios17.transpose": 2,
+      "select": 1,
+      "split": 2,
+      "stack": 2
+     }
+    },
+    "ops_total": 67,
+    "ops_with_usage_by_preferred_device": {
+     "cpu": 24
+    },
+    "ops_without_usage (constants etc.)": {
+     "const": 42,
+     "identity": 1
+    }
+   }
+  },
+  "Encoder": {
+   "compute_units": "cpuAndNeuralEngine",
+   "model": "Encoder.mlmodelc",
+   "plan_load_ms": 260.3147916666667,
+   "structure": "program",
+   "summary": {
+    "estimated_cost_share_by_preferred_device": {
+     "ane": 0.9995290845623478,
+     "cpu": 0.00047091543765226363
+    },
+    "operators_by_preferred_device": {
+     "ane": {
+      "ios16.relu": 3,
+      "ios16.sigmoid": 24,
+      "ios16.silu": 72,
+      "ios16.softmax": 24,
+      "ios17.add": 174,
+      "ios17.conv": 77,
+      "ios17.expand_dims": 4,
+      "ios17.floor": 3,
+      "ios17.layer_norm": 120,
+      "ios17.linear": 193,
+      "ios17.logical_and": 2,
+      "ios17.logical_not": 2,
+      "ios17.matmul": 72,
+      "ios17.mul": 99,
+      "ios17.reshape": 145,
+      "ios17.slice_by_index": 48,
+      "ios17.transpose": 172,
+      "pad": 48,
+      "select": 72,
+      "split": 24,
+      "tile": 1
+     },
+     "cpu": {
+      "ios17.cast": 4,
+      "ios17.expand_dims": 1,
+      "ios17.less": 1
+     }
+    },
+    "ops_total": 3398,
+    "ops_with_usage_by_preferred_device": {
+     "ane": 1379,
+     "cpu": 6
+    },
+    "ops_without_usage (constants etc.)": {
+     "const": 1719,
+     "ios16.constexpr_lut_to_dense": 294
+    }
+   }
+  },
+  "JointDecision": {
+   "compute_units": "cpuAndNeuralEngine",
+   "model": "JointDecision.mlmodelc",
+   "plan_load_ms": 26.34875,
+   "structure": "program",
+   "summary": {
+    "estimated_cost_share_by_preferred_device": {
+     "cpu": 1
+    },
+    "operators_by_preferred_device": {
+     "cpu": {
+      "ios16.relu": 1,
+      "ios16.softmax": 1,
+      "ios17.add": 1,
+      "ios17.cast": 4,
+      "ios17.expand_dims": 3,
+      "ios17.gather_along_axis": 1,
+      "ios17.linear": 3,
+      "ios17.reduce_argmax": 2,
+      "ios17.slice_by_index": 2,
+      "ios17.squeeze": 1,
+      "ios17.transpose": 2
+     }
+    },
+    "ops_total": 52,
+    "ops_with_usage_by_preferred_device": {
+     "cpu": 21
+    },
+    "ops_without_usage (constants etc.)": {
+     "const": 31
+    }
+   }
+  },
+  "Preprocessor": {
+   "compute_units": "cpuOnly",
+   "model": "Preprocessor.mlmodelc",
+   "plan_load_ms": 211.8005,
+   "structure": "program",
+   "summary": {
+    "estimated_cost_share_by_preferred_device": {
+     "cpu": 0
+    },
+    "operators_by_preferred_device": {
+     "cpu": {
+      "ios16.reduce_sum": 4,
+      "ios17.add": 4,
+      "ios17.cast": 7,
+      "ios17.concat": 3,
+      "ios17.conv": 2,
+      "ios17.expand_dims": 10,
+      "ios17.floor_div": 1,
+      "ios17.gather": 3,
+      "ios17.greater_equal": 1,
+      "ios17.less": 1,
+      "ios17.log": 1,
+      "ios17.matmul": 1,
+      "ios17.mul": 1,
+      "ios17.pow": 2,
+      "ios17.real_div": 4,
+      "ios17.reshape": 2,
+      "ios17.slice_by_index": 3,
+      "ios17.sqrt": 1,
+      "ios17.sub": 4,
+      "pad": 1,
+      "range_1d": 2,
+      "select": 3,
+      "shape": 3,
+      "stack": 1,
+      "tile": 2
+     }
+    },
+    "ops_total": 163,
+    "ops_with_usage_by_preferred_device": {
+     "cpu": 67
+    },
+    "ops_without_usage (constants etc.)": {
+     "const": 90,
+     "ios16.constexpr_affine_dequantize": 3,
+     "ios17.cast": 3
+    }
+   }
+  }
+ }
+}

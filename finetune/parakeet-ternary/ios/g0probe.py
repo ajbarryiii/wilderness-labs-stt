@@ -14,7 +14,7 @@ coremltools 9.0's own reader (libmilstoragepython._BlobStorageReader) and decomp
 
   Mac:   macguard --rss-cap 4G --timeout 900 -- ios/pyenv/.venv/bin/python ios/g0probe.py extract \
              --model <artifacts>/c0/Encoder.mlmodelc --out <artifacts>/results/g0probe.json
-  NixOS: ../heavy ios-wp2-g0 --mem-max 4G --runtime 10min --wait -- env CUDA_VISIBLE_DEVICES= \
+  NixOS: ../heavy ios-wp2-g0 --mem-max 8G --runtime 10min --wait -- env CUDA_VISIBLE_DEVICES= \
              <repo>/finetune/parakeet-ternary/python <repo>/finetune/parakeet-ternary/ios/g0probe.py compare \
              --probe <copy of g0probe.json>
 The probe's JSON holds weight excerpts (fingerprints); it stays in the artifact directories, not in Git.
@@ -169,7 +169,11 @@ def cmd_compare(args) -> None:
 
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     probe = json.loads(Path(args.probe).read_text())
-    state = torch.load(args.ckpt, map_location="cpu", weights_only=True, mmap=True)
+    import tarfile
+
+    with tarfile.open(args.nemo, "r:") as tar:  # B0's model_weights.ckpt, read from the pinned .nemo
+        member = next(m for m in tar.getmembers() if Path(m.name).name == "model_weights.ckpt")
+        state = torch.load(tar.extractfile(member), map_location="cpu", weights_only=True)
     pos_tables = [t["name"] for t in probe["tensors"] if t["shape"] == [1, 8, 128, 375]]
     layer_of_pos = {name: i for i, name in enumerate(pos_tables)}  # MIL order = layer order
     depthwise = [t["name"] for t in probe["tensors"] if t["shape"] == [1024, 1, 9]]
@@ -204,7 +208,8 @@ def main() -> None:
     p = sub.add_parser("extract"); p.add_argument("--model", required=True); p.add_argument("--out", required=True)
     p.set_defaults(func=cmd_extract)
     p = sub.add_parser("compare"); p.add_argument("--probe", required=True)
-    p.add_argument("--ckpt", default="/mnt/hd/wilderness-labs-stt/parakeet-ios/cache/b0/model_weights.ckpt")
+    p.add_argument("--nemo", default="/mnt/hd/wilderness-labs-stt/parakeet-ternary/models/parakeet-tdt-0.6b-v2/"
+                                     "parakeet-tdt-0.6b-v2.nemo")
     p.set_defaults(func=cmd_compare)
     args = parser.parse_args()
     args.func(args)
