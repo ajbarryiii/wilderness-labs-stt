@@ -10,11 +10,15 @@
 # Disk: Core ML keeps device-specialized copies of every model a Python process loads in
 # ~/Library/Caches/python/com.apple.e5rt.e5bundlecache (up to several GB per load; 28 GB after the first
 # WP3 runs). After each step the entries created during it are deleted (guarded jobs are serialized by
-# macguard's lock, so they are this step's); the run stops if the data volume has less than 60 GB free.
+# macguard's lock, so they are this step's), as are coremltools' temporary *.mlpackage directories in the
+# user temp dir; the run stops if the data volume has less than 30 GB free (floor lowered from 60 GB with
+# the user's approval, 2026-10-02).
 set -u
 cap=$1 timeout=$2 steps=$3
 cd "$(dirname "$0")/.." || exit 2
 cache="$HOME/Library/Caches/python/com.apple.e5rt.e5bundlecache"
+tmpd=$(getconf DARWIN_USER_TEMP_DIR 2>/dev/null || echo "${TMPDIR:-/tmp}")
+floor=30
 marker="${TMPDIR:-/tmp}/macrun-marker.$$"
 n=0
 while IFS= read -r line || [ -n "$line" ]; do
@@ -27,6 +31,7 @@ while IFS= read -r line || [ -n "$line" ]; do
     ./macguard --rss-cap "$cap" --timeout "$timeout" -- sh -c "$line" < /dev/null
     status=$?
     [ -d "$cache" ] && find "$cache" -mindepth 2 -maxdepth 2 -newer "$marker" -exec rm -rf {} +
+    [ -d "$tmpd" ] && find "$tmpd" -maxdepth 2 -name '*.mlpackage' -newer "$marker" -prune -exec rm -rf {} +
     [ "$status" -ne 3 ] && break
     tries=$((tries + 1))
     [ "$tries" -ge 40 ] && { echo "=== step $n refused 40 times; stopping"; exit 3; }
@@ -36,7 +41,7 @@ while IFS= read -r line || [ -n "$line" ]; do
   echo "=== step $n exit $status ($(date '+%F %T'))"
   [ "$status" -eq 0 ] || { echo "=== stopping after step $n"; exit "$status"; }
   free_gb=$(df -g "$HOME" | awk 'NR == 2 {print $4}')
-  [ "$free_gb" -ge 60 ] || { echo "=== stopping after step $n: ${free_gb} GB free < 60"; exit 4; }
+  [ "$free_gb" -ge "$floor" ] || { echo "=== stopping after step $n: ${free_gb} GB free < $floor"; exit 4; }
 done < "$steps"
 rm -f "$marker"
 echo "=== all $n steps done ($(date '+%F %T'))"

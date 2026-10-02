@@ -314,6 +314,8 @@ def folding(args) -> None:
         if pkg.exists():
             shutil.rmtree(pkg)
         model.save(str(pkg))
+        from .build import drop_temp_package
+        drop_temp_package(model)
         if sys.platform == "darwin":
             comp = compile_model(pkg, out_dir / f"{name}.mlmodelc")
             mil_text = (Path(comp["mlmodelc"]) / "model.mil").read_text()
@@ -405,6 +407,8 @@ def stress(args) -> None:
             if pkg.exists():
                 shutil.rmtree(pkg)
             model.save(str(pkg))
+            from .build import drop_temp_package
+            drop_temp_package(model)
             comp = compile_model(pkg, out_dir / f"{module}-{arm}.mlmodelc")
             plan = compute_plan(Path(comp["mlmodelc"]), "cpuAndNeuralEngine")["functions"]["main"]
             for uname, cu in units.items():

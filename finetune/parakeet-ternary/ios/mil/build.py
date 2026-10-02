@@ -236,6 +236,15 @@ def environment() -> dict:
             "platform": platform.platform(), "machine": platform.machine()}
 
 
+def drop_temp_package(mlmodel) -> None:
+    """Delete the temporary .mlpackage coremltools keeps for an unloaded converted model (user temp dir)."""
+    import tempfile
+
+    path = getattr(mlmodel, "package_path", None)
+    if path and Path(path).exists() and Path(path).resolve().is_relative_to(Path(tempfile.gettempdir()).resolve()):
+        shutil.rmtree(path, ignore_errors=True)
+
+
 def save_manifest(manifest: dict, out_dir: Path, model: str, arm: str, variant: str) -> None:
     text = json.dumps(manifest, indent=1, default=str) + "\n"
     (out_dir / f"manifest-{variant}.json").write_text(text)
@@ -277,6 +286,7 @@ def build_encoder(model: str, arm: str, variant: str, out_root: Path, layers: in
     if package.exists():
         shutil.rmtree(package)
     mlmodel.save(str(package))
+    drop_temp_package(mlmodel)
     t_saved = time.time()
     weight_bin = package / "Data" / "com.apple.CoreML" / "weights" / "weight.bin"
     manifest = {
@@ -348,6 +358,7 @@ def build_decoder(model: str, out_root: Path, plan: bool = True) -> dict:
         if package.exists():
             shutil.rmtree(package)
         mlmodel.save(str(package))
+        drop_temp_package(mlmodel)
         entry = {"program": describe_program(final), "convert_s": round(time.time() - t0, 1),
                  "mlpackage_bytes": dir_bytes(package), "paths": {"mlpackage": str(package)}}
         if sys.platform == "darwin":
