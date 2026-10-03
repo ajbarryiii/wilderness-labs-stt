@@ -6,7 +6,7 @@ the Mac is shared, so every number here is informational and no claim rests on i
   (b) WP5 pipeline factors on C4 multifunction: front end {c0pre, vdsp} x decode {f0, f1, f2};
   (c) WP7, front end A + F2: the ANE-layout builds C4-ane, C3-ane, C6s8-ane (cpuAndNeuralEngine), C4, C3, C6s8
       multifunction on the GPU backend (cpuAndGPU), and C6s8 multifunction on cpuAndNeuralEngine (within-session anchor).
-Every timed combination needs its revision-9 deployed-pipeline record (ios/pipegate.py); the Swift runner verifies
+Every timed combination needs its revision-10 deployed-pipeline record (ios/pipegate.py); the Swift runner verifies
 it, component SHA-256s and executable included, and verifies C0 against c0.json.
 
   ./python ios/wp5sweep.py plan [--groups c]
@@ -102,7 +102,7 @@ def eligibility(a: dict) -> tuple[bool, str]:
     if not p.exists():
         return False, f"no pipeline record {p.name}"
     prec = json.loads(p.read_text())
-    if prec.get("design_revision") != 9 or not prec.get("timing_allowed"):
+    if prec.get("design_revision") != 10 or not prec.get("timing_allowed"):
         return False, f"pipeline record {p.name}: not timing-allowed ({prec.get('reasons')})"
     return True, f"revision {rec.get('design_revision')} encoder and pipeline records, timing allowed"
 
@@ -387,8 +387,33 @@ def identity_problems(manifest: dict, a: dict, d: Path) -> list[str]:
     want("arm.jsonl", "mode", "free")
     want("arm.jsonl", "warmups", manifest.get("warmups", WARMUPS))
     want("arm.jsonl", "timed", manifest.get("timed", TIMED))
+    # the subsequent fresh-process load (review r3 finding 3): arm alone, free mode, the one prescribed clip, exactly
+    # one warm-up call and no timed call, a complete inference and an end record
     want("cached.jsonl", "warmups", 1)
     want("cached.jsonl", "timed", 0)
+    want("cached.jsonl", "mode", "free")
+    want("cached.jsonl", "clip_ids", [CACHED_CLIP])
+    if loads["cached.jsonl"].get("pairing") not in (None, {}):
+        problems.append("cached.jsonl: paired with C0 (must load the arm alone)")
+    cached = load_records(d / "cached.jsonl")
+    calls = [r for r in cached if "result" in r]
+    if len(calls) != 1:
+        problems.append(f"cached.jsonl: {len(calls)} call records, expected exactly 1")
+    else:
+        c = calls[0]
+        res = c.get("result") or {}
+        if (c.get("clip"), c.get("warmup"), c.get("rep"), c.get("mode"), c.get("arm")) != (CACHED_CLIP, True, 0, "free", a["name"]):
+            problems.append("cached.jsonl: the call is not the prescribed warm-up of the arm on the cached clip")
+        if not isinstance(res.get("tokens"), list) or not (res.get("encoder_length") or 0) > 0 \
+                or not isinstance((res.get("times_ms") or {}).get("total"), (int, float)):
+            problems.append("cached.jsonl: incomplete inference result")
+    ends = [r for r in cached if r.get("record") == "end"]
+    if len(ends) != 1 or not isinstance(ends[0].get("phys_footprint_peak_mb"), (int, float)) \
+            or ends[0].get("phys_footprint_note") != "this arm only":
+        problems.append("cached.jsonl: no single arm-only end record with a footprint")
+    for f in ("arm.jsonl", "c0.jsonl"):
+        if sum(r.get("record") == "end" for r in load_records(d / f)) != 1:
+            problems.append(f"{f}: no single end record (run did not finish)")
     want("c0.jsonl", "arm", "C0")
     want("c0.jsonl", "compute_units", "cpuAndNeuralEngine")
     want("c0.jsonl", "preprocessor_units", "cpuOnly")

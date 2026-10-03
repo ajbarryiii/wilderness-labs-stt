@@ -1,4 +1,4 @@
-"""Deployed-pipeline gates and records (WP7; DESIGN.md revision 9, gate 4b applied to the deployed combinations).
+"""Deployed-pipeline gates and records (WP7; DESIGN.md revision 10, gate 4b applied to the deployed combinations).
 
 A deployed pipeline = front end A (vDSP) -> encoder arm (model, arm, variant, backend) -> decode loop (F2 native
 FP32; F0 / F1 with the FP32 decoder models). Gated on all 82 clips, run in Swift (`parakeet-bench gate`):
@@ -14,11 +14,14 @@ FP32; F0 / F1 with the FP32 decoder models). Gated on all 82 clips, run in Swift
 - free decoding of the 64 natural clips: token sequences identical to the reference's on >= 61, and WER within
   +0.2 points of the reference (scored on NixOS with the parent experiment's scorer);
 - coverage: every clip of clips.json, every trace replayed in full, every decode present; else the gate fails.
-Reported (DESIGN.md gate 4b): head errors for token logits (incl. blank) and duration logits (F2 directly; F0
-through the diagnostic JointLogits on the same inputs; F1 through a diagnostic reconstruction, FP32 Decoder +
-JointLogits on F1's own inputs and state, since DecoderJoint exposes no logits) and LSTM h and c (all three),
-token-probability differences, and margin distributions (the reference's, the pipeline's own, and the reference
-margins of disagreeing steps). Every required diagnostic section must be present with exact dimensions.
+Reported (DESIGN.md rev. 10, gate 4b): head errors for token logits (incl. blank) and duration logits for F2
+(directly) and F0 (JointLogits on the same joint inputs); for F1 they are UNAVAILABLE (DecoderJoint outputs only
+decisions, a probability and its state), and a labelled informational PROXY (FP32 Decoder + JointLogits evaluated on
+F1's own inputs) is reported separately with its consistency to F1 (state, token and duration argmax agreement),
+never as F1's head error. LSTM h and c errors (all three, F1's own h_out/c_out), token-probability differences, and
+margin distributions (the reference's, the pipeline's own for F2/F0, and the reference margins of disagreeing
+steps). Every required diagnostic section, decision and probability array and capture count must have its exact
+dimensions and valid values before anything is scored.
 
 Identity (review WP7 r1 findings 2, 4): records bind every component (parakeet-bench recomputes and compares them
 before timing, executable SHA-256 included); the FP64-feature reference is valid only while its front-end manifest,
@@ -54,9 +57,9 @@ IOS = Path(__file__).resolve().parent
 sys.path.insert(0, str(IOS))
 sys.path.insert(0, str(IOS.parent))
 
-DESIGN_REVISION = 9          # pipeline records (DESIGN.md revision 9)
+DESIGN_REVISION = 10         # pipeline records (DESIGN.md revision 10)
 ENCODER_RECORD_REVISION = 8  # WP3's encoder records
-CODE_VERSION = "wp7-pipegate-4"
+CODE_VERSION = "wp7-pipegate-5"
 T = {"encoder_rel": 0.1, "tau": 1e-3, "decisive_margin": 1.0, "agree_decisive": 0.995, "agree_all": 0.99,
      "decisive_min": 0.5, "identical_min": 61, "wer_points": 0.2, "diag_head_rel": 2e-2}
 DURATIONS = (0, 1, 2, 3, 4)
@@ -64,16 +67,67 @@ N_DUR = 5
 DECODES = ("f2", "f0", "f1")
 STATE_SECTIONS = {"f2": ("h", "c"), "f0": ("h_step", "c_step"), "f1": ("h_out", "c_out")}
 # replay diagnostics every decode loop must deliver (review WP7 r2 finding 3): name -> (row shape, rows per clip:
-# "steps" = trace steps, "predictions" = 1 + emitted tokens). F1's logits / recon_* are the diagnostic reconstruction
-# (FP32 Decoder + JointLogits on F1's own inputs and state; DecoderJoint exposes no logits).
+# "steps" = trace steps, "predictions" = 1 + emitted tokens). F1's proxy_* sections are the informational proxy of
+# DESIGN.md rev. 10 (FP32 Decoder + JointLogits on F1's own inputs); F1's own logits are unavailable.
 REQUIRED_SECTIONS = {
     "f2": {"logits": ([1030], "steps"), "h": ([2, 640], "steps"), "c": ([2, 640], "steps"),
            "pred_g": ([640], "predictions"), "pred_h": ([2, 640], "predictions"), "pred_c": ([2, 640], "predictions")},
     "f0": {"logits": ([1030], "steps"), "h_step": ([2, 640], "steps"), "c_step": ([2, 640], "steps"),
            "decoder_out": ([640], "predictions"), "h": ([2, 640], "predictions"), "c": ([2, 640], "predictions")},
-    "f1": {"logits": ([1030], "steps"), "h_out": ([2, 640], "steps"), "c_out": ([2, 640], "steps"),
-           "recon_h": ([2, 640], "steps"), "recon_c": ([2, 640], "steps")},
+    "f1": {"h_out": ([2, 640], "steps"), "c_out": ([2, 640], "steps"),
+           "proxy_logits": ([1030], "steps"), "proxy_h": ([2, 640], "steps"), "proxy_c": ([2, 640], "steps")},
 }
+TRUE_HEADS = ("f2", "f0")    # DESIGN.md rev. 10: F0 and F2 report true head errors
+PROB_DECODES = ("f0", "f1")  # their decision models output token_prob
+UNAVAILABLE = "unavailable"
+PROXY_LABEL = ("informational proxy (DESIGN.md rev. 10), not F1's own head error: FP32 Decoder + JointLogits evaluated "
+               "on F1's own inputs (pending token, F1's input state h_in/c_in, the same encoder frame)")
+
+
+def expected_values(dec: str, steps: int, predictions: int) -> int:
+    """Float values one DiagSink captures for a pass: every required section plus token_prob per step (F0, F1)."""
+    n = 0
+    for shape, rows in REQUIRED_SECTIONS[dec].values():
+        size = 1
+        for k in shape:
+            size *= k
+        n += size * (steps if rows == "steps" else predictions)
+    return n + (steps if dec in PROB_DECODES else 0)
+
+
+def record_problems(dec: str, x: dict, sec: dict, steps: int, predictions: int) -> list[str]:
+    """Exact lengths and valid values of the decision/probability arrays, and capture counts consistent with the
+    loop's own step counts, before anything is scored (review WP7 r3 finding 2)."""
+    out = []
+
+    def ints(key: str, valid) -> None:
+        v = x.get(key)
+        if not isinstance(v, list) or len(v) != steps:
+            out.append(f"{key}: {len(v) if isinstance(v, list) else v!r} entries != {steps} steps")
+        elif not all(isinstance(t, int) and valid(t) for t in v):
+            out.append(f"{key}: invalid values")
+
+    ints("argmax_token", lambda t: 0 <= t <= 1024)
+    ints("argmax_duration", lambda t: t in DURATIONS)
+    if dec in PROB_DECODES:
+        pr = x.get("token_prob")
+        if not isinstance(pr, list) or len(pr) != steps:
+            out.append(f"token_prob: {len(pr) if isinstance(pr, list) else pr!r} entries != {steps} steps")
+        elif not all(isinstance(v, (int, float)) and math.isfinite(v) and 0 <= v <= 1 for v in pr):
+            out.append("token_prob: values outside [0, 1] or not finite")
+    if x.get("replay_predictions") != predictions:
+        out.append(f"replay_predictions {x.get('replay_predictions')} != {predictions}")
+    if x.get("replay_values") != expected_values(dec, steps, predictions):
+        out.append(f"replay_values {x.get('replay_values')} != {expected_values(dec, steps, predictions)}")
+    fs, ft = x.get("free_steps"), x.get("tokens")
+    if not isinstance(fs, int) or fs < 1 or not isinstance(ft, list):
+        out.append(f"free decoding: steps {fs!r}")
+    elif x.get("free_values") != expected_values(dec, fs, 1 + len(ft)):
+        out.append(f"free_values {x.get('free_values')} != {expected_values(dec, fs, 1 + len(ft))}")
+    for key in ("free_nonfinite", "replay_nonfinite"):
+        if not isinstance(x.get(key), int) or x[key] < 0:
+            out.append(f"{key}: {x.get(key)!r}")
+    return out
 
 
 def section_problems(dec: str, sec: dict, steps: int, predictions: int) -> list[str]:
@@ -292,7 +346,7 @@ def cmd_evaluate(args) -> int:
         dur = {"all": 0, "ok": 0, "dec": 0, "dec_ok": 0, "ref_margin": [], "own_margin": [], "disagree_ref_margin": []}
         head_err = {"token_logits": [], "duration_logits": [], "h": [], "c": []}
         prob_diff = []
-        recon = {"state_rel": [], "steps": 0, "token_argmax_equal": 0}
+        proxy = {"token_logits": [], "duration_logits": [], "state_rel": [], "steps": 0, "token_equal": 0, "duration_equal": 0}
         nonfinite = {"free": 0, "replay": 0, "replay_recount": 0, "values": 0}
         missing, free_rows = [], {}
         for cid, r in rows.items():
@@ -300,34 +354,29 @@ def cmd_evaluate(args) -> int:
             if x is None or "replay_error" in x or x.get("replay_steps") != traces[cid]["steps"] or "diag" not in x:
                 missing.append(cid)
                 continue
+            steps = traces[cid]["steps"]
+            predictions = 1 + sum(traces[cid]["pred_updated"])
+            sec = load_diag(d, x["diag"])
+            # validation before any scoring (review r2 finding 3, r3 finding 2): sections, decisions, probabilities
+            # and capture counts must all have their exact dimensions and valid values
+            bad = section_problems(dec, sec, steps, predictions) + record_problems(dec, x, sec, steps, predictions)
+            if bad:
+                missing.append(f"{cid}: " + "; ".join(bad))
+                continue
             nonfinite["free"] += x["free_nonfinite"]
             nonfinite["replay"] += x["replay_nonfinite"]
             nonfinite["values"] += x["free_values"] + x["replay_values"]
+            nonfinite["replay_recount"] += sum(int((~np.isfinite(v)).sum()) for v in sec.values())
             ref = refcache.load_clip(header["model"], cid)
             logits = ref["fp16s_logits"]
-            sec = load_diag(d, x["diag"])
-            nonfinite["replay_recount"] += sum(int((~np.isfinite(v)).sum()) for v in sec.values())
-            steps = traces[cid]["steps"]
-            predictions = 1 + sum(traces[cid]["pred_updated"])
-            bad = section_problems(dec, sec, steps, predictions)
-            if x.get("replay_predictions") != predictions:
-                bad.append(f"replay_predictions {x.get('replay_predictions')} != {predictions}")
-            if bad:  # a missing or malformed diagnostic fails coverage (no silently absent head errors)
-                missing.append(f"{cid}: " + "; ".join(bad))
-                continue
-            own = sec["logits"]
-            if dec == "f1":
-                recon["state_rel"].append(max(refcache.errors(sec["recon_h"], sec["h_out"], T["tau"])[0],
-                                              refcache.errors(sec["recon_c"], sec["c_out"], T["tau"])[0]))
-                recon["steps"] += steps
-                recon["token_argmax_equal"] += int((own[:, :-N_DUR].argmax(1) == np.asarray(x["argmax_token"])).sum())
-            for head, at, sl, vals in ((tok, x["argmax_token"], slice(0, -N_DUR), None),
-                                       (dur, x["argmax_duration"], slice(-N_DUR, None), DURATIONS)):
+            at_tok, at_dur = np.asarray(x["argmax_token"]), np.asarray(x["argmax_duration"])
+            own = sec["logits"] if dec in TRUE_HEADS else None   # F1: DecoderJoint exposes no logits (rev. 10)
+            for head, at, sl, vals in ((tok, at_tok, slice(0, -N_DUR), None), (dur, at_dur, slice(-N_DUR, None), DURATIONS)):
                 lg = logits[:, sl]
                 srt = np.sort(lg, axis=1)
                 margin = srt[:, -1] - srt[:, -2]
                 ref_arg = lg.argmax(1) if vals is None else np.asarray(vals)[lg.argmax(1)]
-                agree = np.asarray(at) == ref_arg
+                agree = at == ref_arg
                 decisive = margin >= T["decisive_margin"]
                 head["all"] += len(agree); head["ok"] += int(agree.sum())
                 head["dec"] += int(decisive.sum()); head["dec_ok"] += int(agree[decisive].sum())
@@ -342,37 +391,58 @@ def cmd_evaluate(args) -> int:
             hn, cn = STATE_SECTIONS[dec]
             head_err["h"].append(refcache.errors(sec[hn].reshape(ref["fp16s_h"].shape), ref["fp16s_h"], T["tau"]))
             head_err["c"].append(refcache.errors(sec[cn].reshape(ref["fp16s_c"].shape), ref["fp16s_c"], T["tau"]))
-            # token probability of the pipeline's chosen token vs the reference softmax at that token (diagnostic)
+            if dec == "f1":  # informational proxy only (DESIGN.md rev. 10): never reported as F1's head error
+                pl = sec["proxy_logits"]
+                proxy["token_logits"].append(refcache.errors(pl[:, :-N_DUR], logits[:, :-N_DUR], T["tau"]))
+                proxy["duration_logits"].append(refcache.errors(pl[:, -N_DUR:], logits[:, -N_DUR:], T["tau"]))
+                proxy["state_rel"].append(max(refcache.errors(sec["proxy_h"], sec["h_out"], T["tau"])[0],
+                                              refcache.errors(sec["proxy_c"], sec["c_out"], T["tau"])[0]))
+                proxy["steps"] += steps
+                proxy["token_equal"] += int((pl[:, :-N_DUR].argmax(1) == at_tok).sum())
+                proxy["duration_equal"] += int((np.asarray(DURATIONS)[pl[:, -N_DUR:].argmax(1)] == at_dur).sum())
+            # probability of the pipeline's chosen token vs the reference softmax at that token (F0, F1: their own
+            # token_prob output; F2: from its logits)
             tl = logits[:, :-N_DUR].astype(np.float64)
             p_ref = np.exp(tl - tl.max(1, keepdims=True))
             p_ref /= p_ref.sum(1, keepdims=True)
-            chosen = np.asarray(x["argmax_token"])
-            if "token_prob" in x:
-                prob_diff.append(float(np.abs(np.asarray(x["token_prob"]) - p_ref[np.arange(steps), chosen]).max()))
+            if dec in PROB_DECODES:
+                p_own = np.asarray(x["token_prob"], dtype=np.float64)
+            else:
+                ol = own[:, :-N_DUR].astype(np.float64)
+                e = np.exp(ol - ol.max(1, keepdims=True))
+                p_own = (e / e.sum(1, keepdims=True))[np.arange(steps), at_tok]
+            prob_diff.append(float(np.abs(p_own - p_ref[np.arange(steps), at_tok]).max()))
             if clips[cid]["kind"] == "natural":
                 free_rows[cid] = x["tokens"]
         heads = {}
         for name, h in (("token", tok), ("duration", dur)):
             heads[name] = {"steps": h["all"], "agree_all": h["ok"] / max(h["all"], 1), "decisive_fraction": h["dec"] / max(h["all"], 1),
                            "agree_decisive": h["dec_ok"] / max(h["dec"], 1),
-                           "reference_margin": quantiles(h["ref_margin"]), "pipeline_margin": quantiles(h["own_margin"]) or None,
+                           "reference_margin": quantiles(h["ref_margin"]),
+                           "pipeline_margin": quantiles(h["own_margin"]) if dec in TRUE_HEADS else UNAVAILABLE,
                            "reference_margin_of_disagreements": sorted(round(v, 4) for v in h["disagree_ref_margin"])[:50]}
             heads[name]["pass"] = (heads[name]["agree_decisive"] >= T["agree_decisive"] and heads[name]["agree_all"] >= T["agree_all"]
                                    and heads[name]["decisive_fraction"] >= T["decisive_min"])
-        errs = {}
-        for k, v in head_err.items():
-            if v:
-                rels = [e[0] for e in v]
-                errs[k] = {"clips": len(v), "rel_max": max(rels), "rel_median": float(np.median(rels)),
-                           "abs_max": max(e[1] for e in v), "clips_over_diag_ceiling": sum(r > T["diag_head_rel"] for r in rels)}
-            else:
-                errs[k] = None
-        if dec == "f1":
-            errs["logits_note"] = ("F1 logits are a diagnostic reconstruction: FP32 Decoder + JointLogits on F1's own inputs "
-                                   "(pending token, F1's input state, the same encoder frame); DecoderJoint exposes none")
-            errs["reconstruction_consistency"] = {
-                "state_rel_max_vs_decoderjoint": max(recon["state_rel"]) if recon["state_rel"] else None,
-                "token_argmax_equal_to_f1_decisions": recon["token_argmax_equal"] / max(recon["steps"], 1)}
+
+        def summarize(v):
+            rels = [e[0] for e in v]
+            return {"clips": len(v), "rel_max": max(rels), "rel_median": float(np.median(rels)), "abs_max": max(e[1] for e in v),
+                    "clips_over_diag_ceiling": sum(r > T["diag_head_rel"] for r in rels)} if v else None
+
+        errs = {k: summarize(v) for k, v in head_err.items()}
+        informational_proxy = None
+        if dec not in TRUE_HEADS:
+            errs["token_logits"] = errs["duration_logits"] = UNAVAILABLE
+            errs["note"] = ("DESIGN.md rev. 10: DecoderJoint outputs only decisions, a probability and its state, so F1's token "
+                            "and duration logit errors are unavailable; h and c are F1's own (h_out, c_out)")
+            informational_proxy = {
+                "label": PROXY_LABEL,
+                "token_logits_vs_reference": summarize(proxy["token_logits"]),
+                "duration_logits_vs_reference": summarize(proxy["duration_logits"]),
+                "consistency_with_f1": {"state_rel_max_vs_h_out_c_out": max(proxy["state_rel"]) if proxy["state_rel"] else None,
+                                        "token_argmax_agreement": proxy["token_equal"] / max(proxy["steps"], 1),
+                                        "duration_argmax_agreement": proxy["duration_equal"] / max(proxy["steps"], 1),
+                                        "steps": proxy["steps"]}}
         ref_tokens = {c: index["free_tokens"][c]["fp16s_free_tokens"] for c in free_rows}
         identical = sum(free_rows[c] == ref_tokens[c] for c in free_rows)
         n_nat = sum(1 for c in clips.values() if c["kind"] == "natural")
@@ -386,6 +456,8 @@ def cmd_evaluate(args) -> int:
             "free_decoding": {"pass": identical >= T["identical_min"] and len(free_rows) == n_nat, "clips": len(free_rows),
                               "identical": identical},
             "free_tokens": free_rows, "reference_tokens": ref_tokens}
+        if informational_proxy is not None:
+            per_decode[dec]["informational_proxy"] = informational_proxy
         per_decode[dec]["pass_before_wer"] = (encoder["pass"] and not problems and per_decode[dec]["coverage"]["pass"]
                                              and finite_ok and per_decode[dec]["decisions"]["pass"]
                                              and per_decode[dec]["free_decoding"]["pass"])
@@ -444,7 +516,8 @@ def cmd_record(args) -> int:
     summary = {k: ev[k] for k in ("design_revision", "code_version", "thresholds", "header", "build", "refcache_provenance",
                                   "ref64_index_sha256", "problems", "encoder", "evaluated", "pipegate_py_sha256")}
     summary["decodes"] = {dec: {k: v[k] for k in ("coverage", "finite", "decisions", "head_errors",
-                                                   "token_prob_max_abs_diff_vs_reference_softmax", "free_decoding")}
+                                                   "token_prob_max_abs_diff_vs_reference_softmax", "free_decoding",
+                                                   "informational_proxy") if k in v}
                           | {"wer": wers[dec]} for dec, v in ev["decodes"].items()}
     summary["encoder_rows"] = ev["encoder_rows"]
     summary_path.write_text(json.dumps(summary, indent=1) + "\n")
@@ -634,7 +707,7 @@ def cmd_table(args) -> int:
                     f"{c['decisions']['token']['agree_decisive']:.4f} / {c['decisions']['duration']['agree_decisive']:.4f} | "
                     f"{c['decisions']['token']['agree_all']:.4f} / {c['decisions']['duration']['agree_all']:.4f} | "
                     f"{c['wer']['pipeline_wer_pct']:.3f} / {c['wer']['reference_wer_pct']:.3f} |")
-    text = ("Deployed-pipeline records (front end A + encoder arm + decode loop; DESIGN.md revision 9 gate 4b conditions).\n\n"
+    text = ("Deployed-pipeline records (front end A + encoder arm + decode loop; DESIGN.md revision 10 gate 4b conditions).\n\n"
             "| model | arm | variant | backend | decode | timing allowed | failed | encoder rel max | identical | "
             "decisive agreement token / duration | all-step agreement token / duration | WER pipeline / ref (%) |\n"
             "|---|---|---|---|---|---|---|---|---|---|---|---|\n" + "\n".join(rows) + "\n")

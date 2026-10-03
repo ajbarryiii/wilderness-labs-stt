@@ -7,10 +7,14 @@ faults, each of which must fail the evaluation (exit 10) for the stated reason:
   nan     one NaN in one clip's F1 replay state       -> f1 finite fails, f2/f0 pass
   missing one clip dropped                             -> coverage fails (problems)
   flip    5% of F0 token decisions flipped              -> f0 decisions fail
-  nologits  F1's (reconstructed) logits missing on one clip   -> f1 coverage fails (review r2 finding 3)
+  noproxy   F1's informational proxy logits missing on one clip -> f1 coverage fails (review r2 finding 3)
   badshape  F2's pred_g one row short on one clip            -> f2 coverage fails
   nopred    F0's decoder_out missing on one clip             -> f0 coverage fails
-The scratch directory is removed at the end (pass or fail).
+  singleton F2's argmax_token of length 1 (would broadcast)   -> f2 coverage fails (review r3 finding 2)
+  noprob    F0's token_prob missing on one clip               -> f0 coverage fails
+  zerocount F1's free-decoding capture count 0                -> f1 coverage fails
+The scratch directory ($A/scratch/pipegate-selftest) is removed before the run and in a `finally` on every exit path
+Python sees; after a guard kill (SIGKILL) the next run removes it first, or remove it by hand.
 
   cd ios && ios/macguard --rss-cap 2G --timeout 900 -- pyenv/.venv/bin/python tests/pipegate_selftest.py
 """
@@ -71,14 +75,16 @@ def build(root: Path, fault: str | None) -> Path:
             hn, cn = pipegate.STATE_SECTIONS[dec]
             secs[hn] = ref["fp16s_h"].astype("<f4").copy()
             secs[cn] = ref["fp16s_c"].astype("<f4").copy()
-            secs["logits"] = lg.astype("<f4")
-            if dec == "f1":
-                secs["recon_h"], secs["recon_c"] = secs[hn].copy(), secs[cn].copy()
+            if dec == "f1":  # F1: no logits of its own; the informational proxy
+                secs["proxy_logits"] = lg.astype("<f4")
+                secs["proxy_h"], secs["proxy_c"] = secs[hn].copy(), secs[cn].copy()
+            else:
+                secs["logits"] = lg.astype("<f4")
             first = c["id"] == ids[0]
             if fault == "nan" and dec == "f1" and first:
                 secs[hn][0, 0, 0] = np.nan
-            if fault == "nologits" and dec == "f1" and first:
-                del secs["logits"]
+            if fault == "noproxy" and dec == "f1" and first:
+                del secs["proxy_logits"]
             if fault == "badshape" and dec == "f2" and first:
                 secs["pred_g"] = secs["pred_g"][:-1]
             if fault == "nopred" and dec == "f0" and first:
@@ -94,11 +100,24 @@ def build(root: Path, fault: str | None) -> Path:
             (d / "diag" / dec).mkdir(parents=True, exist_ok=True)
             (d / "diag" / dec / f"{c['id']}.f32").write_bytes(data)
             nonfinite = int(sum((~np.isfinite(a)).sum() for a in secs.values()))
-            rec[dec] = {"tokens": index["free_tokens"][c["id"]]["fp16s_free_tokens"], "free_steps": int(lg.shape[0]),
-                        "free_values": 1, "free_nonfinite": 0, "argmax_token": t.tolist(), "argmax_duration": dur.tolist(),
-                        "replay_steps": traces[c["id"]]["steps"], "replay_predictions": npred, "replay_values": 1,
-                        "replay_nonfinite": nonfinite,
+            steps = int(lg.shape[0])
+            free_tokens = index["free_tokens"][c["id"]]["fp16s_free_tokens"]
+            rec[dec] = {"tokens": free_tokens, "free_steps": steps,
+                        "free_values": pipegate.expected_values(dec, steps, 1 + len(free_tokens)), "free_nonfinite": 0,
+                        "argmax_token": [int(v) for v in t], "argmax_duration": [int(v) for v in dur],
+                        "replay_steps": traces[c["id"]]["steps"], "replay_predictions": npred,
+                        "replay_values": pipegate.expected_values(dec, steps, npred), "replay_nonfinite": nonfinite,
                         "diag": {"file": f"diag/{dec}/{c['id']}.f32", "sha256": hashlib.sha256(data).hexdigest(), "sections": index_}}
+            if dec in pipegate.PROB_DECODES:
+                tl = lg[:, :-5].astype(np.float64)
+                e = np.exp(tl - tl.max(1, keepdims=True))
+                rec[dec]["token_prob"] = (e / e.sum(1, keepdims=True))[np.arange(steps), t].tolist()
+            if first and fault == "singleton" and dec == "f2":
+                rec[dec]["argmax_token"] = rec[dec]["argmax_token"][:1]   # would broadcast in NumPy
+            if first and fault == "noprob" and dec == "f0":
+                del rec[dec]["token_prob"]
+            if first and fault == "zerocount" and dec == "f1":
+                rec[dec]["free_values"] = 0
         lines.append(rec)
     (d / "gate.jsonl").write_text("".join(json.dumps(l) + "\n" for l in lines))
     (d / "build.json").write_text(json.dumps({"commit": "mock", "clean": True, "executable_sha256": "mock"}))
@@ -108,6 +127,14 @@ def build(root: Path, fault: str | None) -> Path:
 def main() -> int:
     pipegate.disk_preflight(2)  # 30 GB floor + about 0.3 GB of mock outputs, with margin
     root = artifacts.check(artifacts.root() / "scratch" / "pipegate-selftest")
+    shutil.rmtree(root, ignore_errors=True)  # also clears what a guard-killed earlier run left behind
+    try:
+        return run(root)
+    finally:  # disposable, removed on every exit path Python sees (review r3 finding 5)
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def run(root: Path) -> int:
     # the FP64-feature reference is replaced by the FP32-feature one for the mock (same arrays as the mock encoder)
     ref_dir = root / "ref"
     shutil.rmtree(ref_dir, ignore_errors=True)
@@ -122,8 +149,9 @@ def main() -> int:
     failures = []
     for fault, expect in ((None, {"f2": True, "f0": True, "f1": True}), ("nan", {"f2": True, "f0": True, "f1": False}),
                           ("missing", {"f2": False, "f0": False, "f1": False}), ("flip", {"f2": True, "f0": False, "f1": True}),
-                          ("nologits", {"f2": True, "f0": True, "f1": False}), ("badshape", {"f2": False, "f0": True, "f1": True}),
-                          ("nopred", {"f2": True, "f0": False, "f1": True})):
+                          ("noproxy", {"f2": True, "f0": True, "f1": False}), ("badshape", {"f2": False, "f0": True, "f1": True}),
+                          ("nopred", {"f2": True, "f0": False, "f1": True}), ("singleton", {"f2": False, "f0": True, "f1": True}),
+                          ("noprob", {"f2": True, "f0": False, "f1": True}), ("zerocount", {"f2": True, "f0": True, "f1": False})):
         d = build(root, fault)
 
         class A:
@@ -135,18 +163,22 @@ def main() -> int:
         if fault is None:
             e = ev["decodes"]["f2"]["head_errors"]
             e1 = ev["decodes"]["f1"]["head_errors"]
-            ok = ok and e["token_logits"]["rel_max"] == 0 and e["h"]["rel_max"] == 0 and e1["token_logits"]["rel_max"] == 0 \
-                and e1["reconstruction_consistency"]["state_rel_max_vs_decoderjoint"] == 0
+            px = ev["decodes"]["f1"]["informational_proxy"]
+            ok = ok and e["token_logits"]["rel_max"] == 0 and e["h"]["rel_max"] == 0 \
+                and e1["token_logits"] == "unavailable" and e1["duration_logits"] == "unavailable" and e1["h"]["rel_max"] == 0 \
+                and px["token_logits_vs_reference"]["rel_max"] == 0 and px["consistency_with_f1"]["state_rel_max_vs_h_out_c_out"] == 0 \
+                and px["consistency_with_f1"]["token_argmax_agreement"] == 1 and px["consistency_with_f1"]["duration_argmax_agreement"] == 1 \
+                and ev["decodes"]["f1"]["decisions"]["token"]["pipeline_margin"] == "unavailable" \
+                and ev["decodes"]["f2"]["token_prob_max_abs_diff_vs_reference_softmax"] == 0
         if fault == "nan":
             ok = ok and not ev["decodes"]["f1"]["finite"]["pass"] and ev["decodes"]["f1"]["finite"]["replay_recount"] == 1
         if fault == "flip":
             ok = ok and not ev["decodes"]["f0"]["decisions"]["pass"]
-        if fault in ("nologits", "badshape", "nopred"):
-            dec = {"nologits": "f1", "badshape": "f2", "nopred": "f0"}[fault]
+        if fault in ("noproxy", "badshape", "nopred", "singleton", "noprob", "zerocount"):
+            dec = {"noproxy": "f1", "badshape": "f2", "nopred": "f0", "singleton": "f2", "noprob": "f0", "zerocount": "f1"}[fault]
             ok = ok and not ev["decodes"][dec]["coverage"]["pass"]
         print(f"{fault or 'clean'}: exit {code}, pass {got}, expected {expect}: {'PASS' if ok else 'FAIL'}", flush=True)
         failures += [] if ok else [fault or "clean"]
-    shutil.rmtree(root, ignore_errors=True)  # disposable (review r2 finding 6)
     print(f"failed checks: {len(failures)}")
     return 1 if failures else 0
 

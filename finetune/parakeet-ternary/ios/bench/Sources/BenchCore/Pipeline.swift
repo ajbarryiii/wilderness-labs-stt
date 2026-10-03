@@ -180,9 +180,9 @@ public struct PipelineSpec {
 /// revision whose components (SHA-256 + configuration) equal what this process is about to load, whose input files are
 /// unchanged, and whose encoder arm still has its passing WP3 record.
 public enum PipelineEligibility {
-    /// Pipeline records follow DESIGN.md revision 9 (gate 4, "Deployed-pipeline references"); the encoder arms'
-    /// WP3 records stay at Eligibility.requiredRevision (8).
-    public static let requiredRevision = 9
+    /// Pipeline records follow DESIGN.md revision 10 (gate 4: "Deployed-pipeline references", "Decisions-only
+    /// decoder models"); the encoder arms' WP3 records stay at Eligibility.requiredRevision (8).
+    public static let requiredRevision = 10
 
     public static func check(iosDir: URL, spec: PipelineSpec) throws -> [String: Any] {
         let url = iosDir.appendingPathComponent("results/eligibility/pipelines/\(spec.recordName)")

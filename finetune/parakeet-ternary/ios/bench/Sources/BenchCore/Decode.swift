@@ -461,9 +461,10 @@ public final class CoreMLFusedEngine: DecodeEngine {
     var frames: EncoderFrames?
     var pending = 1024, started = false
     var acc = Accumulator()
-    /// Diagnostic only (untimed gate runs; review WP7 r2 finding 3): DecoderJoint exposes no logits, so the heads
-    /// are reconstructed from F1's own inputs (the pending token, F1's input state h_in/c_in, the same encoder frame)
-    /// through the FP32 Decoder and JointLogits models of the same decoder directory. Never set when timing.
+    /// Untimed gate runs only (DESIGN.md rev. 10): DecoderJoint outputs only decisions, a probability and its state,
+    /// so F1's own logit errors are unavailable. An informational PROXY is captured instead: the FP32 Decoder and
+    /// JointLogits models of the same directory evaluated on F1's own inputs (pending token, F1's input state
+    /// h_in/c_in, the same encoder frame). It is not F1's head error. Never set when timing.
     public var diagDecoder: MLModel?, logitsModel: MLModel?
     lazy var diagBuffers: C0Pipeline.StepBuffers? = try? C0Pipeline.StepBuffers()
 
@@ -524,9 +525,9 @@ public final class CoreMLFusedEngine: DecodeEngine {
                       let dl = lo.featureValue(for: "duration_logits")?.multiArrayValue, tl.count == 1025, dl.count == 5 else {
                     throw BenchError.invalid("JointLogits outputs")
                 }
-                diag.append("logits", rowShape: [1030], copyFloats(tl) + copyFloats(dl))
-                diag.append("recon_h", rowShape: [2, 640], copyFloats(rh))   // Decoder's state vs DecoderJoint's h_out
-                diag.append("recon_c", rowShape: [2, 640], copyFloats(rc))
+                diag.append("proxy_logits", rowShape: [1030], copyFloats(tl) + copyFloats(dl))
+                diag.append("proxy_h", rowShape: [2, 640], copyFloats(rh))   // the proxy's state vs DecoderJoint's h_out
+                diag.append("proxy_c", rowShape: [2, 640], copyFloats(rc))
             }
         }
         return (d.token, d.bin)
