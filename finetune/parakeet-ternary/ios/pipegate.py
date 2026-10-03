@@ -218,7 +218,7 @@ def cmd_evaluate(args) -> int:
     r64dir, r64, stale = validate_ref64(header["model"], next(iter(fe_manifests)), index)
     problems += stale
     if not build.get("clean") or build.get("executable_sha256") != header.get("executable_sha256"):
-        problems.append("the gate binary is not the clean reviewed build (build.json)")
+        problems.append("the gate binary is not the clean reviewed build (build.json: modified tracked files, or not built by build_reviewed.sh from this commit)")
     if sorted(rows) != sorted(clips) or sorted(header["clip_ids"]) != sorted(clips):
         problems.append(f"coverage: {len(rows)} of {len(clips)} clips")
     if header["clips_json_sha256"] != sha(IOS / "clips.json"):

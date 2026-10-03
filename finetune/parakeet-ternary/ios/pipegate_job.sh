@@ -33,7 +33,13 @@ commit=$(git -C "$ios" rev-parse HEAD)
 dirty=$(git -C "$ios" status --porcelain --untracked-files=no | wc -l | tr -d ' ')
 exe=$(shasum -a 256 "$bench" | cut -d' ' -f1)
 clean=false; [ "$dirty" = 0 ] && clean=true
-printf '{"commit": "%s", "clean": %s, "modified_tracked_files": %s, "executable_sha256": "%s"}\n' "$commit" "$clean" "$dirty" "$exe" > "$out/build.json"
+# the binary must be the one build_reviewed.sh built from this very commit
+info="$ios/bench/.build/release/BUILD_INFO.json"
+built_from=$(sed -n 's/.*"commit": "\([0-9a-f]*\)".*/\1/p' "$info" 2>/dev/null)
+built_exe=$(sed -n 's/.*"executable_sha256": "\([0-9a-f]*\)".*/\1/p' "$info" 2>/dev/null)
+{ [ "$built_from" = "$commit" ] && [ "$built_exe" = "$exe" ]; } || clean=false
+printf '{"commit": "%s", "clean": %s, "modified_tracked_files": %s, "executable_sha256": "%s", "built_from_commit": "%s"}\n' \
+  "$commit" "$clean" "$dirty" "$exe" "$built_from" > "$out/build.json"
 "$bench" gate "$@" --out "$out"
 s1=$?
 echo "cache after gate: $(du -sk "$cache" 2>/dev/null | cut -f1)KB" > "$out/cache.log"
