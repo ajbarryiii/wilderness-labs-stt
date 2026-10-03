@@ -597,6 +597,17 @@ constexpr chain.
 
 ## Stages
 
+**Review rule** (the user's standing instruction, 2026-10-03):
+- *Before:* no experiment runs (gates, timing sweeps, device sessions) until
+  Codex gpt-6-astra xhigh has reviewed both the code and a written plan in
+  `ios/plans/<work package>.md`.
+- *Iteration:* findings are addressed and the review is repeated until it
+  comes back clean, with no open blocker or major.
+- *Exemption:* unit and safety tests are not experiments.
+- *Record:* reviews are kept in
+  `/mnt/hd/wilderness-labs-stt/parakeet-ios/reviews/`.
+
+
 - **S0 Tooling (Mac and Linux).** Reference, golden outputs, surrogates,
   clips and traces, macguard, one-layer probes (including the C7 folding
   probe), the S0 recomputation of the workload table, and the harness
