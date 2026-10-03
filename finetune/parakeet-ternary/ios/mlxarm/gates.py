@@ -371,8 +371,6 @@ def timing(args) -> int:
                 first[b] = ms
             if rep >= args.warmups:
                 rows.append({"clip": clip["id"], "bucket": b, "rep": rep, "ms": ms})
-    from armreport import harrell_davis
-
     per = {}
     for b in BUCKETS:
         rs = [r for r in rows if r["bucket"] == b]
@@ -380,7 +378,7 @@ def timing(args) -> int:
         for r in rs:
             meds.setdefault(r["clip"], []).append(r["ms"])
         per[str(b)] = {"clips": len(meds), "typical_ms": statistics.median(statistics.median(v) for v in meds.values()),
-                       "p95_hd_ms": harrell_davis([r["ms"] for r in rs]), "first_call_ms_bucket": first.get(b)}
+                       "first_call_ms_bucket": first.get(b)}  # HD p95: record.py on NixOS (no scipy here)
     doc = {"informational": "Python, shared Mac; encoder only (mel in GPU memory -> encoder output evaluated), "
                             "mx.eval + mx.synchronize inside the timed region; front end and decoding excluded",
            "protocol": {"warmups": args.warmups, "timed": args.timed, "clips": len(clips)},
