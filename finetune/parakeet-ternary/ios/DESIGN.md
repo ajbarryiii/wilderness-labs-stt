@@ -1,6 +1,6 @@
 # Parakeet-TDT 0.6B v2 on iPhone 15 Pro: inference pipeline and benchmarks
 
-Status: **revision 8 (2026-10-03): decode-loop arms use FP32 decoder/joint after the FP16 ones failed gate 4b. Revision 7 (2026-10-02): decisive-step definition made arm-independent, eligibility mechanical, scope reductions labelled (Codex review of WP3). Revision 6: gate 4 and the stress rule amended after WP3. Revision 5: front-end gate amended (see gate 5). Revision 4: primary benchmark model changed to the pilot P2 export after WP1's
+Status: **revision 9 (2026-10-03): deployed-pipeline encoder reference defined (gate 4). Revision 8: decode-loop arms use FP32 decoder/joint after the FP16 ones failed gate 4b. Revision 7 (2026-10-02): decisive-step definition made arm-independent, eligibility mechanical, scope reductions labelled (Codex review of WP3). Revision 6: gate 4 and the stress rule amended after WP3. Revision 5: front-end gate amended (see gate 5). Revision 4: primary benchmark model changed to the pilot P2 export after WP1's
 sensitivity gate failed on random surrogates; revision 3 was after Codex reviews r1 and r2. S0 approved
 by the user and cleared by review r2; nothing benchmarked yet.** Review
 findings and their resolutions are listed at the end.
@@ -354,6 +354,22 @@ an output a and its reference r of n elements:
        blank), duration logits, and LSTM h and c.
    - *Original rev 2-5 ceilings, kept as reported diagnostics:* encoder
      rel ≤ 2e-2 and abs ≤ 0.25; heads rel ≤ 2e-2.
+   - **Deployed-pipeline references (clarified in revision 9, after WP7's
+     pre-review runs).**
+     - *Encoder check:* for a whole pipeline (front end A, then encoder arm,
+       then decode loop), the encoder output is compared against the FP32
+       reference encoder fed **FP64 reference features**. This is the same
+       feature reference gate 5 has used since revision 5, and it applies to
+       every arm alike.
+     - *Why:* on the silence clip the FP32 reference front end yields
+       rounding noise where the exact features are 0. The two references
+       differ by 0.34 rel there and by at most 2.6e-6 on every other clip.
+     - *Diagnostic:* the comparison against FP32-feature inputs is kept and
+       reported.
+     - *Decisions and free-decoding tokens* are still compared against the
+       FP32-feature reference trace and transcripts.
+     - *Status:* this clarification does not validate any run made before
+       the clean review.
    - *Decision agreement (revision 7):*
      - Token argmax and duration argmax each agree on at least 99.5% of the
        **decisive** steps, and on at least 99% of **all** steps.
