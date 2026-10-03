@@ -1,0 +1,115 @@
+{
+ "design_revision": 8,
+ "code_version": "wp7-pipegate-2",
+ "kind": "pipeline",
+ "model": "mp2",
+ "arm": "C6d8",
+ "variant": "multi",
+ "backend": "ane",
+ "compute_units": "cpuAndNeuralEngine",
+ "front_end": "vdsp",
+ "decode": "f0",
+ "decoder_precision": "fp32",
+ "encoder_record": {
+  "file": "mp2-C6d8-multi-ane.json",
+  "sha256": "9f7e7645fd9c29a21cc503814f6488f5e8d324b2bd21bd631f1a4240270baa66"
+ },
+ "components": {
+  "compute_units": "cpuAndNeuralEngine",
+  "decode": {
+   "kind": "f0",
+   "models_sha256": {
+    "Decoder": "24d02ae1fa45d90124b3f5133577ca0dfbf4d84fcb8f9c07555c2d5d80b03783",
+    "JointDecision": "af852997542b56aa034a0a87d83d57462598ff50fd09d104a1f3c49dbf17bbb8"
+   },
+   "precision": "fp32"
+  },
+  "encoder": {
+   "arm": "C6d8",
+   "model": "mp2",
+   "package": "mp2/C6d8/multi.mlmodelc",
+   "sha256": "18de2057a0096b4021a427ccae33af8118e6c639646c3d28c05089edc60e3fea",
+   "variant": "multi"
+  },
+  "front_end": {
+   "constants_sha256": "efe8a64a770fa51eeafaca31c1f7f744c900e11f5f19ed1aa39716da8d4f20d3",
+   "kind": "vdsp",
+   "provenance": {
+    "export_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/pilot-P2-lr5e-4/export",
+    "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6",
+    "model": "mp2"
+   }
+  }
+ },
+ "eligible": true,
+ "timing_allowed": true,
+ "selection_eligible": true,
+ "reasons": [],
+ "checks": {
+  "encoder_record": {
+   "pass": true,
+   "record": "mp2-C6d8-multi-ane.json"
+  },
+  "decoder_precision": {
+   "pass": true,
+   "precision": "fp32"
+  },
+  "problems": {
+   "pass": true,
+   "list": []
+  },
+  "encoder": {
+   "pass": true,
+   "clips": 82,
+   "passed": 82,
+   "max_rel": 0.030666595296713183,
+   "max_abs": 0.44485958200137304,
+   "reference": "FP32 reference encoder (fp16s scales) on FP64-evaluated reference features (ref64)",
+   "diag_vs_reference_on_fp32_features": {
+    "max_rel": 0.32796950479075104,
+    "over_ceiling": [
+     "silence-3s"
+    ]
+   }
+  },
+  "coverage": {
+   "pass": true,
+   "missing_or_incomplete": []
+  },
+  "decisions": {
+   "pass": true,
+   "token": {
+    "steps": 3025,
+    "agree_all": 0.9986776859504132,
+    "decisive_fraction": 0.9662809917355372,
+    "agree_decisive": 1.0,
+    "pass": true
+   },
+   "duration": {
+    "steps": 3025,
+    "agree_all": 0.9900826446280991,
+    "decisive_fraction": 0.8502479338842975,
+    "agree_decisive": 0.999611197511664,
+    "pass": true
+   }
+  },
+  "free_decoding": {
+   "pass": true,
+   "clips": 64,
+   "identical": 62
+  },
+  "wer": {
+   "pass": true,
+   "reference_wer_pct": 2.711,
+   "pipeline_wer_pct": 2.711,
+   "clips": 64,
+   "limit_points": 0.2
+  }
+ },
+ "inputs": {
+  "results/pipegates/mp2-C6d8-multi-ane-vdsp.json": "fc1db20d88a593de4cd89384bc48f62ae445af95eef27e7c63cfeae09e70ff05",
+  "results/eligibility/mp2-C6d8-multi-ane.json": "9f7e7645fd9c29a21cc503814f6488f5e8d324b2bd21bd631f1a4240270baa66"
+ },
+ "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
+ "built": "2026-10-03 11:23"
+}
