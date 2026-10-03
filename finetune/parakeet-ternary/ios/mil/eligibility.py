@@ -173,6 +173,23 @@ def build(args) -> int:
                                               for h, v in s["heads_4b"]["paths"][p].items()} for p in ("jd", "dj")},
                                 "sequence_identity": {p: s["free_decoding"][p]["identity_fraction"] for p in ("jd", "dj")},
                                 "rev5_diagnostic_encoder_pass": s["encoder_rev5_diagnostic"]["pass"]}
+            failed = []
+            if not s["encoder_4b"]["pass"]:
+                failed.append(f"encoder rel <= 0.1 fails on {s['encoder_4b']['failing_cases']} cases")
+            for path_name in ("jd", "dj"):
+                for head, v in s["heads_4b"]["paths"][path_name].items():
+                    if not v["pass"]:
+                        failed.append(f"{path_name} {head} agreement (decisive {v['agreement_on_decisive']:.4f}, "
+                                      f"all {v['agreement_all_steps']:.4f}, decisive fraction {v['decisive_fraction']:.3f})")
+                fr = s["free_decoding"][path_name]
+                if not fr["pass_identity"]:
+                    failed.append(f"{path_name} free-decoding sequence identity {fr['identical']}/{s['free_decoding']['clips']}"
+                                  f" = {fr['identity_fraction']:.3f} < 0.95")
+            if not s["heads_4b"]["all_finite"]:
+                failed.append("non-finite decoder outputs")
+            if s["gate5"]["pass"] is False:
+                failed.append("gate 5")
+            checks["gate4b"]["failed_conditions"] = failed
             checks["gate5"] = {"pass": s["gate5"]["pass"] is not False, "applicable": s["gate5"]["pass"] is not None,
                                "gated_rel_max": s["gate5"].get("gated_rel_max")}
             ft = g4b["free_decoding_tokens"]
@@ -190,7 +207,9 @@ def build(args) -> int:
                             "detail": sv}
         for name, c in checks.items():
             if not c["pass"]:
-                reasons.append(f"{name}: " + json.dumps({k: v for k, v in c.items() if k != "pass"}, default=str)[:300])
+                detail = ("; ".join(c["failed_conditions"]) if c.get("failed_conditions")
+                          else json.dumps({k: v for k, v in c.items() if k != "pass"}, default=str)[:300])
+                reasons.append(f"{name}: {detail}")
         eligible = not reasons
         rec = {"design_revision": DESIGN_REVISION, "code_version": CODE_VERSION, "model": model, "arm": arm,
                "variant": variant, "backend": backend, "compute_units": units, "eligible": eligible,

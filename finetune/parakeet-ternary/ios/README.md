@@ -246,7 +246,8 @@ yet.
 | `mil/gates.py` | Gates 4 (encoder and TDT heads) and 5, G0 vs C0, decoder-only heads. Summary table. |
 | `mil/diag.py` | The same graph in FP32 vs FP16 vs the FP32 reference, at reduced depth. This is a diagnostic, not a gate. |
 | `mil/report.py` | `results/wp3_summary.json` and `results/wp3_summary_table.txt` from all result files. |
-| `mil/macrun.sh` | Mac step runner: one macguard job per step, retry on refusal. It deletes each step's Core ML cache entries and stops below 60 GB free. |
+| `mil/macrun.sh`, `mil/job.sh` | Mac step runner: one macguard job per step, retries refusals and system-memory guard aborts. Each job (`job.sh`, inside the guard) checks 30 GB + its expected transient size free before starting, uses a per-job `TMPDIR` and Core ML caches only these jobs write (`~/Library/Caches/wp3py`, `.../computeplan`), and cleans them while still holding the lock. |
+| `mil/gates7.py`, `mil/eligibility.py` | Revision 7 gates (4a FP32 builds, 4b per backend through the deployed decoder paths, gate 5) and the per (model, arm, variant, backend) eligibility records; `eligibility.check()` is what timing runs call. |
 | `mil/contract.json`, `mil/MASKING.md` | I/O contract for the Swift harness; padding and masking contract. |
 
 Results (committed, text only): `results/builds/<model>-<arm>-<variant>.json` (build manifests),
@@ -380,9 +381,15 @@ heavily loaded, so load times are informational. Full table: `results/wp3_summar
       it ANE-eligible (shape-free masks, a static position table per enumerated shape) is an S3 item.
     - Their CPU-only compute plans fail: Core ML rejects `functionName = "main"` for these models;
       fixed in `build.py` for later builds.
-  - **C5 (W8A8, exploratory) is not usable as calibrated** (rel 0.82–2.4). A per-tensor max/127 int8
-    scale cannot represent activations up to |x| = 76 (layer 0, `conv_mid`); it needs its own
-    calibration or QAT study (DESIGN.md).
+  - **C5 (W8A8, exploratory) is not usable as calibrated** (rel 0.82–2.4). The cause is **not
+    established** (corrected after review):
+    - The calibration covers the observed maxima. For example, layer 0's `conv_mid` reaches |x| = 76.15
+      and gets scale 0.5996, so 76 is representable. Clipping within the calibration range is not shown.
+    - Three candidates remain unseparated: the coarseness of per-tensor quantization (a step of up to
+      0.6 against much smaller typical activations), clipping on clips outside the calibration set, and
+      the backend's int8 behaviour.
+    - The accuracy drop stands; C5 is excluded by scope (DESIGN.md), and a dedicated
+      activation-quantization study is out of scope.
 - **G0 vs C0** (`results/gates/c0-G0-fixed-cpuAndNeuralEngine.json`). G0 is C0's own 294 palettized
   and 320 dense tensors in our graph, targeting iOS17. Its `weight.bin` is 445,187,200 bytes, the size
   of C0's. Its compute plan puts 99.4% of cost on the ANE.
@@ -459,5 +466,5 @@ WP3 deviations from the task or the design, and open problems:
    - Instruments placement traces (gate 6);
    - "prepare and cache" load events;
    - resident memory with several functions loaded.
-9. **C5's int8 activation calibration** (per-tensor max/127) is unusable for accuracy. Speed-only, as
-   designed.
+9. **C5 with its per-tensor max/127 int8 activation calibration** is unusable for accuracy, for
+   reasons not separated (see above). Speed-only, as designed; excluded by scope.

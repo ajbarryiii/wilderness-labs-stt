@@ -392,7 +392,7 @@ def gate4b(args) -> int:
         rows[f"{clip['id']}@{b}"] = row
         print(f"{clip['id']}@{b} rel {rel:.4g}", flush=True) if not row["pass"] else None
     print(f"encoder done at {time.time() - t0:.0f}s", flush=True)
-    paths = Paths(args.model, args.units)
+    paths = Paths(args.model, args.units, args.decoder_precision)
     traces = traces_by_id()
     heads, free = {}, {}
     for clip in clips:
@@ -426,16 +426,22 @@ def gate4b(args) -> int:
     }
     passed = (summary["encoder_4b"]["pass"] and heads_pool["pass"] and free_pool["pass_identity"]
               and summary["gate5"]["pass"] is not False)
-    doc = header("4b", model=args.model, arm=args.arm, label=label, variant=args.variant, units=args.units,
+    diag = args.decoder_precision != "fp16"
+    doc = header("4b" if not diag else f"4b-diagnostic-decoder-{args.decoder_precision}", model=args.model,
+                 arm=args.arm, label=label, variant=args.variant, units=args.units,
                  backend=BACKEND[args.units], thresholds=G4B, rev5_diagnostic_thresholds=REV5,
                  build_provenance=man["provenance"], build_chain=man["encoding"].get("chain"),
-                 decoder_models=paths_manifest(args.model))
+                 decoder_models=paths_manifest(args.model, args.decoder_precision))
+    if diag:
+        doc["note"] = ("diagnostic, not an eligibility input: the arm's FP16 encoder with the FP32 builds of the "
+                       "decoder/joint models, to attribute free-decoding differences")
     doc["pass"] = bool(passed)
     doc["pass_scope"] = "all 4b conditions except WER (eligibility.py) and gate 5 where applicable"
     doc["summary"] = summary
     doc.update(encoder_cases=rows, heads_per_clip=heads, free_decoding_tokens=free, load_s=loads,
                seconds=round(time.time() - t0, 1), peak_rss_mb=_peak_mb())
-    return finish(doc, f"{args.model}-{label}-{args.variant}-{args.units}.json")
+    suffix = "" if not diag else f"-decoder-{args.decoder_precision}"
+    return finish(doc, f"{args.model}-{label}-{args.variant}-{args.units}{suffix}.json")
 
 
 def paths_manifest(model: str, precision: str = "fp16") -> dict:
@@ -535,6 +541,8 @@ def main() -> None:
     p.add_argument("--arm", required=True)
     p.add_argument("--variant", required=True, choices=("fixed", "multi", "enum"))
     p.add_argument("--units", required=True, choices=tuple(BACKEND))
+    p.add_argument("--decoder-precision", default="fp16", choices=("fp16", "fp32"),
+                   help="fp32: diagnostic run with the FP32 decoder/joint builds (not an eligibility input)")
     args = parser.parse_args()
     sys.exit({"4a": gate4a, "4a-decoder": gate4a_decoder, "4b": gate4b, "4b-decoder": gate4b_decoder}[args.cmd](args))
 
