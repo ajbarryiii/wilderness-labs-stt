@@ -804,6 +804,20 @@ configuration and the label-loop constants.
 - `tests/pipegate_selftest.py` checks `evaluate` on a mocked perfect pipeline and three injected faults (passes on
   the Mac, 4/4). Unit tests 7/7.
 
+**Pre-run review round 2** (`reviews/wp7-r2.md`):
+- 1: `build_reviewed.sh` removes the old stamp first and checks `swift build` / `swift test` statuses directly;
+  mocked tests (`tests/build_reviewed_tests.sh`, 7/7).
+- 2: F2 captures g, h, c after every prediction, including a terminal one; unit test with a NaN terminal
+  prediction that leaves the decision unchanged (unit tests 8/8).
+- 3: every decode loop's diagnostic sections are required with exact dimensions; F1's heads come from a diagnostic
+  reconstruction (FP32 Decoder + JointLogits on F1's own inputs and state; DecoderJoint exposes no logits);
+  self-test 7/7 including missing-section faults.
+- 4: `wp5sweep.py verify` restores archived packages first and archives them again (guarded workflow).
+- 5: the report checks each run's arm, eligibility, backend and protocol against the manifest; self-test 3/3.
+- 6: disk preflight (30 GB + estimated writes) in every preparation job (`diskcheck.sh`, `disk_preflight`); the
+  self-tests remove their scratch output; pre-review test artifacts removed from the Mac.
+- 7: the plan defines `$A`.
+
 **Results: pending rerun after a clean review.** Gate and sweep runs made before the review rule arrived are
 unreviewed and withdrawn: their records and summaries are quarantined under
 `results/eligibility/pipelines/quarantine/pre-review-20261003/` (read by nothing), and their raw-run pointers on

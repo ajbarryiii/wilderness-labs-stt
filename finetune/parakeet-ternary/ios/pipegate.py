@@ -14,10 +14,11 @@ FP32; F0 / F1 with the FP32 decoder models). Gated on all 82 clips, run in Swift
 - free decoding of the 64 natural clips: token sequences identical to the reference's on >= 61, and WER within
   +0.2 points of the reference (scored on NixOS with the parent experiment's scorer);
 - coverage: every clip of clips.json, every trace replayed in full, every decode present; else the gate fails.
-Reported (DESIGN.md gate 4b): head errors for token logits (incl. blank) and duration logits (F2; F0 through the
-diagnostic JointLogits on the same inputs; DecoderJoint exposes none) and LSTM h and c (all three), token-probability
-differences, and margin distributions (the reference's, the pipeline's own where logits exist, and the reference
-margins of disagreeing steps).
+Reported (DESIGN.md gate 4b): head errors for token logits (incl. blank) and duration logits (F2 directly; F0
+through the diagnostic JointLogits on the same inputs; F1 through a diagnostic reconstruction, FP32 Decoder +
+JointLogits on F1's own inputs and state, since DecoderJoint exposes no logits) and LSTM h and c (all three),
+token-probability differences, and margin distributions (the reference's, the pipeline's own, and the reference
+margins of disagreeing steps). Every required diagnostic section must be present with exact dimensions.
 
 Identity (review WP7 r1 findings 2, 4): records bind every component (parakeet-bench recomputes and compares them
 before timing, executable SHA-256 included); the FP64-feature reference is valid only while its front-end manifest,
