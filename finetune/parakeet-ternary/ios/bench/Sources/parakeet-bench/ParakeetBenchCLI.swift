@@ -25,6 +25,7 @@ import Foundation
 ///                 [--pair-c0 C0DIR --c0-out PATH]  (C0 and the arm interleaved clip by clip in this process;
 ///                 C0 runs as shipped on --c0-compute-units, default cpuAndNeuralEngine, whatever the arm's units;
 ///                 every C0 load verifies the directory against the pinned export, <ios>/c0.json)
+///                 [--verify-only]  (print the eligibility verdict and C0 identity for these arguments; load nothing)
 ///                 [--settle-ms N]  (before every block: wait N ms, then while ProcessInfo.thermalState is serious or
 ///                 critical, up to 120 s; a "block" record holds the thermal states and waits)
 ///   parakeet-bench features --frontend-constants DIR --clips clips.json --pcm DIR --out DIR [--kinds/--ids]
@@ -55,7 +56,7 @@ struct ParakeetBenchCLI {
             guard let command = args.first else { throw BenchError.invalid(usage) }
             args.removeFirst()
             switch command {
-            case "run": try await run(try Options(args, allowed: runOptions, flags: ["--emit-warmups"]))
+            case "run": try await run(try Options(args, allowed: runOptions, flags: ["--emit-warmups", "--verify-only"]))
             case "features": try await features(try Options(args, allowed: ["--frontend-constants", "--clips", "--pcm",
                                                                              "--out", "--kinds", "--ids"], flags: []))
             case "gate": try await gate(try Options(args, allowed: ["--clips", "--pcm", "--traces", "--eligibility", "--encoder",
@@ -192,6 +193,18 @@ struct ParakeetBenchCLI {
         }
         guard (o.values["--pair-c0"] == nil) == (o.values["--c0-out"] == nil) else {
             throw BenchError.invalid("--pair-c0 C0DIR and --c0-out PATH go together")
+        }
+        if o.flags.contains("--verify-only") {
+            // deployment check (no model is loaded, nothing is timed): the eligibility verdict for these exact
+            // arguments, and C0's identity if a C0 directory is involved
+            var c0: Any = NSNull()
+            if let dir = o.values["--pair-c0"] ?? (armKind == "c0" ? o.values["--models"] : nil) {
+                c0 = try autoreleasepool { try C0Identity.verify(directory: URL(fileURLWithPath: dir), pinned: iosDir.appendingPathComponent("c0.json")) }
+            }
+            let doc: [String: Any] = ["verified": true, "eligibility": eligibility, "c0_identity": c0,
+                                      "executable_sha256": BuildIdentity.executableSHA256]
+            print(String(data: try JSONSerialization.data(withJSONObject: doc, options: [.sortedKeys]), encoding: .utf8)!)
+            return
         }
         let c0OutURL = try o.values["--c0-out"].map { try ArtifactPath.check(URL(fileURLWithPath: $0)) }
         let manifest = try ClipManifest.load(clipsURL)

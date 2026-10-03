@@ -10,6 +10,7 @@ Every timed combination needs its revision-9 deployed-pipeline record (ios/pipeg
 it, component SHA-256s and executable included, and verifies C0 against c0.json.
 
   ./python ios/wp5sweep.py plan [--groups c]
+  ./python ios/wp5sweep.py verify --groups c                               # deployment check, nothing timed
   ./python ios/wp5sweep.py sweep --name wp7 --groups c [--settle-ms 500]   # counterbalanced, manifest-driven
   ./python ios/wp5sweep.py report --sweep SWEEP_ID --tag wp7                # from the sweep manifest only
   ./python ios/wp5sweep.py wp5-manifest                                     # manifest of WP5's migrated runs
@@ -225,6 +226,11 @@ def cmd_sweep(args) -> int:
         print(f"refusing: not eligible: {blocked}", file=sys.stderr)
         return 1
     build = mac_build()
+    stale = [a["name"] for a in todo
+             if json.loads(pipeline_record(a).read_text())["components"].get("executable_sha256") != build["executable_sha256"]]
+    if stale:
+        print(f"refusing: the Mac binary is not the one the pipeline gates ran ({stale})", file=sys.stderr)
+        return 1
     h = halves()
     order = [(a["name"], "A") for a in todo] + [(a["name"], "B") for a in reversed(todo)]
     sweep_id = f"{args.name}-{time.strftime('%Y%m%d-%H%M%S')}"
@@ -251,6 +257,36 @@ def cmd_sweep(args) -> int:
     write_atomic(path, manifest)
     print(json.dumps({"sweep_id": sweep_id, "complete": manifest["complete"], "manifest": str(path)}))
     return 0 if manifest["complete"] else 1
+
+
+def cmd_verify(args) -> int:
+    """Deployment check before a sweep (no model loaded, nothing timed): the Mac checkout is this commit and clean,
+    its binary is the one the pipeline gates ran, and `parakeet-bench run --verify-only` accepts every arm with its
+    exact sweep arguments (pipeline record + component SHA-256s + WP3 record) and verifies C0 against c0.json."""
+    groups = set(args.groups.split(","))
+    todo = [a for a in arms() if a["group"] in groups and (not args.only or a["name"] in args.only.split(","))]
+    build = mac_build()
+    failures = []
+    for a in todo:
+        rec = json.loads(pipeline_record(a).read_text()) if pipeline_record(a).exists() else {}
+        if rec.get("components", {}).get("executable_sha256") != build["executable_sha256"]:
+            failures.append(f"{a['name']}: record executable differs from the Mac binary")
+        argv = bench_args(a, halves()["A"]) + ["--pair-c0", f"{MAC_A}/c0", "--c0-out", f"{MAC_A}/wp7/verify-c0.jsonl",
+                                                "--c0-compute-units", "cpuAndNeuralEngine", "--out", f"{MAC_A}/wp7/verify.jsonl",
+                                                "--verify-only"]
+        cmd = "./macguard --rss-cap 1G --timeout 600 -- bench/.build/release/parakeet-bench run " + " ".join(shlex.quote(x) for x in argv)
+        try:
+            outp = mac(f"{cmd} 2>&1 | grep -v '^macguard: '")
+            doc = json.loads(outp.strip().splitlines()[-1])
+            ok = doc.get("verified") and doc.get("c0_identity", {}).get("verified")
+            print(f"{a['name']}: {'verified' if ok else 'FAILED'}", flush=True)
+            if not ok:
+                failures.append(a["name"])
+        except Exception as exc:
+            failures.append(f"{a['name']}: {str(exc)[-300:]}")
+            print(f"{a['name']}: FAILED {str(exc)[-300:]}", flush=True)
+    print(json.dumps({"build": build, "failures": failures}))
+    return 1 if failures else 0
 
 
 def cmd_wp5_manifest(args) -> int:
@@ -428,6 +464,8 @@ def main() -> None:
     p = sub.add_parser("report"); p.add_argument("--sweep", required=True, help="sweep id (manifest under results/wp5/sweeps)")
     p.add_argument("--tag", required=True, help="summary directory under ios/results (wp5 or wp7)")
     p.set_defaults(func=cmd_report)
+    p = sub.add_parser("verify"); p.add_argument("--groups", default="c"); p.add_argument("--only")
+    p.set_defaults(func=cmd_verify)
     sub.add_parser("wp5-manifest").set_defaults(func=cmd_wp5_manifest)
     args = parser.parse_args()
     sys.exit(args.func(args) or 0)
