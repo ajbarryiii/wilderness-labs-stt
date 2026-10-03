@@ -1,0 +1,122 @@
+{
+ "design_revision": 8,
+ "code_version": "wp3-eligibility-2",
+ "model": "mp2",
+ "arm": "C7",
+ "variant": "enum",
+ "backend": "cpu",
+ "compute_units": "cpuOnly",
+ "decoder_precision": "fp32",
+ "decoder_models": "arms/mp2/decoder-fp32",
+ "eligible": false,
+ "timing_allowed": false,
+ "selection_eligible": false,
+ "reasons": [
+  "stress: {\"detail\": {\"pass\": false, \"nonfinite_where_c4_finite\": [[\"layers.0.feed_forward1.linear2\", \"x8\"], [\"layers.23.feed_forward2.linear2\", \"abs_x64\"]], \"nonfinite_at_x1\": [], \"missing_c4_reference\": [], \"nonfinite_cases_total\": 4}}"
+ ],
+ "checks": {
+  "scope": {
+   "pass": true,
+   "note": null
+  },
+  "gate2": {
+   "pass": true,
+   "modules": 240
+  },
+  "gate4a": {
+   "pass": true,
+   "topology": "post_scale",
+   "source": "results/gates/v7/mp2-C7-fp32-enum-cpuOnly-4a.json",
+   "own_fp32_build": true,
+   "rel_max": 1.820269481001914e-06,
+   "abs_max": 2.6560484732233248e-05
+  },
+  "gate4a_decoder": {
+   "pass": true
+  },
+  "gate4b": {
+   "pass": true,
+   "result_design_revision": 8,
+   "decoder_precision": "fp32",
+   "encoder_rel_max": 0.006748093198703854,
+   "encoder_failing": 0,
+   "heads": {
+    "jd": {
+     "token": {
+      "decisive_fraction": 0.9662809917355372,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 1.0,
+      "pass": true
+     },
+     "duration": {
+      "decisive_fraction": 0.8502479338842975,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 0.9983471074380166,
+      "pass": true
+     }
+    },
+    "dj": {
+     "token": {
+      "decisive_fraction": 0.9662809917355372,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 1.0,
+      "pass": true
+     },
+     "duration": {
+      "decisive_fraction": 0.8502479338842975,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 0.9983471074380166,
+      "pass": true
+     }
+    }
+   },
+   "sequence_identity": {
+    "jd": 1.0,
+    "dj": 1.0
+   },
+   "rev5_diagnostic_encoder_pass": true,
+   "failed_conditions": []
+  },
+  "gate5": {
+   "pass": true,
+   "applicable": true,
+   "gated_rel_max": 0.0034465505317972456
+  },
+  "wer": {
+   "pass": true,
+   "reference_wer_pct": 2.711,
+   "jd_wer_pct": 2.711,
+   "dj_wer_pct": 2.711,
+   "clips": 64,
+   "limit_points": 0.2
+  },
+  "stress": {
+   "pass": false,
+   "detail": {
+    "pass": false,
+    "nonfinite_where_c4_finite": [
+     [
+      "layers.0.feed_forward1.linear2",
+      "x8"
+     ],
+     [
+      "layers.23.feed_forward2.linear2",
+      "abs_x64"
+     ]
+    ],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 4
+   }
+  }
+ },
+ "inputs": {
+  "results/gate2/mp2-C7.json": "99d7202f23122c6cf8980eb6a38dad64a73b516f72253c5ba6852c4b3d576448",
+  "results/gates/v7/mp2-C7-fp32-enum-cpuOnly-4a.json": "3d11d1206b987865db1f9a06296ec1013ae9b67401ee240d8574fd10a6c8fede",
+  "results/gates/v7/mp2-decoder-fp32-cpuOnly-4a.json": "1df69d43b6b988cbb95ee22806905790104135bcd3916c103e8a54414272913d",
+  "results/gates/v7/mp2-C7-enum-cpuOnly-dec-fp32.json": "a81139de54d868d01b189c5b1003426ab3b8b3404bcd30011acb81d8057cd6a6",
+  "results/probes/stress.json": "d9035d169c9147e54d96544275c0ef189c31ebcc0fd1ef7361e17a157dfd0f53"
+ },
+ "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
+ "built": "2026-10-03 02:51"
+}

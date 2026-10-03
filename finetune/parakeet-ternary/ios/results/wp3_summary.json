@@ -2118,6 +2118,18 @@
   {
    "model": "mp2",
    "arm": "C7-fp32",
+   "variant": "enum",
+   "mlpackage_mb": 194.1,
+   "mlmodelc_mb": 194.2,
+   "compile_s": 0.39,
+   "convert_s": 8.3,
+   "peak_rss_mb": 1182.4,
+   "encoded_mb": 139.6,
+   "plan": {}
+  },
+  {
+   "model": "mp2",
+   "arm": "C7-fp32",
    "variant": "fixed",
    "mlpackage_mb": 194.1,
    "mlmodelc_mb": 194.1,
@@ -2402,6 +2414,18 @@
      "main": 118.61
     }
    }
+  },
+  {
+   "model": "mp2",
+   "arm": "C8-fp32",
+   "variant": "enum",
+   "mlpackage_mb": 194.4,
+   "mlmodelc_mb": 194.4,
+   "compile_s": 0.44,
+   "convert_s": 10.8,
+   "peak_rss_mb": 1770.7,
+   "encoded_mb": 139.6,
+   "plan": {}
   },
   {
    "model": "mp2",

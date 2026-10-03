@@ -1,18 +1,20 @@
 {
- "design_revision": 7,
- "code_version": "wp3-eligibility-1",
+ "design_revision": 8,
+ "code_version": "wp3-eligibility-2",
  "model": "mp2",
  "arm": "C5",
  "variant": "multi",
  "backend": "cpu",
  "compute_units": "cpuOnly",
+ "decoder_precision": "fp32",
+ "decoder_models": "arms/mp2/decoder-fp32",
  "eligible": false,
  "timing_allowed": false,
  "selection_eligible": false,
  "reasons": [
   "scope: {\"note\": \"exploratory W8A8 (DESIGN.md: scope reduction; numerics fail)\"}",
   "gate4a: {\"topology\": \"dense+activation_quantization\", \"source\": null, \"own_fp32_build\": false, \"rel_max\": null, \"abs_max\": null}",
-  "gate4b: encoder rel <= 0.1 fails on 91 cases; jd token agreement (decisive 0.9962, all 0.9878, decisive fraction 0.966); jd duration agreement (decisive 0.9883, all 0.9660, decisive fraction 0.850); jd free-decoding sequence identity 53/64 = 0.828 < 0.95; dj token agreement (decisive 0.9962, all 0.9878, decisive fraction 0.966); dj duration agreement (decisive 0.9883, all 0.9660, decisive fraction 0.850); dj free-decoding sequence identity 53/64 = 0.828 < 0.95"
+  "gate4b: encoder rel <= 0.1 fails on 91 cases; jd token agreement (decisive 0.9962, all 0.9871, decisive fraction 0.966); jd duration agreement (decisive 0.9879, all 0.9653, decisive fraction 0.850); jd free-decoding sequence identity 55/64 = 0.859 < 0.95; dj token agreement (decisive 0.9962, all 0.9871, decisive fraction 0.966); dj duration agreement (decisive 0.9879, all 0.9653, decisive fraction 0.850); dj free-decoding sequence identity 55/64 = 0.859 < 0.95"
  ],
  "checks": {
   "scope": {
@@ -36,6 +38,8 @@
   },
   "gate4b": {
    "pass": false,
+   "result_design_revision": 8,
+   "decoder_precision": "fp32",
    "encoder_rel_max": 0.2307532622882925,
    "encoder_failing": 91,
    "heads": {
@@ -43,13 +47,13 @@
      "token": {
       "decisive_fraction": 0.9662809917355372,
       "agreement_on_decisive": 0.9962367430721861,
-      "agreement_all_steps": 0.9877685950413223,
+      "agreement_all_steps": 0.9871074380165289,
       "pass": false
      },
      "duration": {
       "decisive_fraction": 0.8502479338842975,
-      "agreement_on_decisive": 0.9883359253499222,
-      "agreement_all_steps": 0.9659504132231405,
+      "agreement_on_decisive": 0.9879471228615864,
+      "agreement_all_steps": 0.9652892561983472,
       "pass": false
      }
     },
@@ -57,30 +61,30 @@
      "token": {
       "decisive_fraction": 0.9662809917355372,
       "agreement_on_decisive": 0.9962367430721861,
-      "agreement_all_steps": 0.9877685950413223,
+      "agreement_all_steps": 0.9871074380165289,
       "pass": false
      },
      "duration": {
       "decisive_fraction": 0.8502479338842975,
-      "agreement_on_decisive": 0.9883359253499222,
-      "agreement_all_steps": 0.9659504132231405,
+      "agreement_on_decisive": 0.9879471228615864,
+      "agreement_all_steps": 0.9652892561983472,
       "pass": false
      }
     }
    },
    "sequence_identity": {
-    "jd": 0.828125,
-    "dj": 0.828125
+    "jd": 0.859375,
+    "dj": 0.859375
    },
    "rev5_diagnostic_encoder_pass": false,
    "failed_conditions": [
     "encoder rel <= 0.1 fails on 91 cases",
-    "jd token agreement (decisive 0.9962, all 0.9878, decisive fraction 0.966)",
-    "jd duration agreement (decisive 0.9883, all 0.9660, decisive fraction 0.850)",
-    "jd free-decoding sequence identity 53/64 = 0.828 < 0.95",
-    "dj token agreement (decisive 0.9962, all 0.9878, decisive fraction 0.966)",
-    "dj duration agreement (decisive 0.9883, all 0.9660, decisive fraction 0.850)",
-    "dj free-decoding sequence identity 53/64 = 0.828 < 0.95"
+    "jd token agreement (decisive 0.9962, all 0.9871, decisive fraction 0.966)",
+    "jd duration agreement (decisive 0.9879, all 0.9653, decisive fraction 0.850)",
+    "jd free-decoding sequence identity 55/64 = 0.859 < 0.95",
+    "dj token agreement (decisive 0.9962, all 0.9871, decisive fraction 0.966)",
+    "dj duration agreement (decisive 0.9879, all 0.9653, decisive fraction 0.850)",
+    "dj free-decoding sequence identity 55/64 = 0.859 < 0.95"
    ]
   },
   "gate5": {
@@ -110,9 +114,9 @@
  "inputs": {
   "results/gate2/mp2-C5.json": "1bd3a0eba34df2755f8abbec21500c314830f9b6bbacab1ecb7634d490a19293",
   "results/gates/v7/mp2-decoder-fp32-cpuOnly-4a.json": "1df69d43b6b988cbb95ee22806905790104135bcd3916c103e8a54414272913d",
-  "results/gates/v7/mp2-C5-multi-cpuOnly.json": "263edde8bc4d66690da38cba6df461f60df3b6e6920f52de545ff6282730adca",
+  "results/gates/v7/mp2-C5-multi-cpuOnly-dec-fp32.json": "cc2036dd9c0dbf9705dc620705b804572c97b806394518ae5b5ceb069318179f",
   "results/probes/stress.json": "d9035d169c9147e54d96544275c0ef189c31ebcc0fd1ef7361e17a157dfd0f53"
  },
  "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
- "built": "2026-10-02 23:31"
+ "built": "2026-10-03 02:51"
 }

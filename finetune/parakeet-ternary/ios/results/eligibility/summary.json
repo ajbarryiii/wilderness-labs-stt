@@ -1,15 +1,56 @@
 {
- "design_revision": 7,
- "code_version": "wp3-eligibility-1",
+ "design_revision": 8,
+ "code_version": "wp3-eligibility-2",
  "records": [
   {
    "model": "mp2",
    "arm": "C1",
    "variant": "fixed",
    "backend": "ane",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
+    "gate4b"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C1",
+   "variant": "fixed",
+   "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C1",
+   "variant": "fixed",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
     "gate4b"
    ],
    "wer": {
@@ -26,9 +67,29 @@
    "arm": "C1",
    "variant": "fixed",
    "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C1",
+   "variant": "multi",
+   "backend": "ane",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
     "gate4b"
    ],
    "wer": {
@@ -45,9 +106,29 @@
    "arm": "C1",
    "variant": "multi",
    "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C1",
+   "variant": "multi",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
     "gate4b"
    ],
    "wer": {
@@ -64,9 +145,29 @@
    "arm": "C1",
    "variant": "multi",
    "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C3",
+   "variant": "fixed",
+   "backend": "ane",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
     "gate4b"
    ],
    "wer": {
@@ -83,9 +184,29 @@
    "arm": "C3",
    "variant": "fixed",
    "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C3",
+   "variant": "fixed",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
     "gate4b"
    ],
    "wer": {
@@ -102,9 +223,29 @@
    "arm": "C3",
    "variant": "fixed",
    "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C3",
+   "variant": "multi",
+   "backend": "ane",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
     "gate4b"
    ],
    "wer": {
@@ -121,9 +262,29 @@
    "arm": "C3",
    "variant": "multi",
    "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C3",
+   "variant": "multi",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
     "gate4b"
    ],
    "wer": {
@@ -140,10 +301,29 @@
    "arm": "C3",
    "variant": "multi",
    "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C4",
+   "variant": "enum",
+   "backend": "ane",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
-    "gate4b"
+    "decoder_precision"
    ],
    "wer": {
     "pass": true,
@@ -159,6 +339,7 @@
    "arm": "C4",
    "variant": "enum",
    "backend": "ane",
+   "decoder_precision": "fp32",
    "timing_allowed": true,
    "selection_eligible": true,
    "failed_checks": [],
@@ -176,6 +357,27 @@
    "arm": "C4",
    "variant": "enum",
    "backend": "cpu",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C4",
+   "variant": "enum",
+   "backend": "cpu",
+   "decoder_precision": "fp32",
    "timing_allowed": true,
    "selection_eligible": true,
    "failed_checks": [],
@@ -193,9 +395,50 @@
    "arm": "C4",
    "variant": "fixed",
    "backend": "ane",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
+    "gate4b"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C4",
+   "variant": "fixed",
+   "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C4",
+   "variant": "fixed",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
     "gate4b"
    ],
    "wer": {
@@ -212,9 +455,29 @@
    "arm": "C4",
    "variant": "fixed",
    "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C4",
+   "variant": "multi",
+   "backend": "ane",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
     "gate4b"
    ],
    "wer": {
@@ -231,9 +494,29 @@
    "arm": "C4",
    "variant": "multi",
    "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C4",
+   "variant": "multi",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
     "gate4b"
    ],
    "wer": {
@@ -250,11 +533,10 @@
    "arm": "C4",
    "variant": "multi",
    "backend": "cpu",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "gate4b"
-   ],
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
    "wer": {
     "pass": true,
     "reference_wer_pct": 2.711,
@@ -269,11 +551,13 @@
    "arm": "C5",
    "variant": "fixed",
    "backend": "ane",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
     "scope",
     "gate4a",
+    "decoder_precision",
     "gate4b",
     "wer"
    ],
@@ -290,7 +574,54 @@
    "model": "mp2",
    "arm": "C5",
    "variant": "fixed",
+   "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "scope",
+    "gate4a",
+    "gate4b",
+    "wer"
+   ],
+   "wer": {
+    "pass": false,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 28.467,
+    "dj_wer_pct": 28.467,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C5",
+   "variant": "fixed",
    "backend": "cpu",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "scope",
+    "gate4a",
+    "decoder_precision",
+    "gate4b"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C5",
+   "variant": "fixed",
+   "backend": "cpu",
+   "decoder_precision": "fp32",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
@@ -312,11 +643,13 @@
    "arm": "C5",
    "variant": "multi",
    "backend": "ane",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
     "scope",
     "gate4a",
+    "decoder_precision",
     "gate4b",
     "gate5",
     "wer"
@@ -334,7 +667,55 @@
    "model": "mp2",
    "arm": "C5",
    "variant": "multi",
+   "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "scope",
+    "gate4a",
+    "gate4b",
+    "gate5",
+    "wer"
+   ],
+   "wer": {
+    "pass": false,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 68.092,
+    "dj_wer_pct": 68.092,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C5",
+   "variant": "multi",
    "backend": "cpu",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "scope",
+    "gate4a",
+    "decoder_precision",
+    "gate4b"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C5",
+   "variant": "multi",
+   "backend": "cpu",
+   "decoder_precision": "fp32",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
@@ -356,9 +737,50 @@
    "arm": "C6d4",
    "variant": "fixed",
    "backend": "ane",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
+    "gate4b"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6d4",
+   "variant": "fixed",
+   "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6d4",
+   "variant": "fixed",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
     "gate4b"
    ],
    "wer": {
@@ -375,9 +797,29 @@
    "arm": "C6d4",
    "variant": "fixed",
    "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6d4",
+   "variant": "multi",
+   "backend": "ane",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
     "gate4b"
    ],
    "wer": {
@@ -394,9 +836,29 @@
    "arm": "C6d4",
    "variant": "multi",
    "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6d4",
+   "variant": "multi",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
     "gate4b"
    ],
    "wer": {
@@ -413,9 +875,29 @@
    "arm": "C6d4",
    "variant": "multi",
    "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6d8",
+   "variant": "fixed",
+   "backend": "ane",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
     "gate4b"
    ],
    "wer": {
@@ -432,9 +914,29 @@
    "arm": "C6d8",
    "variant": "fixed",
    "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6d8",
+   "variant": "fixed",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
     "gate4b"
    ],
    "wer": {
@@ -451,9 +953,29 @@
    "arm": "C6d8",
    "variant": "fixed",
    "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6d8",
+   "variant": "multi",
+   "backend": "ane",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
     "gate4b"
    ],
    "wer": {
@@ -470,9 +992,29 @@
    "arm": "C6d8",
    "variant": "multi",
    "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6d8",
+   "variant": "multi",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
     "gate4b"
    ],
    "wer": {
@@ -489,11 +1031,10 @@
    "arm": "C6d8",
    "variant": "multi",
    "backend": "cpu",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "gate4b"
-   ],
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
    "wer": {
     "pass": true,
     "reference_wer_pct": 2.711,
@@ -506,259 +1047,766 @@
   {
    "model": "mp2",
    "arm": "C6s2",
-   "variant": "fixed",
+   "variant": "enum",
    "backend": "ane",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
-    "gate4b"
-   ],
-   "wer": {
-    "pass": true,
-    "reference_wer_pct": 2.711,
-    "jd_wer_pct": 2.711,
-    "dj_wer_pct": 2.711,
-    "clips": 64,
-    "limit_points": 0.2
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C6s2",
-   "variant": "fixed",
-   "backend": "cpu",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "gate4b"
-   ],
-   "wer": {
-    "pass": true,
-    "reference_wer_pct": 2.711,
-    "jd_wer_pct": 2.711,
-    "dj_wer_pct": 2.711,
-    "clips": 64,
-    "limit_points": 0.2
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C6s2",
-   "variant": "multi",
-   "backend": "ane",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "gate4b"
-   ],
-   "wer": {
-    "pass": true,
-    "reference_wer_pct": 2.711,
-    "jd_wer_pct": 2.711,
-    "dj_wer_pct": 2.711,
-    "clips": 64,
-    "limit_points": 0.2
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C6s2",
-   "variant": "multi",
-   "backend": "cpu",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "gate4b"
-   ],
-   "wer": {
-    "pass": true,
-    "reference_wer_pct": 2.711,
-    "jd_wer_pct": 2.711,
-    "dj_wer_pct": 2.711,
-    "clips": 64,
-    "limit_points": 0.2
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C6s4",
-   "variant": "fixed",
-   "backend": "ane",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "gate4b"
-   ],
-   "wer": {
-    "pass": true,
-    "reference_wer_pct": 2.711,
-    "jd_wer_pct": 2.711,
-    "dj_wer_pct": 2.711,
-    "clips": 64,
-    "limit_points": 0.2
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C6s4",
-   "variant": "fixed",
-   "backend": "cpu",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "gate4b"
-   ],
-   "wer": {
-    "pass": true,
-    "reference_wer_pct": 2.711,
-    "jd_wer_pct": 2.711,
-    "dj_wer_pct": 2.711,
-    "clips": 64,
-    "limit_points": 0.2
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C6s4",
-   "variant": "multi",
-   "backend": "ane",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "gate4b"
-   ],
-   "wer": {
-    "pass": true,
-    "reference_wer_pct": 2.711,
-    "jd_wer_pct": 2.711,
-    "dj_wer_pct": 2.711,
-    "clips": 64,
-    "limit_points": 0.2
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C6s4",
-   "variant": "multi",
-   "backend": "cpu",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "gate4b"
-   ],
-   "wer": {
-    "pass": true,
-    "reference_wer_pct": 2.711,
-    "jd_wer_pct": 2.711,
-    "dj_wer_pct": 2.711,
-    "clips": 64,
-    "limit_points": 0.2
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C6s8",
-   "variant": "fixed",
-   "backend": "ane",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "gate4b"
-   ],
-   "wer": {
-    "pass": true,
-    "reference_wer_pct": 2.711,
-    "jd_wer_pct": 2.711,
-    "dj_wer_pct": 2.711,
-    "clips": 64,
-    "limit_points": 0.2
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C6s8",
-   "variant": "fixed",
-   "backend": "cpu",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "gate4b"
-   ],
-   "wer": {
-    "pass": true,
-    "reference_wer_pct": 2.711,
-    "jd_wer_pct": 2.711,
-    "dj_wer_pct": 2.711,
-    "clips": 64,
-    "limit_points": 0.2
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C6s8",
-   "variant": "multi",
-   "backend": "ane",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "gate4b"
-   ],
-   "wer": {
-    "pass": true,
-    "reference_wer_pct": 2.711,
-    "jd_wer_pct": 2.711,
-    "dj_wer_pct": 2.711,
-    "clips": 64,
-    "limit_points": 0.2
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C6s8",
-   "variant": "multi",
-   "backend": "cpu",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "gate4b"
-   ],
-   "wer": {
-    "pass": true,
-    "reference_wer_pct": 2.711,
-    "jd_wer_pct": 2.711,
-    "dj_wer_pct": 2.711,
-    "clips": 64,
-    "limit_points": 0.2
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C7",
-   "variant": "fixed",
-   "backend": "ane",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "gate4b"
-   ],
-   "wer": {
-    "pass": true,
-    "reference_wer_pct": 2.711,
-    "jd_wer_pct": 2.711,
-    "dj_wer_pct": 2.711,
-    "clips": 64,
-    "limit_points": 0.2
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C7",
-   "variant": "fixed",
-   "backend": "cpu",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
+    "decoder_precision",
     "gate4b",
+    "wer",
+    "gate5"
+   ],
+   "wer": {
+    "pass": false,
+    "note": "not run"
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s2",
+   "variant": "enum",
+   "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s2",
+   "variant": "enum",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
+    "gate4b",
+    "wer",
+    "gate5"
+   ],
+   "wer": {
+    "pass": false,
+    "note": "not run"
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s2",
+   "variant": "enum",
+   "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s2",
+   "variant": "fixed",
+   "backend": "ane",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
+    "gate4b"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s2",
+   "variant": "fixed",
+   "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s2",
+   "variant": "fixed",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
+    "gate4b"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s2",
+   "variant": "fixed",
+   "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s2",
+   "variant": "multi",
+   "backend": "ane",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
+    "gate4b"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s2",
+   "variant": "multi",
+   "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s2",
+   "variant": "multi",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
+    "gate4b"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s2",
+   "variant": "multi",
+   "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s4",
+   "variant": "enum",
+   "backend": "ane",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
+    "gate4b",
+    "wer",
+    "gate5"
+   ],
+   "wer": {
+    "pass": false,
+    "note": "not run"
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s4",
+   "variant": "enum",
+   "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s4",
+   "variant": "enum",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
+    "gate4b",
+    "wer",
+    "gate5"
+   ],
+   "wer": {
+    "pass": false,
+    "note": "not run"
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s4",
+   "variant": "enum",
+   "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s4",
+   "variant": "fixed",
+   "backend": "ane",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
+    "gate4b"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s4",
+   "variant": "fixed",
+   "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s4",
+   "variant": "fixed",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
+    "gate4b"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s4",
+   "variant": "fixed",
+   "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s4",
+   "variant": "multi",
+   "backend": "ane",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
+    "gate4b"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s4",
+   "variant": "multi",
+   "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s4",
+   "variant": "multi",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
+    "gate4b"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s4",
+   "variant": "multi",
+   "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s8",
+   "variant": "fixed",
+   "backend": "ane",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
+    "gate4b"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s8",
+   "variant": "fixed",
+   "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s8",
+   "variant": "fixed",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
+    "gate4b"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s8",
+   "variant": "fixed",
+   "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s8",
+   "variant": "multi",
+   "backend": "ane",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
+    "gate4b"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s8",
+   "variant": "multi",
+   "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s8",
+   "variant": "multi",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
+    "gate4b"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s8",
+   "variant": "multi",
+   "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C7",
+   "variant": "enum",
+   "backend": "ane",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
+    "gate4b",
+    "wer",
+    "gate5"
+   ],
+   "wer": {
+    "pass": false,
+    "note": "not run"
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C7",
+   "variant": "enum",
+   "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C7",
+   "variant": "enum",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
+    "gate4b",
+    "wer",
+    "gate5",
+    "stress"
+   ],
+   "wer": {
+    "pass": false,
+    "note": "not run"
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C7",
+   "variant": "enum",
+   "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "stress"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C7",
+   "variant": "fixed",
+   "backend": "ane",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
+    "gate4b"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C7",
+   "variant": "fixed",
+   "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C7",
+   "variant": "fixed",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision",
+    "gate4b",
+    "stress"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C7",
+   "variant": "fixed",
+   "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
     "stress"
    ],
    "wer": {
@@ -775,9 +1823,11 @@
    "arm": "C7",
    "variant": "multi",
    "backend": "ane",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
     "gate4b"
    ],
    "wer": {
@@ -793,11 +1843,133 @@
    "model": "mp2",
    "arm": "C7",
    "variant": "multi",
+   "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C7",
+   "variant": "multi",
    "backend": "cpu",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
     "gate4b",
+    "stress"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C7",
+   "variant": "multi",
+   "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "stress"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C8",
+   "variant": "enum",
+   "backend": "ane",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "gate4a",
+    "decoder_precision",
+    "gate4b",
+    "wer",
+    "gate5"
+   ],
+   "wer": {
+    "pass": false,
+    "note": "not run"
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C8",
+   "variant": "enum",
+   "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "gate4a"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C8",
+   "variant": "enum",
+   "backend": "cpu",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "gate4a",
+    "decoder_precision",
+    "gate4b",
+    "wer",
+    "gate5",
+    "stress"
+   ],
+   "wer": {
+    "pass": false,
+    "note": "not run"
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C8",
+   "variant": "enum",
+   "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "gate4a",
     "stress"
    ],
    "wer": {
@@ -814,6 +1986,27 @@
    "arm": "C8",
    "variant": "fixed",
    "backend": "ane",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C8",
+   "variant": "fixed",
+   "backend": "ane",
+   "decoder_precision": "fp32",
    "timing_allowed": true,
    "selection_eligible": true,
    "failed_checks": [],
@@ -831,10 +2024,32 @@
    "arm": "C8",
    "variant": "fixed",
    "backend": "cpu",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
     "gate4b",
+    "stress"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C8",
+   "variant": "fixed",
+   "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
     "stress"
    ],
    "wer": {
@@ -851,6 +2066,27 @@
    "arm": "C8",
    "variant": "multi",
    "backend": "ane",
+   "decoder_precision": "fp16",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
+    "decoder_precision"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C8",
+   "variant": "multi",
+   "backend": "ane",
+   "decoder_precision": "fp32",
    "timing_allowed": true,
    "selection_eligible": true,
    "failed_checks": [],
@@ -868,10 +2104,32 @@
    "arm": "C8",
    "variant": "multi",
    "backend": "cpu",
+   "decoder_precision": "fp16",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
+    "decoder_precision",
     "gate4b",
+    "stress"
+   ],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C8",
+   "variant": "multi",
+   "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": false,
+   "selection_eligible": false,
+   "failed_checks": [
     "stress"
    ],
    "wer": {
@@ -888,6 +2146,7 @@
    "arm": "G0",
    "variant": "fixed",
    "backend": "ane",
+   "decoder_precision": null,
    "timing_allowed": true,
    "selection_eligible": false,
    "failed_checks": []
@@ -897,6 +2156,7 @@
    "arm": "G0",
    "variant": "fixed",
    "backend": "cpu",
+   "decoder_precision": null,
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [

@@ -1,0 +1,86 @@
+{
+ "design_revision": 8,
+ "code_version": "wp3-eligibility-2",
+ "model": "mp2",
+ "arm": "C8",
+ "variant": "enum",
+ "backend": "cpu",
+ "compute_units": "cpuOnly",
+ "decoder_precision": "fp16",
+ "decoder_models": "arms/mp2/decoder",
+ "eligible": false,
+ "timing_allowed": false,
+ "selection_eligible": false,
+ "reasons": [
+  "gate4a: {\"topology\": \"planes\", \"source\": \"results/gates/v7/mp2-C8-fp32-enum-cpuOnly-4a.json\", \"own_fp32_build\": true, \"rel_max\": 4.415151051539462e-06, \"abs_max\": 0.00011360979613302924}",
+  "decoder_precision: {\"note\": \"FP16 decoder/joint: not deployed (DESIGN.md revision 8, 'Decoder and joint precision'); recorded for comparison\"}",
+  "gate4b: {\"note\": \"not run\"}",
+  "wer: {\"note\": \"not run\"}",
+  "gate5: {\"note\": \"not run\"}",
+  "stress: {\"detail\": {\"pass\": false, \"nonfinite_where_c4_finite\": [[\"layers.0.feed_forward1.linear2\", \"x8\"], [\"layers.23.feed_forward2.linear2\", \"abs_x64\"]], \"nonfinite_at_x1\": [], \"missing_c4_reference\": [], \"nonfinite_cases_total\": 4}}"
+ ],
+ "checks": {
+  "scope": {
+   "pass": true,
+   "note": null
+  },
+  "gate2": {
+   "pass": true,
+   "modules": 240
+  },
+  "gate4a": {
+   "pass": false,
+   "topology": "planes",
+   "source": "results/gates/v7/mp2-C8-fp32-enum-cpuOnly-4a.json",
+   "own_fp32_build": true,
+   "rel_max": 4.415151051539462e-06,
+   "abs_max": 0.00011360979613302924
+  },
+  "gate4a_decoder": {
+   "pass": true
+  },
+  "decoder_precision": {
+   "pass": false,
+   "note": "FP16 decoder/joint: not deployed (DESIGN.md revision 8, 'Decoder and joint precision'); recorded for comparison"
+  },
+  "gate4b": {
+   "pass": false,
+   "note": "not run"
+  },
+  "wer": {
+   "pass": false,
+   "note": "not run"
+  },
+  "gate5": {
+   "pass": false,
+   "note": "not run"
+  },
+  "stress": {
+   "pass": false,
+   "detail": {
+    "pass": false,
+    "nonfinite_where_c4_finite": [
+     [
+      "layers.0.feed_forward1.linear2",
+      "x8"
+     ],
+     [
+      "layers.23.feed_forward2.linear2",
+      "abs_x64"
+     ]
+    ],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 4
+   }
+  }
+ },
+ "inputs": {
+  "results/gate2/mp2-C8.json": "8a3789398002302001f34d9fcbc4fc264585e254956c47543706d6064a60a723",
+  "results/gates/v7/mp2-C8-fp32-enum-cpuOnly-4a.json": "7e14449f4749c2731a44ef4d1185f72b668c39010071d6d712b1c5347721a705",
+  "results/gates/v7/mp2-decoder-fp32-cpuOnly-4a.json": "1df69d43b6b988cbb95ee22806905790104135bcd3916c103e8a54414272913d",
+  "results/probes/stress.json": "d9035d169c9147e54d96544275c0ef189c31ebcc0fd1ef7361e17a157dfd0f53"
+ },
+ "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
+ "built": "2026-10-03 02:51"
+}

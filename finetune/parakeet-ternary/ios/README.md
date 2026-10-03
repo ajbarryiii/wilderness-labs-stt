@@ -544,3 +544,40 @@ Results (2026-10-02/03, Mac M1 Pro, shared):
   - Host and wrapper settings live in the untracked `mil/local.json` or in environment variables; the
     tailnet address is gone from tracked code.
   - `macpush.py` (WP4's file) still names the local SSH helper path; it is left to its owner.
+
+### WP3 under DESIGN.md revision 8 (FP32 decoder/joint deployed)
+
+Revision 8 ("Decoder and joint precision") makes the FP32 decoder/joint models
+(`arms/<model>/decoder-fp32/`) the deployed decode-loop models: F0 per-step = Decoder + JointDecision, F1
+fused = DecoderJoint. The FP16 decoder variants stay recorded as ineligible.
+
+How the code changed:
+- `mil.gates7 4b` now runs with `--decoder-precision fp32` by default and names its result
+  `...-<units>-dec-fp32.json` (design revision 8).
+- The revision 7 FP16-decoder runs are kept as `...-dec-fp16.json`. The revision 7 FP32-decoder diagnostics
+  moved to `results/gates/v7/superseded/`.
+- `eligibility.py` (revision 8) writes deployed records `<model>-<arm>-<variant>-<backend>.json` and
+  separate `...-dec-fp16.json` records, which are always ineligible. `check(..., decoder="fp32")` is the
+  default.
+- 4a, gate 2 and the stress probe are unchanged by revision 8, and their revision 7 results are accepted.
+
+Rerun: 4b with the FP32 decoder on both deployed paths for every built mp2 arm × length variant ×
+{CPU_AND_NE, CPU_ONLY}. That is 54 runs: 11 arms × fixed/multi, plus the enumerated builds of C4, C7, C8,
+C6s2 and C6s4. 4a was added for the C7 and C8 enumerated graphs.
+
+- **Every exact arm passes 4b on both backends:**
+  - free-decoding sequence identity: 62–64/64 on the ANE, 63–64/64 on the CPU;
+  - WER: 2.711%, equal to the reference;
+  - decision agreement: 100% on decisive steps; all steps token ≥ 99.87%, duration ≥ 99.14%;
+  - encoder rel max: 0.036.
+- **Eligibility table:** `results/eligibility/table.txt`.
+  - **Timing allowed:** C1, C3, C4, C6s2/4/8 and C6d4/8 in every built variant on both backends; C7 and
+    C8 fixed/multifunction on the ANE; C7 enumerated on the ANE; G0 on the ANE (control).
+  - **Not allowed:**
+    - C7 and C8 on the CPU: relative stress rule.
+    - C8 enumerated: its FP32 build fails 4a on one case (`b08-N128000@8`, abs 1.14e-4 > 1e-4; rel
+      4.4e-6). This is FP32 cancellation in P − N, the same mechanism that put C8 multifunction at
+      9.6e-5.
+    - C5: scope, plus numerics.
+    - Every FP16-decoder record.
+- The full 4b table with both decoder precisions is in `results/wp3_rev7_table.txt`.

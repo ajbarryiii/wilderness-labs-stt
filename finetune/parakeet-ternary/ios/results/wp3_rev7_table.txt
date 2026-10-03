@@ -11,67 +11,125 @@ Gate 4a (FP32 builds, CPU_ONLY, full depth; ceilings rel <= 1e-5, abs <= 1e-4)
 | C6s2-fp32 | fixed | 82 | 1.53e-06 | 2.01e-05 | True |
 | C6s4-fp32 | fixed | 82 | 1.53e-06 | 2.01e-05 | True |
 | C6s8-fp32 | fixed | 82 | 1.53e-06 | 2.01e-05 | True |
+| C7-fp32 | enum | 200 | 1.82e-06 | 2.66e-05 | True |
 | C7-fp32 | fixed | 82 | 1.81e-06 | 3.52e-05 | True |
 | C7-fp32 | multi | 200 | 1.81e-06 | 3.52e-05 | True |
+| C8-fp32 | enum | 200 | 4.42e-06 | 1.14e-04 | False |
 | C8-fp32 | fixed | 82 | 4.49e-06 | 9.60e-05 | True |
 | C8-fp32 | multi | 200 | 5.48e-06 | 9.60e-05 | True |
 | decoder-fp32 (replay + free decoding, both deployed paths) | - | 82 clips | 2.81e-07 (logits) | 2.22e-06 | True |
 
-Gate 4b (FP16 builds; WER from eligibility.py; jd = Decoder + JointDecision, dj = DecoderJoint)
+Gate 4b (FP16 encoder builds; decoder/joint FP32 = deployed (revision 8), FP16 = recorded, ineligible; WER from eligibility.py; jd = Decoder + JointDecision, dj = DecoderJoint)
 
-| arm | variant | backend | enc rel max (<= 0.1) | rev2-5 enc failing (diag) | agree all tok / dur (jd) | identical seqs jd / dj (of 64; >= 61) | WER jd / ref (%) | gate 5 | stress | eligible |
-|---|---|---|---|---|---|---|---|---|---|---|
-| C1 | fixed | ane | 0.0215 | 1 | 0.9967 / 0.9970 | 60 / 60 | 2.711 / 2.711 | - | pass | no |
-| C1 | fixed | cpu | 0.0215 | 1 | 0.9967 / 0.9970 | 60 / 60 | 2.711 / 2.711 | - | pass | no |
-| C1 | multi | ane | 0.0215 | 3 | 0.9967 / 0.9970 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
-| C1 | multi | cpu | 0.0215 | 3 | 0.9967 / 0.9970 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
-| C3 | fixed | ane | 0.0283 | 7 | 0.9970 / 0.9917 | 58 / 58 | 2.711 / 2.711 | - | pass | no |
-| C3 | fixed | cpu | 0.0215 | 1 | 0.9967 / 0.9970 | 60 / 60 | 2.711 / 2.711 | - | pass | no |
-| C3 | multi | ane | 0.0309 | 17 | 0.9970 / 0.9917 | 58 / 58 | 2.711 / 2.711 | True | pass | no |
-| C3 | multi | cpu | 0.0215 | 3 | 0.9967 / 0.9970 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
-| C4 | enum | ane | 0.0109 | 0 | 0.9980 / 0.9980 | 61 / 61 | 2.711 / 2.711 | True | pass | yes |
-| C4 | enum | cpu | 0.0109 | 0 | 0.9980 / 0.9980 | 61 / 61 | 2.711 / 2.711 | True | pass | yes |
-| C4 | fixed | ane | 0.0342 | 7 | 0.9970 / 0.9917 | 59 / 59 | 2.711 / 2.711 | - | pass | no |
-| C4 | fixed | cpu | 0.0215 | 1 | 0.9967 / 0.9970 | 60 / 60 | 2.711 / 2.711 | - | pass | no |
-| C4 | multi | ane | 0.0342 | 16 | 0.9970 / 0.9921 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
-| C4 | multi | cpu | 0.0215 | 3 | 0.9967 / 0.9970 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
-| C5 | fixed | ane | 1.5287 | 82 | 0.7064 / 0.5015 | 8 / 8 | 29.51 / 2.711 | - | pass | no |
-| C5 | fixed | cpu | 0.2308 | 82 | 0.9868 / 0.9656 | 53 / 53 | 2.711 / 2.711 | - | pass | no |
-| C5 | multi | ane | 2.3972 | 200 | 0.5078 / 0.4017 | 0 / 0 | 69.76 / 2.711 | False | pass | no |
-| C5 | multi | cpu | 0.2308 | 200 | 0.9878 / 0.9660 | 53 / 53 | 2.711 / 2.711 | True | pass | no |
-| C6d4 | fixed | ane | 0.0358 | 7 | 0.9964 / 0.9914 | 59 / 59 | 2.711 / 2.711 | - | pass | no |
-| C6d4 | fixed | cpu | 0.0215 | 1 | 0.9967 / 0.9970 | 60 / 60 | 2.711 / 2.711 | - | pass | no |
-| C6d4 | multi | ane | 0.0358 | 16 | 0.9964 / 0.9917 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
-| C6d4 | multi | cpu | 0.0215 | 3 | 0.9967 / 0.9970 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
-| C6d8 | fixed | ane | 0.0358 | 7 | 0.9964 / 0.9914 | 59 / 59 | 2.711 / 2.711 | - | pass | no |
-| C6d8 | fixed | cpu | 0.0215 | 1 | 0.9967 / 0.9970 | 60 / 60 | 2.711 / 2.711 | - | pass | no |
-| C6d8 | multi | ane | 0.0358 | 16 | 0.9964 / 0.9917 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
-| C6d8 | multi | cpu | 0.0215 | 3 | 0.9967 / 0.9970 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
-| C6s2 | fixed | ane | 0.0358 | 7 | 0.9964 / 0.9914 | 59 / 59 | 2.711 / 2.711 | - | pass | no |
-| C6s2 | fixed | cpu | 0.0087 | 0 | 0.9970 / 0.9980 | 60 / 60 | 2.711 / 2.711 | - | pass | no |
-| C6s2 | multi | ane | 0.0358 | 16 | 0.9964 / 0.9917 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
-| C6s2 | multi | cpu | 0.0115 | 0 | 0.9970 / 0.9980 | 60 / 60 | 2.711 / 2.711 | True | pass | no |
-| C6s4 | fixed | ane | 0.0358 | 7 | 0.9964 / 0.9914 | 59 / 59 | 2.711 / 2.711 | - | pass | no |
-| C6s4 | fixed | cpu | 0.0087 | 0 | 0.9970 / 0.9980 | 60 / 60 | 2.711 / 2.711 | - | pass | no |
-| C6s4 | multi | ane | 0.0358 | 16 | 0.9964 / 0.9917 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
-| C6s4 | multi | cpu | 0.0115 | 0 | 0.9970 / 0.9980 | 60 / 60 | 2.711 / 2.711 | True | pass | no |
-| C6s8 | fixed | ane | 0.0358 | 7 | 0.9964 / 0.9914 | 59 / 59 | 2.711 / 2.711 | - | pass | no |
-| C6s8 | fixed | cpu | 0.0087 | 0 | 0.9970 / 0.9980 | 60 / 60 | 2.711 / 2.711 | - | pass | no |
-| C6s8 | multi | ane | 0.0358 | 16 | 0.9964 / 0.9917 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
-| C6s8 | multi | cpu | 0.0115 | 0 | 0.9970 / 0.9980 | 60 / 60 | 2.711 / 2.711 | True | pass | no |
-| C7 | fixed | ane | 0.0342 | 7 | 0.9970 / 0.9917 | 59 / 59 | 2.711 / 2.711 | - | pass | no |
-| C7 | fixed | cpu | 0.0112 | 0 | 0.9970 / 0.9974 | 58 / 58 | 2.711 / 2.711 | - | FAIL | no |
-| C7 | multi | ane | 0.0342 | 16 | 0.9970 / 0.9921 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
-| C7 | multi | cpu | 0.0112 | 0 | 0.9974 / 0.9970 | 59 / 59 | 2.711 / 2.711 | True | FAIL | no |
-| C8 | fixed | ane | 0.0318 | 8 | 0.9977 / 0.9917 | 61 / 61 | 2.711 / 2.711 | - | pass | yes |
-| C8 | fixed | cpu | 0.0247 | 11 | 0.9964 / 0.9944 | 57 / 57 | 2.711 / 2.711 | - | FAIL | no |
-| C8 | multi | ane | 0.0338 | 19 | 0.9974 / 0.9917 | 61 / 61 | 2.711 / 2.711 | True | pass | yes |
-| C8 | multi | cpu | 0.0273 | 27 | 0.9967 / 0.9931 | 57 / 57 | 2.711 / 2.711 | True | FAIL | no |
+| arm | variant | backend | decoder | enc rel max (<= 0.1) | rev2-5 enc failing (diag) | agree all tok / dur (jd) | identical seqs jd / dj (of 64; >= 61) | WER jd / ref (%) | gate 5 | stress | eligible |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| C1 | fixed | ane | fp32 | 0.0215 | 1 | 0.9993 / 0.9974 | 64 / 64 | 2.711 / 2.711 | - | pass | yes |
+| C1 | fixed | cpu | fp32 | 0.0215 | 1 | 0.9993 / 0.9974 | 64 / 64 | 2.711 / 2.711 | - | pass | yes |
+| C1 | multi | ane | fp32 | 0.0215 | 3 | 0.9997 / 0.9974 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C1 | multi | cpu | fp32 | 0.0215 | 3 | 0.9997 / 0.9974 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C3 | fixed | ane | fp32 | 0.0283 | 7 | 0.9990 / 0.9921 | 63 / 63 | 2.711 / 2.711 | - | pass | yes |
+| C3 | fixed | cpu | fp32 | 0.0215 | 1 | 0.9993 / 0.9974 | 64 / 64 | 2.711 / 2.711 | - | pass | yes |
+| C3 | multi | ane | fp32 | 0.0309 | 17 | 0.9987 / 0.9921 | 62 / 62 | 2.711 / 2.711 | True | pass | yes |
+| C3 | multi | cpu | fp32 | 0.0215 | 3 | 0.9997 / 0.9974 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C4 | enum | ane | fp32 | 0.0109 | 0 | 1.0000 / 0.9990 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C4 | enum | cpu | fp32 | 0.0109 | 0 | 1.0000 / 0.9990 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C4 | fixed | ane | fp32 | 0.0342 | 7 | 0.9990 / 0.9914 | 62 / 62 | 2.711 / 2.711 | - | pass | yes |
+| C4 | fixed | cpu | fp32 | 0.0215 | 1 | 0.9993 / 0.9974 | 64 / 64 | 2.711 / 2.711 | - | pass | yes |
+| C4 | multi | ane | fp32 | 0.0342 | 16 | 0.9990 / 0.9914 | 62 / 62 | 2.711 / 2.711 | True | pass | yes |
+| C4 | multi | cpu | fp32 | 0.0215 | 3 | 0.9997 / 0.9974 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C5 | fixed | ane | fp32 | 1.5287 | 82 | 0.7091 / 0.5031 | 8 / 8 | 28.467 / 2.711 | - | pass | no |
+| C5 | fixed | cpu | fp32 | 0.2308 | 82 | 0.9874 / 0.9656 | 55 / 55 | 2.711 / 2.711 | - | pass | no |
+| C5 | multi | ane | fp32 | 2.3972 | 200 | 0.5084 / 0.4030 | 0 / 0 | 68.092 / 2.711 | False | pass | no |
+| C5 | multi | cpu | fp32 | 0.2308 | 200 | 0.9871 / 0.9653 | 55 / 55 | 2.711 / 2.711 | True | pass | no |
+| C6d4 | fixed | ane | fp32 | 0.0358 | 7 | 0.9990 / 0.9917 | 62 / 62 | 2.711 / 2.711 | - | pass | yes |
+| C6d4 | fixed | cpu | fp32 | 0.0215 | 1 | 0.9993 / 0.9974 | 64 / 64 | 2.711 / 2.711 | - | pass | yes |
+| C6d4 | multi | ane | fp32 | 0.0358 | 16 | 0.9990 / 0.9917 | 62 / 62 | 2.711 / 2.711 | True | pass | yes |
+| C6d4 | multi | cpu | fp32 | 0.0215 | 3 | 0.9997 / 0.9974 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C6d8 | fixed | ane | fp32 | 0.0358 | 7 | 0.9990 / 0.9917 | 62 / 62 | 2.711 / 2.711 | - | pass | yes |
+| C6d8 | fixed | cpu | fp32 | 0.0215 | 1 | 0.9993 / 0.9974 | 64 / 64 | 2.711 / 2.711 | - | pass | yes |
+| C6d8 | multi | ane | fp32 | 0.0358 | 16 | 0.9990 / 0.9917 | 62 / 62 | 2.711 / 2.711 | True | pass | yes |
+| C6d8 | multi | cpu | fp32 | 0.0215 | 3 | 0.9997 / 0.9974 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C6s2 | enum | ane | fp32 | 0.0109 | 0 | 1.0000 / 0.9990 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C6s2 | enum | cpu | fp32 | 0.0109 | 0 | 1.0000 / 0.9990 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C6s2 | fixed | ane | fp32 | 0.0358 | 7 | 0.9990 / 0.9917 | 62 / 62 | 2.711 / 2.711 | - | pass | yes |
+| C6s2 | fixed | cpu | fp32 | 0.0087 | 0 | 1.0000 / 0.9990 | 64 / 64 | 2.711 / 2.711 | - | pass | yes |
+| C6s2 | multi | ane | fp32 | 0.0358 | 16 | 0.9990 / 0.9917 | 62 / 62 | 2.711 / 2.711 | True | pass | yes |
+| C6s2 | multi | cpu | fp32 | 0.0115 | 0 | 1.0000 / 0.9983 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C6s4 | enum | ane | fp32 | 0.0109 | 0 | 1.0000 / 0.9990 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C6s4 | enum | cpu | fp32 | 0.0109 | 0 | 1.0000 / 0.9990 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C6s4 | fixed | ane | fp32 | 0.0358 | 7 | 0.9990 / 0.9917 | 62 / 62 | 2.711 / 2.711 | - | pass | yes |
+| C6s4 | fixed | cpu | fp32 | 0.0087 | 0 | 1.0000 / 0.9990 | 64 / 64 | 2.711 / 2.711 | - | pass | yes |
+| C6s4 | multi | ane | fp32 | 0.0358 | 16 | 0.9990 / 0.9917 | 62 / 62 | 2.711 / 2.711 | True | pass | yes |
+| C6s4 | multi | cpu | fp32 | 0.0115 | 0 | 1.0000 / 0.9983 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C6s8 | fixed | ane | fp32 | 0.0358 | 7 | 0.9990 / 0.9917 | 62 / 62 | 2.711 / 2.711 | - | pass | yes |
+| C6s8 | fixed | cpu | fp32 | 0.0087 | 0 | 1.0000 / 0.9990 | 64 / 64 | 2.711 / 2.711 | - | pass | yes |
+| C6s8 | multi | ane | fp32 | 0.0358 | 16 | 0.9990 / 0.9917 | 62 / 62 | 2.711 / 2.711 | True | pass | yes |
+| C6s8 | multi | cpu | fp32 | 0.0115 | 0 | 1.0000 / 0.9983 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C7 | enum | ane | fp32 | 0.0067 | 0 | 1.0000 / 0.9983 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C7 | enum | cpu | fp32 | 0.0067 | 0 | 1.0000 / 0.9983 | 64 / 64 | 2.711 / 2.711 | True | FAIL | no |
+| C7 | fixed | ane | fp32 | 0.0342 | 7 | 0.9990 / 0.9914 | 62 / 62 | 2.711 / 2.711 | - | pass | yes |
+| C7 | fixed | cpu | fp32 | 0.0112 | 0 | 1.0000 / 0.9983 | 63 / 63 | 2.711 / 2.711 | - | FAIL | no |
+| C7 | multi | ane | fp32 | 0.0342 | 16 | 0.9990 / 0.9914 | 62 / 62 | 2.711 / 2.711 | True | pass | yes |
+| C7 | multi | cpu | fp32 | 0.0112 | 0 | 1.0000 / 0.9987 | 63 / 63 | 2.711 / 2.711 | True | FAIL | no |
+| C8 | enum | ane | fp32 | 0.0128 | 0 | 1.0000 / 0.9983 | 64 / 64 | 2.711 / 2.711 | True | pass | no |
+| C8 | enum | cpu | fp32 | 0.0128 | 0 | 1.0000 / 0.9983 | 64 / 64 | 2.711 / 2.711 | True | FAIL | no |
+| C8 | fixed | ane | fp32 | 0.0318 | 8 | 0.9990 / 0.9917 | 62 / 62 | 2.711 / 2.711 | - | pass | yes |
+| C8 | fixed | cpu | fp32 | 0.0247 | 11 | 0.9990 / 0.9947 | 64 / 64 | 2.711 / 2.711 | - | FAIL | no |
+| C8 | multi | ane | fp32 | 0.0338 | 19 | 0.9990 / 0.9917 | 62 / 62 | 2.711 / 2.711 | True | pass | yes |
+| C8 | multi | cpu | fp32 | 0.0273 | 27 | 0.9990 / 0.9940 | 63 / 63 | 2.711 / 2.711 | True | FAIL | no |
+| C1 | fixed | ane | fp16 | 0.0215 | 1 | 0.9967 / 0.9970 | 60 / 60 | 2.711 / 2.711 | - | pass | no |
+| C1 | fixed | cpu | fp16 | 0.0215 | 1 | 0.9967 / 0.9970 | 60 / 60 | 2.711 / 2.711 | - | pass | no |
+| C1 | multi | ane | fp16 | 0.0215 | 3 | 0.9967 / 0.9970 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
+| C1 | multi | cpu | fp16 | 0.0215 | 3 | 0.9967 / 0.9970 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
+| C3 | fixed | ane | fp16 | 0.0283 | 7 | 0.9970 / 0.9917 | 58 / 58 | 2.711 / 2.711 | - | pass | no |
+| C3 | fixed | cpu | fp16 | 0.0215 | 1 | 0.9967 / 0.9970 | 60 / 60 | 2.711 / 2.711 | - | pass | no |
+| C3 | multi | ane | fp16 | 0.0309 | 17 | 0.9970 / 0.9917 | 58 / 58 | 2.711 / 2.711 | True | pass | no |
+| C3 | multi | cpu | fp16 | 0.0215 | 3 | 0.9967 / 0.9970 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
+| C4 | enum | ane | fp16 | 0.0109 | 0 | 0.9980 / 0.9980 | 61 / 61 | 2.711 / 2.711 | True | pass | no |
+| C4 | enum | cpu | fp16 | 0.0109 | 0 | 0.9980 / 0.9980 | 61 / 61 | 2.711 / 2.711 | True | pass | no |
+| C4 | fixed | ane | fp16 | 0.0342 | 7 | 0.9970 / 0.9917 | 59 / 59 | 2.711 / 2.711 | - | pass | no |
+| C4 | fixed | cpu | fp16 | 0.0215 | 1 | 0.9967 / 0.9970 | 60 / 60 | 2.711 / 2.711 | - | pass | no |
+| C4 | multi | ane | fp16 | 0.0342 | 16 | 0.9970 / 0.9921 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
+| C4 | multi | cpu | fp16 | 0.0215 | 3 | 0.9967 / 0.9970 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
+| C5 | fixed | ane | fp16 | 1.5287 | 82 | 0.7064 / 0.5015 | 8 / 8 | 29.51 / 2.711 | - | pass | no |
+| C5 | fixed | cpu | fp16 | 0.2308 | 82 | 0.9868 / 0.9656 | 53 / 53 | 2.711 / 2.711 | - | pass | no |
+| C5 | multi | ane | fp16 | 2.3972 | 200 | 0.5078 / 0.4017 | 0 / 0 | 69.76 / 2.711 | False | pass | no |
+| C5 | multi | cpu | fp16 | 0.2308 | 200 | 0.9878 / 0.9660 | 53 / 53 | 2.711 / 2.711 | True | pass | no |
+| C6d4 | fixed | ane | fp16 | 0.0358 | 7 | 0.9964 / 0.9914 | 59 / 59 | 2.711 / 2.711 | - | pass | no |
+| C6d4 | fixed | cpu | fp16 | 0.0215 | 1 | 0.9967 / 0.9970 | 60 / 60 | 2.711 / 2.711 | - | pass | no |
+| C6d4 | multi | ane | fp16 | 0.0358 | 16 | 0.9964 / 0.9917 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
+| C6d4 | multi | cpu | fp16 | 0.0215 | 3 | 0.9967 / 0.9970 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
+| C6d8 | fixed | ane | fp16 | 0.0358 | 7 | 0.9964 / 0.9914 | 59 / 59 | 2.711 / 2.711 | - | pass | no |
+| C6d8 | fixed | cpu | fp16 | 0.0215 | 1 | 0.9967 / 0.9970 | 60 / 60 | 2.711 / 2.711 | - | pass | no |
+| C6d8 | multi | ane | fp16 | 0.0358 | 16 | 0.9964 / 0.9917 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
+| C6d8 | multi | cpu | fp16 | 0.0215 | 3 | 0.9967 / 0.9970 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
+| C6s2 | fixed | ane | fp16 | 0.0358 | 7 | 0.9964 / 0.9914 | 59 / 59 | 2.711 / 2.711 | - | pass | no |
+| C6s2 | fixed | cpu | fp16 | 0.0087 | 0 | 0.9970 / 0.9980 | 60 / 60 | 2.711 / 2.711 | - | pass | no |
+| C6s2 | multi | ane | fp16 | 0.0358 | 16 | 0.9964 / 0.9917 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
+| C6s2 | multi | cpu | fp16 | 0.0115 | 0 | 0.9970 / 0.9980 | 60 / 60 | 2.711 / 2.711 | True | pass | no |
+| C6s4 | fixed | ane | fp16 | 0.0358 | 7 | 0.9964 / 0.9914 | 59 / 59 | 2.711 / 2.711 | - | pass | no |
+| C6s4 | fixed | cpu | fp16 | 0.0087 | 0 | 0.9970 / 0.9980 | 60 / 60 | 2.711 / 2.711 | - | pass | no |
+| C6s4 | multi | ane | fp16 | 0.0358 | 16 | 0.9964 / 0.9917 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
+| C6s4 | multi | cpu | fp16 | 0.0115 | 0 | 0.9970 / 0.9980 | 60 / 60 | 2.711 / 2.711 | True | pass | no |
+| C6s8 | fixed | ane | fp16 | 0.0358 | 7 | 0.9964 / 0.9914 | 59 / 59 | 2.711 / 2.711 | - | pass | no |
+| C6s8 | fixed | cpu | fp16 | 0.0087 | 0 | 0.9970 / 0.9980 | 60 / 60 | 2.711 / 2.711 | - | pass | no |
+| C6s8 | multi | ane | fp16 | 0.0358 | 16 | 0.9964 / 0.9917 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
+| C6s8 | multi | cpu | fp16 | 0.0115 | 0 | 0.9970 / 0.9980 | 60 / 60 | 2.711 / 2.711 | True | pass | no |
+| C7 | fixed | ane | fp16 | 0.0342 | 7 | 0.9970 / 0.9917 | 59 / 59 | 2.711 / 2.711 | - | pass | no |
+| C7 | fixed | cpu | fp16 | 0.0112 | 0 | 0.9970 / 0.9974 | 58 / 58 | 2.711 / 2.711 | - | FAIL | no |
+| C7 | multi | ane | fp16 | 0.0342 | 16 | 0.9970 / 0.9921 | 59 / 59 | 2.711 / 2.711 | True | pass | no |
+| C7 | multi | cpu | fp16 | 0.0112 | 0 | 0.9974 / 0.9970 | 59 / 59 | 2.711 / 2.711 | True | FAIL | no |
+| C8 | fixed | ane | fp16 | 0.0318 | 8 | 0.9977 / 0.9917 | 61 / 61 | 2.711 / 2.711 | - | pass | no |
+| C8 | fixed | cpu | fp16 | 0.0247 | 11 | 0.9964 / 0.9944 | 57 / 57 | 2.711 / 2.711 | - | FAIL | no |
+| C8 | multi | ane | fp16 | 0.0338 | 19 | 0.9974 / 0.9917 | 61 / 61 | 2.711 / 2.711 | True | pass | no |
+| C8 | multi | cpu | fp16 | 0.0273 | 27 | 0.9967 / 0.9931 | 57 / 57 | 2.711 / 2.711 | True | FAIL | no |
 
-Diagnostics: decoder-only 4b (FP16 deployed paths on the FP32 reference encoder output) and arms with the FP32 decoder builds (not eligibility inputs)
+Diagnostics: decoder-only 4b (FP16 decoder paths on the FP32 reference encoder output) and the revision-7 FP32-decoder diagnostic runs (superseded by the revision-8 4b runs above)
 
 | run | identical seqs jd / dj (of 64) | agree all tok / dur (jd) | heads pass |
 |---|---|---|---|
+| mp2-decoder-cpuAndNeuralEngine-4b | 60 / 60 | 0.9974 / 0.9977 | True |
+| mp2-decoder-cpuOnly-4b | 60 / 60 | 0.9974 / 0.9977 | True |
 | mp2-C1-multi-cpuAndNeuralEngine-decoder-fp32 | 64 / 64 | 0.9997 / 0.9974 | True |
 | mp2-C1-multi-cpuOnly-decoder-fp32 | 64 / 64 | 0.9997 / 0.9974 | True |
 | mp2-C3-multi-cpuAndNeuralEngine-decoder-fp32 | 62 / 62 | 0.9987 / 0.9921 | True |
@@ -86,5 +144,3 @@ Diagnostics: decoder-only 4b (FP16 deployed paths on the FP32 reference encoder 
 | mp2-C7-multi-cpuOnly-decoder-fp32 | 63 / 63 | 1.0000 / 0.9987 | True |
 | mp2-C8-multi-cpuAndNeuralEngine-decoder-fp32 | 62 / 62 | 0.9990 / 0.9917 | True |
 | mp2-C8-multi-cpuOnly-decoder-fp32 | 63 / 63 | 0.9990 / 0.9940 | True |
-| mp2-decoder-cpuAndNeuralEngine-4b | 60 / 60 | 0.9974 / 0.9977 | True |
-| mp2-decoder-cpuOnly-4b | 60 / 60 | 0.9974 / 0.9977 | True |

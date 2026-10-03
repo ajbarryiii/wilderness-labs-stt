@@ -1,20 +1,22 @@
 {
- "design_revision": 7,
- "code_version": "wp3-eligibility-1",
+ "design_revision": 8,
+ "code_version": "wp3-eligibility-2",
  "model": "mp2",
  "arm": "C5",
  "variant": "multi",
  "backend": "ane",
  "compute_units": "cpuAndNeuralEngine",
+ "decoder_precision": "fp32",
+ "decoder_models": "arms/mp2/decoder-fp32",
  "eligible": false,
  "timing_allowed": false,
  "selection_eligible": false,
  "reasons": [
   "scope: {\"note\": \"exploratory W8A8 (DESIGN.md: scope reduction; numerics fail)\"}",
   "gate4a: {\"topology\": \"dense+activation_quantization\", \"source\": null, \"own_fp32_build\": false, \"rel_max\": null, \"abs_max\": null}",
-  "gate4b: encoder rel <= 0.1 fails on 200 cases; jd token agreement (decisive 0.5135, all 0.5078, decisive fraction 0.966); jd duration agreement (decisive 0.4250, all 0.4017, decisive fraction 0.850); jd free-decoding sequence identity 0/64 = 0.000 < 0.95; dj token agreement (decisive 0.5135, all 0.5078, decisive fraction 0.966); dj duration agreement (decisive 0.4250, all 0.4017, decisive fraction 0.850); dj free-decoding sequence identity 0/64 = 0.000 < 0.95; gate 5",
+  "gate4b: encoder rel <= 0.1 fails on 200 cases; jd token agreement (decisive 0.5139, all 0.5084, decisive fraction 0.966); jd duration agreement (decisive 0.4261, all 0.4030, decisive fraction 0.850); jd free-decoding sequence identity 0/64 = 0.000 < 0.95; dj token agreement (decisive 0.5139, all 0.5084, decisive fraction 0.966); dj duration agreement (decisive 0.4261, all 0.4030, decisive fraction 0.850); dj free-decoding sequence identity 0/64 = 0.000 < 0.95; gate 5",
   "gate5: {\"applicable\": true, \"gated_rel_max\": 1.7358567304095223}",
-  "wer: {\"reference_wer_pct\": 2.711, \"jd_wer_pct\": 69.76, \"dj_wer_pct\": 69.76, \"clips\": 64, \"limit_points\": 0.2}"
+  "wer: {\"reference_wer_pct\": 2.711, \"jd_wer_pct\": 68.092, \"dj_wer_pct\": 68.092, \"clips\": 64, \"limit_points\": 0.2}"
  ],
  "checks": {
   "scope": {
@@ -38,34 +40,36 @@
   },
   "gate4b": {
    "pass": false,
+   "result_design_revision": 8,
+   "decoder_precision": "fp32",
    "encoder_rel_max": 2.39717544915313,
    "encoder_failing": 200,
    "heads": {
     "jd": {
      "token": {
       "decisive_fraction": 0.9662809917355372,
-      "agreement_on_decisive": 0.5135135135135135,
-      "agreement_all_steps": 0.5077685950413223,
+      "agreement_on_decisive": 0.5138556277796784,
+      "agreement_all_steps": 0.5084297520661157,
       "pass": false
      },
      "duration": {
       "decisive_fraction": 0.8502479338842975,
-      "agreement_on_decisive": 0.4249611197511664,
-      "agreement_all_steps": 0.40165289256198344,
+      "agreement_on_decisive": 0.4261275272161742,
+      "agreement_all_steps": 0.40297520661157027,
       "pass": false
      }
     },
     "dj": {
      "token": {
       "decisive_fraction": 0.9662809917355372,
-      "agreement_on_decisive": 0.5135135135135135,
-      "agreement_all_steps": 0.5077685950413223,
+      "agreement_on_decisive": 0.5138556277796784,
+      "agreement_all_steps": 0.5084297520661157,
       "pass": false
      },
      "duration": {
       "decisive_fraction": 0.8502479338842975,
-      "agreement_on_decisive": 0.4249611197511664,
-      "agreement_all_steps": 0.40165289256198344,
+      "agreement_on_decisive": 0.4261275272161742,
+      "agreement_all_steps": 0.40297520661157027,
       "pass": false
      }
     }
@@ -77,11 +81,11 @@
    "rev5_diagnostic_encoder_pass": false,
    "failed_conditions": [
     "encoder rel <= 0.1 fails on 200 cases",
-    "jd token agreement (decisive 0.5135, all 0.5078, decisive fraction 0.966)",
-    "jd duration agreement (decisive 0.4250, all 0.4017, decisive fraction 0.850)",
+    "jd token agreement (decisive 0.5139, all 0.5084, decisive fraction 0.966)",
+    "jd duration agreement (decisive 0.4261, all 0.4030, decisive fraction 0.850)",
     "jd free-decoding sequence identity 0/64 = 0.000 < 0.95",
-    "dj token agreement (decisive 0.5135, all 0.5078, decisive fraction 0.966)",
-    "dj duration agreement (decisive 0.4250, all 0.4017, decisive fraction 0.850)",
+    "dj token agreement (decisive 0.5139, all 0.5084, decisive fraction 0.966)",
+    "dj duration agreement (decisive 0.4261, all 0.4030, decisive fraction 0.850)",
     "dj free-decoding sequence identity 0/64 = 0.000 < 0.95",
     "gate 5"
    ]
@@ -94,8 +98,8 @@
   "wer": {
    "pass": false,
    "reference_wer_pct": 2.711,
-   "jd_wer_pct": 69.76,
-   "dj_wer_pct": 69.76,
+   "jd_wer_pct": 68.092,
+   "dj_wer_pct": 68.092,
    "clips": 64,
    "limit_points": 0.2
   },
@@ -113,9 +117,9 @@
  "inputs": {
   "results/gate2/mp2-C5.json": "1bd3a0eba34df2755f8abbec21500c314830f9b6bbacab1ecb7634d490a19293",
   "results/gates/v7/mp2-decoder-fp32-cpuOnly-4a.json": "1df69d43b6b988cbb95ee22806905790104135bcd3916c103e8a54414272913d",
-  "results/gates/v7/mp2-C5-multi-cpuAndNeuralEngine.json": "de1632a3e3ce5b1ad75b7d6b4eecace5f8abca03d9f8ad3fbb6cfce2ef4caf67",
+  "results/gates/v7/mp2-C5-multi-cpuAndNeuralEngine-dec-fp32.json": "039db839f1ba9e66898921394bd0913757fc8016728b71d52a8834a6d3643666",
   "results/probes/stress.json": "d9035d169c9147e54d96544275c0ef189c31ebcc0fd1ef7361e17a157dfd0f53"
  },
  "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
- "built": "2026-10-02 23:31"
+ "built": "2026-10-03 02:51"
 }

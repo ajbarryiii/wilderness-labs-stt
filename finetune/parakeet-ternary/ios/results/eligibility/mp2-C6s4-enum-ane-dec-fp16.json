@@ -1,0 +1,75 @@
+{
+ "design_revision": 8,
+ "code_version": "wp3-eligibility-2",
+ "model": "mp2",
+ "arm": "C6s4",
+ "variant": "enum",
+ "backend": "ane",
+ "compute_units": "cpuAndNeuralEngine",
+ "decoder_precision": "fp16",
+ "decoder_models": "arms/mp2/decoder",
+ "eligible": false,
+ "timing_allowed": false,
+ "selection_eligible": false,
+ "reasons": [
+  "decoder_precision: {\"note\": \"FP16 decoder/joint: not deployed (DESIGN.md revision 8, 'Decoder and joint precision'); recorded for comparison\"}",
+  "gate4b: {\"note\": \"not run\"}",
+  "wer: {\"note\": \"not run\"}",
+  "gate5: {\"note\": \"not run\"}"
+ ],
+ "checks": {
+  "scope": {
+   "pass": true,
+   "note": null
+  },
+  "gate2": {
+   "pass": true,
+   "modules": 240
+  },
+  "gate4a": {
+   "pass": true,
+   "topology": "dense",
+   "source": "results/gates/v7/mp2-C4-fp32-enum-cpuOnly-4a.json",
+   "own_fp32_build": false,
+   "rel_max": 1.5270502566903729e-06,
+   "abs_max": 2.6145477158292104e-05
+  },
+  "gate4a_decoder": {
+   "pass": true
+  },
+  "decoder_precision": {
+   "pass": false,
+   "note": "FP16 decoder/joint: not deployed (DESIGN.md revision 8, 'Decoder and joint precision'); recorded for comparison"
+  },
+  "gate4b": {
+   "pass": false,
+   "note": "not run"
+  },
+  "wer": {
+   "pass": false,
+   "note": "not run"
+  },
+  "gate5": {
+   "pass": false,
+   "note": "not run"
+  },
+  "stress": {
+   "pass": true,
+   "detail": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 5
+   }
+  }
+ },
+ "inputs": {
+  "results/gate2/mp2-C6s4.json": "585d004f4f887083fdc0d33669076ec578421f4e44c583b65efc1e959869276e",
+  "results/gates/v7/mp2-C4-fp32-enum-cpuOnly-4a.json": "9ff5f9d7117b8a118ab8d4f668f935433b1fbfe6cbdc6db26aa9b699cf8e8673",
+  "results/gates/v7/mp2-decoder-fp32-cpuOnly-4a.json": "1df69d43b6b988cbb95ee22806905790104135bcd3916c103e8a54414272913d",
+  "results/probes/stress.json": "d9035d169c9147e54d96544275c0ef189c31ebcc0fd1ef7361e17a157dfd0f53"
+ },
+ "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
+ "built": "2026-10-03 02:51"
+}

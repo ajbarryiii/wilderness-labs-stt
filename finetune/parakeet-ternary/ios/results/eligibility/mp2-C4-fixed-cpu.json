@@ -1,17 +1,17 @@
 {
- "design_revision": 7,
- "code_version": "wp3-eligibility-1",
+ "design_revision": 8,
+ "code_version": "wp3-eligibility-2",
  "model": "mp2",
  "arm": "C4",
  "variant": "fixed",
  "backend": "cpu",
  "compute_units": "cpuOnly",
- "eligible": false,
- "timing_allowed": false,
- "selection_eligible": false,
- "reasons": [
-  "gate4b: jd free-decoding sequence identity 60/64 = 0.938 < 0.95; dj free-decoding sequence identity 60/64 = 0.938 < 0.95"
- ],
+ "decoder_precision": "fp32",
+ "decoder_models": "arms/mp2/decoder-fp32",
+ "eligible": true,
+ "timing_allowed": true,
+ "selection_eligible": true,
+ "reasons": [],
  "checks": {
   "scope": {
    "pass": true,
@@ -33,7 +33,9 @@
    "pass": true
   },
   "gate4b": {
-   "pass": false,
+   "pass": true,
+   "result_design_revision": 8,
+   "decoder_precision": "fp32",
    "encoder_rel_max": 0.021525233496639026,
    "encoder_failing": 0,
    "heads": {
@@ -41,13 +43,13 @@
      "token": {
       "decisive_fraction": 0.9662809917355372,
       "agreement_on_decisive": 1.0,
-      "agreement_all_steps": 0.996694214876033,
+      "agreement_all_steps": 0.9993388429752066,
       "pass": true
      },
      "duration": {
       "decisive_fraction": 0.8502479338842975,
       "agreement_on_decisive": 1.0,
-      "agreement_all_steps": 0.9970247933884298,
+      "agreement_all_steps": 0.9973553719008265,
       "pass": true
      }
     },
@@ -55,26 +57,23 @@
      "token": {
       "decisive_fraction": 0.9662809917355372,
       "agreement_on_decisive": 1.0,
-      "agreement_all_steps": 0.996694214876033,
+      "agreement_all_steps": 0.9993388429752066,
       "pass": true
      },
      "duration": {
       "decisive_fraction": 0.8502479338842975,
       "agreement_on_decisive": 1.0,
-      "agreement_all_steps": 0.9970247933884298,
+      "agreement_all_steps": 0.9973553719008265,
       "pass": true
      }
     }
    },
    "sequence_identity": {
-    "jd": 0.9375,
-    "dj": 0.9375
+    "jd": 1.0,
+    "dj": 1.0
    },
    "rev5_diagnostic_encoder_pass": false,
-   "failed_conditions": [
-    "jd free-decoding sequence identity 60/64 = 0.938 < 0.95",
-    "dj free-decoding sequence identity 60/64 = 0.938 < 0.95"
-   ]
+   "failed_conditions": []
   },
   "gate5": {
    "pass": true,
@@ -104,9 +103,9 @@
   "results/gate2/mp2-C4.json": "31693c1a2550f9c490dba19a1f5712e03268879817550324bfcc3dcba113ace2",
   "results/gates/v7/mp2-C4-fp32-fixed-cpuOnly-4a.json": "5e2c9306f0d552d7b154483af8a4e9ada068ce9811ba6f02191d5528cca549b6",
   "results/gates/v7/mp2-decoder-fp32-cpuOnly-4a.json": "1df69d43b6b988cbb95ee22806905790104135bcd3916c103e8a54414272913d",
-  "results/gates/v7/mp2-C4-fixed-cpuOnly.json": "2c8b21e0e5cf7ee09e6952c1dc9a741727433fea41f7efde67cc3a0bcde25431",
+  "results/gates/v7/mp2-C4-fixed-cpuOnly-dec-fp32.json": "bb6681ca3aa45e92ffcd3f54c242b3fc6618074301f3543abb3046eec69e4f7c",
   "results/probes/stress.json": "d9035d169c9147e54d96544275c0ef189c31ebcc0fd1ef7361e17a157dfd0f53"
  },
  "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
- "built": "2026-10-02 23:31"
+ "built": "2026-10-03 02:51"
 }

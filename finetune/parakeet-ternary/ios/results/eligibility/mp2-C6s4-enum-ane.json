@@ -1,0 +1,111 @@
+{
+ "design_revision": 8,
+ "code_version": "wp3-eligibility-2",
+ "model": "mp2",
+ "arm": "C6s4",
+ "variant": "enum",
+ "backend": "ane",
+ "compute_units": "cpuAndNeuralEngine",
+ "decoder_precision": "fp32",
+ "decoder_models": "arms/mp2/decoder-fp32",
+ "eligible": true,
+ "timing_allowed": true,
+ "selection_eligible": true,
+ "reasons": [],
+ "checks": {
+  "scope": {
+   "pass": true,
+   "note": null
+  },
+  "gate2": {
+   "pass": true,
+   "modules": 240
+  },
+  "gate4a": {
+   "pass": true,
+   "topology": "dense",
+   "source": "results/gates/v7/mp2-C4-fp32-enum-cpuOnly-4a.json",
+   "own_fp32_build": false,
+   "rel_max": 1.5270502566903729e-06,
+   "abs_max": 2.6145477158292104e-05
+  },
+  "gate4a_decoder": {
+   "pass": true
+  },
+  "gate4b": {
+   "pass": true,
+   "result_design_revision": 8,
+   "decoder_precision": "fp32",
+   "encoder_rel_max": 0.010867163106504615,
+   "encoder_failing": 0,
+   "heads": {
+    "jd": {
+     "token": {
+      "decisive_fraction": 0.9662809917355372,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 1.0,
+      "pass": true
+     },
+     "duration": {
+      "decisive_fraction": 0.8502479338842975,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 0.9990082644628099,
+      "pass": true
+     }
+    },
+    "dj": {
+     "token": {
+      "decisive_fraction": 0.9662809917355372,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 1.0,
+      "pass": true
+     },
+     "duration": {
+      "decisive_fraction": 0.8502479338842975,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 0.9990082644628099,
+      "pass": true
+     }
+    }
+   },
+   "sequence_identity": {
+    "jd": 1.0,
+    "dj": 1.0
+   },
+   "rev5_diagnostic_encoder_pass": true,
+   "failed_conditions": []
+  },
+  "gate5": {
+   "pass": true,
+   "applicable": true,
+   "gated_rel_max": 0.003129940957081359
+  },
+  "wer": {
+   "pass": true,
+   "reference_wer_pct": 2.711,
+   "jd_wer_pct": 2.711,
+   "dj_wer_pct": 2.711,
+   "clips": 64,
+   "limit_points": 0.2
+  },
+  "stress": {
+   "pass": true,
+   "detail": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 5
+   }
+  }
+ },
+ "inputs": {
+  "results/gate2/mp2-C6s4.json": "585d004f4f887083fdc0d33669076ec578421f4e44c583b65efc1e959869276e",
+  "results/gates/v7/mp2-C4-fp32-enum-cpuOnly-4a.json": "9ff5f9d7117b8a118ab8d4f668f935433b1fbfe6cbdc6db26aa9b699cf8e8673",
+  "results/gates/v7/mp2-decoder-fp32-cpuOnly-4a.json": "1df69d43b6b988cbb95ee22806905790104135bcd3916c103e8a54414272913d",
+  "results/gates/v7/mp2-C6s4-enum-cpuAndNeuralEngine-dec-fp32.json": "9178ec25218064ca8c493a828573370595b41cd4e35ccdd9cdf504fd034e2587",
+  "results/probes/stress.json": "d9035d169c9147e54d96544275c0ef189c31ebcc0fd1ef7361e17a157dfd0f53"
+ },
+ "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
+ "built": "2026-10-03 02:51"
+}

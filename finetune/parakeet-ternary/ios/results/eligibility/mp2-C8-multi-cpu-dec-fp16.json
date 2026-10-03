@@ -1,0 +1,131 @@
+{
+ "design_revision": 8,
+ "code_version": "wp3-eligibility-2",
+ "model": "mp2",
+ "arm": "C8",
+ "variant": "multi",
+ "backend": "cpu",
+ "compute_units": "cpuOnly",
+ "decoder_precision": "fp16",
+ "decoder_models": "arms/mp2/decoder",
+ "eligible": false,
+ "timing_allowed": false,
+ "selection_eligible": false,
+ "reasons": [
+  "decoder_precision: {\"note\": \"FP16 decoder/joint: not deployed (DESIGN.md revision 8, 'Decoder and joint precision'); recorded for comparison\"}",
+  "gate4b: jd free-decoding sequence identity 57/64 = 0.891 < 0.95; dj free-decoding sequence identity 57/64 = 0.891 < 0.95",
+  "stress: {\"detail\": {\"pass\": false, \"nonfinite_where_c4_finite\": [[\"layers.0.feed_forward1.linear2\", \"x8\"], [\"layers.23.feed_forward2.linear2\", \"abs_x64\"]], \"nonfinite_at_x1\": [], \"missing_c4_reference\": [], \"nonfinite_cases_total\": 4}}"
+ ],
+ "checks": {
+  "scope": {
+   "pass": true,
+   "note": null
+  },
+  "gate2": {
+   "pass": true,
+   "modules": 240
+  },
+  "gate4a": {
+   "pass": true,
+   "topology": "planes",
+   "source": "results/gates/v7/mp2-C8-fp32-multi-cpuOnly-4a.json",
+   "own_fp32_build": true,
+   "rel_max": 5.4847554465054186e-06,
+   "abs_max": 9.599237247820563e-05
+  },
+  "gate4a_decoder": {
+   "pass": true
+  },
+  "decoder_precision": {
+   "pass": false,
+   "note": "FP16 decoder/joint: not deployed (DESIGN.md revision 8, 'Decoder and joint precision'); recorded for comparison"
+  },
+  "gate4b": {
+   "pass": false,
+   "result_design_revision": 7,
+   "decoder_precision": "fp16",
+   "encoder_rel_max": 0.02731371935846376,
+   "encoder_failing": 0,
+   "heads": {
+    "jd": {
+     "token": {
+      "decisive_fraction": 0.9662809917355372,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 0.996694214876033,
+      "pass": true
+     },
+     "duration": {
+      "decisive_fraction": 0.8502479338842975,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 0.9930578512396694,
+      "pass": true
+     }
+    },
+    "dj": {
+     "token": {
+      "decisive_fraction": 0.9662809917355372,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 0.996694214876033,
+      "pass": true
+     },
+     "duration": {
+      "decisive_fraction": 0.8502479338842975,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 0.9930578512396694,
+      "pass": true
+     }
+    }
+   },
+   "sequence_identity": {
+    "jd": 0.890625,
+    "dj": 0.890625
+   },
+   "rev5_diagnostic_encoder_pass": false,
+   "failed_conditions": [
+    "jd free-decoding sequence identity 57/64 = 0.891 < 0.95",
+    "dj free-decoding sequence identity 57/64 = 0.891 < 0.95"
+   ]
+  },
+  "gate5": {
+   "pass": true,
+   "applicable": true,
+   "gated_rel_max": 0.009322401550537473
+  },
+  "wer": {
+   "pass": true,
+   "reference_wer_pct": 2.711,
+   "jd_wer_pct": 2.711,
+   "dj_wer_pct": 2.711,
+   "clips": 64,
+   "limit_points": 0.2
+  },
+  "stress": {
+   "pass": false,
+   "detail": {
+    "pass": false,
+    "nonfinite_where_c4_finite": [
+     [
+      "layers.0.feed_forward1.linear2",
+      "x8"
+     ],
+     [
+      "layers.23.feed_forward2.linear2",
+      "abs_x64"
+     ]
+    ],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 4
+   }
+  }
+ },
+ "inputs": {
+  "results/gate2/mp2-C8.json": "8a3789398002302001f34d9fcbc4fc264585e254956c47543706d6064a60a723",
+  "results/gates/v7/mp2-C8-fp32-multi-cpuOnly-4a.json": "306fb08bba2bdfa58ecb8d77c28f29f59a1d38f8de14a45afc1deef30244d4bc",
+  "results/gates/v7/mp2-decoder-fp32-cpuOnly-4a.json": "1df69d43b6b988cbb95ee22806905790104135bcd3916c103e8a54414272913d",
+  "results/gates/v7/mp2-C8-multi-cpuOnly-dec-fp16.json": "d8b8150cb49719c0387bd20dfc57b50df56a3aaee816b4c1f1b00c0154d72d8a",
+  "results/probes/stress.json": "d9035d169c9147e54d96544275c0ef189c31ebcc0fd1ef7361e17a157dfd0f53"
+ },
+ "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
+ "built": "2026-10-03 02:51"
+}

@@ -110,7 +110,7 @@ def main() -> None:
 def rev7() -> str:
     """Revision 7 tables (4a, 4b per arm x variant x backend, diagnostics) -> results/wp3_rev7_table.txt."""
     v7 = RES / "gates" / "v7"
-    elig = {(r["model"], r["arm"], r["variant"], r["backend"]): r
+    elig = {(r["model"], r["arm"], r["variant"], r["backend"], r.get("decoder_precision") or "fp32"): r
             for r in (load(RES / "eligibility" / "summary.json") or {"records": []})["records"]}
     out = ["Gate 4a (FP32 builds, CPU_ONLY, full depth; ceilings rel <= 1e-5, abs <= 1e-4)", "",
            "| build | variant | cases | rel max | abs max | pass |", "|---|---|---|---|---|---|"]
@@ -122,30 +122,33 @@ def rev7() -> str:
         else:
             out.append(f"| decoder-fp32 (replay + free decoding, both deployed paths) | - | {s['clips']} clips | "
                        f"{s['logits_rel_max']:.2e} (logits) | {s['logits_abs_max']:.2e} | {d['pass']} |")
-    out += ["", "Gate 4b (FP16 builds; WER from eligibility.py; jd = Decoder + JointDecision, dj = DecoderJoint)", "",
-            "| arm | variant | backend | enc rel max (<= 0.1) | rev2-5 enc failing (diag) | agree all tok / dur (jd) | "
+    out += ["", "Gate 4b (FP16 encoder builds; decoder/joint FP32 = deployed (revision 8), FP16 = recorded, ineligible; "
+            "WER from eligibility.py; jd = Decoder + JointDecision, dj = DecoderJoint)", "",
+            "| arm | variant | backend | decoder | enc rel max (<= 0.1) | rev2-5 enc failing (diag) | agree all tok / dur (jd) | "
             "identical seqs jd / dj (of 64; >= 61) | WER jd / ref (%) | gate 5 | stress | eligible |",
-            "|---|---|---|---|---|---|---|---|---|---|---|"]
-    for p in sorted(v7.glob("mp2-*.json")):
-        d = load(p)
+            "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    runs = [load(p) for p in sorted(v7.glob("mp2-*-dec-*.json"))]
+    runs.sort(key=lambda d: (d.get("decoder_precision", "fp16") != "fp32", d["arm"], d["variant"], d["backend"]))
+    for d in runs:
         if d["gate"] != "4b":
             continue
         s = d["summary"]
         h = s["heads_4b"]["paths"]["jd"]
         fd = s["free_decoding"]
-        e = elig.get((d["model"], d["arm"], d["variant"], d["backend"]), {})
+        dec = d.get("decoder_precision", "fp16")
+        e = elig.get((d["model"], d["arm"], d["variant"], d["backend"], dec), {})
         w = e.get("wer", {})
         stress_ok = "stress" not in e.get("failed_checks", [])
-        out.append(f"| {d['arm']} | {d['variant']} | {d['backend']} | {s['encoder_4b']['rel_max']:.4f} | "
+        out.append(f"| {d['arm']} | {d['variant']} | {d['backend']} | {dec} | {s['encoder_4b']['rel_max']:.4f} | "
                    f"{s['encoder_rev5_diagnostic']['failing_cases']} | {h['token']['agreement_all_steps']:.4f} / "
                    f"{h['duration']['agreement_all_steps']:.4f} | {fd['jd']['identical']} / {fd['dj']['identical']} | "
                    f"{w.get('jd_wer_pct', '-')} / {w.get('reference_wer_pct', '-')} | "
                    f"{'-' if s['gate5']['pass'] is None else s['gate5']['pass']} | {'pass' if stress_ok else 'FAIL'} | "
                    f"{'yes' if e.get('timing_allowed') else 'no'} |")
-    out += ["", "Diagnostics: decoder-only 4b (FP16 deployed paths on the FP32 reference encoder output) and "
-            "arms with the FP32 decoder builds (not eligibility inputs)", "",
+    out += ["", "Diagnostics: decoder-only 4b (FP16 decoder paths on the FP32 reference encoder output) and the "
+            "revision-7 FP32-decoder diagnostic runs (superseded by the revision-8 4b runs above)", "",
             "| run | identical seqs jd / dj (of 64) | agree all tok / dur (jd) | heads pass |", "|---|---|---|---|"]
-    for p in sorted(list(v7.glob("*-4b.json")) + list(v7.glob("*-decoder-fp32.json"))):
+    for p in sorted(list(v7.glob("*-4b.json")) + list((v7 / "superseded").glob("*-decoder-fp32.json"))):
         d = load(p)
         s = d["summary"]
         h = s["heads_4b"]["paths"]["jd"]

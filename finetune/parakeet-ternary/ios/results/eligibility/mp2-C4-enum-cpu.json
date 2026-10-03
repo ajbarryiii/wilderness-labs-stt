@@ -1,11 +1,13 @@
 {
- "design_revision": 7,
- "code_version": "wp3-eligibility-1",
+ "design_revision": 8,
+ "code_version": "wp3-eligibility-2",
  "model": "mp2",
  "arm": "C4",
  "variant": "enum",
  "backend": "cpu",
  "compute_units": "cpuOnly",
+ "decoder_precision": "fp32",
+ "decoder_models": "arms/mp2/decoder-fp32",
  "eligible": true,
  "timing_allowed": true,
  "selection_eligible": true,
@@ -32,6 +34,8 @@
   },
   "gate4b": {
    "pass": true,
+   "result_design_revision": 8,
+   "decoder_precision": "fp32",
    "encoder_rel_max": 0.010867163106504615,
    "encoder_failing": 0,
    "heads": {
@@ -39,13 +43,13 @@
      "token": {
       "decisive_fraction": 0.9662809917355372,
       "agreement_on_decisive": 1.0,
-      "agreement_all_steps": 0.9980165289256199,
+      "agreement_all_steps": 1.0,
       "pass": true
      },
      "duration": {
       "decisive_fraction": 0.8502479338842975,
       "agreement_on_decisive": 1.0,
-      "agreement_all_steps": 0.9980165289256199,
+      "agreement_all_steps": 0.9990082644628099,
       "pass": true
      }
     },
@@ -53,20 +57,20 @@
      "token": {
       "decisive_fraction": 0.9662809917355372,
       "agreement_on_decisive": 1.0,
-      "agreement_all_steps": 0.9980165289256199,
+      "agreement_all_steps": 1.0,
       "pass": true
      },
      "duration": {
       "decisive_fraction": 0.8502479338842975,
       "agreement_on_decisive": 1.0,
-      "agreement_all_steps": 0.9980165289256199,
+      "agreement_all_steps": 0.9990082644628099,
       "pass": true
      }
     }
    },
    "sequence_identity": {
-    "jd": 0.953125,
-    "dj": 0.953125
+    "jd": 1.0,
+    "dj": 1.0
    },
    "rev5_diagnostic_encoder_pass": true,
    "failed_conditions": []
@@ -99,9 +103,9 @@
   "results/gate2/mp2-C4.json": "31693c1a2550f9c490dba19a1f5712e03268879817550324bfcc3dcba113ace2",
   "results/gates/v7/mp2-C4-fp32-enum-cpuOnly-4a.json": "9ff5f9d7117b8a118ab8d4f668f935433b1fbfe6cbdc6db26aa9b699cf8e8673",
   "results/gates/v7/mp2-decoder-fp32-cpuOnly-4a.json": "1df69d43b6b988cbb95ee22806905790104135bcd3916c103e8a54414272913d",
-  "results/gates/v7/mp2-C4-enum-cpuOnly.json": "fda942e407074a87754a7da7f92a7fb98f48fd153a4a8d990608e2895baafdc9",
+  "results/gates/v7/mp2-C4-enum-cpuOnly-dec-fp32.json": "ab01affc47de88d167ea5dfb6a770b5f07f63e7dec8e38f8fda3db8c478e1207",
   "results/probes/stress.json": "d9035d169c9147e54d96544275c0ef189c31ebcc0fd1ef7361e17a157dfd0f53"
  },
  "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
- "built": "2026-10-02 23:31"
+ "built": "2026-10-03 02:51"
 }
