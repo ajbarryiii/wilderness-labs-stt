@@ -1,6 +1,6 @@
 # Parakeet-TDT 0.6B v2 on iPhone 15 Pro: inference pipeline and benchmarks
 
-Status: **revision 6 (2026-10-02): gate 4 and the stress rule amended after WP3, arm disposition added. Revision 5: front-end gate amended (see gate 5). Revision 4: primary benchmark model changed to the pilot P2 export after WP1's
+Status: **revision 7 (2026-10-02): decisive-step definition made arm-independent, eligibility mechanical, scope reductions labelled (Codex review of WP3). Revision 6: gate 4 and the stress rule amended after WP3. Revision 5: front-end gate amended (see gate 5). Revision 4: primary benchmark model changed to the pilot P2 export after WP1's
 sensitivity gate failed on random surrogates; revision 3 was after Codex reviews r1 and r2. S0 approved
 by the user and cleared by review r2; nothing benchmarked yet.** Review
 findings and their resolutions are listed at the end.
@@ -354,28 +354,40 @@ an output a and its reference r of n elements:
        blank), duration logits, and LSTM h and c.
    - *Original rev 2-5 ceilings, kept as reported diagnostics:* encoder
      rel ≤ 2e-2 and abs ≤ 0.25; heads rel ≤ 2e-2.
-   - *Decision agreement:* token argmax and duration argmax each agree on at
-     least 99.5% of the **decisive** steps. A step is decisive when the
-     reference's top-1 margin for that head exceeds 4× the arm's logit error
-     on that step. At least 50% of steps must be decisive per head, otherwise
-     the comparison fails as degenerate.
+   - *Decision agreement (revision 7):*
+     - Token argmax and duration argmax each agree on at least 99.5% of the
+       **decisive** steps, and on at least 99% of **all** steps.
+     - A step is decisive when the FP32 reference's top-1 margin for that
+       head, in raw logits, is at least 1.0. This definition does not depend
+       on the arm.
+     - At least 50% of steps must be decisive per head; otherwise the
+       comparison fails as degenerate.
+     - Replay and free decoding go through the **deployed** decoder paths
+       (`JointDecision`/`DecoderJoint` and F2), not only the diagnostic
+       `JointLogits`.
+     - The revision 2-6 definition (margin above 4× the arm's own error) was
+       circular, because any arm passes it by construction (Codex review of
+       WP3).
    - Margin distributions are reported. Every output must be finite.
 
    **Why gate 4 was amended (revision 6, after data).** The rev 2-5 ceilings
    were set before any FP16 build existed. WP3 then showed four things:
-   - Our graph built in FP32 matches the reference to about 1e-6 at every
-     depth tested.
-   - FP16 execution of M_P2 has an intrinsic error that grows with depth: on
-     the ANE, median rel 1.1e-3 at 1 layer and 1.2e-2 at 24. M_P2's layer-0
-     FF outputs reach 2,700-6,400.
-   - That error is the same for every exact encoding. On the ANE, the
-     fixed-window C3, C4, C6 and C7 builds all fail the 2e-2 encoder ceiling
-     on the same 7 of 82 clips (rel max 0.028-0.036).
-   - Token and duration decisions still agree on 100% of decisive steps.
+   - Our graph built in FP32 matches the reference to about 1e-6 at the
+     depths tested (1, 2, 4, 8 and 12 layers, 4 clips, fixed window). 4a now
+     requires full depth on every clip and bucket.
+   - FP16 execution of M_P2 has an error that grows with depth: on the ANE,
+     median rel 1.1e-3 at 1 layer and 1.2e-2 at 24. M_P2's layer-0 FF outputs
+     reach 2,700-6,400.
+   - The error profile is **similar but not identical** across encodings:
+     - C3 and C4/C6/C7 fail the combined rel/abs ceiling on 7 clips each, but
+       not the same 7 (C3 fails `n04-8297…`; the others fail the silence
+       clip instead).
+     - Only 1 C3 clip and 3 C4/C6/C7 clips exceed the relative ceiling alone.
 
-   The old ceiling therefore tested FP16 arithmetic, not the arms. The
-   amendment applies identically to every arm and changes no comparison
-   between them. The FP32 build (4a) replaces it as the implementation check.
+   This is evidence of shared FP16 sensitivity, not proof that all of the
+   error is intrinsic to FP16. The amendment applies identically to every arm.
+   The FP32 build (4a) is the implementation check. The old ceilings remain
+   reported diagnostics.
 5. **Buckets vs full window.** On the valid frames, every bucket matches the
    same arm's 15 s window output to within the gate-4 ceilings. This is
    checked on the boundary-length, silence and impulse clips.
@@ -494,31 +506,42 @@ models, weights and audio stay outside Git.
 
 Summary: `results/wp3_summary_table.txt`.
 
-**Dropped from the device matrix (reported):**
-- **C8** fails the CPU gates through cancellation in P − N, overflows
-  earlier than C4, and takes 93-172 s to load on the ANE for the first time.
-- **C5** gives garbage: per-tensor activation calibration cannot cover
-  activations up to 76 (rel 0.8-2.4). It remains exploratory; a better
-  activation-quantization study is out of scope.
-- **Enumerated-shape variants:** Core ML places the shape-generic graph
-  entirely on the CPU, so they do not test ANE shape specialization.
-  Multifunction is the B arm.
+**Eligibility is mechanical (revision 7).** The versioned gate code computes
+eligibility per arm and per backend (ANE, CPU, GPU) from gates 2-5 and the
+stress rule. The gate code exits nonzero on any failure. Timing runs refuse
+any arm and backend without a passing eligibility record.
 
-**Kept with caveats:**
-- **C7:** on the ANE it gives per-case errors identical to C4 on all 282
-  cases, which suggests the device compiler folds its scale (not provable).
-  It overflows earlier than C4 on the CPU. It stays in only as a GPU (E)
-  candidate and as one pilot check that its ANE latency equals C4's.
-- **C1:** the plan puts it entirely on the CPU on the M1 Pro (1.13 GB of
-  dense weights). It is measured once in the pilot, because the A17 Pro's
-  placement may differ.
+**Scope reductions**, labelled as such rather than as gate failures:
+- **C5** (exploratory from the start): its numerics fail (rel 0.8-2.4 on
+  every case). The cause (coarse quantization, clipping or backend behaviour)
+  is not established. A dedicated activation-quantization study is out of
+  scope.
+- **C8 on the phone:** C8 is the same arithmetic as C7 with twice the MACs,
+  and its first ANE load takes 93-172 s. It stays in the Mac record, with its
+  eligibility computed like every other arm's. It is left out of the S2
+  pilot timing unless the eligibility record makes it a candidate on a
+  backend where C4 and C7 are not.
+- **Enumerated shapes:** on the M1 Pro the plan puts them entirely on the
+  CPU. Symmetric with C1, one enumerated build (C4) goes through a single
+  load-and-placement check in the S2 pilot, because the A17 Pro may place
+  it differently.
 
-**Device candidates:** C4, C3, C6s(2, 4, 8) and C6d(4, 8), all as
-multifunction models, plus G0 vs C0.
+**Caveats:**
+- **C7 on the ANE:** its per-case errors equal C4's on all 282 cases, which
+  suggests the device compiler folds its scale. That is unproven, and the
+  pilot checks whether its latency equals C4's.
+- **C1:** planned entirely on the CPU on the M1 Pro; it gets one placement
+  check in the pilot.
+- **Stress evidence** covers C1, C4, C7 and C8. C3, C6 and the GPU backends
+  still need their stress runs.
+
+**Device candidates,** subject to eligibility: C4, C3, C6s(2, 4, 8),
+C6d(4, 8) and C7, all as multifunction models, plus G0 vs C0.
 
 **New C0 finding:** C0's subsampling has no masking, so padding from the
-15 s window leaks into valid frames. G0 equals C0 exactly only when M mod 8 ∈
-{0, 7}. This is a fourth difference from NeMo.
+15 s window leaks into valid frames. On the 82 tested clips, G0 equals C0
+exactly on all 25 clips with M mod 8 ∈ {0, 7}, and differs on the other 57.
+This is a fourth difference from NeMo.
 
 **Deployment target:** iOS26, because at iOS18 coremltools rewrites C4's
 constexpr chain.
