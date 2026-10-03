@@ -1,6 +1,6 @@
 # Parakeet-TDT 0.6B v2 on iPhone 15 Pro: inference pipeline and benchmarks
 
-Status: **revision 7 (2026-10-02): decisive-step definition made arm-independent, eligibility mechanical, scope reductions labelled (Codex review of WP3). Revision 6: gate 4 and the stress rule amended after WP3. Revision 5: front-end gate amended (see gate 5). Revision 4: primary benchmark model changed to the pilot P2 export after WP1's
+Status: **revision 8 (2026-10-03): decode-loop arms use FP32 decoder/joint after the FP16 ones failed gate 4b. Revision 7 (2026-10-02): decisive-step definition made arm-independent, eligibility mechanical, scope reductions labelled (Codex review of WP3). Revision 6: gate 4 and the stress rule amended after WP3. Revision 5: front-end gate amended (see gate 5). Revision 4: primary benchmark model changed to the pilot P2 export after WP1's
 sensitivity gate failed on random surrogates; revision 3 was after Codex reviews r1 and r2. S0 approved
 by the user and cleared by review r2; nothing benchmarked yet.** Review
 findings and their resolutions are listed at the end.
@@ -534,6 +534,21 @@ any arm and backend without a passing eligibility record.
   check in the pilot.
 - **Stress evidence** covers C1, C4, C7 and C8. C3, C6 and the GPU backends
   still need their stress runs.
+
+**Decoder and joint precision (revision 8, after the rev 7 gates):**
+- *What failed:* the FP16 decoder and joint models fail gate 4b on their own.
+  Fed the FP32 reference encoder output, they reach only 60/64 identical
+  sequences against the 61 required. The differences are casing,
+  punctuation and spelling variants, with identical WER.
+- *What passes:* with FP32 decoder and joint models, every exact encoder arm
+  reaches 62-64/64 and passes 4b on the ANE and the CPU.
+- *Why FP32 is cheap:* the plan puts these models entirely on the CPU, so
+  FP32 costs no ANE capacity.
+- *Decision:* the decode-loop arms (F0 per-step, F1 fused) use **FP32**
+  decoder and joint models, and F2 is native FP32. The FP16 decoder variants
+  stay in the record as ineligible.
+- *What is unchanged:* no gate threshold changes. C0 keeps its own FP16
+  decoder as the product baseline.
 
 **Device candidates,** subject to eligibility: C4, C3, C6s(2, 4, 8),
 C6d(4, 8) and C7, all as multifunction models, plus G0 vs C0.
