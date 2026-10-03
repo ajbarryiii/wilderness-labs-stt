@@ -269,7 +269,8 @@ final class NativeMath {
 /// F2: native CPU decode loop. Joint encoder side projected for all frames in one sgemm (stage "preprojection");
 /// prediction network run only after a non-blank emission (its projected output cached); joint per step as one
 /// sgemv plus the two-head argmax. FP32 throughout. Diagnostics: per step logits [1030] and the LSTM state (h, c)
-/// [2, 640] that produced the step's prediction output (as reference.StepOutputs).
+/// [2, 640] that produced the step's prediction output (as reference.StepOutputs); per prediction-network run its
+/// projected output pred_g [640] and state pred_h, pred_c [2, 640].
 public final class NativeEngine: DecodeEngine {
     public let name = "f2"
     let math: NativeMath
@@ -297,6 +298,12 @@ public final class NativeEngine: DecodeEngine {
             h.withUnsafeMutableBufferPointer { hp in c.withUnsafeMutableBufferPointer { cp in g.withUnsafeMutableBufferPointer { gp in
                 math.predict(token, h: hp.baseAddress!, c: cp.baseAddress!, g: gp.baseAddress!)
             } } }
+        }
+        if let diag {  // every prediction's outputs, including a terminal one no joint step follows (review r2 finding 2)
+            diag.append("pred_g", rowShape: [640], g)
+            diag.append("pred_h", rowShape: [2, 640], h)
+            diag.append("pred_c", rowShape: [2, 640], c)
+            diag.int("pred_token", token)
         }
     }
 

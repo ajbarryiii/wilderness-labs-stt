@@ -250,4 +250,32 @@ final class BenchCoreTests: XCTestCase {
         XCTAssertEqual(sink.valueCount, 5)
         XCTAssertEqual(sink.nonfiniteCount, 2)
     }
+
+    /// A terminal prediction (no joint step follows it) with non-finite outputs leaves every decision unchanged, so
+    /// only the per-prediction capture can catch it (review WP7 r2 finding 2).
+    func testTerminalNonfinitePredictionIsCaptured() throws {
+        let clean = try randomWeights(seed: 21)
+        var bad = clean
+        let token = 7
+        var embed = bad["decoder.prediction.embed.weight"]!
+        for k in 0..<640 { embed[token * 640 + k] = .nan }
+        bad["decoder.prediction.embed.weight"] = embed
+        var gen = LCG(s: 5)
+        let enc = (0..<1024 * 4).map { _ in gen.normal() }
+        let frames = try EncoderFrames(timeMajor: FloatBuffer(enc), frames: 4)
+        func run(_ t: [String: [Float]]) throws -> ((Int, Int), DiagSink) {
+            let e = NativeEngine(weights: try NativeWeights(tensors: t))
+            let sink = DiagSink()
+            try e.begin(frames: frames, length: 4, diag: sink)
+            try e.predict(1024, diag: sink)
+            let d = try e.joint(0, diag: sink)
+            try e.predict(token, diag: sink)   // terminal: nothing reads its output
+            return ((d.token, d.durationBin), sink)
+        }
+        let (d0, s0) = try run(clean), (d1, s1) = try run(bad)
+        XCTAssertEqual(d0.0, d1.0); XCTAssertEqual(d0.1, d1.1)
+        XCTAssertEqual(s0.nonfiniteCount, 0)
+        XCTAssertGreaterThan(s1.nonfiniteCount, 0, "the terminal prediction's non-finite g/h/c must be captured")
+        XCTAssertEqual(s1.sections.first { $0.name == "pred_g" }!.data.count, 2 * 640)
+    }
 }
