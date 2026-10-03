@@ -1,4 +1,8 @@
-"""Correctness gates of DESIGN.md revision 7: 4a (FP32 graph), 4b (FP16 execution per backend), 5 (buckets).
+"""Correctness gates of DESIGN.md revisions 7-8: 4a (FP32 graph), 4b (FP16 encoder per backend), 5 (buckets).
+
+Revision 8: the deployed decode-loop paths use the FP32 decoder/joint models (decoder-fp32), so 4b runs with
+--decoder-precision fp32 by default; runs with the FP16 decoder/joint (--decoder-precision fp16) are kept as
+separate, ineligible records. Result names carry the decoder precision: ...-<units>-dec-fp32.json.
 
   cd ios && python -m mil.gates7 4a --model mp2 --arm C4 --variant multi          # <arm>-fp32 build, CPU_ONLY
   cd ios && python -m mil.gates7 4a-decoder --model mp2                            # decoder-fp32 builds, CPU_ONLY
@@ -53,8 +57,8 @@ import numpy as np
 from . import IOS, refcache  # noqa: E402
 from .gates import BUCKETS, GATE5_KINDS, arms_root, clips_manifest, padded, purge_cache, traces_by_id, units_of
 
-DESIGN_REVISION = 7
-GATE_CODE_VERSION = "wp3-gates7-1"
+DESIGN_REVISION = 8
+GATE_CODE_VERSION = "wp3-gates7-2"
 OUT = IOS / "results" / "gates" / "v7"
 EXIT_FAIL = 10
 TAU16, TAU32 = 1e-3, 1e-6
@@ -426,22 +430,19 @@ def gate4b(args) -> int:
     }
     passed = (summary["encoder_4b"]["pass"] and heads_pool["pass"] and free_pool["pass_identity"]
               and summary["gate5"]["pass"] is not False)
-    diag = args.decoder_precision != "fp16"
-    doc = header("4b" if not diag else f"4b-diagnostic-decoder-{args.decoder_precision}", model=args.model,
+    doc = header("4b", model=args.model, decoder_precision=args.decoder_precision,
                  arm=args.arm, label=label, variant=args.variant, units=args.units,
                  backend=BACKEND[args.units], thresholds=G4B, rev5_diagnostic_thresholds=REV5,
                  build_provenance=man["provenance"], build_chain=man["encoding"].get("chain"),
                  decoder_models=paths_manifest(args.model, args.decoder_precision))
-    if diag:
-        doc["note"] = ("diagnostic, not an eligibility input: the arm's FP16 encoder with the FP32 builds of the "
-                       "decoder/joint models, to attribute free-decoding differences")
+    doc["decoder_role"] = ("deployed (revision 8)" if args.decoder_precision == "fp32"
+                           else "FP16 decoder/joint: recorded, ineligible by revision 8")
     doc["pass"] = bool(passed)
     doc["pass_scope"] = "all 4b conditions except WER (eligibility.py) and gate 5 where applicable"
     doc["summary"] = summary
     doc.update(encoder_cases=rows, heads_per_clip=heads, free_decoding_tokens=free, load_s=loads,
                seconds=round(time.time() - t0, 1), peak_rss_mb=_peak_mb())
-    suffix = "" if not diag else f"-decoder-{args.decoder_precision}"
-    return finish(doc, f"{args.model}-{label}-{args.variant}-{args.units}{suffix}.json")
+    return finish(doc, f"{args.model}-{label}-{args.variant}-{args.units}-dec-{args.decoder_precision}.json")
 
 
 def paths_manifest(model: str, precision: str = "fp16") -> dict:
@@ -541,8 +542,8 @@ def main() -> None:
     p.add_argument("--arm", required=True)
     p.add_argument("--variant", required=True, choices=("fixed", "multi", "enum"))
     p.add_argument("--units", required=True, choices=tuple(BACKEND))
-    p.add_argument("--decoder-precision", default="fp16", choices=("fp16", "fp32"),
-                   help="fp32: diagnostic run with the FP32 decoder/joint builds (not an eligibility input)")
+    p.add_argument("--decoder-precision", default="fp32", choices=("fp16", "fp32"),
+                   help="fp32 (revision 8 deployed decoder/joint) or fp16 (recorded, ineligible)")
     args = parser.parse_args()
     sys.exit({"4a": gate4a, "4a-decoder": gate4a_decoder, "4b": gate4b, "4b-decoder": gate4b_decoder}[args.cmd](args))
 

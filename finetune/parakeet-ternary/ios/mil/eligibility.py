@@ -24,6 +24,11 @@ A record is eligible when every check passes:
 - stress rule on that backend (results/probes/stress.json, revision 6/7 relative rule).
 Every record lists the SHA-256 of each input file; check() recomputes them, so a changed or re-run input
 invalidates the record until it is rebuilt.
+
+Revision 8 ("Decoder and joint precision"): the deployed decode-loop paths use the FP32 decoder/joint models, so
+the records <model>-<arm>-<variant>-<backend>.json gate 4b runs made with decoder-fp32 (...-dec-fp32.json).
+The 4b runs with the FP16 decoder/joint stay as separate records ...-<backend>-dec-fp16.json, ineligible by
+design whatever their gate outcome.
 """
 from __future__ import annotations
 
@@ -37,8 +42,12 @@ from pathlib import Path
 IOS = Path(__file__).resolve().parents[1]
 RES = IOS / "results"
 ELIG = RES / "eligibility"
-DESIGN_REVISION = 7
-CODE_VERSION = "wp3-eligibility-1"
+DESIGN_REVISION = 8
+CODE_VERSION = "wp3-eligibility-2"
+# Gate results valid under this revision: revision 8 changed only the deployed decoder precision, so 4a, the
+# stress probe and gate 2 from revision 7 stand; 4b must be a revision-8 run (FP32 decoder, deployed paths).
+ACCEPTED_REVISIONS = {"4a": {7, 8}, "stress": {7, 8}, "4b": {8}, "4b_fp16_decoder": {7, 8}}
+DEPLOYED_DECODER = "fp32"
 EXIT_INELIGIBLE = 10
 BACKENDS = {"ane": "cpuAndNeuralEngine", "cpu": "cpuOnly"}
 SCOPE_EXCLUDED = {"C5": "exploratory W8A8 (DESIGN.md: scope reduction; numerics fail)"}
@@ -64,18 +73,20 @@ def load(path: Path):
     return json.loads(path.read_text()) if path.exists() else None
 
 
-def record_path(model: str, arm: str, variant: str, backend: str) -> Path:
-    return ELIG / f"{model}-{arm}-{variant}-{backend}.json"
+def record_path(model: str, arm: str, variant: str, backend: str, decoder: str = DEPLOYED_DECODER) -> Path:
+    return ELIG / (f"{model}-{arm}-{variant}-{backend}.json" if decoder == DEPLOYED_DECODER
+                   else f"{model}-{arm}-{variant}-{backend}-dec-{decoder}.json")
 
 
 # --- check (any machine; the timing runner calls this) -----------------------------------------------------
 
-def check(model: str, arm: str, variant: str, backend: str, root: Path | None = None) -> dict:
-    """The passing eligibility record of an arm/backend, or Ineligible. C0 (baseline) always passes."""
+def check(model: str, arm: str, variant: str, backend: str, root: Path | None = None, decoder: str = DEPLOYED_DECODER) -> dict:
+    """The passing eligibility record of an arm/backend (with the deployed FP32 decoder/joint unless decoder is
+    given), or Ineligible. C0 (baseline) always passes; FP16-decoder records are never eligible (revision 8)."""
     if arm == "C0":
         return {"model": model, "arm": "C0", "variant": variant, "backend": backend, "timing_allowed": True,
                 "eligible": False, "role": "product baseline (no gate record; always timed)"}
-    path = (Path(root) if root else ELIG) / f"{model}-{arm}-{variant}-{backend}.json"
+    path = (Path(root) if root else ELIG) / record_path(model, arm, variant, backend, decoder).name
     if not path.exists():
         raise Ineligible(f"no eligibility record {path.name}: run the revision-{DESIGN_REVISION} gates and "
                          "eligibility.py build first")
@@ -124,13 +135,15 @@ def build(args) -> int:
         d = load(p)
         if d.get("gate") != "4b":
             continue
-        built.add((d["model"], d["arm"], d["variant"], d["backend"]))
+        for dec in ("fp32", "fp16"):
+            built.add((d["model"], d["arm"], d["variant"], d["backend"], dec))
     expected = set(built)
     for arm in ("C1", "C3", "C4", "C5", "C6s2", "C6s4", "C6s8", "C6d4", "C6d8", "C7", "C8"):
         for variant in ("fixed", "multi"):
             for backend in BACKENDS:
-                expected.add(("mp2", arm, variant, backend))
-    for model, arm, variant, backend in sorted(expected):
+                for dec in ("fp32", "fp16"):
+                    expected.add(("mp2", arm, variant, backend, dec))
+    for model, arm, variant, backend, decoder in sorted(expected):
         units = BACKENDS[backend]
         inputs, checks, reasons = {}, {}, []
 
@@ -151,14 +164,17 @@ def build(args) -> int:
         repf = v7 / f"{model}-{rep}-fp32-{variant}-cpuOnly-4a.json" if rep else None
         src = own if own.exists() else repf
         g4a = use(src) if src is not None else None
-        checks["gate4a"] = {"pass": bool(g4a and g4a["pass"] and g4a.get("design_revision") == DESIGN_REVISION),
+        checks["gate4a"] = {"pass": bool(g4a and g4a["pass"] and g4a.get("design_revision") in ACCEPTED_REVISIONS["4a"]),
                             "topology": topo, "source": rel(src) if src is not None and src.exists() else None,
                             "own_fp32_build": own.exists(),
                             "rel_max": g4a and g4a["summary"]["rel_max"], "abs_max": g4a and g4a["summary"]["abs_max"]}
         d4a = use(v7 / f"{model}-decoder-fp32-cpuOnly-4a.json")
         checks["gate4a_decoder"] = {"pass": bool(d4a and d4a["pass"])}
         # gate 4b
-        g4b_path = v7 / f"{model}-{arm}-{variant}-{units}.json"
+        g4b_path = v7 / f"{model}-{arm}-{variant}-{units}-dec-{decoder}.json"
+        if decoder != DEPLOYED_DECODER:
+            checks["decoder_precision"] = {"pass": False, "note": "FP16 decoder/joint: not deployed (DESIGN.md "
+                                           "revision 8, 'Decoder and joint precision'); recorded for comparison"}
         g4b = use(g4b_path)
         if g4b is None:
             checks["gate4b"] = {"pass": False, "note": "not run"}
@@ -166,7 +182,9 @@ def build(args) -> int:
             checks["gate5"] = {"pass": False, "note": "not run"}
         else:
             s = g4b["summary"]
-            checks["gate4b"] = {"pass": bool(g4b["pass"] and g4b.get("design_revision") == DESIGN_REVISION),
+            ok_rev = g4b.get("design_revision") in ACCEPTED_REVISIONS["4b" if decoder == DEPLOYED_DECODER else "4b_fp16_decoder"]
+            checks["gate4b"] = {"pass": bool(g4b["pass"] and ok_rev), "result_design_revision": g4b.get("design_revision"),
+                                "decoder_precision": g4b.get("decoder_precision", "fp16"),
                                 "encoder_rel_max": s["encoder_4b"]["rel_max"], "encoder_failing": s["encoder_4b"]["failing_cases"],
                                 "heads": {p: {h: {k: v[k] for k in ("decisive_fraction", "agreement_on_decisive",
                                                                      "agreement_all_steps", "pass")}
@@ -203,7 +221,7 @@ def build(args) -> int:
         sv = (stress or {}).get("verdict", {}).get(arm, {}).get(backend)
         if stress is not None:
             inputs[rel(stress_path)] = sha(stress_path)
-        checks["stress"] = {"pass": bool(sv and sv["pass"] and stress.get("design_revision") == DESIGN_REVISION),
+        checks["stress"] = {"pass": bool(sv and sv["pass"] and stress.get("design_revision") in ACCEPTED_REVISIONS["stress"]),
                             "detail": sv}
         for name, c in checks.items():
             if not c["pass"]:
@@ -212,13 +230,16 @@ def build(args) -> int:
                 reasons.append(f"{name}: {detail}")
         eligible = not reasons
         rec = {"design_revision": DESIGN_REVISION, "code_version": CODE_VERSION, "model": model, "arm": arm,
-               "variant": variant, "backend": backend, "compute_units": units, "eligible": eligible,
+               "variant": variant, "backend": backend, "compute_units": units, "decoder_precision": decoder,
+               "decoder_models": f"arms/{model}/{'decoder' if decoder == 'fp16' else 'decoder-' + decoder}",
+               "eligible": eligible,
                "timing_allowed": eligible, "selection_eligible": eligible, "reasons": reasons, "checks": checks,
                "inputs": inputs, "tokenizer_sha256": sha(sp_path), "built": time.strftime("%Y-%m-%d %H:%M")}
-        record_path(model, arm, variant, backend).write_text(json.dumps(rec, indent=1, allow_nan=False) + "\n")
+        record_path(model, arm, variant, backend, decoder).write_text(json.dumps(rec, indent=1, allow_nan=False) + "\n")
         rows.append(rec)
     rows += build_g0(stress)
-    summary = [{k: r[k] for k in ("model", "arm", "variant", "backend", "timing_allowed", "selection_eligible")}
+    summary = [{k: r.get(k) for k in ("model", "arm", "variant", "backend", "decoder_precision", "timing_allowed",
+                                      "selection_eligible")}
                | {"failed_checks": [n for n, c in r["checks"].items() if not c["pass"]],
                   **({"wer": r["checks"]["wer"]} if "wer" in r["checks"] else {})} for r in rows]
     (ELIG / "summary.json").write_text(json.dumps({"design_revision": DESIGN_REVISION, "code_version": CODE_VERSION,
@@ -256,14 +277,19 @@ def build_g0(stress) -> list[dict]:
 
 
 def table(rows: list[dict]) -> str:
-    lines = ["| model | arm | variant | backend | timing allowed | failed checks | WER jd / dj / ref (%) |", "|---|---|---|---|---|---|---|"]
-    for r in rows:
+    lines = [f"Eligibility (design revision {DESIGN_REVISION}); deployed decoder/joint: FP32. FP16-decoder records follow.",
+             "", "| model | arm | variant | backend | decoder | timing allowed | failed checks | identical seqs jd / dj "
+             "(of 64; >= 61) | WER jd / dj / ref (%) |", "|---|---|---|---|---|---|---|---|---|"]
+    order = sorted(rows, key=lambda r: (r.get("decoder_precision") == "fp16", r["model"] != "mp2", r["arm"], r["variant"], r["backend"]))
+    for r in order:
         w = r["checks"].get("wer", {})
         wer = (f"{w.get('jd_wer_pct')} / {w.get('dj_wer_pct')} / {w.get('reference_wer_pct')}"
                if "jd_wer_pct" in w else "-")
-        lines.append(f"| {r['model']} | {r['arm']} | {r['variant']} | {r['backend']} | "
+        si = r["checks"].get("gate4b", {}).get("sequence_identity")
+        ident = f"{round(si['jd'] * 64)} / {round(si['dj'] * 64)}" if si else "-"
+        lines.append(f"| {r['model']} | {r['arm']} | {r['variant']} | {r['backend']} | {r.get('decoder_precision', '-')} | "
                      f"{'yes' if r['timing_allowed'] else 'no'} | "
-                     f"{', '.join(n for n, c in r['checks'].items() if not c['pass']) or '-'} | {wer} |")
+                     f"{', '.join(n for n, c in r['checks'].items() if not c['pass']) or '-'} | {ident} | {wer} |")
     text = "\n".join(lines) + "\n"
     (ELIG / "table.txt").write_text(text)
     return text
@@ -276,11 +302,12 @@ def main() -> None:
     p = sub.add_parser("check")
     for k in ("model", "arm", "variant", "backend"):
         p.add_argument(f"--{k}", required=True)
+    p.add_argument("--decoder", default=DEPLOYED_DECODER, choices=("fp32", "fp16"))
     args = parser.parse_args()
     if args.cmd == "build":
         sys.exit(build(args))
     try:
-        rec = check(args.model, args.arm, args.variant, args.backend)
+        rec = check(args.model, args.arm, args.variant, args.backend, decoder=args.decoder)
         print(json.dumps({"timing_allowed": True, "record": f"{args.model}-{args.arm}-{args.variant}-{args.backend}"}))
     except Ineligible as e:
         print(f"INELIGIBLE: {e}", file=sys.stderr)
