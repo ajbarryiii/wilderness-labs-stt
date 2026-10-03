@@ -105,7 +105,67 @@ def load_run(path: str) -> tuple[dict, dict, list[dict], list[dict], dict]:
     end = next((l for l in lines if l.get("record") == "end"), {})
     diagnostics = [l for l in lines if l.get("record") == "diagnostic"]
     calls = [l for l in lines if "result" in l]
+    load["_blocks"] = [l for l in lines if l.get("record") == "block"]
     return load, end, diagnostics, calls, check_complete(load, calls)
+
+
+# load fields that must agree between the runs (e.g. the two counterbalanced halves) merged into one arm summary
+MERGE_KEYS = ("arm", "arm_spec", "compute_units", "preprocessor_units", "eligibility", "warmups", "timed", "mode",
+              "clips_json_sha256", "executable_sha256", "settle_ms", "c0_identity", "os")
+
+
+def merge_runs(runs: list[tuple]) -> tuple[dict, dict, list[dict], list[dict], dict]:
+    """Several complete runs of one arm on disjoint clip sets (counterbalanced sweep halves) as one run."""
+    if len(runs) == 1:
+        return runs[0]
+    loads = [r[0] for r in runs]
+    problems = [f"{k} differs between the merged runs" for k in MERGE_KEYS if len({json.dumps(l.get(k), sort_keys=True) for l in loads}) > 1]
+    ids = [c for l in loads for c in l.get("clip_ids") or []]
+    if len(ids) != len(set(ids)) or not all(l.get("clip_ids") for l in loads):
+        problems.append("merged runs must record disjoint clip_ids")
+    if problems:
+        raise SystemExit("cannot merge runs: " + "; ".join(problems))
+    load = {**loads[0], "clip_ids": ids, "_blocks": [b for l in loads for b in l["_blocks"]],
+            "merged_runs": len(runs), "load_ms_per_run": [l.get("load_ms") for l in loads],
+            "phys_footprint_mb_after_load_per_run": [l.get("phys_footprint_mb_after_load") for l in loads]}
+    peaks = [r[1].get("phys_footprint_peak_mb") for r in runs if r[1].get("phys_footprint_peak_mb") is not None]
+    end = {**runs[0][1], "phys_footprint_peak_mb": max(peaks) if peaks else None}
+    calls = [c for r in runs for c in r[3]]
+    return load, end, [d for r in runs for d in r[2]], calls, check_complete(load, calls)
+
+
+def thermal_summary(blocks: list[dict]) -> dict:
+    """ProcessInfo.thermalState per timed block (parakeet-bench --settle-ms records), counts by state."""
+    if not blocks:
+        return {"recorded": False}
+    count = lambda key: {s: sum(b.get(key) == s for b in blocks) for s in sorted({b.get(key) for b in blocks})}
+    return {"recorded": True, "blocks": len(blocks), "at_start": count("thermal_start"), "at_end": count("thermal_end"),
+            "blocks_waited": sum(b.get("thermal_wait_ms", 0) > 0 for b in blocks),
+            "wait_ms_total": round(sum(b.get("thermal_wait_ms", 0) for b in blocks), 1),
+            "settle_ms": sorted({b.get("settle_ms") for b in blocks}),
+            "nominal_at_every_start": all(b.get("thermal_start") == "nominal" for b in blocks)}
+
+
+def check_c0_baseline(bload: dict, run_dir: Path) -> dict | str:
+    """The baseline must be the pinned published C0 export on its prescribed compute units (review WP7 r1
+    finding 3); WP5's migrated runs predate the check and are labelled unverified."""
+    pinned = json.loads((HERE / "c0.json").read_text())
+    ident = bload.get("c0_identity") or {}
+    if not ident:
+        if (run_dir / "MIGRATED").exists():
+            return "unverified: WP5 run recorded before C0 identity checks"
+        raise SystemExit("baseline has no C0 identity record (c0_identity)")
+    problems = []
+    if not ident.get("verified") or ident.get("revision") != pinned["revision"] or ident.get("repo") != pinned["repo"]:
+        problems.append(f"C0 identity {ident} is not the pinned {pinned['repo']}@{pinned['revision']}")
+    if ident.get("c0_json_sha256") != __import__("hashlib").sha256((HERE / "c0.json").read_bytes()).hexdigest():
+        problems.append("c0.json changed since the baseline ran")
+    if bload.get("compute_units") != "cpuAndNeuralEngine" or bload.get("preprocessor_units") != "cpuOnly":
+        problems.append(f"C0 ran on {bload.get('compute_units')} / preprocessor {bload.get('preprocessor_units')}, "
+                        "not the shipped cpuAndNeuralEngine / cpuOnly")
+    if problems:
+        raise SystemExit("baseline is not C0 as shipped: " + "; ".join(problems))
+    return ident
 
 
 def stage_values(records: list[dict], stage: str) -> dict[str, list[float]]:
@@ -139,20 +199,46 @@ def paired(arm: list[dict], base: list[dict], stage: str, n_boot: int, seed: int
             "baseline_typical_ms": round(statistics.median(statistics.median(b[i]) for i in ids), 3)}
 
 
+def check_pairing(load: dict, calls: list[dict], bload: dict, bcalls: list[dict], apath: str, bpath: str) -> str:
+    """Pairing provenance (review WP4/5 finding 8): same session (pairing block), manifest, mode, clips, protocol."""
+    problems, evidence = [], None
+    if bload.get("arm") != "C0":
+        problems.append(f"baseline arm is {bload.get('arm')!r}, not C0")
+    for key in ("pairing", "clips_json_sha256", "clip_ids", "warmups", "timed", "mode"):
+        if load.get(key) is None or load.get(key) != bload.get(key):
+            problems.append(f"{key} missing or different between the arm and the baseline run")
+    pa, pb = load.get("pairing") or {}, bload.get("pairing") or {}
+    if not pa:
+        problems.append("the arm run was not paired with C0 in one process (no pairing block)")
+    elif "session" in pa or "session" in pb:
+        evidence = "pairing session id"  # equality is checked with the whole block above
+    elif Path(apath).resolve().parent == Path(bpath).resolve().parent:
+        evidence = "same run directory (records written before session ids, WP5)"
+    else:
+        problems.append("no pairing session id and the files are not from one run directory")
+    if sorted({c["clip"] for c in calls if not c["warmup"]}) != sorted({c["clip"] for c in bcalls if not c["warmup"]}):
+        problems.append("clip coverage differs")
+    if problems:
+        raise SystemExit(f"unpaired runs ({apath}): " + "; ".join(problems))
+    return evidence
+
+
 def main() -> None:
     import traces as tracemod
 
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("results")
+    parser.add_argument("results", nargs="+", help="one run, or several runs of the same arm on disjoint clips "
+                        "(counterbalanced sweep halves), merged")
     parser.add_argument("--plan", help="parakeet-bench plan summary JSON to embed")
     parser.add_argument("--out", help="summary JSON: under ios/results/ (text, no audio or weights) or the artifact area")
     parser.add_argument("--min-timed", type=int, default=10, help="timed calls per clip for a baseline (Mac 10, phone 5)")
     parser.add_argument("--smoke", action="store_true", help="accept fewer timed calls and label the summary smoke")
-    parser.add_argument("--baseline", help="a C0 run of the same clips (JSON lines) for paired comparisons")
+    parser.add_argument("--baseline", nargs="+", help="the C0 run paired with each results file, in the same order")
     parser.add_argument("--ref", help="native.py reference output directory (ref/<id>.npz greedy tokens) of the arm's model")
     parser.add_argument("--bootstrap", type=int, default=2000)
     args = parser.parse_args()
-    load, end, diagnostics, calls, completeness = load_run(args.results)
+    arm_runs = [load_run(r) for r in args.results]
+    load, end, diagnostics, calls, completeness = merge_runs(arm_runs)
     timed = [c for c in calls if not c["warmup"]]
     first = [c for c in calls if c["warmup"] and c["rep"] == 0]
     eligible = completeness["timed_per_clip"] >= args.min_timed and completeness["warmups"] >= 3
@@ -167,7 +253,8 @@ def main() -> None:
                  "label_note": None if eligible else (
                      f"{completeness['timed_per_clip']} timed call(s) per clip, fewer than the {args.min_timed} "
                      "DESIGN.md prescribes: a functional check, not a comparison baseline"),
-                 "results_file": Path(args.results).name, "arm": load.get("arm"), "arm_spec": load.get("arm_spec"),
+                 "results_file": [str(Path(r)) for r in args.results], "arm": load.get("arm"), "arm_spec": load.get("arm_spec"),
+                 "executable_sha256": load.get("executable_sha256"), "thermal": thermal_summary(load["_blocks"]),
                  "mode": mode, "compute_units": load.get("compute_units"),
                  "preprocessor_units": load.get("preprocessor_units"), "os": load.get("os"),
                  "load_ms": load.get("load_ms"),
@@ -256,31 +343,20 @@ def main() -> None:
                 "duration_agree": sum(r["duration_agree"] for r in rep) / max(steps, 1),
                 "all_steps_executed": all(r["steps"] == r["trace_steps"] for r in rep)}
     if args.baseline:
-        bload, _, _, bcalls, bcomp = load_run(args.baseline)
-        # pairing provenance (review WP4/5 finding 8): same session (pairing block), manifest, mode, clips, protocol
-        problems = []
-        if bload.get("arm") != "C0":
-            problems.append(f"baseline arm is {bload.get('arm')!r}, not C0")
-        for key in ("pairing", "clips_json_sha256", "clip_ids", "warmups", "timed", "mode"):
-            if load.get(key) is None or load.get(key) != bload.get(key):
-                problems.append(f"{key} missing or different between the arm and the baseline run")
-        pa, pb = load.get("pairing") or {}, bload.get("pairing") or {}
-        if not pa:
-            problems.append("the arm run was not paired with C0 in one process (no pairing block)")
-        elif "session" in pa or "session" in pb:
-            evidence = "pairing session id"  # equality is checked with the whole block above
-        elif Path(args.results).resolve().parent == Path(args.baseline).resolve().parent:
-            evidence = "same run directory (records written before session ids, WP5)"
-        else:
-            problems.append("no pairing session id and the files are not from one run directory")
-        if sorted({c['clip'] for c in timed}) != sorted({c['clip'] for c in bcalls if not c['warmup']}):
-            problems.append("clip coverage differs")
-        if problems:
-            raise SystemExit("unpaired runs: " + "; ".join(problems))
+        if len(args.baseline) != len(args.results):
+            raise SystemExit("one --baseline file per results file")
+        base_runs = [load_run(b) for b in args.baseline]
+        evidence_all, c0_ids = [], []
+        for (aload, _, _, acalls, _), (bload, _, _, bcalls, _), apath, bpath in zip(arm_runs, base_runs, args.results, args.baseline):
+            evidence_all.append(check_pairing(aload, acalls, bload, bcalls, apath, bpath))
+            c0_ids.append(check_c0_baseline(bload, Path(bpath).resolve().parent))
+        bload, _, _, bcalls, bcomp = merge_runs(base_runs)
+        evidence = evidence_all[0] if len(set(evidence_all)) == 1 else evidence_all
         btimed = [c for c in bcalls if not c["warmup"]]
         out["paired_vs_baseline"] = {
-            "baseline_file": Path(args.baseline).name, "baseline_arm": bload.get("arm"), "baseline_completeness": bcomp,
-            "pairing_evidence": evidence,
+            "baseline_file": [str(Path(b)) for b in args.baseline], "baseline_arm": bload.get("arm"), "baseline_completeness": bcomp,
+            "pairing_evidence": evidence, "c0_identity": c0_ids[0] if all(c == c0_ids[0] for c in c0_ids) else c0_ids,
+            "baseline_compute_units": bload.get("compute_units"), "baseline_thermal": thermal_summary(bload["_blocks"]),
             "method": "per-clip ratios arm/baseline; typical = median over clips; p95 = HD p95 ratio of pooled calls; "
                       f"percentile bootstrap ({args.bootstrap} resamples of clips, pairs kept together), seed 0",
             "per_bucket": {str(b): {s: paired([c for c in timed if c["bucket"] == b], [c for c in btimed if c["bucket"] == b],
