@@ -207,8 +207,10 @@ def compute_plan(path: Path, units: str = "cpuAndNeuralEngine", functions: list[
     return out
 
 
-def function_names(variant: str) -> list[str]:
-    return ["b2", "b4", "b8", "b15"] if variant == "multi" else ["main"]
+def function_names(variant: str) -> list[str] | None:
+    """Functions to plan one by one; None for single-function models (Core ML rejects functionName = "main" for
+    the enumerated-shape model, so no function name is set there)."""
+    return ["b2", "b4", "b8", "b15"] if variant == "multi" else None
 
 
 def load_times(path: Path, functions: list[str | None], units: str = "cpuAndNeuralEngine") -> dict:
