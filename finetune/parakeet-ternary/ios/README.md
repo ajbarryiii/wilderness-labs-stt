@@ -589,7 +589,7 @@ C6s2 and C6s4. 4a was added for the C7 and C8 enumerated graphs.
   - every input file's SHA-256 is unchanged;
   - `timing_allowed` is true.
 
-  C0 is exempt as the product baseline and is labelled so. External-encoder gate runs are labelled "not an arm timing". `wp5sweep.py` checks eligibility in Python as well.
+  C0 is exempt as the product baseline and is labelled so. External-encoder gate runs are labelled "not an arm timing". `wp5sweep.py` checks eligibility in Python as well. (WP7 tightened this: the runner now requires a deployed-pipeline record bound to every component's SHA-256; see WP7.)
 - **Pairing.** `--pair-c0 C0DIR --c0-out PATH` runs C0 and the arm in the same process, clip by clip: per clip a C0 block and an arm block, each with warm-ups and timed calls. C0 goes first on even-numbered clips and the arm first on odd ones.
 - **`sweep_job.sh`** runs inside macguard. It checks the 30 GB disk floor, purges this binary's Core ML cache (`~/Library/Caches/parakeet-bench`, where its e5 bundle cache lives), runs the paired sweep (post-purge loads), loads the arm in a fresh process (subsequent fresh-process load, arm-only footprint), and purges the cache again.
 - **`wp5sweep.py plan | run | report`** checks eligibility and restores each arm with `mil/archive.py back`. It then times the arm, fetches the records, archives restored arms back out (the Mac ended with 133 GB free), and builds `armreport` summaries with paired comparisons.
@@ -718,3 +718,67 @@ ANE layout, backend `gpu` for CPU_AND_GPU).
 
 All models are archived on NixOS, except C4 fixed/multi and the decoder models (fp16 and fp32), which
 stay on the Mac for the harness.
+
+## WP7: deployed-pipeline gates, component-bound eligibility, runner hardening (Codex review of WP4/5)
+
+**Deployed-pipeline gate (review blocker).** WP3 gated encoder arms on the reference features with Core ML
+decoder models; the deployed pipelines (front end A → encoder arm → native F2 or the FP32 F0/F1 decoder models)
+had never been gated end to end. Now they are, in Swift, on all 82 clips:
+- `parakeet-bench gate` runs, per clip, front end A (vDSP) → the encoder arm in its own bucket, once → for each of
+  F2, F0, F1: free decoding, and forced replay of the clip's B0 trace with the argmax of every step recorded. The
+  encoder output (valid frames) is written with its SHA-256. Decoder models load with the encoder's compute units.
+- `pipegate.py evaluate` (Mac, same macguard job, `pipegate_job.sh`) applies the revision-8 gate-4b conditions:
+  - encoder: rel ≤ 0.1 (tau 1e-3), finite, length = clips.json on every clip;
+  - decisions: pooled agreement with the reference argmax ≥ 99.5% on decisive steps (reference raw-logit top-1
+    margin ≥ 1.0) and ≥ 99% on all steps, decisive fraction ≥ 50%, per head (token incl. blank, duration);
+  - free decoding: ≥ 61/64 natural clips identical to the reference's tokens; WER within +0.2 points (scored on
+    NixOS by `pipegate.py record` with the parent experiment's scorer);
+  - coverage: every clip, every trace replayed in full, every decode; anything missing fails.
+- **Reference features: FP64.** The encoder reference is the FP32 reference encoder (FP16-rounded scales, as WP3's
+  refcache `fp16s`) on the reference front end **evaluated in FP64** (`pipegate.py ref64`, results/pipegates/
+  ref64_index.json), as gate 5 has used since revision 5. Reason: on the silence clip the FP32 reference front end
+  is rounding noise (its features differ from FP64 by rel 1.6e5; the exact features are 0, which front end A
+  returns), so the reference encoder output there is noise-driven: refcache vs ref64 encoder outputs differ by rel
+  0.34 on silence and by ≤ 2.6e-6 on every other clip. Against the FP32-feature reference, every pipeline exceeds
+  the ceiling on the silence clip only (rel 0.33); this is kept in every summary as a diagnostic
+  (`encoder.diag_vs_reference_on_fp32_features`).
+- `pipegate.py run` (NixOS) loops over every rev-8 timing-allowed encoder record except G0 (control, C0's weights)
+  and MLX (no Swift implementation): restore → measured disk need → guarded job in a unique run directory →
+  retrieval into `.part`, atomic rename, `LATEST` → `record`. Summaries: `results/pipegates/<model>-<arm>-<variant>-
+  <backend>-vdsp.json`; records: `results/eligibility/pipelines/<…>-vdsp-<decode>.json`; table:
+  `results/eligibility/pipelines/table.txt`.
+
+**Component-bound eligibility (finding 2).** A pipeline record holds `components`: compute units; encoder package
+(model/arm/variant and a SHA-256 over the sorted per-file SHA-256s of the `.mlmodelc`, symlinks refused); front end
+(constants manifest SHA-256); decode (F2: native-weights SHA-256, precision fp32; F0/F1: SHA-256 of each Core ML
+decoder model and the precision from the decoder directory's manifest). `parakeet-bench run` rebuilds the same
+description from what it is about to load and refuses unless the record for the exact model-arm-variant-backend-
+front end-decode exists, is revision 8 and timing-allowed, its components match exactly (provenance blocks aside),
+its inputs are unchanged, and the arm's WP3 record still passes.
+
+**Other findings.**
+- 3: `native.py gate-frontend`, `gate-frontend-encoder` and `gate-f2` check coverage of every manifest clip and exit
+  10 on any failure.
+- 4: macguard's detached watcher acknowledges its start over a pipe; without the ack (fork failure, early death)
+  the supervisor keeps the lock itself, kills until the group is empty, and reaps its own leader. Tests 18 and 19;
+  the suite passes on Linux (26 checks) and the Mac (27 checks), 0 failed.
+- 5: `sweep_job.sh` and `pipegate_job.sh` refuse when `df -k` cannot be parsed and exit 6 if the cache purge fails;
+  the disk need is measured per arm (package size on the Mac + Core ML cache estimate: 4 × package for dense C1,
+  whose cache reached 4.6 GB in WP5, else 1 GB); `macpush.py` checks 30 GB + 2 × file size on the Mac first.
+- 6: sweep and gate runs write `<arm>/<run id>/` on both machines, are retrieved completely into a `.part` directory
+  and renamed atomically, with `LATEST`; the report reads only `LATEST` runs with status 0. WP5's raw records were
+  moved into this layout (`wp5-20261003`).
+- 7: loads are labelled "post-purge" and "subsequent fresh-process"; neither is claimed cached or uncached.
+- 8: `armreport.py --baseline` requires a C0 baseline with the same pairing block, now carrying a per-process
+  session id (WP5's records predate it and are accepted only from one run directory), the same clips.json SHA-256,
+  clip ids, warm-ups/timed and mode; "baseline-eligible" needs ≥ 3 warm-ups.
+- 9: every call records logical joint steps and prediction-network runs; armreport compares those (not physical
+  calls) with the trace, so F1's fused calls count correctly.
+- 10: the preprojection has its own signpost interval.
+- 11: WP5's fixed-window rows now print their CIs.
+- Also: the paired C0 runs as shipped on `--c0-compute-units` (default cpuAndNeuralEngine) whatever the arm's
+  backend; GPU-backend jobs get a 6G RSS cap (GPU-visible model memory counts in RSS: C3 on cpuAndGPU with the
+  F0/F1 models exceeded 4.19 GB at load).
+
+<!-- WP7-RESULTS -->
+

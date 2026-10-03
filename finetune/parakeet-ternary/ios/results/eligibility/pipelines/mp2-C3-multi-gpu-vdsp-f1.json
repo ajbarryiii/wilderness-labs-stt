@@ -1,0 +1,114 @@
+{
+ "design_revision": 8,
+ "code_version": "wp7-pipegate-2",
+ "kind": "pipeline",
+ "model": "mp2",
+ "arm": "C3",
+ "variant": "multi",
+ "backend": "gpu",
+ "compute_units": "cpuAndGPU",
+ "front_end": "vdsp",
+ "decode": "f1",
+ "decoder_precision": "fp32",
+ "encoder_record": {
+  "file": "mp2-C3-multi-gpu.json",
+  "sha256": "9349657b728bf2b36bb56195aeabdc419a7a270e54fe7ae0ceb4b03f8f07962d"
+ },
+ "components": {
+  "compute_units": "cpuAndGPU",
+  "decode": {
+   "kind": "f1",
+   "models_sha256": {
+    "DecoderJoint": "c7044821d2d43851a2a201244bd3ae2255fcf8198b0b1602625cf4b7fa656a3a"
+   },
+   "precision": "fp32"
+  },
+  "encoder": {
+   "arm": "C3",
+   "model": "mp2",
+   "package": "mp2/C3/multi.mlmodelc",
+   "sha256": "4128cea7045d1a09a2d47a6265ab917c5394674926fa90de9ab18fbcd0acfd34",
+   "variant": "multi"
+  },
+  "front_end": {
+   "constants_sha256": "efe8a64a770fa51eeafaca31c1f7f744c900e11f5f19ed1aa39716da8d4f20d3",
+   "kind": "vdsp",
+   "provenance": {
+    "export_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/pilot-P2-lr5e-4/export",
+    "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6",
+    "model": "mp2"
+   }
+  }
+ },
+ "eligible": true,
+ "timing_allowed": true,
+ "selection_eligible": true,
+ "reasons": [],
+ "checks": {
+  "encoder_record": {
+   "pass": true,
+   "record": "mp2-C3-multi-gpu.json"
+  },
+  "decoder_precision": {
+   "pass": true,
+   "precision": "fp32"
+  },
+  "problems": {
+   "pass": true,
+   "list": []
+  },
+  "encoder": {
+   "pass": true,
+   "clips": 82,
+   "passed": 82,
+   "max_rel": 0.01850794952638844,
+   "max_abs": 0.26083355484253873,
+   "reference": "FP32 reference encoder (fp16s scales) on FP64-evaluated reference features (ref64)",
+   "diag_vs_reference_on_fp32_features": {
+    "max_rel": 0.32071808727358914,
+    "over_ceiling": [
+     "silence-3s"
+    ]
+   }
+  },
+  "coverage": {
+   "pass": true,
+   "missing_or_incomplete": []
+  },
+  "decisions": {
+   "pass": true,
+   "token": {
+    "steps": 3025,
+    "agree_all": 0.9990082644628099,
+    "decisive_fraction": 0.9662809917355372,
+    "agree_decisive": 1.0,
+    "pass": true
+   },
+   "duration": {
+    "steps": 3025,
+    "agree_all": 0.996694214876033,
+    "decisive_fraction": 0.8502479338842975,
+    "agree_decisive": 0.999611197511664,
+    "pass": true
+   }
+  },
+  "free_decoding": {
+   "pass": true,
+   "clips": 64,
+   "identical": 64
+  },
+  "wer": {
+   "pass": true,
+   "reference_wer_pct": 2.711,
+   "pipeline_wer_pct": 2.711,
+   "clips": 64,
+   "limit_points": 0.2
+  }
+ },
+ "inputs": {
+  "results/pipegates/mp2-C3-multi-gpu-vdsp.json": "f1659e500b43c2b02550f6b5ec33729c8afde1290ec4311c07f6db5035310f3f",
+  "results/eligibility/mp2-C3-multi-gpu.json": "9349657b728bf2b36bb56195aeabdc419a7a270e54fe7ae0ceb4b03f8f07962d"
+ },
+ "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
+ "built": "2026-10-03 08:52"
+}
