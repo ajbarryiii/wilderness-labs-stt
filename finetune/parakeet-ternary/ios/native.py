@@ -309,8 +309,10 @@ def cmd_gate_frontend(args) -> None:
         if write is not None:
             ref64.astype("<f4").tofile(write / f"{clip['id']}.ref64.mel.f32")
             ref32.astype("<f4").tofile(write / f"{clip['id']}.ref32.mel.f32")
+    expected = [c["id"] for c in clipmod.load_manifest()["clips"]]
+    missing = [c for c in expected if c not in {r["clip"] for r in rows}]
     summary = {"gate": "DESIGN.md gate 5 (rev. 5), features: front end A (vDSP, FP32) vs the FP64 reference front end, "
-                       "same stored constants",
+                       "same stored constants", "coverage": {"expected": len(expected), "missing": missing},
                "ceilings": {"rel": FE_REL, "abs": FE_ABS}, "clips": len(rows), "passed": sum(r["pass"] for r in rows),
                "max_rel": max(r["rel"] for r in rows), "max_abs": max(r["abs"] for r in rows),
                "median_rel": float(np.median([r["rel"] for r in rows])),
@@ -319,8 +321,11 @@ def cmd_gate_frontend(args) -> None:
                                           "max_abs": max(r["vs_fp32_reference"][1] for r in rows if r["kind"] != "silence"),
                                           "note": "non-silence clips; for silence the FP32 reference is rounding noise"},
                "failures": [r for r in rows if not r["pass"]]}
+    summary["pass"] = not missing and summary["passed"] == len(expected)
     print(json.dumps(summary, indent=1))
     write_summary(args.out, {**summary, "rows": rows})
+    if not summary["pass"]:
+        sys.exit(10)  # fail closed: any failing clip or missing coverage
 
 
 def write_summary(out, doc: dict) -> None:
@@ -359,10 +364,13 @@ def cmd_gate_frontend_encoder(args) -> None:
         row["pass"] = (rel <= ENC_REL and ab <= ENC_ABS and len(set(lengths.values())) == 1
                        and all(bool(np.isfinite(e).all()) for e in enc.values()))
         rows.append(row)
+    expected = [c["id"] for c in clipmod.load_manifest()["clips"]]
+    missing = [c for c in expected if c not in {r["clip"] for r in rows}]
     nonsil = [r for r in rows if r["kind"] != "silence"]
     summary = {"gate": "DESIGN.md gate 5 (rev. 5), encoder: C0's encoder (cpuAndNeuralEngine) on front end A's "
                        "features vs on the FP64 reference front end's features, valid frames",
                "encoder": args.encoder_label, "ceilings": {"rel": ENC_REL, "abs": ENC_ABS, "tau": ENC_TAU},
+               "coverage": {"expected": len(expected), "missing": missing},
                "clips": len(rows), "passed": sum(r["pass"] for r in rows),
                "max_rel": max(r["rel"] for r in rows), "max_abs": max(r["abs"] for r in rows),
                "median_rel": float(np.median([r["rel"] for r in rows])),
@@ -371,8 +379,11 @@ def cmd_gate_frontend_encoder(args) -> None:
                    "max_abs_non_silence": max(r["info_vs_fp32_reference_features"][1] for r in nonsil),
                    "silence": next((r["info_vs_fp32_reference_features"] for r in rows if r["kind"] == "silence"), None)},
                "failures": [r for r in rows if not r["pass"]]}
+    summary["pass"] = not missing and summary["passed"] == len(expected)
     print(json.dumps(summary, indent=1))
     write_summary(args.out, {**summary, "rows": rows})
+    if not summary["pass"]:
+        sys.exit(10)
 
 
 def cmd_gate_f2(args) -> None:
@@ -409,6 +420,10 @@ def cmd_gate_f2(args) -> None:
         free_rows.append({"clip": cid, "tokens_equal": l["result"]["tokens"] == ref["greedy_tokens"].tolist(),
                           "f2_tokens": len(l["result"]["tokens"]), "ref_tokens": int(ref["greedy_tokens"].size)})
     rep = [r for r in rows if r["mode"] == "replay"]
+    import clips as clipmod
+    natural = [c["id"] for c in clipmod.load_manifest()["clips"] if c["kind"] == "natural"]
+    missing_replay = sorted(set(natural) - {r["clip"] for r in rep})
+    missing_free = sorted(set(natural) - {r["clip"] for r in free_rows})
     summary = {"gate": "F2 (native CPU decode loop, FP32) vs reference replay of the B0 trace, same encoder output",
                "ceilings": {"rel": REL_CEILING, "abs": ABS_CEILING}, "replay_clips": len(rep),
                "replay_passed": sum(r["pass"] for r in rep)}
@@ -421,13 +436,14 @@ def cmd_gate_f2(args) -> None:
     if free_rows:
         summary["free_decoding"] = {"clips": len(free_rows), "token_sequences_equal": sum(r["tokens_equal"] for r in free_rows),
                                     "differing": [r for r in free_rows if not r["tokens_equal"]]}
+    summary["coverage"] = {"natural": len(natural), "missing_replay": missing_replay, "missing_free": missing_free}
+    summary["pass"] = (not missing_replay and not missing_free and all(r["pass"] for r in rep)
+                       and all(r["tokens_equal"] for r in free_rows)
+                       and all(summary.get("argmax_equal_all_clips", {"t": False}).values()))
     print(json.dumps(summary, indent=1))
-    if args.out:
-        dest = Path(args.out).resolve()
-        if not dest.is_relative_to((HERE / "results").resolve()):
-            import artifacts
-            dest = artifacts.check(dest)
-        dest.write_text(json.dumps({**summary, "rows": rows, "free_rows": free_rows}, indent=1) + "\n")
+    write_summary(args.out, {**summary, "rows": rows, "free_rows": free_rows})
+    if not summary["pass"]:
+        sys.exit(10)
 
 
 def main() -> None:
