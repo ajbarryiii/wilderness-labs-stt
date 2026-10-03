@@ -101,7 +101,7 @@ Per combination:
    removal of the per-step diagnostics (their SHA-256s are in gate.jsonl / evaluation.json), purge;
 4. retrieval of evaluation.json, gate.jsonl, job.log, cache.log, build.json into `.part`, atomic rename;
 5. `pipegate.py record`: refuses an evaluation not made by this pipegate.py / revision 10 / a clean build of this
-   checkout's commit; scores WER; writes the summary and the three revision-9 records;
+   checkout's commit; scores WER; writes the summary and the three revision-10 records;
 6. archive arms the run restored once no later combination needs them.
 `run` checks first that the Mac checkout is this commit with no modified tracked files, and that every requested
 combination exists. Exit 0 = all 147 gated and passed; 10 = all gated, some failed; 1 = an orchestration or job
@@ -199,7 +199,7 @@ One macguard job per run (`sweep_job.sh`): fail-closed disk check, Core ML cache
 ("subsequent fresh-process load", arm-only phys_footprint), purge.
 
 **Command.** `CUDA_VISIBLE_DEVICES= ./python ios/wp5sweep.py sweep --name wp7 --groups c --settle-ms 500`. It
-refuses unless every arm has a revision-9 timing-allowed pipeline record whose executable is the Mac's binary and
+refuses unless every arm has a revision-10 timing-allowed pipeline record whose executable is the Mac's binary and
 the Mac checkout is this commit and clean. Manifest: `/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/sweeps/
 wp7-<time>.json` (build, halves, order, every run's id/status/position), rewritten atomically after each run. Runs
 in never-reused `<arm>/<run id>/` directories on both machines, retrieved completely into `.part` and renamed;
