@@ -1,0 +1,114 @@
+{
+ "design_revision": 8,
+ "code_version": "wp7-pipegate-2",
+ "kind": "pipeline",
+ "model": "mp2",
+ "arm": "C4",
+ "variant": "fixed",
+ "backend": "ane",
+ "compute_units": "cpuAndNeuralEngine",
+ "front_end": "vdsp",
+ "decode": "f1",
+ "decoder_precision": "fp32",
+ "encoder_record": {
+  "file": "mp2-C4-fixed-ane.json",
+  "sha256": "4ce192652094a131e1bccc0c635659915de622ff03702d86d2962c17e55caae4"
+ },
+ "components": {
+  "compute_units": "cpuAndNeuralEngine",
+  "decode": {
+   "kind": "f1",
+   "models_sha256": {
+    "DecoderJoint": "c7044821d2d43851a2a201244bd3ae2255fcf8198b0b1602625cf4b7fa656a3a"
+   },
+   "precision": "fp32"
+  },
+  "encoder": {
+   "arm": "C4",
+   "model": "mp2",
+   "package": "mp2/C4/fixed.mlmodelc",
+   "sha256": "6a0e630e07083c4007d0dcdb25fd35f3f6acc618746378a83c568e910847121c",
+   "variant": "fixed"
+  },
+  "front_end": {
+   "constants_sha256": "efe8a64a770fa51eeafaca31c1f7f744c900e11f5f19ed1aa39716da8d4f20d3",
+   "kind": "vdsp",
+   "provenance": {
+    "export_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/pilot-P2-lr5e-4/export",
+    "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6",
+    "model": "mp2"
+   }
+  }
+ },
+ "eligible": true,
+ "timing_allowed": true,
+ "selection_eligible": true,
+ "reasons": [],
+ "checks": {
+  "encoder_record": {
+   "pass": true,
+   "record": "mp2-C4-fixed-ane.json"
+  },
+  "decoder_precision": {
+   "pass": true,
+   "precision": "fp32"
+  },
+  "problems": {
+   "pass": true,
+   "list": []
+  },
+  "encoder": {
+   "pass": true,
+   "clips": 82,
+   "passed": 82,
+   "max_rel": 0.031863332650742836,
+   "max_abs": 0.440265685433183,
+   "reference": "FP32 reference encoder (fp16s scales) on FP64-evaluated reference features (ref64)",
+   "diag_vs_reference_on_fp32_features": {
+    "max_rel": 0.3281059415346566,
+    "over_ceiling": [
+     "silence-3s"
+    ]
+   }
+  },
+  "coverage": {
+   "pass": true,
+   "missing_or_incomplete": []
+  },
+  "decisions": {
+   "pass": true,
+   "token": {
+    "steps": 3025,
+    "agree_all": 0.9986776859504132,
+    "decisive_fraction": 0.9662809917355372,
+    "agree_decisive": 1.0,
+    "pass": true
+   },
+   "duration": {
+    "steps": 3025,
+    "agree_all": 0.9907438016528926,
+    "decisive_fraction": 0.8502479338842975,
+    "agree_decisive": 0.999611197511664,
+    "pass": true
+   }
+  },
+  "free_decoding": {
+   "pass": true,
+   "clips": 64,
+   "identical": 63
+  },
+  "wer": {
+   "pass": true,
+   "reference_wer_pct": 2.711,
+   "pipeline_wer_pct": 2.711,
+   "clips": 64,
+   "limit_points": 0.2
+  }
+ },
+ "inputs": {
+  "results/pipegates/mp2-C4-fixed-ane-vdsp.json": "d4559f5a202e72affe3979c447f60ef68eb021f1a1a950686bc7525cb319e944",
+  "results/eligibility/mp2-C4-fixed-ane.json": "4ce192652094a131e1bccc0c635659915de622ff03702d86d2962c17e55caae4"
+ },
+ "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
+ "built": "2026-10-03 08:01"
+}

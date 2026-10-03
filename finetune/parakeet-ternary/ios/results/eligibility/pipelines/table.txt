@@ -1,0 +1,22 @@
+Deployed-pipeline records (front end A + encoder arm + decode loop; DESIGN.md revision 8 gate 4b conditions).
+
+| model | arm | variant | backend | decode | timing allowed | failed | encoder rel max | identical | decisive agreement token / duration | WER pipeline / ref (%) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| mp2 | C3-ane | multi | ane | f0 | yes | - | 0.0346 | 63/64 | 1.0000 / 0.9996 | 2.711 / 2.711 |
+| mp2 | C3-ane | multi | ane | f1 | yes | - | 0.0346 | 63/64 | 1.0000 / 0.9996 | 2.711 / 2.711 |
+| mp2 | C3-ane | multi | ane | f2 | yes | - | 0.0346 | 63/64 | 1.0000 / 0.9996 | 2.711 / 2.711 |
+| mp2 | C4-ane | multi | ane | f0 | yes | - | 0.0332 | 62/64 | 1.0000 / 0.9996 | 2.711 / 2.711 |
+| mp2 | C4-ane | multi | ane | f1 | yes | - | 0.0332 | 62/64 | 1.0000 / 0.9996 | 2.711 / 2.711 |
+| mp2 | C4-ane | multi | ane | f2 | yes | - | 0.0332 | 62/64 | 1.0000 / 0.9996 | 2.711 / 2.711 |
+| mp2 | C4 | fixed | ane | f0 | yes | - | 0.0319 | 63/64 | 1.0000 / 0.9996 | 2.711 / 2.711 |
+| mp2 | C4 | fixed | ane | f1 | yes | - | 0.0319 | 63/64 | 1.0000 / 0.9996 | 2.711 / 2.711 |
+| mp2 | C4 | fixed | ane | f2 | yes | - | 0.0319 | 63/64 | 1.0000 / 0.9996 | 2.711 / 2.711 |
+| mp2 | C4 | multi | ane | f0 | yes | - | 0.0315 | 62/64 | 1.0000 / 0.9996 | 2.711 / 2.711 |
+| mp2 | C4 | multi | ane | f1 | yes | - | 0.0315 | 62/64 | 1.0000 / 0.9996 | 2.711 / 2.711 |
+| mp2 | C4 | multi | ane | f2 | yes | - | 0.0315 | 62/64 | 1.0000 / 0.9996 | 2.711 / 2.711 |
+| mp2 | C6s8-ane | multi | ane | f0 | yes | - | 0.0327 | 62/64 | 1.0000 / 0.9996 | 2.711 / 2.711 |
+| mp2 | C6s8-ane | multi | ane | f1 | yes | - | 0.0327 | 62/64 | 1.0000 / 0.9996 | 2.711 / 2.711 |
+| mp2 | C6s8-ane | multi | ane | f2 | yes | - | 0.0327 | 62/64 | 1.0000 / 0.9996 | 2.711 / 2.711 |
+| mp2 | C6s8 | multi | ane | f0 | yes | - | 0.0307 | 62/64 | 1.0000 / 0.9996 | 2.711 / 2.711 |
+| mp2 | C6s8 | multi | ane | f1 | yes | - | 0.0307 | 62/64 | 1.0000 / 0.9996 | 2.711 / 2.711 |
+| mp2 | C6s8 | multi | ane | f2 | yes | - | 0.0307 | 62/64 | 1.0000 / 0.9996 | 2.711 / 2.711 |
