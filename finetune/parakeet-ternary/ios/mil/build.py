@@ -460,7 +460,7 @@ def main() -> None:
     p.add_argument("--model", required=True)
     p.add_argument("--arm", required=True, help="encoder arm or 'decoder'")
     p.add_argument("--variant", default="fixed")
-    p.add_argument("--units", choices=("cpuAndNeuralEngine", "cpuOnly"))
+    p.add_argument("--units", choices=("cpuAndNeuralEngine", "cpuOnly", "cpuAndGPU"))
     p.add_argument("--function")
     p = sub.add_parser("loadtimes")
     p.add_argument("--path", required=True)
