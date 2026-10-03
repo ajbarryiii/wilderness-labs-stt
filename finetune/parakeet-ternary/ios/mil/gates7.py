@@ -492,6 +492,32 @@ def gate4a_decoder(args) -> int:
     return finish(doc, f"{args.model}-decoder-fp32-cpuOnly-4a.json")
 
 
+def gate4b_decoder(args) -> int:
+    """Decoder-only 4b (diagnostic for attribution): the FP16 deployed decoder paths fed with the FP32
+    reference's own encoder output; same decision and free-decoding conditions as 4b."""
+    t0 = time.time()
+    pm = paths_manifest(args.model)
+    index = refcache.validate(args.model, pm["provenance"])
+    paths = Paths(args.model, args.units)
+    traces = traces_by_id()
+    heads, free = {}, {}
+    for clip in clips_manifest():
+        ref = refcache.load_clip(args.model, clip["id"])
+        heads[clip["id"]] = head_stats(replay(paths, ref["fp16s_enc"], traces[clip["id"]]), ref)
+        if clip["kind"] == "natural":
+            fd = free_decode(paths, ref["fp16s_enc"], clip["encoder_frames"])
+            free[clip["id"]] = {**fd, "reference": index["free_tokens"][clip["id"]]["fp16s_free_tokens"]}
+    del paths
+    purge_cache()
+    hp, fp = pool(heads), free_stats(free)
+    doc = header("4b-decoder", model=args.model, label="decoder", units=args.units, backend=BACKEND[args.units],
+                 thresholds=G4B, decoder_models=pm, encoder_input="FP32 reference encoder output (FP16-rounded scales)")
+    doc["pass"] = bool(hp["pass"] and fp["pass_identity"])
+    doc["summary"] = {"heads_4b": hp, "free_decoding": fp}
+    doc.update(heads_per_clip=heads, free_decoding_tokens=free, seconds=round(time.time() - t0, 1))
+    return finish(doc, f"{args.model}-decoder-{args.units}-4b.json")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -501,13 +527,16 @@ def main() -> None:
     p.add_argument("--variant", required=True, choices=("fixed", "multi", "enum"))
     p = sub.add_parser("4a-decoder")
     p.add_argument("--model", required=True)
+    p = sub.add_parser("4b-decoder")
+    p.add_argument("--model", required=True)
+    p.add_argument("--units", required=True, choices=tuple(BACKEND))
     p = sub.add_parser("4b")
     p.add_argument("--model", required=True)
     p.add_argument("--arm", required=True)
     p.add_argument("--variant", required=True, choices=("fixed", "multi", "enum"))
     p.add_argument("--units", required=True, choices=tuple(BACKEND))
     args = parser.parse_args()
-    sys.exit({"4a": gate4a, "4a-decoder": gate4a_decoder, "4b": gate4b}[args.cmd](args))
+    sys.exit({"4a": gate4a, "4a-decoder": gate4a_decoder, "4b": gate4b, "4b-decoder": gate4b_decoder}[args.cmd](args))
 
 
 if __name__ == "__main__":
