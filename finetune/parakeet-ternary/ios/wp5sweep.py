@@ -210,7 +210,7 @@ def cmd_run(args) -> None:
             continue
         ensure_model(a, restored)
         t0 = time.time()
-        r = run_arm(a, "6G" if a["arm"] == "C1" else args.cap)  # dense FP16 C1: see README
+        r = run_arm(a, "6G" if a["arm"] == "C1" or a["backend"] == "gpu" else args.cap)  # C1, GPU: see README
         r["minutes"] = round((time.time() - t0) / 60, 1)
         log.append(r)
         print(json.dumps(r), flush=True)
@@ -273,7 +273,7 @@ def cmd_report(args) -> None:
             "run": d.name, "backend": a["backend"],
             "c0_post_purge_load_ms": next((r for r in load_records(d / "c0.jsonl") if r.get("record") == "load"), {}).get("load_ms"),
             "wer_b0_same_clips": s.get("b0_wer_vs_reference_same_clips", {}).get("wer"),
-            "rss_cap": "6G" if a["arm"] == "C1" else "4G",
+            "rss_cap": "6G" if a["arm"] == "C1" or a["backend"] == "gpu" else "4G",
             "c0_total_ms_typical": {b: v.get("total_ms_typical") for b, v in c0s["per_bucket"].items()},
             "physical_calls": s["calls"]["physical_totals"],
             "post_purge_load_ms": {"encoder": enc_load.get("load_ms"), "encoder_total": enc_load.get("total_ms"),

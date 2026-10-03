@@ -338,7 +338,9 @@ def cmd_run(args) -> int:
                 "--compute-units", units, "--frontend-constants", f"{MAC_A}/native/mp2", "--native-weights", f"{MAC_A}/native/mp2",
                 "--decoder-models", f"{MAC_A}/arms/mp2/decoder-fp32", "--decodes", ",".join(DECODES),
                 "--clips", f"{MAC_IOS}/clips.json", "--pcm", f"{MAC_A}/clips", "--traces", f"{MAC_IOS}/traces.json"]
-        cap = "6G" if r["arm"] == "C1" else "4G"
+        # 6G: dense C1 (WP5) and the GPU backend, whose GPU-visible model memory counts in the job's RSS (C3 multi on
+        # cpuAndGPU with the F0/F1 decoder models peaked above 4.19 GB at load); macguard's system-memory aborts still apply
+        cap = "6G" if r["arm"] == "C1" or r["backend"] == "gpu" else "4G"
         q = " ".join(shlex.quote(x) for x in gate)
         line = (f"mkdir -p {out}; i=0; while :; do ./macguard --rss-cap {cap} --timeout 5400 -- sh pipegate_job.sh {need} {out} -- {q} "
                 f"> {out}/job.log 2>&1; s=$?; [ $s -ne 3 ] && break; i=$((i+1)); [ $i -gt 120 ] && break; sleep 60; done; "
