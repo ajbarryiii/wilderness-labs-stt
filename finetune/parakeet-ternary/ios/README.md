@@ -780,5 +780,19 @@ its inputs are unchanged, and the arm's WP3 record still passes.
   backend; GPU-backend jobs get a 6G RSS cap (GPU-visible model memory counts in RSS: C3 on cpuAndGPU with the
   F0/F1 models exceeded 4.19 GB at load).
 
-<!-- WP7-RESULTS -->
+**Pipeline gate results** (2026-10-03, `results/eligibility/pipelines/table.txt`). Every rev-8 timing-allowed encoder
+record except G0 and MLX: 49 arm × variant × backend combinations (C1, C3, C4, C6s2/s4/s8, C6d4/d8, C7, C8 on
+fixed/multi/enum where WP3 passed them; ANE, CPU and GPU backends; the -ane layouts), each with F2, F0 and F1:
+**147 pipeline records, all timing-allowed.**
+- Encoder (front end A → arm) vs the FP64-feature reference: max rel 0.008–0.036 per combination (ceiling 0.1).
+  Against the FP32-feature reference: the silence clip alone exceeds, rel 0.32–0.33, in all 49 (see above).
+- Free decoding: 62–64/64 identical; WER 2.711% = the reference's in every pipeline.
+- Decisions: decisive agreement token 1.0000, duration ≥ 0.9996; all-step agreement token ≥ 0.9983, duration
+  ≥ 0.9901 (ceiling 0.99, the closest margin in the gate).
+- F2, F0 and F1 give identical tokens and identical argmax decisions within every combination.
+- Jobs: 1–9 min each on the ANE/CPU, 23 min for C6s8 on the GPU (slow GPU loads). GPU- and CPU-backend jobs need
+  the 6G cap (C3/C4/C6s8 on the GPU and C3 multi on the CPU exceeded 4 GB with the decoder models loaded); C3 multi
+  on the ANE was once aborted by macguard on system free memory (24% < 25%) and passed on retry.
+
+<!-- WP7-SWEEP -->
 
