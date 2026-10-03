@@ -208,3 +208,51 @@ public enum ArtifactPath {
         return resolved
     }
 }
+
+/// Timing gate (DESIGN.md revision 8; WP3's mil/eligibility.py check()): an encoder arm may be timed only with a
+/// passing eligibility record results/eligibility/<model>-<arm>-<variant>-<backend>.json of the required design
+/// revision whose input files are unchanged (SHA-256 recomputed here). C0 is the product baseline and exempt.
+public enum Eligibility {
+    public static let requiredRevision = 8
+    public static let variants: [LengthVariant: String] = [.fixed15: "fixed", .multifunction: "multi", .enumerated: "enum"]
+
+    public static func backend(_ units: String) -> String? { units == "cpuAndNeuralEngine" ? "ane" : units == "cpuOnly" ? "cpu" : nil }
+
+    /// The record (as a dictionary) or an error explaining why the arm may not be timed.
+    public static func check(iosDir: URL, model: String, arm: String, variant: LengthVariant, computeUnits: String,
+                             encoderPath: URL) throws -> [String: Any] {
+        guard let v = variants[variant], let b = backend(computeUnits) else {
+            throw BenchError.invalid("no eligibility backend for compute units \(computeUnits)")
+        }
+        let name = "\(model)-\(arm)-\(v)-\(b).json"
+        let url = iosDir.appendingPathComponent("results/eligibility/\(name)")
+        guard let data = try? Data(contentsOf: url),
+              let rec = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw BenchError.invalid("refusing to time \(model)/\(arm)/\(v)/\(b): no eligibility record \(name)")
+        }
+        guard (rec["design_revision"] as? Int) == requiredRevision else {
+            throw BenchError.invalid("refusing to time: \(name) is for design revision \(rec["design_revision"] ?? "?"), not \(requiredRevision)")
+        }
+        guard rec["model"] as? String == model, rec["arm"] as? String == arm, rec["variant"] as? String == v,
+              rec["backend"] as? String == b, rec["compute_units"] as? String == computeUnits else {
+            throw BenchError.invalid("refusing to time: \(name) does not describe this arm/backend")
+        }
+        let expected = "/\(model)/\(arm)/\(v).mlmodelc"
+        guard encoderPath.standardizedFileURL.path.hasSuffix(expected) else {
+            throw BenchError.invalid("refusing to time: encoder \(encoderPath.path) is not the record's model (*\(expected))")
+        }
+        var stale: [String] = []
+        for (file, digest) in (rec["inputs"] as? [String: String]) ?? [:] {
+            let d = try? Data(contentsOf: iosDir.appendingPathComponent(file))
+            if d == nil || sha256Hex(d!) != digest { stale.append(file) }
+        }
+        guard stale.isEmpty else { throw BenchError.invalid("refusing to time: \(name) inputs changed: \(stale.prefix(5))") }
+        guard rec["timing_allowed"] as? Bool == true else {
+            let reasons = (rec["reasons"] as? [String])?.joined(separator: "; ") ?? "?"
+            throw BenchError.invalid("refusing to time \(model)/\(arm)/\(v)/\(b): not eligible: \(reasons)")
+        }
+        return ["record": name, "design_revision": requiredRevision, "eligible": rec["eligible"] ?? NSNull(),
+                "selection_eligible": rec["selection_eligible"] ?? NSNull(), "timing_allowed": true,
+                "built": rec["built"] ?? NSNull()]
+    }
+}

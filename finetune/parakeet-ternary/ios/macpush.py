@@ -1,7 +1,8 @@
-"""Copy artifact files from NixOS to the Mac artifact directory through the macos-ssh helper (NixOS only).
+"""Copy artifact files from NixOS to the Mac artifact directory through the local SSH helper (NixOS only).
 
-The helper (~/.codex/skills/macos-ssh/scripts/run.sh) has no stdin and passes the remote command as one
-argument, which Linux limits to 128 KiB; files therefore travel as base64 chunks of CHUNK bytes appended to
+The helper is configured outside Git: WP3_MAC_RUN in the environment or in the untracked mil/local.json (the
+same setting mil/archive.py uses; `$WP3_MAC_RUN -- CMD...` runs CMD on the Mac). It has no stdin and passes the
+remote command as one argument, which Linux limits to 128 KiB; files therefore travel as base64 chunks of CHUNK bytes appended to
 <dest>.part, and are renamed into place only when the Mac's SHA-256 equals the local one. Sources must be under
 the NixOS artifact area and destinations under the Mac artifact root (both checked). Appending decoded chunks is
 I/O only; anything that computes on the Mac still goes through ios/macguard.
@@ -19,13 +20,15 @@ from pathlib import Path, PurePosixPath
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-RUN = Path.home() / ".codex/skills/macos-ssh/scripts/run.sh"
 MAC_ROOT = PurePosixPath("/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios")
 CHUNK = 90_000
 
 
 def mac(script: str, *args: str) -> str:
-    out = subprocess.run([str(RUN), "--", "sh", "-c", script, "sh", *args], capture_output=True, text=True)
+    from mil.archive import local_config
+
+    out = subprocess.run([*local_config("WP3_MAC_RUN").split(), "--", "sh", "-c", script, "sh", *args],
+                         capture_output=True, text=True)
     if out.returncode != 0:
         raise RuntimeError(f"remote command failed ({out.returncode}): {out.stderr.strip()[:300]}")
     return out.stdout
