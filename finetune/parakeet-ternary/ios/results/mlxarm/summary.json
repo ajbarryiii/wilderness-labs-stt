@@ -1,0 +1,72 @@
+{
+ "informational_timing": "Python MLX on the shared Mac (M1 Pro GPU); encoder only, mx.eval + synchronize in the timed region; 3 warm-up + 10 timed per natural clip",
+ "timing_per_bucket": {
+  "2": {
+   "clips": 16,
+   "typical_ms": 22.54229149548337,
+   "first_call_ms_bucket": 49.13212498649955,
+   "p95_hd_ms": 22.884563287879402,
+   "best_ane_c6s8_ms": 14.0,
+   "ratio_to_best_ane": 1.610163678248812
+  },
+  "4": {
+   "clips": 16,
+   "typical_ms": 34.05653123627417,
+   "first_call_ms_bucket": 40.14233301859349,
+   "p95_hd_ms": 34.56449300335847,
+   "best_ane_c6s8_ms": 15.4,
+   "ratio_to_best_ane": 2.21146306729053
+  },
+  "8": {
+   "clips": 16,
+   "typical_ms": 57.11328124743886,
+   "first_call_ms_bucket": 63.65529203321785,
+   "p95_hd_ms": 57.62110399898842,
+   "best_ane_c6s8_ms": 19.6,
+   "ratio_to_best_ane": 2.913942920787697
+  },
+  "15": {
+   "clips": 16,
+   "typical_ms": 82.12863525841385,
+   "first_call_ms_bucket": 90.42766701895744,
+   "p95_hd_ms": 82.45777632765913,
+   "best_ane_c6s8_ms": 40.2,
+   "ratio_to_best_ane": 2.0430008770749715
+  }
+ },
+ "peak_memory_mb": 488.4316005706787,
+ "weights_load_s": 1.4992079734802246,
+ "step3_condition": "eligible and typical encoder ms <= 1.5x the best Core ML ANE arm in every bucket",
+ "step3_triggered": false,
+ "eligibility": {
+  "eligible": true,
+  "timing_allowed": true,
+  "selection_eligible": false,
+  "reasons": []
+ },
+ "gates": {
+  "scope": true,
+  "gate2": true,
+  "gate4a": true,
+  "gate4a_decoder": true,
+  "gate4b": true,
+  "gate5": true,
+  "wer": true,
+  "stress": true,
+  "f2_swift": true
+ },
+ "wer": {
+  "pass": true,
+  "reference_wer_pct": 2.711,
+  "f2_wer_pct": 2.711,
+  "swift_f2_wer_pct": 2.711,
+  "clips": 64,
+  "limit_points": 0.2
+ },
+ "f2_swift": {
+  "what": "Swift parakeet-bench F2 (native FP32 CPU decode loop) free decoding of the MLX arm's own-bucket encoder outputs (external-encoder mode), vs the gate's F2-equivalent (reference.py FP32 decoder/joint) tokens",
+  "clips": 64,
+  "identical": 64,
+  "identical_to_reference": 64
+ }
+}

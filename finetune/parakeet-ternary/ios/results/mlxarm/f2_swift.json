@@ -1,0 +1,6 @@
+{
+ "what": "Swift parakeet-bench F2 (native FP32 CPU decode loop) free decoding of the MLX arm's own-bucket encoder outputs (external-encoder mode), vs the gate's F2-equivalent (reference.py FP32 decoder/joint) tokens",
+ "clips": 64,
+ "identical": 64,
+ "identical_to_reference": 64
+}

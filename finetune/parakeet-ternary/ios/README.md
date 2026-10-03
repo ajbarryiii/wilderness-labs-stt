@@ -629,3 +629,32 @@ Notes:
   - Front end A takes 1.8 ms against 16 ms for C0's preprocessor.
   - Physical calls over 64 clips × 1: F2 1,955 prediction runs and 2,135 joint steps; F0 1,955 Decoder + 2,135 JointDecision calls; F1 2,135 fused calls.
 - **C1 and the 4 GB cap.** C1's first job was aborted by macguard at a group RSS of 4.49 GB under the 4 GB cap (process footprint about 220 MB). After the uncached run, its Core ML cache held 4.6 GB: device-specialized copies of the dense FP16 multifunction model, against 18 MB for the compressed arms. It was rerun with `--cap 6G` (peak RSS 3.5 GB), the cap WP3's runner uses for the same models. The system-memory and swap aborts were unchanged. All other arms ran at 4 GB.
+
+## WP6b: MLX GPU encoder arm (S3 exploration)
+
+- **Environment.** `ios/pyenv` gains `mlx==0.32.3` (macOS-only marker). The lock was redone on NixOS with uv and synced on the Mac with `uv sync --frozen` through macguard.
+- **`mlxarm/encoder.py`.** M_P2's encoder in MLX on the GPU, with FP16 activations.
+  - Every ternary matmul is `mx.quantized_matmul(..., bits=2, group_size=64)` on weights built exactly as DESIGN.md "E" specifies, without MLX's quantizer: q = C + 1 packed LSB-first, scales FP16(s) and biases −FP16(s) repeated over every group.
+  - Per-bucket graphs follow the masking contract of `mil/MASKING.md`, compiled once per bucket shape, with lengths passed as arrays.
+  - Precision `fp32` is the same graph and packed weights with FP32 activations, used for gate 4a.
+- **`mlxarm/gates.py`** runs on the Mac through macguard; `mlxarm/record.py` runs on NixOS and writes the eligibility record. Results are in `results/mlxarm/` and the record in `results/eligibility/mp2-MLX-multi-gpu-mlx.json`, in WP3's format plus three fields: `runtime`, `encoding`, `deployed_decoder`.
+  - **Gate 2:** 240/240 modules are exact. Unpacked q − 1 equals the codes, scales and biases are FP16(s) and −FP16(s) bitwise, and `mx.dequantize` gives codes × FP16(s) bit for bit in FP16 and in FP32.
+  - **Gate 4a** (FP32 path, all 82 clips in every bucket they fit, 200 runs): max rel 2.5e-6, max abs 3.4e-5. Ceilings are 1e-5 and 1e-4.
+  - **Gate 4b** (FP16 on the GPU), all thresholds met:
+    - encoder rel ≤ 2.3e-3 on all 200 runs (ceiling 0.1);
+    - decisions through the F2-equivalent FP32 decoder: token agreement 100% on decisive steps (96.6% of steps decisive), duration 100% (85.0% decisive);
+    - free decoding identical to the reference on 64/64 clips;
+    - gate 5 max rel 1.8e-3;
+    - WER 2.711%, equal to the reference.
+  - **Swift F2 check:** run on the MLX encoder outputs, Swift F2 decodes 64/64 sequences identically to the gate's decode and to the reference.
+  - **Stress** passes under the relative rule on the GPU. The comparison arm is MLX's dense FP16 matmul with C4's effective weights on the same GPU, since WP3's Core ML GPU C4 run was not available.
+- **Timing** (informational; Python, shared Mac; encoder only, `mx.eval` and `mx.synchronize` inside the timed region; 3 warm-up + 10 timed calls on the 64 natural clips):
+
+  | | 2 s | 4 s | 8 s | 15 s |
+  | --- | --- | --- | --- | --- |
+  | Typical ms | 22.5 | 34.1 | 57.1 | 82.1 |
+  | HD p95 ms | 22.9 | 34.6 | 57.6 | 82.5 |
+  | Ratio to C6s8 (ANE) | 1.6× | 2.2× | 2.9× | 2.0× |
+
+  Peak MLX memory was 488 MB and weight load 1.5 s.
+- **Not ported.** The arm is eligible, but the 1.5× condition for a Swift/mlx-swift port fails in every bucket, so it stays a Python prototype. The record is `timing_allowed` but `selection_eligible: false`.

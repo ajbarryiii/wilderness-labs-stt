@@ -1,0 +1,153 @@
+{
+ "design_revision": 8,
+ "code_version": "wp6b-mlxarm-1",
+ "arm": "MLX",
+ "model": "mp2",
+ "variant": "multi",
+ "backend": "gpu-mlx",
+ "date": "2026-10-03 05:27",
+ "environment": {
+  "mlx": "0.32.3",
+  "device": "Device(gpu, 0)",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "python": "3.12.14",
+  "group_size": 64,
+  "bits": 2,
+  "encoder_py_sha256": "e0262e29af87c13c2dcae7b6fe6169235f5ba8b9d6721dfaa0581fc2903cdda6",
+  "gates_py_sha256": "8587f38766f3bc1b2a93ebba646cbe1bcdf430a3f247e3ba8878d1a1bc7a8e0a"
+ },
+ "probe": "stress (revision 6/7 relative rule) on the MLX GPU",
+ "pass": true,
+ "rule": "fail on a non-finite output where the C4 analogue (MLX dense FP16 matmul with codes x FP16(s), same GPU) stays finite; x1 must be finite",
+ "modules": [
+  "layers.0.feed_forward1.linear1",
+  "layers.0.feed_forward1.linear2",
+  "layers.23.feed_forward2.linear2"
+ ],
+ "nonfinite_where_c4_finite": [],
+ "nonfinite_at_x1": [],
+ "results": {
+  "layers.0.feed_forward1.linear1": {
+   "x1": {
+    "arm_finite": true,
+    "c4_analogue_finite": true,
+    "arm_max_abs": 56.1875,
+    "c4_max_abs": 56.1875,
+    "reference_max_abs": 56.18052483423526,
+    "input_finite_fp16": true,
+    "arm_rel_err": 0.00024095657552598957,
+    "arm_abs_err": 0.0022215117942339826
+   },
+   "x8": {
+    "arm_finite": true,
+    "c4_analogue_finite": true,
+    "arm_max_abs": 449.5,
+    "c4_max_abs": 449.5,
+    "reference_max_abs": 449.44419867388206,
+    "input_finite_fp16": true,
+    "arm_rel_err": 0.00024095657552598957,
+    "arm_abs_err": 0.0022215117942339826
+   },
+   "x64": {
+    "arm_finite": true,
+    "c4_analogue_finite": true,
+    "arm_max_abs": 3596.0,
+    "c4_max_abs": 3596.0,
+    "reference_max_abs": 3595.5535893910564,
+    "input_finite_fp16": true,
+    "arm_rel_err": 0.00024095657552598957,
+    "arm_abs_err": 0.0022215117942339826
+   },
+   "abs_x64": {
+    "arm_finite": true,
+    "c4_analogue_finite": true,
+    "arm_max_abs": 8132.0,
+    "c4_max_abs": 8132.0,
+    "reference_max_abs": 8131.771192448519,
+    "input_finite_fp16": true,
+    "arm_rel_err": 0.0003025185240096113,
+    "arm_abs_err": 0.007140933294554158
+   }
+  },
+  "layers.0.feed_forward1.linear2": {
+   "x1": {
+    "arm_finite": true,
+    "c4_analogue_finite": true,
+    "arm_max_abs": 6412.0,
+    "c4_max_abs": 6412.0,
+    "reference_max_abs": 6411.351476058972,
+    "input_finite_fp16": true,
+    "arm_rel_err": 0.0003087377506188264,
+    "arm_abs_err": 0.011154893622689522
+   },
+   "x8": {
+    "arm_finite": true,
+    "c4_analogue_finite": true,
+    "arm_max_abs": 51296.0,
+    "c4_max_abs": 51296.0,
+    "reference_max_abs": 51290.81180847178,
+    "input_finite_fp16": true,
+    "arm_rel_err": 0.0003087377399458613,
+    "arm_abs_err": 0.011154893622689522
+   },
+   "x64": {
+    "arm_finite": false,
+    "c4_analogue_finite": false,
+    "arm_max_abs": "inf",
+    "c4_max_abs": "inf",
+    "reference_max_abs": 410326.49446777423,
+    "input_finite_fp16": true
+   },
+   "abs_x64": {
+    "arm_finite": false,
+    "c4_analogue_finite": false,
+    "arm_max_abs": "inf",
+    "c4_max_abs": "inf",
+    "reference_max_abs": 414765.09701419534,
+    "input_finite_fp16": true
+   }
+  },
+  "layers.23.feed_forward2.linear2": {
+   "x1": {
+    "arm_finite": true,
+    "c4_analogue_finite": true,
+    "arm_max_abs": 644.0,
+    "c4_max_abs": 644.0,
+    "reference_max_abs": 644.0691773402324,
+    "input_finite_fp16": true,
+    "arm_rel_err": 0.00029365805897854283,
+    "arm_abs_err": 0.03649961482190656
+   },
+   "x8": {
+    "arm_finite": true,
+    "c4_analogue_finite": true,
+    "arm_max_abs": 5152.0,
+    "c4_max_abs": 5152.0,
+    "reference_max_abs": 5152.553418721859,
+    "input_finite_fp16": true,
+    "arm_rel_err": 0.00029365805897854283,
+    "arm_abs_err": 0.03649961482190656
+   },
+   "x64": {
+    "arm_finite": true,
+    "c4_analogue_finite": true,
+    "arm_max_abs": 41216.0,
+    "c4_max_abs": 41216.0,
+    "reference_max_abs": 41220.42734977487,
+    "input_finite_fp16": true,
+    "arm_rel_err": 0.00029365805897854283,
+    "arm_abs_err": 0.03649961482190656
+   },
+   "abs_x64": {
+    "arm_finite": true,
+    "c4_analogue_finite": true,
+    "arm_max_abs": 39296.0,
+    "c4_max_abs": 39296.0,
+    "reference_max_abs": 39294.889428401075,
+    "input_finite_fp16": true,
+    "arm_rel_err": 0.00028785394151507887,
+    "arm_abs_err": 0.015734664575805028
+   }
+  }
+ }
+}

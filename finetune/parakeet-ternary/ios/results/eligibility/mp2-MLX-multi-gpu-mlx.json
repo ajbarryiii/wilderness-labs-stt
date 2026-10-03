@@ -1,0 +1,103 @@
+{
+ "design_revision": 8,
+ "code_version": "wp6b-mlxarm-record-1",
+ "model": "mp2",
+ "arm": "MLX",
+ "variant": "multi",
+ "backend": "gpu-mlx",
+ "compute_units": "mlx-gpu",
+ "decoder_precision": "fp32",
+ "deployed_decoder": "F2",
+ "runtime": {
+  "mlx": "0.32.3",
+  "device": "Device(gpu, 0)"
+ },
+ "encoding": "q = codes + 1 in {0,1,2} packed 2-bit (LSB first), scales FP16(s), biases -FP16(s) per group of 64; mx.quantized_matmul bits 2",
+ "eligible": true,
+ "timing_allowed": true,
+ "selection_eligible": false,
+ "selection_note": "exploration arm (S3): no Swift/device implementation; not a deployment candidate yet",
+ "reasons": [],
+ "checks": {
+  "scope": {
+   "pass": true,
+   "note": "DESIGN.md E: MLX GPU encoder (2-bit affine, exact)"
+  },
+  "gate2": {
+   "pass": true,
+   "modules": 240
+  },
+  "gate4a": {
+   "pass": true,
+   "source": "results/mlxarm/4a.json",
+   "own_fp32_build": true,
+   "rel_max": 2.5472179801221552e-06,
+   "abs_max": 3.410552528049188e-05
+  },
+  "gate4a_decoder": {
+   "pass": true,
+   "note": "F2 gated in WP4 (results/wp4/f2_gate_mp2.json)"
+  },
+  "gate4b": {
+   "pass": true,
+   "result_design_revision": 8,
+   "decoder_precision": "fp32 (F2)",
+   "encoder_rel_max": 0.002342772736088173,
+   "encoder_failing": 0,
+   "heads": {
+    "f2": {
+     "token": {
+      "decisive_fraction": 0.9662809917355372,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 1.0
+     },
+     "duration": {
+      "decisive_fraction": 0.8502479338842975,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 0.9993388429752066
+     }
+    }
+   },
+   "sequence_identity": {
+    "f2": 1.0
+   },
+   "rev5_diagnostic_encoder_pass": true
+  },
+  "gate5": {
+   "pass": true,
+   "applicable": true,
+   "gated_rel_max": 0.0017517824687643953
+  },
+  "wer": {
+   "pass": true,
+   "reference_wer_pct": 2.711,
+   "f2_wer_pct": 2.711,
+   "swift_f2_wer_pct": 2.711,
+   "clips": 64,
+   "limit_points": 0.2
+  },
+  "stress": {
+   "pass": true,
+   "detail": {
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": []
+   },
+   "c4_reference": "MLX dense FP16 matmul with C4's effective weights on the same GPU"
+  },
+  "f2_swift": {
+   "pass": true,
+   "identical": 64,
+   "clips": 64
+  }
+ },
+ "inputs": {
+  "results/mlxarm/4a.json": "9a20d38836883768f744c8c703611b35be523006a5399adeab26b27dc566eeab",
+  "results/mlxarm/4b.json": "44abcba18aafa047d48ac61b8f39d5f627faa40f102d4a383a50bbdce7f5b988",
+  "results/mlxarm/f2_swift.json": "bca0eb1aa5682a66c70e056ff0780b95d13b6986eb5f892c16bf89aa6034630a",
+  "results/mlxarm/gate2.json": "77d0bcfe3ff2a9721b844efa24288834a9e59c83463bd95fc7a2610ca20f7060",
+  "results/mlxarm/stress.json": "e59e8f1de055243a6a33a0381752be97b2695ee8d15a7332a8518164f88e973b",
+  "results/mlxarm/timing.json": "b6b0b052ec4056831cde69a8977ef8755a063f4629a343e7a3a37b28dd6dd6c6"
+ },
+ "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
+ "built": "2026-10-03 05:31"
+}
