@@ -1,6 +1,6 @@
 # Parakeet-TDT 0.6B v2 on iPhone 15 Pro: inference pipeline and benchmarks
 
-Status: **revision 9 (2026-10-03): deployed-pipeline encoder reference defined (gate 4). Revision 8: decode-loop arms use FP32 decoder/joint after the FP16 ones failed gate 4b. Revision 7 (2026-10-02): decisive-step definition made arm-independent, eligibility mechanical, scope reductions labelled (Codex review of WP3). Revision 6: gate 4 and the stress rule amended after WP3. Revision 5: front-end gate amended (see gate 5). Revision 4: primary benchmark model changed to the pilot P2 export after WP1's
+Status: **revision 10 (2026-10-03): head errors of decisions-only decoder models (C0, F1) defined as unavailable, reconstruction labelled a proxy. Revision 9: deployed-pipeline encoder reference defined (gate 4). Revision 8: decode-loop arms use FP32 decoder/joint after the FP16 ones failed gate 4b. Revision 7 (2026-10-02): decisive-step definition made arm-independent, eligibility mechanical, scope reductions labelled (Codex review of WP3). Revision 6: gate 4 and the stress rule amended after WP3. Revision 5: front-end gate amended (see gate 5). Revision 4: primary benchmark model changed to the pilot P2 export after WP1's
 sensitivity gate failed on random surrogates; revision 3 was after Codex reviews r1 and r2. S0 approved
 by the user and cleared by review r2; nothing benchmarked yet.** Review
 findings and their resolutions are listed at the end.
@@ -352,6 +352,18 @@ an output a and its reference r of n elements:
        within +0.2 points of the reference.
      - Head errors are reported separately for token logits (including
        blank), duration logits, and LSTM h and c.
+     - *Decisions-only decoder models (clarified in revision 10):* C0's
+       `JointDecision` and F1's fused `DecoderJoint` output only the argmax
+       token, its probability and the duration, not raw logits. For these
+       loops:
+       - token and duration logit errors are recorded as **unavailable**;
+       - gate 4b applies through its decision, finiteness and free-decoding
+         conditions, together with probability and LSTM-state comparisons;
+       - a reconstruction of F1's heads (FP32 `Decoder` + `JointLogits`
+         evaluated on F1's own inputs) may be reported as a labelled
+         **proxy**, informational only; it is not F1's own head error.
+
+       F0 and F2 report true head errors.
    - *Original rev 2-5 ceilings, kept as reported diagnostics:* encoder
      rel ≤ 2e-2 and abs ≤ 0.25; heads rel ≤ 2e-2.
    - **Deployed-pipeline references (clarified in revision 9, after WP7's
