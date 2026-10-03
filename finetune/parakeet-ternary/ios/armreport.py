@@ -155,9 +155,10 @@ def main() -> None:
     load, end, diagnostics, calls, completeness = load_run(args.results)
     timed = [c for c in calls if not c["warmup"]]
     first = [c for c in calls if c["warmup"] and c["rep"] == 0]
-    eligible = completeness["timed_per_clip"] >= args.min_timed
+    eligible = completeness["timed_per_clip"] >= args.min_timed and completeness["warmups"] >= 3
     if not eligible and not args.smoke:
-        raise SystemExit(f"{completeness['timed_per_clip']} timed calls per clip < {args.min_timed}: pass --smoke")
+        raise SystemExit(f"{completeness['timed_per_clip']} timed calls / {completeness['warmups']} warm-ups per clip "
+                         f"(< {args.min_timed} / 3): pass --smoke")
     clips = {c["id"]: c for c in json.loads((HERE / "clips.json").read_text())["clips"]}
     trace = {t["id"]: t for t in json.loads((HERE / "traces.json").read_text())["clips"]}
     mode = load.get("mode") or (timed[0]["mode"] if timed else None)
@@ -221,7 +222,9 @@ def main() -> None:
     per_clip = {}
     for i, r in {c["clip"]: c for c in timed}.items():
         t = trace[i]
-        per_clip[i] = {"joint_calls": r["result"]["joint_calls"], "decoder_calls": r["result"]["decoder_calls"],
+        res = r["result"]
+        per_clip[i] = {"joint_calls": res.get("logical_joint_steps") or res["joint_calls"],
+                       "decoder_calls": res.get("logical_predictions") or res["decoder_calls"],
                        "b0_steps": t["steps"], "b0_decoder_runs": 1 + sum(t["pred_updated"]),
                        "encoder_length": r["result"]["encoder_length"], "b0_frames": t["num_frames"],
                        "effective_frames": r["result"]["effective_frames"]}
@@ -254,9 +257,30 @@ def main() -> None:
                 "all_steps_executed": all(r["steps"] == r["trace_steps"] for r in rep)}
     if args.baseline:
         bload, _, _, bcalls, bcomp = load_run(args.baseline)
+        # pairing provenance (review WP4/5 finding 8): same session (pairing block), manifest, mode, clips, protocol
+        problems = []
+        if bload.get("arm") != "C0":
+            problems.append(f"baseline arm is {bload.get('arm')!r}, not C0")
+        for key in ("pairing", "clips_json_sha256", "clip_ids", "warmups", "timed", "mode"):
+            if load.get(key) is None or load.get(key) != bload.get(key):
+                problems.append(f"{key} missing or different between the arm and the baseline run")
+        pa, pb = load.get("pairing") or {}, bload.get("pairing") or {}
+        if not pa:
+            problems.append("the arm run was not paired with C0 in one process (no pairing block)")
+        elif "session" in pa or "session" in pb:
+            evidence = "pairing session id"  # equality is checked with the whole block above
+        elif Path(args.results).resolve().parent == Path(args.baseline).resolve().parent:
+            evidence = "same run directory (records written before session ids, WP5)"
+        else:
+            problems.append("no pairing session id and the files are not from one run directory")
+        if sorted({c['clip'] for c in timed}) != sorted({c['clip'] for c in bcalls if not c['warmup']}):
+            problems.append("clip coverage differs")
+        if problems:
+            raise SystemExit("unpaired runs: " + "; ".join(problems))
         btimed = [c for c in bcalls if not c["warmup"]]
         out["paired_vs_baseline"] = {
             "baseline_file": Path(args.baseline).name, "baseline_arm": bload.get("arm"), "baseline_completeness": bcomp,
+            "pairing_evidence": evidence,
             "method": "per-clip ratios arm/baseline; typical = median over clips; p95 = HD p95 ratio of pooled calls; "
                       f"percentile bootstrap ({args.bootstrap} resamples of clips, pairs kept together), seed 0",
             "per_bucket": {str(b): {s: paired([c for c in timed if c["bucket"] == b], [c for c in btimed if c["bucket"] == b],

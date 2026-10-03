@@ -237,7 +237,8 @@ struct ParakeetBenchCLI {
             "paired_with": armKind == "custom" ? "C0" : armName,
             "order": "per clip, C0 block and arm block (warm-ups + timed each) in the same process; C0 first on even "
                 + "clip indices, the arm first on odd ones",
-            "c0_out": c0OutURL?.lastPathComponent ?? "", "arm_out": outURL.lastPathComponent]
+            "c0_out": c0OutURL?.lastPathComponent ?? "", "arm_out": outURL.lastPathComponent,
+            "arm": armName, "session": UUID().uuidString]  // session: one id per process, shared by both files
         load["eligibility"] = eligibility
         load["pairing"] = pairing
         if let (_, models, w) = paired {

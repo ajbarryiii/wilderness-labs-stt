@@ -34,8 +34,21 @@ def mac(script: str, *args: str) -> str:
     return out.stdout
 
 
+FLOOR_GB = 30
+
+
+def check_disk(nbytes: int) -> None:
+    """Refuse unless the Mac's artifact volume has 30 GB + nbytes free; an unreadable reading refuses (fail closed)."""
+    kb = mac('df -k "$1" | awk \'NR == 2 {print $4}\'', str(MAC_ROOT)).strip()
+    if not kb.isdigit():
+        raise RuntimeError(f"cannot read the Mac's free disk space ({kb!r})")
+    if int(kb) * 1024 < FLOOR_GB * 2 ** 30 + nbytes:
+        raise RuntimeError(f"Mac has {int(kb) / 2 ** 20:.1f} GB free < {FLOOR_GB} GB floor + {nbytes / 2 ** 30:.2f} GB")
+
+
 def push(src: Path, dest: PurePosixPath, skip_existing: bool) -> dict:
     data = src.read_bytes()
+    check_disk(2 * len(data))  # the .part file plus the final file
     digest = hashlib.sha256(data).hexdigest()
     have = mac('[ -f "$1" ] && shasum -a 256 "$1" | cut -d" " -f1 || true', str(dest)).strip()
     if have == digest and skip_existing:

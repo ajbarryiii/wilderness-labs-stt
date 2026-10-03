@@ -321,6 +321,7 @@
    "timed_per_clip": 10,
    "clip_ids_recorded": true
   },
+  "pairing_evidence": "same run directory (records written before session ids, WP5)",
   "method": "per-clip ratios arm/baseline; typical = median over clips; p95 = HD p95 ratio of pooled calls; percentile bootstrap (2000 resamples of clips, pairs kept together), seed 0",
   "per_bucket": {
    "2": {

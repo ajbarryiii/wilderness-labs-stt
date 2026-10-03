@@ -1,5 +1,6 @@
 {
  "informational": "Mac (M1 Pro) is shared; no claims",
+ "load_labels": "Loads: 'post-purge load' = the first load after this binary's Core ML cache directory was purged; 'subsequent fresh-process load' = a new process loading the arm afterwards. Whether Core ML specialized or reused a cache in either is not established (no Instruments cache events).",
  "rows": [
   {
    "arm": "C1-multi-vdsp-f2",
@@ -154,7 +155,9 @@
      ]
     }
    },
-   "c0_first_load_ms": {
+   "run": "wp5-20261003",
+   "backend": "ane",
+   "c0_post_purge_load_ms": {
     "Decoder": 72.69516666666667,
     "Encoder": 29161.728708333332,
     "JointDecision": 43.129333333333335,
@@ -172,7 +175,7 @@
     "native_joint": 2142,
     "native_predict": 1958
    },
-   "first_load_ms": {
+   "post_purge_load_ms": {
     "encoder": {
      "b2": 2345.083125,
      "b4": 2408.1452083333334,
@@ -183,7 +186,7 @@
     "compile_ms": null,
     "decode": 41.166125
    },
-   "cached_load_ms": {
+   "subsequent_fresh_process_load_ms": {
     "encoder": {
      "b2": 283.83325,
      "b4": 255.07525,
@@ -353,7 +356,9 @@
      ]
     }
    },
-   "c0_first_load_ms": {
+   "run": "wp5-20261003",
+   "backend": "ane",
+   "c0_post_purge_load_ms": {
     "Decoder": 68.786125,
     "Encoder": 28997.17445833333,
     "JointDecision": 41.77879166666666,
@@ -371,7 +376,7 @@
     "native_joint": 2135,
     "native_predict": 1955
    },
-   "first_load_ms": {
+   "post_purge_load_ms": {
     "encoder": {
      "b2": 17914.972041666668,
      "b4": 17256.80579166667,
@@ -382,7 +387,7 @@
     "compile_ms": null,
     "decode": 29.8015
    },
-   "cached_load_ms": {
+   "subsequent_fresh_process_load_ms": {
     "encoder": {
      "b2": 322.23991666666666,
      "b4": 307.1133333333333,
@@ -552,7 +557,9 @@
      ]
     }
    },
-   "c0_first_load_ms": {
+   "run": "wp5-20261003",
+   "backend": "ane",
+   "c0_post_purge_load_ms": {
     "Decoder": 70.44883333333333,
     "Encoder": 29509.354333333333,
     "JointDecision": 39.397625,
@@ -570,7 +577,7 @@
     "native_joint": 2135,
     "native_predict": 1955
    },
-   "first_load_ms": {
+   "post_purge_load_ms": {
     "encoder": {
      "b2": 17680.34375,
      "b4": 16981.767583333334,
@@ -581,7 +588,7 @@
     "compile_ms": null,
     "decode": 31.904958333333333
    },
-   "cached_load_ms": {
+   "subsequent_fresh_process_load_ms": {
     "encoder": {
      "b2": 356.591375,
      "b4": 344.16404166666666,
@@ -751,7 +758,9 @@
      ]
     }
    },
-   "c0_first_load_ms": {
+   "run": "wp5-20261003",
+   "backend": "ane",
+   "c0_post_purge_load_ms": {
     "Decoder": 72.78125,
     "Encoder": 29564.868375,
     "JointDecision": 44.007041666666666,
@@ -769,7 +778,7 @@
     "native_joint": 2136,
     "native_predict": 1955
    },
-   "first_load_ms": {
+   "post_purge_load_ms": {
     "encoder": {
      "b2": 119463.18295833333,
      "b4": 121814.46375,
@@ -780,7 +789,7 @@
     "compile_ms": null,
     "decode": 43.04779166666666
    },
-   "cached_load_ms": {
+   "subsequent_fresh_process_load_ms": {
     "encoder": {
      "b2": 414.80075,
      "b4": 387.07395833333334,
@@ -950,7 +959,9 @@
      ]
     }
    },
-   "c0_first_load_ms": {
+   "run": "wp5-20261003",
+   "backend": "ane",
+   "c0_post_purge_load_ms": {
     "Decoder": 69.71075,
     "Encoder": 29129.04095833333,
     "JointDecision": 42.544958333333334,
@@ -968,7 +979,7 @@
     "native_joint": 2136,
     "native_predict": 1955
    },
-   "first_load_ms": {
+   "post_purge_load_ms": {
     "encoder": {
      "b2": 122823.77954166668,
      "b4": 126231.513,
@@ -979,7 +990,7 @@
     "compile_ms": null,
     "decode": 29.604458333333334
    },
-   "cached_load_ms": {
+   "subsequent_fresh_process_load_ms": {
     "encoder": {
      "b2": 404.8570833333333,
      "b4": 373.5349583333333,
@@ -1149,7 +1160,9 @@
      ]
     }
    },
-   "c0_first_load_ms": {
+   "run": "wp5-20261003",
+   "backend": "ane",
+   "c0_post_purge_load_ms": {
     "Decoder": 74.584625,
     "Encoder": 30038.41533333333,
     "JointDecision": 49.89475,
@@ -1167,7 +1180,7 @@
     "native_joint": 2136,
     "native_predict": 1955
    },
-   "first_load_ms": {
+   "post_purge_load_ms": {
     "encoder": {
      "b2": 95233.72683333333,
      "b4": 94345.54675,
@@ -1178,7 +1191,7 @@
     "compile_ms": null,
     "decode": 30.245083333333334
    },
-   "cached_load_ms": {
+   "subsequent_fresh_process_load_ms": {
     "encoder": {
      "b2": 396.4386666666667,
      "b4": 406.69866666666667,
@@ -1348,7 +1361,9 @@
      ]
     }
    },
-   "c0_first_load_ms": {
+   "run": "wp5-20261003",
+   "backend": "ane",
+   "c0_post_purge_load_ms": {
     "Decoder": 81.968,
     "Encoder": 30856.325791666666,
     "JointDecision": 41.275166666666664,
@@ -1366,7 +1381,7 @@
     "native_joint": 2136,
     "native_predict": 1955
    },
-   "first_load_ms": {
+   "post_purge_load_ms": {
     "encoder": {
      "b2": 33234.427875,
      "b4": 34792.04858333334,
@@ -1377,7 +1392,7 @@
     "compile_ms": null,
     "decode": 32.64675
    },
-   "cached_load_ms": {
+   "subsequent_fresh_process_load_ms": {
     "encoder": {
      "b2": 339.5187916666667,
      "b4": 308.4825833333333,
@@ -1547,7 +1562,9 @@
      ]
     }
    },
-   "c0_first_load_ms": {
+   "run": "wp5-20261003",
+   "backend": "ane",
+   "c0_post_purge_load_ms": {
     "Decoder": 74.88541666666667,
     "Encoder": 29361.12525,
     "JointDecision": 38.025375,
@@ -1565,7 +1582,7 @@
     "native_joint": 2136,
     "native_predict": 1955
    },
-   "first_load_ms": {
+   "post_purge_load_ms": {
     "encoder": {
      "b2": 32290.286291666667,
      "b4": 39021.22116666666,
@@ -1576,7 +1593,7 @@
     "compile_ms": null,
     "decode": 28.737
    },
-   "cached_load_ms": {
+   "subsequent_fresh_process_load_ms": {
     "encoder": {
      "b2": 336.40375,
      "b4": 317.48475,
@@ -1746,7 +1763,9 @@
      ]
     }
    },
-   "c0_first_load_ms": {
+   "run": "wp5-20261003",
+   "backend": "ane",
+   "c0_post_purge_load_ms": {
     "Decoder": 84.84666666666668,
     "Encoder": 35415.540791666666,
     "JointDecision": 57.632416666666664,
@@ -1764,7 +1783,7 @@
     "native_joint": 2135,
     "native_predict": 1955
    },
-   "first_load_ms": {
+   "post_purge_load_ms": {
     "encoder": {
      "b2": 19114.548166666667,
      "b4": 19841.25795833333,
@@ -1775,7 +1794,7 @@
     "compile_ms": null,
     "decode": 29.4245
    },
-   "cached_load_ms": {
+   "subsequent_fresh_process_load_ms": {
     "encoder": {
      "b2": 371.5699166666667,
      "b4": 352.9705,
@@ -1945,7 +1964,9 @@
      ]
     }
    },
-   "c0_first_load_ms": {
+   "run": "wp5-20261003",
+   "backend": "ane",
+   "c0_post_purge_load_ms": {
     "Decoder": 81.13866666666667,
     "Encoder": 30487.623625,
     "JointDecision": 38.66254166666666,
@@ -1963,7 +1984,7 @@
     "native_joint": 2136,
     "native_predict": 1955
    },
-   "first_load_ms": {
+   "post_purge_load_ms": {
     "encoder": {
      "b2": 92710.268125,
      "b4": 96502.25479166667,
@@ -1974,7 +1995,7 @@
     "compile_ms": null,
     "decode": 38.105
    },
-   "cached_load_ms": {
+   "subsequent_fresh_process_load_ms": {
     "encoder": {
      "b2": 434.2799166666667,
      "b4": 399.8739583333333,
@@ -2144,7 +2165,9 @@
      ]
     }
    },
-   "c0_first_load_ms": {
+   "run": "wp5-20261003",
+   "backend": "ane",
+   "c0_post_purge_load_ms": {
     "Decoder": 76.49445833333333,
     "Encoder": 30293.443875,
     "JointDecision": 52.007333333333335,
@@ -2162,7 +2185,7 @@
     "native_joint": 2135,
     "native_predict": 1954
    },
-   "first_load_ms": {
+   "post_purge_load_ms": {
     "encoder": {
      "main": 20041.267333333333
     },
@@ -2170,7 +2193,7 @@
     "compile_ms": null,
     "decode": 29.020958333333333
    },
-   "cached_load_ms": {
+   "subsequent_fresh_process_load_ms": {
     "encoder": {
      "main": 106.98575
     },
@@ -2333,7 +2356,9 @@
      ]
     }
    },
-   "c0_first_load_ms": {
+   "run": "wp5-20261003",
+   "backend": "ane",
+   "c0_post_purge_load_ms": {
     "Decoder": 72.2855,
     "Encoder": 29800.911083333332,
     "JointDecision": 41.383208333333336,
@@ -2351,7 +2376,7 @@
     "native_joint": 2152,
     "native_predict": 1955
    },
-   "first_load_ms": {
+   "post_purge_load_ms": {
     "encoder": {
      "main": 28572.227791666668
     },
@@ -2359,7 +2384,7 @@
     "compile_ms": null,
     "decode": 31.397125
    },
-   "cached_load_ms": {
+   "subsequent_fresh_process_load_ms": {
     "encoder": {
      "main": 107.90225
     },
@@ -2526,7 +2551,9 @@
      ]
     }
    },
-   "c0_first_load_ms": {
+   "run": "wp5-20261003",
+   "backend": "ane",
+   "c0_post_purge_load_ms": {
     "Decoder": 73.711,
     "Encoder": 29764.769708333333,
     "JointDecision": 38.721333333333334,
@@ -2544,7 +2571,7 @@
     "decoder_model": 1954,
     "joint_model": 2129
    },
-   "first_load_ms": {
+   "post_purge_load_ms": {
     "encoder": {
      "b2": 17828.577791666667,
      "b4": 17890.7265,
@@ -2555,7 +2582,7 @@
     "compile_ms": null,
     "decode": 197.999625
    },
-   "cached_load_ms": {
+   "subsequent_fresh_process_load_ms": {
     "encoder": {
      "b2": 337.99875,
      "b4": 369.91854166666667,
@@ -2725,7 +2752,9 @@
      ]
     }
    },
-   "c0_first_load_ms": {
+   "run": "wp5-20261003",
+   "backend": "ane",
+   "c0_post_purge_load_ms": {
     "Decoder": 96.91691666666667,
     "Encoder": 29145.14875,
     "JointDecision": 49.97079166666666,
@@ -2742,7 +2771,7 @@
    "physical_calls": {
     "fused_model": 2129
    },
-   "first_load_ms": {
+   "post_purge_load_ms": {
     "encoder": {
      "b2": 17330.788875,
      "b4": 17164.057,
@@ -2753,7 +2782,7 @@
     "compile_ms": null,
     "decode": 119.6235
    },
-   "cached_load_ms": {
+   "subsequent_fresh_process_load_ms": {
     "encoder": {
      "b2": 343.4739166666667,
      "b4": 333.0843333333333,
@@ -2923,7 +2952,9 @@
      ]
     }
    },
-   "c0_first_load_ms": {
+   "run": "wp5-20261003",
+   "backend": "ane",
+   "c0_post_purge_load_ms": {
     "Decoder": 183.272625,
     "Encoder": 29029.64075,
     "JointDecision": 140.84941666666666,
@@ -2941,7 +2972,7 @@
     "native_joint": 2129,
     "native_predict": 1954
    },
-   "first_load_ms": {
+   "post_purge_load_ms": {
     "encoder": {
      "b2": 17732.30004166667,
      "b4": 17059.156083333335,
@@ -2952,7 +2983,7 @@
     "compile_ms": null,
     "decode": 32.3375
    },
-   "cached_load_ms": {
+   "subsequent_fresh_process_load_ms": {
     "encoder": {
      "b2": 352.6462916666667,
      "b4": 330.8263333333333,
@@ -3122,7 +3153,9 @@
      ]
     }
    },
-   "c0_first_load_ms": {
+   "run": "wp5-20261003",
+   "backend": "ane",
+   "c0_post_purge_load_ms": {
     "Decoder": 78.28541666666668,
     "Encoder": 29205.44008333333,
     "JointDecision": 40.67925,
@@ -3140,7 +3173,7 @@
     "decoder_model": 1955,
     "joint_model": 2135
    },
-   "first_load_ms": {
+   "post_purge_load_ms": {
     "encoder": {
      "b2": 17835.069291666667,
      "b4": 17301.606291666667,
@@ -3151,7 +3184,7 @@
     "compile_ms": null,
     "decode": 175.46154166666665
    },
-   "cached_load_ms": {
+   "subsequent_fresh_process_load_ms": {
     "encoder": {
      "b2": 360.4707916666667,
      "b4": 333.543125,
@@ -3321,7 +3354,9 @@
      ]
     }
    },
-   "c0_first_load_ms": {
+   "run": "wp5-20261003",
+   "backend": "ane",
+   "c0_post_purge_load_ms": {
     "Decoder": 82.89641666666667,
     "Encoder": 29203.159958333334,
     "JointDecision": 38.054916666666664,
@@ -3338,7 +3373,7 @@
    "physical_calls": {
     "fused_model": 2135
    },
-   "first_load_ms": {
+   "post_purge_load_ms": {
     "encoder": {
      "b2": 17901.167791666667,
      "b4": 17183.953791666667,
@@ -3349,7 +3384,7 @@
     "compile_ms": null,
     "decode": 158.36458333333334
    },
-   "cached_load_ms": {
+   "subsequent_fresh_process_load_ms": {
     "encoder": {
      "b2": 349.283625,
      "b4": 333.313625,

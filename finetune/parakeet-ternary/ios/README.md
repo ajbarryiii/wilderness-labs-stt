@@ -591,7 +591,7 @@ C6s2 and C6s4. 4a was added for the C7 and C8 enumerated graphs.
 
   C0 is exempt as the product baseline and is labelled so. External-encoder gate runs are labelled "not an arm timing". `wp5sweep.py` checks eligibility in Python as well.
 - **Pairing.** `--pair-c0 C0DIR --c0-out PATH` runs C0 and the arm in the same process, clip by clip: per clip a C0 block and an arm block, each with warm-ups and timed calls. C0 goes first on even-numbered clips and the arm first on odd ones.
-- **`sweep_job.sh`** runs inside macguard. It checks the 30 GB disk floor, purges this binary's Core ML cache (`~/Library/Caches/parakeet-bench`, where its e5 bundle cache lives), runs the paired sweep (first loads uncached), loads the arm in a fresh process (cached load, arm-only footprint), and purges the cache again.
+- **`sweep_job.sh`** runs inside macguard. It checks the 30 GB disk floor, purges this binary's Core ML cache (`~/Library/Caches/parakeet-bench`, where its e5 bundle cache lives), runs the paired sweep (post-purge loads), loads the arm in a fresh process (subsequent fresh-process load, arm-only footprint), and purges the cache again.
 - **`wp5sweep.py plan | run | report`** checks eligibility and restores each arm with `mil/archive.py back`. It then times the arm, fetches the records, archives restored arms back out (the Mac ended with 133 GB free), and builds `armreport` summaries with paired comparisons.
 - **`macpush.py`** now takes the SSH helper from `WP3_MAC_RUN` (environment or untracked `mil/local.json`) instead of a personal path.
 
@@ -601,7 +601,7 @@ C6s2 and C6s4. 4a was added for the C7 and C8 enumerated graphs.
 - All mp2 arms transcribe with WER 2.71%, equal to mp2's FP32 reference, and 62–63/64 token sequences equal the reference's greedy tokens. G0 (C0's weights) has 1.67%, as C0 does.
 - Per-arm files are in `results/wp5/` (`sweep_table.md`, `sweep.json`, `<arm>.summary.json`, `<arm>.c0block.summary.json`).
 
-| Arm (front end + decode) | Total vs C0, 2 / 4 / 8 / 15 s [95% CI] | Encoder ms, 2 / 4 / 8 / 15 s | Encoder load, first / cached (ms) | Arm-only footprint MB |
+| Arm (front end + decode) | Total vs C0, 2 / 4 / 8 / 15 s [95% CI] | Encoder ms, 2 / 4 / 8 / 15 s | Encoder load, post-purge / subsequent fresh process (ms) | Arm-only footprint MB |
 |---|---|---|---|---|
 | C1 multi, A + F2 | 0.75 [0.72, 0.76] / 0.86 [0.85, 0.87] / 1.25 [1.24, 1.26] / 1.55 [1.51, 1.61] | 39.4 / 46.6 / 77.8 / 114.5 | 9,835 / 1,052 | 145 |
 | C3 multi, A + F2 | 0.37 [0.36, 0.39] / 0.42 [0.41, 0.44] / 0.54 [0.53, 0.55] / 0.85 [0.83, 0.86] | 16.1 / 17.6 / 21.3 / 45.1 | 78,664 / 1,255 | 148 |
@@ -613,8 +613,8 @@ C6s2 and C6s4. 4a was added for the C7 and C8 enumerated graphs.
 | C6d8 multi, A + F2 | 0.37 [0.36, 0.38] / 0.43 [0.41, 0.44] / 0.55 [0.53, 0.57] / 0.84 [0.83, 0.85] | 16.1 / 17.6 / 21.5 / 44.1 | 143,466 / 1,291 | 148 |
 | C7 multi, A + F2 | 0.37 [0.37, 0.39] / 0.44 [0.43, 0.46] / 0.57 [0.55, 0.58] / 0.84 [0.83, 0.84] | 16.6 / 18.5 / 22.8 / 43.7 | 89,038 / 1,380 | 154 |
 | C8 multi, A + F2 | 0.39 [0.38, 0.41] / 0.45 [0.44, 0.47] / 0.61 [0.59, 0.62] / 0.92 [0.91, 0.93] | 17.4 / 19.4 / 26.2 / 53.0 | 410,627 / 1,651 | 167 |
-| C4 fixed 15 s, A + F2 | 0.82 / 0.82 / 0.83 / 0.83 (CI width ≤ 0.01) | 44.2 / 44.2 / 44.3 / 44.3 | 20,041 / 107 | 168 |
-| G0 fixed 15 s, A + F2 (B0 decoder) | 0.83 / 0.83 / 0.85 / 0.84 (CI width ≤ 0.01) | 44.6 / 44.6 / 44.6 / 44.6 | 28,572 / 108 | 166 |
+| C4 fixed 15 s, A + F2 | 0.82 [0.82, 0.83] / 0.82 [0.82, 0.83] / 0.83 [0.83, 0.84] / 0.83 [0.83, 0.84] | 44.2 / 44.2 / 44.3 / 44.3 | 20,041 / 107 | 168 |
+| G0 fixed 15 s, A + F2 (B0 decoder) | 0.83 [0.82, 0.83] / 0.83 [0.83, 0.84] / 0.85 [0.84, 0.85] / 0.84 [0.84, 0.85] | 44.6 / 44.6 / 44.6 / 44.6 | 28,572 / 108 | 166 |
 | C4 multi, c0pre + F0 | 0.65 [0.63, 0.68] / 0.73 [0.72, 0.76] / 0.91 [0.89, 0.94] / 1.22 [1.21, 1.24] | 16.5 / 18.1 / 22.5 / 44.9 | 77,989 / 1,365 | 85 |
 | C4 multi, c0pre + F1 | 0.68 [0.66, 0.70] / 0.74 [0.72, 0.77] / 0.91 [0.88, 0.95] / 1.22 [1.20, 1.26] | 16.5 / 18.2 / 22.5 / 44.9 | 76,138 / 1,336 | 83 |
 | C4 multi, c0pre + F2 | 0.59 [0.58, 0.60] / 0.64 [0.63, 0.65] / 0.72 [0.71, 0.74] / 1.00 [0.98, 1.00] | 16.5 / 18.2 / 22.0 / 44.3 | 76,287 / 1,351 | 155 |
@@ -622,7 +622,8 @@ C6s2 and C6s4. 4a was added for the C7 and C8 enumerated graphs.
 | C4 multi, A + F1 | 0.46 [0.44, 0.48] / 0.53 [0.51, 0.57] / 0.72 [0.70, 0.77] / 1.07 [1.04, 1.11] | 16.4 / 18.0 / 21.8 / 44.5 | 76,127 / 1,333 | 70 |
 
 Notes:
-- **Load times.** "First" is `MLModel` loading of all four functions after the cache purge (uncached device specialization). C0's own encoder first load in the same jobs was 29–35 s. "Cached" is a fresh process loading from the populated cache. Neither is backed by an Instruments cache-event trace yet (DESIGN.md "Load").
+- **Load times.** "Post-purge" is `MLModel` loading of all four functions in the first process after this binary's Core ML cache directory was purged; C0's own encoder post-purge load in the same jobs was 29–35 s. "Subsequent fresh process" is a new process loading the arm afterwards. Whether Core ML specialized the model or reused a cache in either load is not established: no Instruments cache-event trace backs them (DESIGN.md "Load"). (Relabelled in WP7; earlier text said "first (uncached)" and "cached".)
+- **CIs at 3 decimals** for the two fixed-window rows (`results/wp5/sweep.json`): C4 fixed 0.822 [0.815, 0.826] / 0.823 [0.819, 0.825] / 0.830 [0.827, 0.837] / 0.833 [0.825, 0.836]; G0 0.825 [0.820, 0.830] / 0.834 [0.827, 0.841] / 0.846 [0.839, 0.853] / 0.844 [0.838, 0.852].
 - **Footprint.** `phys_footprint` peak of a process with the arm loaded alone. Core ML's mapped model memory is not attributed to it.
 - **Decode, 15 s bucket:**
   - F2 takes 35 ms against 58–60 ms for F0/F1 with the FP32 Core ML decoder models.
