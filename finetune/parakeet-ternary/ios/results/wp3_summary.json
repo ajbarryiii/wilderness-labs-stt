@@ -255,6 +255,107 @@
   },
   {
    "model": "mp2",
+   "arm": "C3-ane-fp32",
+   "variant": "multi",
+   "mlpackage_mb": 647.9,
+   "mlmodelc_mb": 648.1,
+   "compile_s": 2.78,
+   "convert_s": 106.1,
+   "peak_rss_mb": 1819.7,
+   "encoded_mb": 553.6,
+   "plan": {}
+  },
+  {
+   "model": "mp2",
+   "arm": "C3-ane",
+   "variant": "multi",
+   "mlpackage_mb": 603.7,
+   "mlmodelc_mb": 603.8,
+   "compile_s": 2.84,
+   "convert_s": 108.5,
+   "peak_rss_mb": 1859.9,
+   "encoded_mb": 552.8,
+   "plan": {
+    "b2": {
+     "ane_cost": 0.9964,
+     "ops": {
+      "ane": 4513,
+      "cpu": 24
+     },
+     "cpu_ops": {
+      "identity": 1,
+      "ios18.cast": 3,
+      "ios18.conv": 2,
+      "ios18.relu": 1,
+      "ios19.add": 3,
+      "ios19.expand_dims": 2,
+      "ios19.floor_div": 3,
+      "ios19.less": 4,
+      "ios19.mul": 1,
+      "ios19.sub": 3,
+      "ios19.transpose": 1
+     }
+    },
+    "b4": {
+     "ane_cost": 0.9985,
+     "ops": {
+      "ane": 4518,
+      "cpu": 19
+     },
+     "cpu_ops": {
+      "identity": 1,
+      "ios18.cast": 2,
+      "ios18.relu": 1,
+      "ios19.add": 3,
+      "ios19.expand_dims": 1,
+      "ios19.floor_div": 3,
+      "ios19.less": 4,
+      "ios19.sub": 3,
+      "ios19.transpose": 1
+     }
+    },
+    "b8": {
+     "ane_cost": 0.9779,
+     "ops": {
+      "ane": 4518,
+      "cpu": 19
+     },
+     "cpu_ops": {
+      "identity": 1,
+      "ios18.cast": 2,
+      "ios18.relu": 1,
+      "ios19.add": 3,
+      "ios19.expand_dims": 1,
+      "ios19.floor_div": 3,
+      "ios19.less": 4,
+      "ios19.sub": 3,
+      "ios19.transpose": 1
+     }
+    },
+    "b15": {
+     "ane_cost": 0.9871,
+     "ops": {
+      "ane": 4520,
+      "cpu": 17
+     },
+     "cpu_ops": {
+      "identity": 1,
+      "ios18.cast": 2,
+      "ios18.relu": 1,
+      "ios19.add": 3,
+      "ios19.floor_div": 3,
+      "ios19.less": 4,
+      "ios19.sub": 3
+     }
+    }
+   },
+   "gate2": {
+    "bit_exact": true,
+    "modules": 240
+   }
+  },
+  {
+   "model": "mp2",
    "arm": "C3",
    "variant": "fixed",
    "mlpackage_mb": 580.3,
@@ -454,6 +555,107 @@
      "b4": 4.52,
      "b2": 2.86
     }
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C4-ane-fp32",
+   "variant": "multi",
+   "mlpackage_mb": 234.2,
+   "mlmodelc_mb": 234.3,
+   "compile_s": 2.89,
+   "convert_s": 109.4,
+   "peak_rss_mb": 1917.6,
+   "encoded_mb": 139.6,
+   "plan": {}
+  },
+  {
+   "model": "mp2",
+   "arm": "C4-ane",
+   "variant": "multi",
+   "mlpackage_mb": 189.9,
+   "mlmodelc_mb": 190.1,
+   "compile_s": 3.03,
+   "convert_s": 110.2,
+   "peak_rss_mb": 1875.4,
+   "encoded_mb": 138.8,
+   "plan": {
+    "b2": {
+     "ane_cost": 0.9964,
+     "ops": {
+      "ane": 4513,
+      "cpu": 24
+     },
+     "cpu_ops": {
+      "identity": 1,
+      "ios18.cast": 3,
+      "ios18.conv": 2,
+      "ios18.relu": 1,
+      "ios19.add": 3,
+      "ios19.expand_dims": 2,
+      "ios19.floor_div": 3,
+      "ios19.less": 4,
+      "ios19.mul": 1,
+      "ios19.sub": 3,
+      "ios19.transpose": 1
+     }
+    },
+    "b4": {
+     "ane_cost": 0.9985,
+     "ops": {
+      "ane": 4518,
+      "cpu": 19
+     },
+     "cpu_ops": {
+      "identity": 1,
+      "ios18.cast": 2,
+      "ios18.relu": 1,
+      "ios19.add": 3,
+      "ios19.expand_dims": 1,
+      "ios19.floor_div": 3,
+      "ios19.less": 4,
+      "ios19.sub": 3,
+      "ios19.transpose": 1
+     }
+    },
+    "b8": {
+     "ane_cost": 0.9779,
+     "ops": {
+      "ane": 4518,
+      "cpu": 19
+     },
+     "cpu_ops": {
+      "identity": 1,
+      "ios18.cast": 2,
+      "ios18.relu": 1,
+      "ios19.add": 3,
+      "ios19.expand_dims": 1,
+      "ios19.floor_div": 3,
+      "ios19.less": 4,
+      "ios19.sub": 3,
+      "ios19.transpose": 1
+     }
+    },
+    "b15": {
+     "ane_cost": 0.9871,
+     "ops": {
+      "ane": 4520,
+      "cpu": 17
+     },
+     "cpu_ops": {
+      "identity": 1,
+      "ios18.cast": 2,
+      "ios18.relu": 1,
+      "ios19.add": 3,
+      "ios19.floor_div": 3,
+      "ios19.less": 4,
+      "ios19.sub": 3
+     }
+    }
+   },
+   "gate2": {
+    "bit_exact": true,
+    "modules": 240
    }
   },
   {
@@ -1783,6 +1985,107 @@
      "b4": 151.03,
      "b2": 142.61
     }
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s8-ane-fp32",
+   "variant": "multi",
+   "mlpackage_mb": 353.7,
+   "mlmodelc_mb": 353.9,
+   "compile_s": 2.96,
+   "convert_s": 114.5,
+   "peak_rss_mb": 2359.5,
+   "encoded_mb": 259.0,
+   "plan": {}
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s8-ane",
+   "variant": "multi",
+   "mlpackage_mb": 308.7,
+   "mlmodelc_mb": 308.9,
+   "compile_s": 2.93,
+   "convert_s": 116.3,
+   "peak_rss_mb": 2105.7,
+   "encoded_mb": 257.4,
+   "plan": {
+    "b2": {
+     "ane_cost": 0.9964,
+     "ops": {
+      "ane": 4513,
+      "cpu": 24
+     },
+     "cpu_ops": {
+      "identity": 1,
+      "ios18.cast": 3,
+      "ios18.conv": 2,
+      "ios18.relu": 1,
+      "ios19.add": 3,
+      "ios19.expand_dims": 2,
+      "ios19.floor_div": 3,
+      "ios19.less": 4,
+      "ios19.mul": 1,
+      "ios19.sub": 3,
+      "ios19.transpose": 1
+     }
+    },
+    "b4": {
+     "ane_cost": 0.9985,
+     "ops": {
+      "ane": 4518,
+      "cpu": 19
+     },
+     "cpu_ops": {
+      "identity": 1,
+      "ios18.cast": 2,
+      "ios18.relu": 1,
+      "ios19.add": 3,
+      "ios19.expand_dims": 1,
+      "ios19.floor_div": 3,
+      "ios19.less": 4,
+      "ios19.sub": 3,
+      "ios19.transpose": 1
+     }
+    },
+    "b8": {
+     "ane_cost": 0.9779,
+     "ops": {
+      "ane": 4518,
+      "cpu": 19
+     },
+     "cpu_ops": {
+      "identity": 1,
+      "ios18.cast": 2,
+      "ios18.relu": 1,
+      "ios19.add": 3,
+      "ios19.expand_dims": 1,
+      "ios19.floor_div": 3,
+      "ios19.less": 4,
+      "ios19.sub": 3,
+      "ios19.transpose": 1
+     }
+    },
+    "b15": {
+     "ane_cost": 0.9871,
+     "ops": {
+      "ane": 4520,
+      "cpu": 17
+     },
+     "cpu_ops": {
+      "identity": 1,
+      "ios18.cast": 2,
+      "ios18.relu": 1,
+      "ios19.add": 3,
+      "ios19.floor_div": 3,
+      "ios19.less": 4,
+      "ios19.sub": 3
+     }
+    }
+   },
+   "gate2": {
+    "bit_exact": true,
+    "modules": 240
    }
   },
   {

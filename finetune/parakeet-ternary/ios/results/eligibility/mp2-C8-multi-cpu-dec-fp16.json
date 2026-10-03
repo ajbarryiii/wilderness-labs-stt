@@ -124,8 +124,8 @@
   "results/gates/v7/mp2-C8-fp32-multi-cpuOnly-4a.json": "306fb08bba2bdfa58ecb8d77c28f29f59a1d38f8de14a45afc1deef30244d4bc",
   "results/gates/v7/mp2-decoder-fp32-cpuOnly-4a.json": "1df69d43b6b988cbb95ee22806905790104135bcd3916c103e8a54414272913d",
   "results/gates/v7/mp2-C8-multi-cpuOnly-dec-fp16.json": "d8b8150cb49719c0387bd20dfc57b50df56a3aaee816b4c1f1b00c0154d72d8a",
-  "results/probes/stress.json": "d9035d169c9147e54d96544275c0ef189c31ebcc0fd1ef7361e17a157dfd0f53"
+  "results/probes/stress.json": "501b9f754c270a26d9f8015b6f3cc5cb2ff876de0e5c16b3cc3669528f0cbe9e"
  },
  "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
- "built": "2026-10-03 02:51"
+ "built": "2026-10-03 07:00"
 }

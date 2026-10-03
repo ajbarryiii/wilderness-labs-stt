@@ -1,0 +1,639 @@
+{
+ "schema": 1,
+ "model": "mp2",
+ "arm": "C3-ane-fp32",
+ "encoding_arm": "C3",
+ "variant": "multi",
+ "layers": 24,
+ "precision": "fp32",
+ "layout": "ane",
+ "exact": true,
+ "exploratory": false,
+ "provenance": {
+  "name": "mp2",
+  "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+  "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+ },
+ "opset": "iOS26",
+ "minimum_deployment_target": "iOS26",
+ "compute_precision": "FLOAT32 (gate 4a build: same constexpr chain with FP32 values)",
+ "functions": {
+  "b2": {
+   "mel": [
+    1,
+    128,
+    201
+   ],
+   "encoder_frames": 26
+  },
+  "b4": {
+   "mel": [
+    1,
+    128,
+    401
+   ],
+   "encoder_frames": 51
+  },
+  "b8": {
+   "mel": [
+    1,
+    128,
+    801
+   ],
+   "encoder_frames": 101
+  },
+  "b15": {
+   "mel": [
+    1,
+    128,
+    1501
+   ],
+   "encoder_frames": 188
+  }
+ },
+ "default_function": "b15",
+ "encoding": {
+  "arm": "C3",
+  "precision": "fp32",
+  "layout": "ane",
+  "chain": "constexpr_blockwise_shift_scale(int8 codes, fp16 per-row scale)",
+  "modules": 240,
+  "constexpr_inputs_by_module": {
+   "feed_forward1.linear1": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       4096,
+       1024,
+       1,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float32",
+      "shape": [
+       4096,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "feed_forward1.linear2": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       1024,
+       4096,
+       1,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float32",
+      "shape": [
+       1024,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_q": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       1024,
+       1024,
+       1,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float32",
+      "shape": [
+       1024,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_k": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       1024,
+       1024,
+       1,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float32",
+      "shape": [
+       1024,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_v": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       1024,
+       1024,
+       1,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float32",
+      "shape": [
+       1024,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_out": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       1024,
+       1024,
+       1,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float32",
+      "shape": [
+       1024,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "conv.pointwise_conv1": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       2048,
+       1024,
+       1,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float32",
+      "shape": [
+       2048,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "conv.pointwise_conv2": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       1024,
+       1024,
+       1,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float32",
+      "shape": [
+       1024,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "feed_forward2.linear1": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       4096,
+       1024,
+       1,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float32",
+      "shape": [
+       4096,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "feed_forward2.linear2": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       1024,
+       4096,
+       1,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float32",
+      "shape": [
+       1024,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   }
+  },
+  "encoded_bytes_by_const": {
+   "data": 578813952,
+   "scale": 1671168
+  },
+  "encoded_bytes_total": 580485120,
+  "position_tables": {
+   "layers": 24,
+   "dtype": "float16",
+   "full_shape": [
+    1,
+    8,
+    128,
+    375
+   ],
+   "note": "linear_pos folded: pos_emb @ (codes x FP16(s))^T in FP32, cast to FP16; per bucket the middle 2T-1 columns"
+  },
+  "activation_quantization": null
+ },
+ "pass_pipeline": {
+  "name": "DEFAULT",
+  "excluded": [],
+  "passes": [
+   "common::lower_complex_dialect_ops",
+   "common::update_output_dtypes",
+   "common::cast_optimization",
+   "common::noop_elimination",
+   "common::int_op_canonicalization",
+   "common::nullify_redundant_quantization_zero_point",
+   "common::dequantize_quantize_pair_elimination",
+   "common::distributive_quantized_binary_op_scale_normalization",
+   "common::dequantize_to_constexpr",
+   "common::canonicalize_quantized_lut_pattern",
+   "common::const_elimination",
+   "common::sanitize_input_output_names",
+   "common::divide_to_multiply",
+   "common::select_optimization",
+   "common::add_conv_transpose_output_shape",
+   "common::const_elimination",
+   "common::const_deduplication",
+   "common::loop_invariant_elimination",
+   "common::remove_symbolic_reshape",
+   "common::noop_elimination",
+   "common::fuse_matmul_weight_bias",
+   "common::fuse_linear_bias",
+   "common::fuse_gelu_tanh_approximation",
+   "common::fuse_gelu_exact",
+   "common::fuse_leaky_relu",
+   "common::rank0_expand_dims_swap",
+   "common::fuse_squeeze_expand_dims",
+   "common::compose_conv1d",
+   "common::use_reflection_padding",
+   "common::merge_consecutive_paddings",
+   "common::fuse_pad_conv",
+   "common::image_input_preprocess",
+   "common::replace_stack_reshape",
+   "common::reduce_transposes",
+   "common::fuse_dilated_conv",
+   "common::fuse_conv_scale",
+   "common::fuse_conv_bias",
+   "common::fuse_onehot_matmul_to_gather",
+   "common::fuse_layernorm_or_instancenorm",
+   "common::fuse_elementwise_to_batchnorm",
+   "common::fuse_reduce_mean",
+   "common::fuse_conv_batchnorm",
+   "common::fuse_conv_scale",
+   "common::fuse_conv_bias",
+   "common::fuse_conv_batchnorm",
+   "common::detect_concat_interleave",
+   "common::concat_to_pixel_shuffle",
+   "common::fuse_prelu",
+   "common::prelu_to_lrelu",
+   "common::merge_consecutive_relus",
+   "common::merge_consecutive_reshapes",
+   "common::merge_consecutive_transposes",
+   "common::fuse_transpose_matmul",
+   "common::expand_high_rank_reshape_and_transpose",
+   "common::fuse_stack_split",
+   "common::reduce_transposes",
+   "common::remove_redundant_ops",
+   "common::dedup_op_and_var_names",
+   "common::update_output_dtypes",
+   "common::guard_negative_gather_indices",
+   "common::const_elimination",
+   "common::dead_code_elimination",
+   "common::cast_optimization",
+   "common::dead_code_elimination",
+   "common::const_elimination",
+   "common::dead_code_elimination",
+   "common::cast_optimization",
+   "common::dead_code_elimination",
+   "common::const_elimination",
+   "common::canonicalize_inplace_pattern",
+   "common::prefer_state_in_downstream",
+   "common::const_elimination",
+   "common::dead_code_elimination",
+   "common::dead_code_elimination",
+   "common::const_elimination",
+   "common::cast_optimization",
+   "common::dead_code_elimination",
+   "common::const_elimination",
+   "common::const_deduplication",
+   "common::dead_code_elimination",
+   "common::merge_affine_dequantize_with_consecutive_ops",
+   "common::expand_dynamic_linear",
+   "common::fuse_transpose_matmul",
+   "common::dead_code_elimination",
+   "common::const_deduplication",
+   "common::loop_invariant_elimination",
+   "common::noop_elimination",
+   "common::dedup_op_and_var_names",
+   "common::reduce_transposes",
+   "common::remove_redundant_ops",
+   "common::topological_reorder",
+   "common::dead_code_elimination"
+  ],
+  "multifunction": "frontend_milinternal + main + backend_mlprogram per function, then const_deduplication._deduplicate_const_across_functions, export with skip_all_passes"
+ },
+ "program": {
+  "b2": {
+   "ops": 12575,
+   "op_histogram": {
+    "add": 675,
+    "cast": 4,
+    "concat": 24,
+    "const": 7800,
+    "constexpr_blockwise_shift_scale": 240,
+    "conv": 270,
+    "expand_dims": 9,
+    "floor_div": 3,
+    "identity": 1,
+    "layer_norm": 120,
+    "less": 4,
+    "logical_and": 1,
+    "logical_not": 2,
+    "matmul": 576,
+    "mul": 268,
+    "pad": 216,
+    "relu": 3,
+    "reshape": 385,
+    "select": 408,
+    "sigmoid": 24,
+    "silu": 72,
+    "slice_by_index": 384,
+    "softmax": 192,
+    "split": 96,
+    "squeeze": 1,
+    "sub": 3,
+    "transpose": 794
+   },
+   "constexpr_inputs": {
+    "constexpr_blockwise_shift_scale": {
+     "data: int8 [4096, 1024, 1, 1], scale: fp32 [4096, 1, 1, 1]": 48,
+     "data: int8 [1024, 4096, 1, 1], scale: fp32 [1024, 1, 1, 1]": 48,
+     "data: int8 [1024, 1024, 1, 1], scale: fp32 [1024, 1, 1, 1]": 120,
+     "data: int8 [2048, 1024, 1, 1], scale: fp32 [2048, 1, 1, 1]": 24
+    }
+   },
+   "matmul_followed_by_mul": 48,
+   "consts_with_shared_weight_id": 5940,
+   "inputs": {
+    "mel": "fp32 [1, 128, 201]",
+    "mel_length": "int32 [1]"
+   },
+   "outputs": {
+    "encoder": "fp32 [1, 1024, 26]",
+    "encoder_length": "int32 [1]"
+   }
+  },
+  "b4": {
+   "ops": 12575,
+   "op_histogram": {
+    "add": 675,
+    "cast": 4,
+    "concat": 24,
+    "const": 7800,
+    "constexpr_blockwise_shift_scale": 240,
+    "conv": 270,
+    "expand_dims": 9,
+    "floor_div": 3,
+    "identity": 1,
+    "layer_norm": 120,
+    "less": 4,
+    "logical_and": 1,
+    "logical_not": 2,
+    "matmul": 576,
+    "mul": 268,
+    "pad": 216,
+    "relu": 3,
+    "reshape": 385,
+    "select": 408,
+    "sigmoid": 24,
+    "silu": 72,
+    "slice_by_index": 384,
+    "softmax": 192,
+    "split": 96,
+    "squeeze": 1,
+    "sub": 3,
+    "transpose": 794
+   },
+   "constexpr_inputs": {
+    "constexpr_blockwise_shift_scale": {
+     "data: int8 [4096, 1024, 1, 1], scale: fp32 [4096, 1, 1, 1]": 48,
+     "data: int8 [1024, 4096, 1, 1], scale: fp32 [1024, 1, 1, 1]": 48,
+     "data: int8 [1024, 1024, 1, 1], scale: fp32 [1024, 1, 1, 1]": 120,
+     "data: int8 [2048, 1024, 1, 1], scale: fp32 [2048, 1, 1, 1]": 24
+    }
+   },
+   "matmul_followed_by_mul": 48,
+   "consts_with_shared_weight_id": 5941,
+   "inputs": {
+    "mel": "fp32 [1, 128, 401]",
+    "mel_length": "int32 [1]"
+   },
+   "outputs": {
+    "encoder": "fp32 [1, 1024, 51]",
+    "encoder_length": "int32 [1]"
+   }
+  },
+  "b8": {
+   "ops": 12575,
+   "op_histogram": {
+    "add": 675,
+    "cast": 4,
+    "concat": 24,
+    "const": 7800,
+    "constexpr_blockwise_shift_scale": 240,
+    "conv": 270,
+    "expand_dims": 9,
+    "floor_div": 3,
+    "identity": 1,
+    "layer_norm": 120,
+    "less": 4,
+    "logical_and": 1,
+    "logical_not": 2,
+    "matmul": 576,
+    "mul": 268,
+    "pad": 216,
+    "relu": 3,
+    "reshape": 385,
+    "select": 408,
+    "sigmoid": 24,
+    "silu": 72,
+    "slice_by_index": 384,
+    "softmax": 192,
+    "split": 96,
+    "squeeze": 1,
+    "sub": 3,
+    "transpose": 794
+   },
+   "constexpr_inputs": {
+    "constexpr_blockwise_shift_scale": {
+     "data: int8 [4096, 1024, 1, 1], scale: fp32 [4096, 1, 1, 1]": 48,
+     "data: int8 [1024, 4096, 1, 1], scale: fp32 [1024, 1, 1, 1]": 48,
+     "data: int8 [1024, 1024, 1, 1], scale: fp32 [1024, 1, 1, 1]": 120,
+     "data: int8 [2048, 1024, 1, 1], scale: fp32 [2048, 1, 1, 1]": 24
+    }
+   },
+   "matmul_followed_by_mul": 48,
+   "consts_with_shared_weight_id": 5940,
+   "inputs": {
+    "mel": "fp32 [1, 128, 801]",
+    "mel_length": "int32 [1]"
+   },
+   "outputs": {
+    "encoder": "fp32 [1, 1024, 101]",
+    "encoder_length": "int32 [1]"
+   }
+  },
+  "b15": {
+   "ops": 12575,
+   "op_histogram": {
+    "add": 675,
+    "cast": 4,
+    "concat": 24,
+    "const": 7800,
+    "constexpr_blockwise_shift_scale": 240,
+    "conv": 270,
+    "expand_dims": 9,
+    "floor_div": 3,
+    "identity": 1,
+    "layer_norm": 120,
+    "less": 4,
+    "logical_and": 1,
+    "logical_not": 2,
+    "matmul": 576,
+    "mul": 268,
+    "pad": 216,
+    "relu": 3,
+    "reshape": 385,
+    "select": 408,
+    "sigmoid": 24,
+    "silu": 72,
+    "slice_by_index": 384,
+    "softmax": 192,
+    "split": 96,
+    "squeeze": 1,
+    "sub": 3,
+    "transpose": 794
+   },
+   "constexpr_inputs": {
+    "constexpr_blockwise_shift_scale": {
+     "data: int8 [4096, 1024, 1, 1], scale: fp32 [4096, 1, 1, 1]": 48,
+     "data: int8 [1024, 4096, 1, 1], scale: fp32 [1024, 1, 1, 1]": 48,
+     "data: int8 [1024, 1024, 1, 1], scale: fp32 [1024, 1, 1, 1]": 120,
+     "data: int8 [2048, 1024, 1, 1], scale: fp32 [2048, 1, 1, 1]": 24
+    }
+   },
+   "matmul_followed_by_mul": 48,
+   "consts_with_shared_weight_id": 5937,
+   "inputs": {
+    "mel": "fp32 [1, 128, 1501]",
+    "mel_length": "int32 [1]"
+   },
+   "outputs": {
+    "encoder": "fp32 [1, 1024, 188]",
+    "encoder_length": "int32 [1]"
+   }
+  }
+ },
+ "sizes": {
+  "mlpackage_bytes": 679381358,
+  "weight_bin_bytes": 671693760
+ },
+ "timing_s": {
+  "build_graph": 6.3,
+  "convert": 106.1,
+  "save": 0.2
+ },
+ "peak_rss_mb_after_save": 1521.8,
+ "environment": {
+  "coremltools": "9.0",
+  "numpy": "2.2.6",
+  "python": "3.12.14",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "machine": "arm64"
+ },
+ "paths": {
+  "mlpackage": null,
+  "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/C3-ane-fp32/multi.mlmodelc"
+ },
+ "compile": {
+  "compile_s": 2.78,
+  "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/C3-ane-fp32/multi.mlmodelc",
+  "mlmodelc_bytes": 679535707
+ },
+ "peak_rss_mb_after_compile": 1819.7
+}

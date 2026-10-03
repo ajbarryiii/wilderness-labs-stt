@@ -2,7 +2,9 @@ Gate 4a (FP32 builds, CPU_ONLY, full depth; ceilings rel <= 1e-5, abs <= 1e-4)
 
 | build | variant | cases | rel max | abs max | pass |
 |---|---|---|---|---|---|
+| C3-ane-fp32 | multi | 200 | 2.29e-06 | 4.18e-05 | True |
 | C3-fp32 | fixed | 82 | 1.48e-06 | 3.09e-05 | True |
+| C4-ane-fp32 | multi | 200 | 2.29e-06 | 4.18e-05 | True |
 | C4-fp32 | enum | 200 | 1.53e-06 | 2.61e-05 | True |
 | C4-fp32 | fixed | 82 | 1.48e-06 | 3.09e-05 | True |
 | C4-fp32 | multi | 200 | 1.99e-06 | 3.09e-05 | True |
@@ -10,6 +12,7 @@ Gate 4a (FP32 builds, CPU_ONLY, full depth; ceilings rel <= 1e-5, abs <= 1e-4)
 | C6d8-fp32 | fixed | 82 | 1.48e-06 | 3.09e-05 | True |
 | C6s2-fp32 | fixed | 82 | 1.53e-06 | 2.01e-05 | True |
 | C6s4-fp32 | fixed | 82 | 1.53e-06 | 2.01e-05 | True |
+| C6s8-ane-fp32 | multi | 200 | 2.18e-06 | 3.44e-05 | True |
 | C6s8-fp32 | fixed | 82 | 1.53e-06 | 2.01e-05 | True |
 | C7-fp32 | enum | 200 | 1.82e-06 | 2.66e-05 | True |
 | C7-fp32 | fixed | 82 | 1.81e-06 | 3.52e-05 | True |
@@ -31,12 +34,16 @@ Gate 4b (FP16 encoder builds; decoder/joint FP32 = deployed (revision 8), FP16 =
 | C3 | fixed | cpu | fp32 | 0.0215 | 1 | 0.9993 / 0.9974 | 64 / 64 | 2.711 / 2.711 | - | pass | yes |
 | C3 | multi | ane | fp32 | 0.0309 | 17 | 0.9987 / 0.9921 | 62 / 62 | 2.711 / 2.711 | True | pass | yes |
 | C3 | multi | cpu | fp32 | 0.0215 | 3 | 0.9997 / 0.9974 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C3 | multi | gpu | fp32 | 0.0167 | 0 | 0.9997 / 0.9990 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C3-ane | multi | ane | fp32 | 0.0351 | 13 | 0.9990 / 0.9931 | 62 / 62 | 2.711 / 2.711 | True | pass | yes |
 | C4 | enum | ane | fp32 | 0.0109 | 0 | 1.0000 / 0.9990 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
 | C4 | enum | cpu | fp32 | 0.0109 | 0 | 1.0000 / 0.9990 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
 | C4 | fixed | ane | fp32 | 0.0342 | 7 | 0.9990 / 0.9914 | 62 / 62 | 2.711 / 2.711 | - | pass | yes |
 | C4 | fixed | cpu | fp32 | 0.0215 | 1 | 0.9993 / 0.9974 | 64 / 64 | 2.711 / 2.711 | - | pass | yes |
 | C4 | multi | ane | fp32 | 0.0342 | 16 | 0.9990 / 0.9914 | 62 / 62 | 2.711 / 2.711 | True | pass | yes |
 | C4 | multi | cpu | fp32 | 0.0215 | 3 | 0.9997 / 0.9974 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C4 | multi | gpu | fp32 | 0.0167 | 0 | 0.9997 / 0.9990 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C4-ane | multi | ane | fp32 | 0.0335 | 16 | 0.9990 / 0.9921 | 62 / 62 | 2.711 / 2.711 | True | pass | yes |
 | C5 | fixed | ane | fp32 | 1.5287 | 82 | 0.7091 / 0.5031 | 8 / 8 | 28.467 / 2.711 | - | pass | no |
 | C5 | fixed | cpu | fp32 | 0.2308 | 82 | 0.9874 / 0.9656 | 55 / 55 | 2.711 / 2.711 | - | pass | no |
 | C5 | multi | ane | fp32 | 2.3972 | 200 | 0.5084 / 0.4030 | 0 / 0 | 68.092 / 2.711 | False | pass | no |
@@ -65,12 +72,15 @@ Gate 4b (FP16 encoder builds; decoder/joint FP32 = deployed (revision 8), FP16 =
 | C6s8 | fixed | cpu | fp32 | 0.0087 | 0 | 1.0000 / 0.9990 | 64 / 64 | 2.711 / 2.711 | - | pass | yes |
 | C6s8 | multi | ane | fp32 | 0.0358 | 16 | 0.9990 / 0.9917 | 62 / 62 | 2.711 / 2.711 | True | pass | yes |
 | C6s8 | multi | cpu | fp32 | 0.0115 | 0 | 1.0000 / 0.9983 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C6s8 | multi | gpu | fp32 | 0.0136 | 0 | 1.0000 / 0.9983 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
+| C6s8-ane | multi | ane | fp32 | 0.0344 | 16 | 0.9990 / 0.9917 | 62 / 62 | 2.711 / 2.711 | True | pass | yes |
 | C7 | enum | ane | fp32 | 0.0067 | 0 | 1.0000 / 0.9983 | 64 / 64 | 2.711 / 2.711 | True | pass | yes |
 | C7 | enum | cpu | fp32 | 0.0067 | 0 | 1.0000 / 0.9983 | 64 / 64 | 2.711 / 2.711 | True | FAIL | no |
 | C7 | fixed | ane | fp32 | 0.0342 | 7 | 0.9990 / 0.9914 | 62 / 62 | 2.711 / 2.711 | - | pass | yes |
 | C7 | fixed | cpu | fp32 | 0.0112 | 0 | 1.0000 / 0.9983 | 63 / 63 | 2.711 / 2.711 | - | FAIL | no |
 | C7 | multi | ane | fp32 | 0.0342 | 16 | 0.9990 / 0.9914 | 62 / 62 | 2.711 / 2.711 | True | pass | yes |
 | C7 | multi | cpu | fp32 | 0.0112 | 0 | 1.0000 / 0.9987 | 63 / 63 | 2.711 / 2.711 | True | FAIL | no |
+| C7 | multi | gpu | fp32 | 0.0221 | 2 | 1.0000 / 0.9967 | 64 / 64 | 2.711 / 2.711 | True | FAIL | no |
 | C8 | enum | ane | fp32 | 0.0128 | 0 | 1.0000 / 0.9983 | 64 / 64 | 2.711 / 2.711 | True | pass | no |
 | C8 | enum | cpu | fp32 | 0.0128 | 0 | 1.0000 / 0.9983 | 64 / 64 | 2.711 / 2.711 | True | FAIL | no |
 | C8 | fixed | ane | fp32 | 0.0318 | 8 | 0.9990 / 0.9917 | 62 / 62 | 2.711 / 2.711 | - | pass | yes |

@@ -1,0 +1,111 @@
+{
+ "design_revision": 8,
+ "code_version": "wp3-eligibility-2",
+ "model": "mp2",
+ "arm": "C4-ane",
+ "variant": "multi",
+ "backend": "ane",
+ "compute_units": "cpuAndNeuralEngine",
+ "decoder_precision": "fp32",
+ "decoder_models": "arms/mp2/decoder-fp32",
+ "eligible": true,
+ "timing_allowed": true,
+ "selection_eligible": true,
+ "reasons": [],
+ "checks": {
+  "scope": {
+   "pass": true,
+   "note": null
+  },
+  "gate2": {
+   "pass": true,
+   "modules": 240
+  },
+  "gate4a": {
+   "pass": true,
+   "topology": null,
+   "source": "results/gates/v7/mp2-C4-ane-fp32-multi-cpuOnly-4a.json",
+   "own_fp32_build": true,
+   "rel_max": 2.293214422322248e-06,
+   "abs_max": 4.178491507874833e-05
+  },
+  "gate4a_decoder": {
+   "pass": true
+  },
+  "gate4b": {
+   "pass": true,
+   "result_design_revision": 8,
+   "decoder_precision": "fp32",
+   "encoder_rel_max": 0.033526453572355605,
+   "encoder_failing": 0,
+   "heads": {
+    "jd": {
+     "token": {
+      "decisive_fraction": 0.9662809917355372,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 0.9990082644628099,
+      "pass": true
+     },
+     "duration": {
+      "decisive_fraction": 0.8502479338842975,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 0.9920661157024794,
+      "pass": true
+     }
+    },
+    "dj": {
+     "token": {
+      "decisive_fraction": 0.9662809917355372,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 0.9990082644628099,
+      "pass": true
+     },
+     "duration": {
+      "decisive_fraction": 0.8502479338842975,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 0.9920661157024794,
+      "pass": true
+     }
+    }
+   },
+   "sequence_identity": {
+    "jd": 0.96875,
+    "dj": 0.96875
+   },
+   "rev5_diagnostic_encoder_pass": false,
+   "failed_conditions": []
+  },
+  "gate5": {
+   "pass": true,
+   "applicable": true,
+   "gated_rel_max": 0.0015848024590086665
+  },
+  "wer": {
+   "pass": true,
+   "reference_wer_pct": 2.711,
+   "jd_wer_pct": 2.711,
+   "dj_wer_pct": 2.711,
+   "clips": 64,
+   "limit_points": 0.2
+  },
+  "stress": {
+   "pass": true,
+   "detail": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 2
+   }
+  }
+ },
+ "inputs": {
+  "results/gate2/mp2-C4-ane.json": "4d4822d74026ff3d1390d3d0c1a20394edc5ca86061f813bfebe384e572b73f5",
+  "results/gates/v7/mp2-C4-ane-fp32-multi-cpuOnly-4a.json": "658eecfc8f97aa267875aa489e3ab81fc94f67733a369419b6a5e5c8547ead5d",
+  "results/gates/v7/mp2-decoder-fp32-cpuOnly-4a.json": "1df69d43b6b988cbb95ee22806905790104135bcd3916c103e8a54414272913d",
+  "results/gates/v7/mp2-C4-ane-multi-cpuAndNeuralEngine-dec-fp32.json": "fbb18ad1291179c54b295d7523cec2d17cf76860f4b24ec83339599069dd05a4",
+  "results/probes/stress.json": "501b9f754c270a26d9f8015b6f3cc5cb2ff876de0e5c16b3cc3669528f0cbe9e"
+ },
+ "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
+ "built": "2026-10-03 07:00"
+}

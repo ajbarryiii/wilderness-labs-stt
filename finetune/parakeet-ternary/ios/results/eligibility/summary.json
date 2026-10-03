@@ -316,6 +316,42 @@
   },
   {
    "model": "mp2",
+   "arm": "C3",
+   "variant": "multi",
+   "backend": "gpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C3-ane",
+   "variant": "multi",
+   "backend": "ane",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
    "arm": "C4",
    "variant": "enum",
    "backend": "ane",
@@ -533,6 +569,42 @@
    "arm": "C4",
    "variant": "multi",
    "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C4",
+   "variant": "multi",
+   "backend": "gpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C4-ane",
+   "variant": "multi",
+   "backend": "ane",
    "decoder_precision": "fp32",
    "timing_allowed": true,
    "selection_eligible": true,
@@ -1049,25 +1121,6 @@
    "arm": "C6s2",
    "variant": "enum",
    "backend": "ane",
-   "decoder_precision": "fp16",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "decoder_precision",
-    "gate4b",
-    "wer",
-    "gate5"
-   ],
-   "wer": {
-    "pass": false,
-    "note": "not run"
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C6s2",
-   "variant": "enum",
-   "backend": "ane",
    "decoder_precision": "fp32",
    "timing_allowed": true,
    "selection_eligible": true,
@@ -1079,25 +1132,6 @@
     "dj_wer_pct": 2.711,
     "clips": 64,
     "limit_points": 0.2
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C6s2",
-   "variant": "enum",
-   "backend": "cpu",
-   "decoder_precision": "fp16",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "decoder_precision",
-    "gate4b",
-    "wer",
-    "gate5"
-   ],
-   "wer": {
-    "pass": false,
-    "note": "not run"
    }
   },
   {
@@ -1279,25 +1313,6 @@
    "arm": "C6s4",
    "variant": "enum",
    "backend": "ane",
-   "decoder_precision": "fp16",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "decoder_precision",
-    "gate4b",
-    "wer",
-    "gate5"
-   ],
-   "wer": {
-    "pass": false,
-    "note": "not run"
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C6s4",
-   "variant": "enum",
-   "backend": "ane",
    "decoder_precision": "fp32",
    "timing_allowed": true,
    "selection_eligible": true,
@@ -1316,25 +1331,6 @@
    "arm": "C6s4",
    "variant": "enum",
    "backend": "cpu",
-   "decoder_precision": "fp16",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "decoder_precision",
-    "gate4b",
-    "wer",
-    "gate5"
-   ],
-   "wer": {
-    "pass": false,
-    "note": "not run"
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C6s4",
-   "variant": "enum",
-   "backend": "cpu",
    "decoder_precision": "fp32",
    "timing_allowed": true,
    "selection_eligible": true,
@@ -1647,6 +1643,42 @@
    "arm": "C6s8",
    "variant": "multi",
    "backend": "cpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s8",
+   "variant": "multi",
+   "backend": "gpu",
+   "decoder_precision": "fp32",
+   "timing_allowed": true,
+   "selection_eligible": true,
+   "failed_checks": [],
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  {
+   "model": "mp2",
+   "arm": "C6s8-ane",
+   "variant": "multi",
+   "backend": "ane",
    "decoder_precision": "fp32",
    "timing_allowed": true,
    "selection_eligible": true,
@@ -1665,25 +1697,6 @@
    "arm": "C7",
    "variant": "enum",
    "backend": "ane",
-   "decoder_precision": "fp16",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "decoder_precision",
-    "gate4b",
-    "wer",
-    "gate5"
-   ],
-   "wer": {
-    "pass": false,
-    "note": "not run"
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C7",
-   "variant": "enum",
-   "backend": "ane",
    "decoder_precision": "fp32",
    "timing_allowed": true,
    "selection_eligible": true,
@@ -1695,26 +1708,6 @@
     "dj_wer_pct": 2.711,
     "clips": 64,
     "limit_points": 0.2
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C7",
-   "variant": "enum",
-   "backend": "cpu",
-   "decoder_precision": "fp16",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "decoder_precision",
-    "gate4b",
-    "wer",
-    "gate5",
-    "stress"
-   ],
-   "wer": {
-    "pass": false,
-    "note": "not run"
    }
   },
   {
@@ -1901,22 +1894,22 @@
   },
   {
    "model": "mp2",
-   "arm": "C8",
-   "variant": "enum",
-   "backend": "ane",
-   "decoder_precision": "fp16",
+   "arm": "C7",
+   "variant": "multi",
+   "backend": "gpu",
+   "decoder_precision": "fp32",
    "timing_allowed": false,
    "selection_eligible": false,
    "failed_checks": [
-    "gate4a",
-    "decoder_precision",
-    "gate4b",
-    "wer",
-    "gate5"
+    "stress"
    ],
    "wer": {
-    "pass": false,
-    "note": "not run"
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "jd_wer_pct": 2.711,
+    "dj_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
    }
   },
   {
@@ -1937,27 +1930,6 @@
     "dj_wer_pct": 2.711,
     "clips": 64,
     "limit_points": 0.2
-   }
-  },
-  {
-   "model": "mp2",
-   "arm": "C8",
-   "variant": "enum",
-   "backend": "cpu",
-   "decoder_precision": "fp16",
-   "timing_allowed": false,
-   "selection_eligible": false,
-   "failed_checks": [
-    "gate4a",
-    "decoder_precision",
-    "gate4b",
-    "wer",
-    "gate5",
-    "stress"
-   ],
-   "wer": {
-    "pass": false,
-    "note": "not run"
    }
   },
   {

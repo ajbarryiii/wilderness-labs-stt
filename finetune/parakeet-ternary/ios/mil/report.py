@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 
 RES = Path(__file__).resolve().parents[1] / "results"
+IOS_DIR = RES.parent
 
 
 def load(p: Path):
@@ -160,6 +161,74 @@ def rev7() -> str:
     return text
 
 
+def wp6a() -> str:
+    """WP6a tables (ANE graph layout; GPU backend) -> results/wp6a_table.txt."""
+    v7 = RES / "gates" / "v7"
+    elig = {(r["model"], r["arm"], r["variant"], r["backend"], r.get("decoder_precision") or "fp32"): r
+            for r in (load(RES / "eligibility" / "summary.json") or {"records": []})["records"]}
+    stress = (load(RES / "probes" / "stress.json") or {}).get("verdict", {})
+
+    def plan_row(arm, units, dev):
+        m = load(RES / "builds" / f"mp2-{arm}-multi.json") or {}
+        fs = m.get("compute_plan", {}).get(units, {}).get("functions", {})
+        cells = []
+        for f in ("b2", "b4", "b8", "b15"):
+            x = fs.get(f, {})
+            ops = x.get("ops_with_usage_by_preferred_device", {})
+            cells.append(f"{ops.get(dev, 0)}/{sum(ops.values())} ({x.get('estimated_cost_share_by_preferred_device', {}).get(dev, 0):.3f})"
+                         if ops else "-")
+        cpu15 = fs.get("b15", {}).get("operators_by_preferred_device", {}).get("cpu", {})
+        return cells, m, cpu15
+
+    out = ["ANE graph layout (DESIGN.md D) vs plain, multifunction, CPU_AND_NE compute plan: ops on the ANE / ops with "
+           "usage (estimated ANE cost share), per function", "",
+           "| arm | layout | b2 | b4 | b8 | b15 | CPU ops (b15) | mlmodelc MB | convert s | compile s | build peak MB |",
+           "|---|---|---|---|---|---|---|---|---|---|---|"]
+    for a in ("C4", "C3", "C6s8"):
+        for lab, lay in ((a, "plain"), (f"{a}-ane", "ane")):
+            cells, m, cpu15 = plan_row(lab, "cpuAndNeuralEngine", "ane")
+            if not m:
+                continue
+            out.append(f"| {a} | {lay} | " + " | ".join(cells) + f" | {sum(cpu15.values())}: " +
+                       ", ".join(f"{k.split('.')[-1]} {v}" for k, v in sorted(cpu15.items())) +
+                       f" | {m.get('compile', {}).get('mlmodelc_bytes', 0) / 2 ** 20:.1f} | {m['timing_s']['convert']} | "
+                       f"{m.get('compile', {}).get('compile_s')} | {max(m.get('peak_rss_mb_after_save') or 0, m.get('peak_rss_mb_after_compile') or 0)} |")
+    out += ["", "Gates and eligibility (FP32 decoder/joint, both deployed paths; load = first / cached, s, per function "
+            "b2..b15; peak = gate job RSS MB)", "",
+            "| arm | backend | 4a (FP32 build) rel / abs max | 4b enc rel max | identical seqs jd / dj | agree all tok / dur | "
+            "gate 5 | stress | eligible | load first / cached (s) | peak MB |", "|---|---|---|---|---|---|---|---|---|---|---|"]
+    for lab, units in (("C4-ane", "cpuAndNeuralEngine"), ("C3-ane", "cpuAndNeuralEngine"), ("C6s8-ane", "cpuAndNeuralEngine"),
+                       ("C4", "cpuAndGPU"), ("C7", "cpuAndGPU"), ("C3", "cpuAndGPU"), ("C6s8", "cpuAndGPU"), ("C1", "cpuAndGPU")):
+        backend = {"cpuAndNeuralEngine": "ane", "cpuAndGPU": "gpu"}[units]
+        d = load(v7 / f"mp2-{lab}-multi-{units}-dec-fp32.json")
+        rec = load(RES / "eligibility" / f"mp2-{lab}-multi-{backend}.json") or {}
+        src = rec.get("checks", {}).get("gate4a", {}).get("source")  # the arm's own or its topology's FP32 build
+        g4a = load(IOS_DIR / src) if src else None
+        a4 = f"{g4a['summary']['rel_max']:.1e} / {g4a['summary']['abs_max']:.1e} ({'pass' if g4a['pass'] else 'FAIL'})" if g4a else "-"
+        sv = stress.get(lab, {}).get(backend, {})
+        if d is None:
+            out.append(f"| {lab} | {backend} | {a4} | not run | - | - | - | {'pass' if sv.get('pass') else 'FAIL'} | no | - | - |")
+            continue
+        s = d["summary"]
+        h = s["heads_4b"]["paths"]["jd"]
+        e = elig.get(("mp2", lab, "multi", backend, "fp32"), {})
+        loads = d.get("load_s", {})
+        ld = " ".join(f"{loads[f]['first_s']:.0f}/{loads[f]['cached_s']:.2f}" for f in ("b2", "b4", "b8", "b15") if f in loads)
+        out.append(f"| {lab} | {backend} | {a4} | {s['encoder_4b']['rel_max']:.4f} | {s['free_decoding']['jd']['identical']} / "
+                   f"{s['free_decoding']['dj']['identical']} | {h['token']['agreement_all_steps']:.4f} / "
+                   f"{h['duration']['agreement_all_steps']:.4f} | {s['gate5']['pass']} | {'pass' if sv.get('pass') else 'FAIL'} | "
+                   f"{'yes' if e.get('timing_allowed') else 'no'} | {ld} | {d.get('peak_rss_mb')} |")
+    out += ["", "CPU_AND_GPU compute plans (plain multifunction): ops on the GPU / ops with usage (estimated GPU cost share)", "",
+            "| arm | b2 | b4 | b8 | b15 |", "|---|---|---|---|---|"]
+    for a in ("C4", "C7", "C3", "C6s8", "C1"):
+        cells, m, _ = plan_row(a, "cpuAndGPU", "gpu")
+        out.append(f"| {a} | " + " | ".join(cells) + " |")
+    text = "\n".join(out) + "\n"
+    (RES / "wp6a_table.txt").write_text(text)
+    return text
+
+
 if __name__ == "__main__":
     main()
     print(rev7())
+    print(wp6a())

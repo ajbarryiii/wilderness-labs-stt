@@ -1,0 +1,1562 @@
+{
+ "schema": 1,
+ "model": "mp2",
+ "arm": "C4-ane",
+ "encoding_arm": "C4",
+ "variant": "multi",
+ "layers": 24,
+ "precision": "fp16",
+ "layout": "ane",
+ "exact": true,
+ "exploratory": false,
+ "provenance": {
+  "name": "mp2",
+  "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+  "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+ },
+ "opset": "iOS26",
+ "minimum_deployment_target": "iOS26",
+ "compute_precision": "FLOAT16 (graph authored in FP16; fp32/int32 I/O)",
+ "functions": {
+  "b2": {
+   "mel": [
+    1,
+    128,
+    201
+   ],
+   "encoder_frames": 26
+  },
+  "b4": {
+   "mel": [
+    1,
+    128,
+    401
+   ],
+   "encoder_frames": 51
+  },
+  "b8": {
+   "mel": [
+    1,
+    128,
+    801
+   ],
+   "encoder_frames": 101
+  },
+  "b15": {
+   "mel": [
+    1,
+    128,
+    1501
+   ],
+   "encoder_frames": 188
+  }
+ },
+ "default_function": "b15",
+ "encoding": {
+  "arm": "C4",
+  "precision": "fp16",
+  "layout": "ane",
+  "chain": "constexpr_lut_to_dense(uint2, fp16 LUT {-1,0,+1,0}) -> constexpr_blockwise_shift_scale(fp16 per-row scale)",
+  "modules": 240,
+  "constexpr_inputs_by_module": {
+   "feed_forward1.linear1": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       4096,
+       1024,
+       1,
+       1
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       4096,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "feed_forward1.linear2": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       1024,
+       4096,
+       1,
+       1
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_q": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       1024,
+       1024,
+       1,
+       1
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_k": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       1024,
+       1024,
+       1,
+       1
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_v": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       1024,
+       1024,
+       1,
+       1
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_out": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       1024,
+       1024,
+       1,
+       1
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "conv.pointwise_conv1": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       2048,
+       1024,
+       1,
+       1
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       2048,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "conv.pointwise_conv2": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       1024,
+       1024,
+       1,
+       1
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "feed_forward2.linear1": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       4096,
+       1024,
+       1,
+       1
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       4096,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "feed_forward2.linear2": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       1024,
+       4096,
+       1,
+       1
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1,
+       1,
+       1
+      ]
+     }
+    }
+   }
+  },
+  "encoded_bytes_by_const": {
+   "indices": 144703488,
+   "lut": 1920,
+   "scale": 835584
+  },
+  "encoded_bytes_total": 145540992,
+  "position_tables": {
+   "layers": 24,
+   "dtype": "float16",
+   "full_shape": [
+    1,
+    8,
+    128,
+    375
+   ],
+   "note": "linear_pos folded: pos_emb @ (codes x FP16(s))^T in FP32, cast to FP16; per bucket the middle 2T-1 columns"
+  },
+  "activation_quantization": null
+ },
+ "pass_pipeline": {
+  "name": "DEFAULT",
+  "excluded": [],
+  "passes": [
+   "common::lower_complex_dialect_ops",
+   "common::update_output_dtypes",
+   "common::cast_optimization",
+   "common::noop_elimination",
+   "common::int_op_canonicalization",
+   "common::nullify_redundant_quantization_zero_point",
+   "common::dequantize_quantize_pair_elimination",
+   "common::distributive_quantized_binary_op_scale_normalization",
+   "common::dequantize_to_constexpr",
+   "common::canonicalize_quantized_lut_pattern",
+   "common::const_elimination",
+   "common::sanitize_input_output_names",
+   "common::divide_to_multiply",
+   "common::select_optimization",
+   "common::add_conv_transpose_output_shape",
+   "common::const_elimination",
+   "common::const_deduplication",
+   "common::loop_invariant_elimination",
+   "common::remove_symbolic_reshape",
+   "common::noop_elimination",
+   "common::fuse_matmul_weight_bias",
+   "common::fuse_linear_bias",
+   "common::fuse_gelu_tanh_approximation",
+   "common::fuse_gelu_exact",
+   "common::fuse_leaky_relu",
+   "common::rank0_expand_dims_swap",
+   "common::fuse_squeeze_expand_dims",
+   "common::compose_conv1d",
+   "common::use_reflection_padding",
+   "common::merge_consecutive_paddings",
+   "common::fuse_pad_conv",
+   "common::image_input_preprocess",
+   "common::replace_stack_reshape",
+   "common::reduce_transposes",
+   "common::fuse_dilated_conv",
+   "common::fuse_conv_scale",
+   "common::fuse_conv_bias",
+   "common::fuse_onehot_matmul_to_gather",
+   "common::fuse_layernorm_or_instancenorm",
+   "common::fuse_elementwise_to_batchnorm",
+   "common::fuse_reduce_mean",
+   "common::fuse_conv_batchnorm",
+   "common::fuse_conv_scale",
+   "common::fuse_conv_bias",
+   "common::fuse_conv_batchnorm",
+   "common::detect_concat_interleave",
+   "common::concat_to_pixel_shuffle",
+   "common::fuse_prelu",
+   "common::prelu_to_lrelu",
+   "common::merge_consecutive_relus",
+   "common::merge_consecutive_reshapes",
+   "common::merge_consecutive_transposes",
+   "common::fuse_transpose_matmul",
+   "common::expand_high_rank_reshape_and_transpose",
+   "common::fuse_stack_split",
+   "common::reduce_transposes",
+   "common::remove_redundant_ops",
+   "common::dedup_op_and_var_names",
+   "common::add_fp16_cast",
+   "common::add_int16_cast",
+   "common::update_output_dtypes",
+   "common::guard_negative_gather_indices",
+   "common::const_elimination",
+   "common::dead_code_elimination",
+   "common::cast_optimization",
+   "common::dead_code_elimination",
+   "common::add_int16_cast",
+   "common::const_elimination",
+   "common::dead_code_elimination",
+   "common::cast_optimization",
+   "common::dead_code_elimination",
+   "common::const_elimination",
+   "common::canonicalize_inplace_pattern",
+   "common::prefer_state_in_downstream",
+   "common::const_elimination",
+   "common::dead_code_elimination",
+   "common::dead_code_elimination",
+   "common::const_elimination",
+   "common::cast_optimization",
+   "common::dead_code_elimination",
+   "common::const_elimination",
+   "common::const_deduplication",
+   "common::dead_code_elimination",
+   "common::merge_affine_dequantize_with_consecutive_ops",
+   "common::expand_dynamic_linear",
+   "common::fuse_transpose_matmul",
+   "common::dead_code_elimination",
+   "common::const_deduplication",
+   "common::loop_invariant_elimination",
+   "common::noop_elimination",
+   "common::dedup_op_and_var_names",
+   "common::reduce_transposes",
+   "common::remove_redundant_ops",
+   "common::topological_reorder",
+   "common::dead_code_elimination"
+  ],
+  "multifunction": "frontend_milinternal + main + backend_mlprogram per function, then const_deduplication._deduplicate_const_across_functions, export with skip_all_passes"
+ },
+ "program": {
+  "b2": {
+   "ops": 13059,
+   "op_histogram": {
+    "add": 675,
+    "cast": 6,
+    "concat": 24,
+    "const": 8042,
+    "constexpr_blockwise_shift_scale": 240,
+    "constexpr_lut_to_dense": 240,
+    "conv": 270,
+    "expand_dims": 9,
+    "floor_div": 3,
+    "identity": 1,
+    "layer_norm": 120,
+    "less": 4,
+    "logical_and": 1,
+    "logical_not": 2,
+    "matmul": 576,
+    "mul": 268,
+    "pad": 216,
+    "relu": 3,
+    "reshape": 385,
+    "select": 408,
+    "sigmoid": 24,
+    "silu": 72,
+    "slice_by_index": 384,
+    "softmax": 192,
+    "split": 96,
+    "squeeze": 1,
+    "sub": 3,
+    "transpose": 794
+   },
+   "constexpr_inputs": {
+    "constexpr_lut_to_dense": {
+     "indices: uint2 [4096, 1024, 1, 1], lut: fp16 [1, 1, 1, 1, 4, 1]": 48,
+     "indices: uint2 [1024, 4096, 1, 1], lut: fp16 [1, 1, 1, 1, 4, 1]": 48,
+     "indices: uint2 [1024, 1024, 1, 1], lut: fp16 [1, 1, 1, 1, 4, 1]": 120,
+     "indices: uint2 [2048, 1024, 1, 1], lut: fp16 [1, 1, 1, 1, 4, 1]": 24
+    },
+    "constexpr_blockwise_shift_scale": {
+     "data: fp16 [4096, 1024, 1, 1], scale: fp16 [4096, 1, 1, 1]": 48,
+     "data: fp16 [1024, 4096, 1, 1], scale: fp16 [1024, 1, 1, 1]": 48,
+     "data: fp16 [1024, 1024, 1, 1], scale: fp16 [1024, 1, 1, 1]": 120,
+     "data: fp16 [2048, 1024, 1, 1], scale: fp16 [2048, 1, 1, 1]": 24
+    }
+   },
+   "matmul_followed_by_mul": 48,
+   "consts_with_shared_weight_id": 6180,
+   "inputs": {
+    "mel": "fp32 [1, 128, 201]",
+    "mel_length": "int32 [1]"
+   },
+   "outputs": {
+    "encoder": "fp32 [1, 1024, 26]",
+    "encoder_length": "int32 [1]"
+   }
+  },
+  "b4": {
+   "ops": 13059,
+   "op_histogram": {
+    "add": 675,
+    "cast": 6,
+    "concat": 24,
+    "const": 8042,
+    "constexpr_blockwise_shift_scale": 240,
+    "constexpr_lut_to_dense": 240,
+    "conv": 270,
+    "expand_dims": 9,
+    "floor_div": 3,
+    "identity": 1,
+    "layer_norm": 120,
+    "less": 4,
+    "logical_and": 1,
+    "logical_not": 2,
+    "matmul": 576,
+    "mul": 268,
+    "pad": 216,
+    "relu": 3,
+    "reshape": 385,
+    "select": 408,
+    "sigmoid": 24,
+    "silu": 72,
+    "slice_by_index": 384,
+    "softmax": 192,
+    "split": 96,
+    "squeeze": 1,
+    "sub": 3,
+    "transpose": 794
+   },
+   "constexpr_inputs": {
+    "constexpr_lut_to_dense": {
+     "indices: uint2 [4096, 1024, 1, 1], lut: fp16 [1, 1, 1, 1, 4, 1]": 48,
+     "indices: uint2 [1024, 4096, 1, 1], lut: fp16 [1, 1, 1, 1, 4, 1]": 48,
+     "indices: uint2 [1024, 1024, 1, 1], lut: fp16 [1, 1, 1, 1, 4, 1]": 120,
+     "indices: uint2 [2048, 1024, 1, 1], lut: fp16 [1, 1, 1, 1, 4, 1]": 24
+    },
+    "constexpr_blockwise_shift_scale": {
+     "data: fp16 [4096, 1024, 1, 1], scale: fp16 [4096, 1, 1, 1]": 48,
+     "data: fp16 [1024, 4096, 1, 1], scale: fp16 [1024, 1, 1, 1]": 48,
+     "data: fp16 [1024, 1024, 1, 1], scale: fp16 [1024, 1, 1, 1]": 120,
+     "data: fp16 [2048, 1024, 1, 1], scale: fp16 [2048, 1, 1, 1]": 24
+    }
+   },
+   "matmul_followed_by_mul": 48,
+   "consts_with_shared_weight_id": 6181,
+   "inputs": {
+    "mel": "fp32 [1, 128, 401]",
+    "mel_length": "int32 [1]"
+   },
+   "outputs": {
+    "encoder": "fp32 [1, 1024, 51]",
+    "encoder_length": "int32 [1]"
+   }
+  },
+  "b8": {
+   "ops": 13059,
+   "op_histogram": {
+    "add": 675,
+    "cast": 6,
+    "concat": 24,
+    "const": 8042,
+    "constexpr_blockwise_shift_scale": 240,
+    "constexpr_lut_to_dense": 240,
+    "conv": 270,
+    "expand_dims": 9,
+    "floor_div": 3,
+    "identity": 1,
+    "layer_norm": 120,
+    "less": 4,
+    "logical_and": 1,
+    "logical_not": 2,
+    "matmul": 576,
+    "mul": 268,
+    "pad": 216,
+    "relu": 3,
+    "reshape": 385,
+    "select": 408,
+    "sigmoid": 24,
+    "silu": 72,
+    "slice_by_index": 384,
+    "softmax": 192,
+    "split": 96,
+    "squeeze": 1,
+    "sub": 3,
+    "transpose": 794
+   },
+   "constexpr_inputs": {
+    "constexpr_lut_to_dense": {
+     "indices: uint2 [4096, 1024, 1, 1], lut: fp16 [1, 1, 1, 1, 4, 1]": 48,
+     "indices: uint2 [1024, 4096, 1, 1], lut: fp16 [1, 1, 1, 1, 4, 1]": 48,
+     "indices: uint2 [1024, 1024, 1, 1], lut: fp16 [1, 1, 1, 1, 4, 1]": 120,
+     "indices: uint2 [2048, 1024, 1, 1], lut: fp16 [1, 1, 1, 1, 4, 1]": 24
+    },
+    "constexpr_blockwise_shift_scale": {
+     "data: fp16 [4096, 1024, 1, 1], scale: fp16 [4096, 1, 1, 1]": 48,
+     "data: fp16 [1024, 4096, 1, 1], scale: fp16 [1024, 1, 1, 1]": 48,
+     "data: fp16 [1024, 1024, 1, 1], scale: fp16 [1024, 1, 1, 1]": 120,
+     "data: fp16 [2048, 1024, 1, 1], scale: fp16 [2048, 1, 1, 1]": 24
+    }
+   },
+   "matmul_followed_by_mul": 48,
+   "consts_with_shared_weight_id": 6180,
+   "inputs": {
+    "mel": "fp32 [1, 128, 801]",
+    "mel_length": "int32 [1]"
+   },
+   "outputs": {
+    "encoder": "fp32 [1, 1024, 101]",
+    "encoder_length": "int32 [1]"
+   }
+  },
+  "b15": {
+   "ops": 13059,
+   "op_histogram": {
+    "add": 675,
+    "cast": 6,
+    "concat": 24,
+    "const": 8042,
+    "constexpr_blockwise_shift_scale": 240,
+    "constexpr_lut_to_dense": 240,
+    "conv": 270,
+    "expand_dims": 9,
+    "floor_div": 3,
+    "identity": 1,
+    "layer_norm": 120,
+    "less": 4,
+    "logical_and": 1,
+    "logical_not": 2,
+    "matmul": 576,
+    "mul": 268,
+    "pad": 216,
+    "relu": 3,
+    "reshape": 385,
+    "select": 408,
+    "sigmoid": 24,
+    "silu": 72,
+    "slice_by_index": 384,
+    "softmax": 192,
+    "split": 96,
+    "squeeze": 1,
+    "sub": 3,
+    "transpose": 794
+   },
+   "constexpr_inputs": {
+    "constexpr_lut_to_dense": {
+     "indices: uint2 [4096, 1024, 1, 1], lut: fp16 [1, 1, 1, 1, 4, 1]": 48,
+     "indices: uint2 [1024, 4096, 1, 1], lut: fp16 [1, 1, 1, 1, 4, 1]": 48,
+     "indices: uint2 [1024, 1024, 1, 1], lut: fp16 [1, 1, 1, 1, 4, 1]": 120,
+     "indices: uint2 [2048, 1024, 1, 1], lut: fp16 [1, 1, 1, 1, 4, 1]": 24
+    },
+    "constexpr_blockwise_shift_scale": {
+     "data: fp16 [4096, 1024, 1, 1], scale: fp16 [4096, 1, 1, 1]": 48,
+     "data: fp16 [1024, 4096, 1, 1], scale: fp16 [1024, 1, 1, 1]": 48,
+     "data: fp16 [1024, 1024, 1, 1], scale: fp16 [1024, 1, 1, 1]": 120,
+     "data: fp16 [2048, 1024, 1, 1], scale: fp16 [2048, 1, 1, 1]": 24
+    }
+   },
+   "matmul_followed_by_mul": 48,
+   "consts_with_shared_weight_id": 6177,
+   "inputs": {
+    "mel": "fp32 [1, 128, 1501]",
+    "mel_length": "int32 [1]"
+   },
+   "outputs": {
+    "encoder": "fp32 [1, 1024, 188]",
+    "encoder_length": "int32 [1]"
+   }
+  }
+ },
+ "sizes": {
+  "mlpackage_bytes": 199169348,
+  "weight_bin_bytes": 191214528
+ },
+ "timing_s": {
+  "build_graph": 7.1,
+  "convert": 110.2,
+  "save": 0.1
+ },
+ "peak_rss_mb_after_save": 1496.7,
+ "environment": {
+  "coremltools": "9.0",
+  "numpy": "2.2.6",
+  "python": "3.12.14",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "machine": "arm64"
+ },
+ "paths": {
+  "mlpackage": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/C4-ane/multi.mlpackage",
+  "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/C4-ane/multi.mlmodelc"
+ },
+ "compile": {
+  "compile_s": 3.03,
+  "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/C4-ane/multi.mlmodelc",
+  "mlmodelc_bytes": 199342423
+ },
+ "peak_rss_mb_after_compile": 1875.4,
+ "compute_plan": {
+  "cpuAndNeuralEngine": {
+   "compute_units": "cpuAndNeuralEngine",
+   "tool": "mil/computeplan.swift (MLComputePlan, functionName set)",
+   "functions": {
+    "b2": {
+     "compute_units": "cpuAndNeuralEngine",
+     "cpu_ops": [
+      {
+       "cost": 2.317893715759389e-05,
+       "op": "ios18.cast",
+       "outputs": [
+        "mel_fp16"
+       ]
+      },
+      {
+       "cost": 0.0001649338595075785,
+       "op": "ios19.transpose",
+       "outputs": [
+        "transpose_0"
+       ]
+      },
+      {
+       "cost": 1.5453225386809005e-05,
+       "op": "ios19.expand_dims",
+       "outputs": [
+        "mel_nchw"
+       ]
+      },
+      {
+       "cost": 1.5150515386616547e-07,
+       "op": "ios19.less",
+       "outputs": [
+        "less_0"
+       ]
+      },
+      {
+       "cost": 1.6787203319373627e-09,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_0"
+       ]
+      },
+      {
+       "cost": 1.8018452392408182e-09,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_0"
+       ]
+      },
+      {
+       "cost": 1.6787203319373627e-09,
+       "op": "ios19.add",
+       "outputs": [
+        "len1"
+       ]
+      },
+      {
+       "cost": 7.642826889779803e-08,
+       "op": "ios19.less",
+       "outputs": [
+        "less_1"
+       ]
+      },
+      {
+       "cost": 1.6787203319373627e-09,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_1"
+       ]
+      },
+      {
+       "cost": 1.8018452392408182e-09,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_1"
+       ]
+      },
+      {
+       "cost": 1.6787203319373627e-09,
+       "op": "ios19.add",
+       "outputs": [
+        "len2"
+       ]
+      },
+      {
+       "cost": 3.8889826413614325e-08,
+       "op": "ios19.less",
+       "outputs": [
+        "less_2"
+       ]
+      },
+      {
+       "cost": 2.2973526800320432e-08,
+       "op": "ios18.cast",
+       "outputs": [
+        "cast_2"
+       ]
+      },
+      {
+       "cost": 3.2433214306334725e-08,
+       "op": "ios19.expand_dims",
+       "outputs": [
+        "mask2"
+       ]
+      },
+      {
+       "cost": 0.0005610825694695524,
+       "op": "ios19.mul",
+       "outputs": [
+        "sub_masked2"
+       ]
+      },
+      {
+       "cost": 0.0005566540172592537,
+       "op": "ios18.conv",
+       "outputs": [
+        "sub_dw2"
+       ]
+      },
+      {
+       "cost": 0.0003659658984883153,
+       "op": "ios18.conv",
+       "outputs": [
+        "sub_pw2"
+       ]
+      },
+      {
+       "cost": 3.289707472311681e-05,
+       "op": "ios18.relu",
+       "outputs": [
+        "sub_relu2"
+       ]
+      },
+      {
+       "cost": 1.6787203319373627e-09,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_2"
+       ]
+      },
+      {
+       "cost": 1.8018452392408182e-09,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_2"
+       ]
+      },
+      {
+       "cost": 1.6787203319373627e-09,
+       "op": "ios19.add",
+       "outputs": [
+        "len3"
+       ]
+      },
+      {
+       "cost": 2.012060517152247e-08,
+       "op": "ios19.less",
+       "outputs": [
+        "less_3"
+       ]
+      },
+      {
+       "cost": 1.2012301594938789e-09,
+       "op": "identity",
+       "outputs": [
+        "encoder_length"
+       ]
+      },
+      {
+       "cost": 2.3986163824773775e-05,
+       "op": "ios18.cast",
+       "outputs": [
+        "encoder"
+       ]
+      }
+     ],
+     "estimated_cost_share_by_preferred_device": {
+      "ane": 0.9964299569630315,
+      "cpu": 0.0035700430369685794
+     },
+     "operators_by_preferred_device": {
+      "ane": {
+       "ios18.cast": 3,
+       "ios18.conv": 268,
+       "ios18.layer_norm": 120,
+       "ios18.logical_not": 2,
+       "ios18.matmul": 576,
+       "ios18.relu": 2,
+       "ios18.sigmoid": 24,
+       "ios18.silu": 72,
+       "ios18.softmax": 192,
+       "ios19.add": 672,
+       "ios19.concat": 24,
+       "ios19.expand_dims": 7,
+       "ios19.logical_and": 1,
+       "ios19.mul": 267,
+       "ios19.reshape": 385,
+       "ios19.select": 408,
+       "ios19.slice_by_index": 384,
+       "ios19.split": 96,
+       "ios19.squeeze": 1,
+       "ios19.transpose": 793,
+       "pad": 216
+      },
+      "cpu": {
+       "identity": 1,
+       "ios18.cast": 3,
+       "ios18.conv": 2,
+       "ios18.relu": 1,
+       "ios19.add": 3,
+       "ios19.expand_dims": 2,
+       "ios19.floor_div": 3,
+       "ios19.less": 4,
+       "ios19.mul": 1,
+       "ios19.sub": 3,
+       "ios19.transpose": 1
+      }
+     },
+     "ops_with_usage_by_preferred_device": {
+      "ane": 4513,
+      "cpu": 24
+     },
+     "ops_without_usage": {
+      "const": 7322,
+      "ios19.constexpr_blockwise_shift_scale": 240,
+      "ios19.constexpr_lut_to_dense": 240
+     },
+     "plan_load_s": 48.579399943351746
+    },
+    "b4": {
+     "compute_units": "cpuAndNeuralEngine",
+     "cpu_ops": [
+      {
+       "cost": 3.1466221096897484e-05,
+       "op": "ios18.cast",
+       "outputs": [
+        "mel_fp16"
+       ]
+      },
+      {
+       "cost": 0.00022389048576729453,
+       "op": "ios19.transpose",
+       "outputs": [
+        "transpose_2"
+       ]
+      },
+      {
+       "cost": 2.0977889425948815e-05,
+       "op": "ios19.expand_dims",
+       "outputs": [
+        "mel_nchw"
+       ]
+      },
+      {
+       "cost": 2.052669049500826e-07,
+       "op": "ios19.less",
+       "outputs": [
+        "less_4"
+       ]
+      },
+      {
+       "cost": 0.0006922177617354948,
+       "op": "ios18.relu",
+       "outputs": [
+        "sub_relu0"
+       ]
+      },
+      {
+       "cost": 1.1423024469805017e-09,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_3"
+       ]
+      },
+      {
+       "cost": 1.2260840514688856e-09,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_3"
+       ]
+      },
+      {
+       "cost": 1.1423024469805017e-09,
+       "op": "ios19.add",
+       "outputs": [
+        "len1"
+       ]
+      },
+      {
+       "cost": 1.0309323399434213e-07,
+       "op": "ios19.less",
+       "outputs": [
+        "less_5"
+       ]
+      },
+      {
+       "cost": 1.1423024469805017e-09,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_4"
+       ]
+      },
+      {
+       "cost": 1.2260840514688856e-09,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_4"
+       ]
+      },
+      {
+       "cost": 1.1423024469805017e-09,
+       "op": "ios19.add",
+       "outputs": [
+        "len2"
+       ]
+      },
+      {
+       "cost": 5.200639851647189e-08,
+       "op": "ios19.less",
+       "outputs": [
+        "less_6"
+       ]
+      },
+      {
+       "cost": 1.1423024469805017e-09,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_5"
+       ]
+      },
+      {
+       "cost": 1.2260840514688856e-09,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_5"
+       ]
+      },
+      {
+       "cost": 1.1423024469805017e-09,
+       "op": "ios19.add",
+       "outputs": [
+        "len3"
+       ]
+      },
+      {
+       "cost": 2.646298077753678e-08,
+       "op": "ios19.less",
+       "outputs": [
+        "less_7"
+       ]
+      },
+      {
+       "cost": 8.173893676459237e-10,
+       "op": "identity",
+       "outputs": [
+        "encoder_length"
+       ]
+      },
+      {
+       "cost": 3.201550675195554e-05,
+       "op": "ios18.cast",
+       "outputs": [
+        "encoder"
+       ]
+      }
+     ],
+     "estimated_cost_share_by_preferred_device": {
+      "ane": 0.9984648900010386,
+      "cpu": 0.0015351099989614773
+     },
+     "operators_by_preferred_device": {
+      "ane": {
+       "ios18.cast": 4,
+       "ios18.conv": 270,
+       "ios18.layer_norm": 120,
+       "ios18.logical_not": 2,
+       "ios18.matmul": 576,
+       "ios18.relu": 2,
+       "ios18.sigmoid": 24,
+       "ios18.silu": 72,
+       "ios18.softmax": 192,
+       "ios19.add": 672,
+       "ios19.concat": 24,
+       "ios19.expand_dims": 8,
+       "ios19.logical_and": 1,
+       "ios19.mul": 268,
+       "ios19.reshape": 385,
+       "ios19.select": 408,
+       "ios19.slice_by_index": 384,
+       "ios19.split": 96,
+       "ios19.squeeze": 1,
+       "ios19.transpose": 793,
+       "pad": 216
+      },
+      "cpu": {
+       "identity": 1,
+       "ios18.cast": 2,
+       "ios18.relu": 1,
+       "ios19.add": 3,
+       "ios19.expand_dims": 1,
+       "ios19.floor_div": 3,
+       "ios19.less": 4,
+       "ios19.sub": 3,
+       "ios19.transpose": 1
+      }
+     },
+     "ops_with_usage_by_preferred_device": {
+      "ane": 4518,
+      "cpu": 19
+     },
+     "ops_without_usage": {
+      "const": 7322,
+      "ios19.constexpr_blockwise_shift_scale": 240,
+      "ios19.constexpr_lut_to_dense": 240
+     },
+     "plan_load_s": 52.75091600418091
+    },
+    "b8": {
+     "compute_units": "cpuAndNeuralEngine",
+     "cpu_ops": [
+      {
+       "cost": 0.00013770665757295236,
+       "op": "ios18.cast",
+       "outputs": [
+        "mel_fp16"
+       ]
+      },
+      {
+       "cost": 0.001858142587408733,
+       "op": "ios19.transpose",
+       "outputs": [
+        "transpose_4"
+       ]
+      },
+      {
+       "cost": 9.180533379042624e-05,
+       "op": "ios19.expand_dims",
+       "outputs": [
+        "mel_nchw"
+       ]
+      },
+      {
+       "cost": 8.974231270319102e-07,
+       "op": "ios19.less",
+       "outputs": [
+        "less_8"
+       ]
+      },
+      {
+       "cost": 0.003025612165694854,
+       "op": "ios18.relu",
+       "outputs": [
+        "sub_relu0"
+       ]
+      },
+      {
+       "cost": 2.502668405310387e-09,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_6"
+       ]
+      },
+      {
+       "cost": 2.6862253740042204e-09,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_6"
+       ]
+      },
+      {
+       "cost": 2.502668405310387e-09,
+       "op": "ios19.add",
+       "outputs": [
+        "len1"
+       ]
+      },
+      {
+       "cost": 4.497188980312066e-07,
+       "op": "ios19.less",
+       "outputs": [
+        "less_9"
+       ]
+      },
+      {
+       "cost": 2.502668405310387e-09,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_7"
+       ]
+      },
+      {
+       "cost": 2.6862253740042204e-09,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_7"
+       ]
+      },
+      {
+       "cost": 2.502668405310387e-09,
+       "op": "ios19.add",
+       "outputs": [
+        "len2"
+       ]
+      },
+      {
+       "cost": 2.258667835308549e-07,
+       "op": "ios19.less",
+       "outputs": [
+        "less_10"
+       ]
+      },
+      {
+       "cost": 2.502668405310387e-09,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_8"
+       ]
+      },
+      {
+       "cost": 2.6862253740042204e-09,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_8"
+       ]
+      },
+      {
+       "cost": 2.502668405310387e-09,
+       "op": "ios19.add",
+       "outputs": [
+        "len3"
+       ]
+      },
+      {
+       "cost": 1.1394072628067902e-07,
+       "op": "ios19.less",
+       "outputs": [
+        "less_11"
+       ]
+      },
+      {
+       "cost": 1.7908169160028138e-09,
+       "op": "identity",
+       "outputs": [
+        "encoder_length"
+       ]
+      },
+      {
+       "cost": 0.00013891008654050624,
+       "op": "ios18.cast",
+       "outputs": [
+        "encoder"
+       ]
+      }
+     ],
+     "estimated_cost_share_by_preferred_device": {
+      "ane": 0.977894511534237,
+      "cpu": 0.022105488465763
+     },
+     "operators_by_preferred_device": {
+      "ane": {
+       "ios18.cast": 4,
+       "ios18.conv": 270,
+       "ios18.layer_norm": 120,
+       "ios18.logical_not": 2,
+       "ios18.matmul": 576,
+       "ios18.relu": 2,
+       "ios18.sigmoid": 24,
+       "ios18.silu": 72,
+       "ios18.softmax": 192,
+       "ios19.add": 672,
+       "ios19.concat": 24,
+       "ios19.expand_dims": 8,
+       "ios19.logical_and": 1,
+       "ios19.mul": 268,
+       "ios19.reshape": 385,
+       "ios19.select": 408,
+       "ios19.slice_by_index": 384,
+       "ios19.split": 96,
+       "ios19.squeeze": 1,
+       "ios19.transpose": 793,
+       "pad": 216
+      },
+      "cpu": {
+       "identity": 1,
+       "ios18.cast": 2,
+       "ios18.relu": 1,
+       "ios19.add": 3,
+       "ios19.expand_dims": 1,
+       "ios19.floor_div": 3,
+       "ios19.less": 4,
+       "ios19.sub": 3,
+       "ios19.transpose": 1
+      }
+     },
+     "ops_with_usage_by_preferred_device": {
+      "ane": 4518,
+      "cpu": 19
+     },
+     "ops_without_usage": {
+      "const": 7322,
+      "ios19.constexpr_blockwise_shift_scale": 240,
+      "ios19.constexpr_lut_to_dense": 240
+     },
+     "plan_load_s": 57.99048697948456
+    },
+    "b15": {
+     "compute_units": "cpuAndNeuralEngine",
+     "cpu_ops": [
+      {
+       "cost": 0.00020748108006248838,
+       "op": "ios18.cast",
+       "outputs": [
+        "mel_fp16"
+       ]
+      },
+      {
+       "cost": 1.3515082221134044e-06,
+       "op": "ios19.less",
+       "outputs": [
+        "less_12"
+       ]
+      },
+      {
+       "cost": 0.004556005176893594,
+       "op": "ios18.relu",
+       "outputs": [
+        "sub_relu0"
+       ]
+      },
+      {
+       "cost": 2.01223499542016e-09,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_9"
+       ]
+      },
+      {
+       "cost": 2.159821369737762e-09,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_9"
+       ]
+      },
+      {
+       "cost": 2.01223499542016e-09,
+       "op": "ios19.add",
+       "outputs": [
+        "len1"
+       ]
+      },
+      {
+       "cost": 6.765640440703539e-07,
+       "op": "ios19.less",
+       "outputs": [
+        "less_13"
+       ]
+      },
+      {
+       "cost": 2.01223499542016e-09,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_10"
+       ]
+      },
+      {
+       "cost": 2.159821369737762e-09,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_10"
+       ]
+      },
+      {
+       "cost": 2.01223499542016e-09,
+       "op": "ios19.add",
+       "outputs": [
+        "len2"
+       ]
+      },
+      {
+       "cost": 3.3909195504882864e-07,
+       "op": "ios19.less",
+       "outputs": [
+        "less_14"
+       ]
+      },
+      {
+       "cost": 2.01223499542016e-09,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_11"
+       ]
+      },
+      {
+       "cost": 2.159821369737762e-09,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_11"
+       ]
+      },
+      {
+       "cost": 2.01223499542016e-09,
+       "op": "ios19.add",
+       "outputs": [
+        "len3"
+       ]
+      },
+      {
+       "cost": 1.6990594775270395e-07,
+       "op": "ios19.less",
+       "outputs": [
+        "less_15"
+       ]
+      },
+      {
+       "cost": 1.439880913158508e-09,
+       "op": "identity",
+       "outputs": [
+        "encoder_length"
+       ]
+      },
+      {
+       "cost": 0.00020789576576547803,
+       "op": "ios18.cast",
+       "outputs": [
+        "encoder"
+       ]
+      }
+     ],
+     "estimated_cost_share_by_preferred_device": {
+      "ane": 0.987149509467235,
+      "cpu": 0.012850490532764988
+     },
+     "operators_by_preferred_device": {
+      "ane": {
+       "ios18.cast": 4,
+       "ios18.conv": 270,
+       "ios18.layer_norm": 120,
+       "ios18.logical_not": 2,
+       "ios18.matmul": 576,
+       "ios18.relu": 2,
+       "ios18.sigmoid": 24,
+       "ios18.silu": 72,
+       "ios18.softmax": 192,
+       "ios19.add": 672,
+       "ios19.concat": 24,
+       "ios19.expand_dims": 9,
+       "ios19.logical_and": 1,
+       "ios19.mul": 268,
+       "ios19.reshape": 385,
+       "ios19.select": 408,
+       "ios19.slice_by_index": 384,
+       "ios19.split": 96,
+       "ios19.squeeze": 1,
+       "ios19.transpose": 794,
+       "pad": 216
+      },
+      "cpu": {
+       "identity": 1,
+       "ios18.cast": 2,
+       "ios18.relu": 1,
+       "ios19.add": 3,
+       "ios19.floor_div": 3,
+       "ios19.less": 4,
+       "ios19.sub": 3
+      }
+     },
+     "ops_with_usage_by_preferred_device": {
+      "ane": 4520,
+      "cpu": 17
+     },
+     "ops_without_usage": {
+      "const": 7322,
+      "ios19.constexpr_blockwise_shift_scale": 240,
+      "ios19.constexpr_lut_to_dense": 240
+     },
+     "plan_load_s": 57.575923919677734
+    }
+   }
+  }
+ }
+}

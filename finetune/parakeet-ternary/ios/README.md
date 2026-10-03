@@ -658,3 +658,62 @@ Notes:
 
   Peak MLX memory was 488 MB and weight load 1.5 s.
 - **Not ported.** The arm is eligible, but the 1.5× condition for a Swift/mlx-swift port fails in every bucket, so it stays a Python prototype. The record is `timing_allowed` but `selection_eligible: false`.
+
+## WP6a (S3 exploration, Mac): ANE graph layout and the GPU backend
+
+No timing; all figures are informational, from a shared M1 Pro (macOS 27, coremltools 9.0). Table:
+`results/wp6a_table.txt`. Records: `results/eligibility/` (design revision 8; arm labels `<arm>-ane` for the
+ANE layout, backend `gpu` for CPU_AND_GPU).
+
+**What was built.**
+- `mil/encoder_ane.py`: the DESIGN.md D "ANE" layout.
+  - Channels-first (1, C, 1, T) activations; every linear is a 1×1 conv2d (rank-4 constexpr weights, same
+    encoding chains); LayerNorm over axis 1.
+  - Attention is split per head (8 × (1, 128, 1, T)), with rank-4 transposes and matmuls. No
+    rank-changing reshapes inside the 24 layers; the rel-shift reshapes keep rank 4.
+  - The masking contract (`mil/MASKING.md`) and the per-bucket folded `linear_pos` tables are unchanged.
+- Builds: `mil.build encoder --layout ane`, done for C4, C3 and C6s8 as multifunction models.
+- GPU backend: `mil.gates7 4b --units cpuAndGPU`, `mil.probes stress` (now CPU, ANE and GPU), and
+  `mil.build replan --units cpuAndGPU`.
+
+**ANE layout (C4-ane, C3-ane, C6s8-ane), CPU_AND_NE.**
+- **Gates:**
+  - Gate 2 bit-exact (240 modules each).
+  - 4a passes at full depth on all 200 clip × bucket cases: rel ≤ 2.3e-6, abs ≤ 4.2e-5.
+  - 4b passes with the FP32 decoder on both deployed paths: encoder rel ≤ 0.035; 62/64 identical
+    sequences on both paths; WER 2.711% = reference; all-step agreement token 0.999, duration ≥ 0.992.
+  - Gate 5 passes, and stress passes (ANE-layout arms are compared with C4-ane).
+  - **Eligible on the ANE for all three.**
+- **Placement: no op falls off the ANE compared with the plain layout.**
+  - Both layouts leave exactly the same 17 (b15) to 24 (b2) ops on the CPU: input cast, length
+    arithmetic, `less` masks, `identity`, and in b2 also two subsampling ops (`conv`, `expand_dims`,
+    `transpose`).
+  - The ANE-layout graph has 3.3× as many ops (4,537 vs 1,393), from the per-head split.
+  - Estimated ANE cost share: 0.978–0.998 for the ANE layout vs 0.991–0.998 for plain.
+- **Cost:**
+  - Conversion takes about 110 s vs 32–41 s for plain, and compile about 3 s vs about 1 s.
+  - Packages are 5 MB larger.
+  - Build peak 1.9–2.1 GB.
+  - First ANE load per function: C4/C3 38–51 s, C6s8 113–124 s; cached loads about 0.9–1.0 s.
+
+**GPU backend (CPU_AND_GPU), plain multifunction.**
+- **C4, C3, C6s8: eligible on the GPU.** 4b: 64/64 identical sequences, WER = reference, encoder rel
+  0.014–0.017. Gate 5 and stress pass.
+- **C7: 4b passes, but not eligible on the GPU:** the stress rule fails, with inf at ×8 (layer-0 FF1
+  linear2) and at |x|×64 (layer 23) where C4 stays finite, exactly as on the CPU. C8 likewise fails stress
+  on the GPU (no GPU 4b run).
+- **C1: not run, so no GPU record.** Its CPU_AND_GPU 4b job was aborted twice by macguard: system free
+  memory fell to 14–16%, below the 25% abort level (job RSS was only 1.7–2.3 GB). The dense weights in
+  GPU-visible memory exceed what the shared Mac can spare under the guard.
+- **Compute plans:**
+  - **For every compressed arm (C3, C4, C6s8, C7) the GPU plan places only 4–9 ops on the GPU,** about
+    0.2% of estimated cost. All matmuls, convs and norms are planned on the CPU. So on this Mac, Core ML
+    runs the constexpr-compressed encoders on the CPU when asked for the GPU.
+  - Only dense C1 gets real GPU placement: 339–344 ops, 12–50% of estimated cost.
+  - The plan is not proof of placement. But the GPU 4b error profile (rel 0.0167, 64/64) differs from
+    CPU_ONLY's (0.0215, 63–64/64), so execution is not identical to the CPU path either.
+- **Loads:** first GPU load per function is 2–4 s for C3/C4/C7 and about 310 s for C6s8; cached
+  0.01–0.25 s. Gate job peaks 1.8–3.1 GB.
+
+All models are archived on NixOS, except C4 fixed/multi and the decoder models (fp16 and fp32), which
+stay on the Mac for the harness.

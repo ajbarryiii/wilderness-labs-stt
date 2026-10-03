@@ -10,12 +10,16 @@ Eligibility (design revision 8); deployed decoder/joint: FP32. FP16-decoder reco
 | mp2 | C3 | fixed | cpu | fp32 | yes | - | 64 / 64 | 2.711 / 2.711 / 2.711 |
 | mp2 | C3 | multi | ane | fp32 | yes | - | 62 / 62 | 2.711 / 2.711 / 2.711 |
 | mp2 | C3 | multi | cpu | fp32 | yes | - | 64 / 64 | 2.711 / 2.711 / 2.711 |
+| mp2 | C3 | multi | gpu | fp32 | yes | - | 64 / 64 | 2.711 / 2.711 / 2.711 |
+| mp2 | C3-ane | multi | ane | fp32 | yes | - | 62 / 62 | 2.711 / 2.711 / 2.711 |
 | mp2 | C4 | enum | ane | fp32 | yes | - | 64 / 64 | 2.711 / 2.711 / 2.711 |
 | mp2 | C4 | enum | cpu | fp32 | yes | - | 64 / 64 | 2.711 / 2.711 / 2.711 |
 | mp2 | C4 | fixed | ane | fp32 | yes | - | 62 / 62 | 2.711 / 2.711 / 2.711 |
 | mp2 | C4 | fixed | cpu | fp32 | yes | - | 64 / 64 | 2.711 / 2.711 / 2.711 |
 | mp2 | C4 | multi | ane | fp32 | yes | - | 62 / 62 | 2.711 / 2.711 / 2.711 |
 | mp2 | C4 | multi | cpu | fp32 | yes | - | 64 / 64 | 2.711 / 2.711 / 2.711 |
+| mp2 | C4 | multi | gpu | fp32 | yes | - | 64 / 64 | 2.711 / 2.711 / 2.711 |
+| mp2 | C4-ane | multi | ane | fp32 | yes | - | 62 / 62 | 2.711 / 2.711 / 2.711 |
 | mp2 | C5 | fixed | ane | fp32 | no | scope, gate4a, gate4b, wer | 8 / 8 | 28.467 / 28.467 / 2.711 |
 | mp2 | C5 | fixed | cpu | fp32 | no | scope, gate4a, gate4b | 55 / 55 | 2.711 / 2.711 / 2.711 |
 | mp2 | C5 | multi | ane | fp32 | no | scope, gate4a, gate4b, gate5, wer | 0 / 0 | 68.092 / 68.092 / 2.711 |
@@ -44,12 +48,15 @@ Eligibility (design revision 8); deployed decoder/joint: FP32. FP16-decoder reco
 | mp2 | C6s8 | fixed | cpu | fp32 | yes | - | 64 / 64 | 2.711 / 2.711 / 2.711 |
 | mp2 | C6s8 | multi | ane | fp32 | yes | - | 62 / 62 | 2.711 / 2.711 / 2.711 |
 | mp2 | C6s8 | multi | cpu | fp32 | yes | - | 64 / 64 | 2.711 / 2.711 / 2.711 |
+| mp2 | C6s8 | multi | gpu | fp32 | yes | - | 64 / 64 | 2.711 / 2.711 / 2.711 |
+| mp2 | C6s8-ane | multi | ane | fp32 | yes | - | 62 / 62 | 2.711 / 2.711 / 2.711 |
 | mp2 | C7 | enum | ane | fp32 | yes | - | 64 / 64 | 2.711 / 2.711 / 2.711 |
 | mp2 | C7 | enum | cpu | fp32 | no | stress | 64 / 64 | 2.711 / 2.711 / 2.711 |
 | mp2 | C7 | fixed | ane | fp32 | yes | - | 62 / 62 | 2.711 / 2.711 / 2.711 |
 | mp2 | C7 | fixed | cpu | fp32 | no | stress | 63 / 63 | 2.711 / 2.711 / 2.711 |
 | mp2 | C7 | multi | ane | fp32 | yes | - | 62 / 62 | 2.711 / 2.711 / 2.711 |
 | mp2 | C7 | multi | cpu | fp32 | no | stress | 63 / 63 | 2.711 / 2.711 / 2.711 |
+| mp2 | C7 | multi | gpu | fp32 | no | stress | 64 / 64 | 2.711 / 2.711 / 2.711 |
 | mp2 | C8 | enum | ane | fp32 | no | gate4a | 64 / 64 | 2.711 / 2.711 / 2.711 |
 | mp2 | C8 | enum | cpu | fp32 | no | gate4a, stress | 64 / 64 | 2.711 / 2.711 / 2.711 |
 | mp2 | C8 | fixed | ane | fp32 | yes | - | 62 / 62 | 2.711 / 2.711 / 2.711 |
@@ -84,14 +91,10 @@ Eligibility (design revision 8); deployed decoder/joint: FP32. FP16-decoder reco
 | mp2 | C6d8 | fixed | cpu | fp16 | no | decoder_precision, gate4b | 60 / 60 | 2.711 / 2.711 / 2.711 |
 | mp2 | C6d8 | multi | ane | fp16 | no | decoder_precision, gate4b | 59 / 59 | 2.711 / 2.711 / 2.711 |
 | mp2 | C6d8 | multi | cpu | fp16 | no | decoder_precision, gate4b | 59 / 59 | 2.711 / 2.711 / 2.711 |
-| mp2 | C6s2 | enum | ane | fp16 | no | decoder_precision, gate4b, wer, gate5 | - | - |
-| mp2 | C6s2 | enum | cpu | fp16 | no | decoder_precision, gate4b, wer, gate5 | - | - |
 | mp2 | C6s2 | fixed | ane | fp16 | no | decoder_precision, gate4b | 59 / 59 | 2.711 / 2.711 / 2.711 |
 | mp2 | C6s2 | fixed | cpu | fp16 | no | decoder_precision, gate4b | 60 / 60 | 2.711 / 2.711 / 2.711 |
 | mp2 | C6s2 | multi | ane | fp16 | no | decoder_precision, gate4b | 59 / 59 | 2.711 / 2.711 / 2.711 |
 | mp2 | C6s2 | multi | cpu | fp16 | no | decoder_precision, gate4b | 60 / 60 | 2.711 / 2.711 / 2.711 |
-| mp2 | C6s4 | enum | ane | fp16 | no | decoder_precision, gate4b, wer, gate5 | - | - |
-| mp2 | C6s4 | enum | cpu | fp16 | no | decoder_precision, gate4b, wer, gate5 | - | - |
 | mp2 | C6s4 | fixed | ane | fp16 | no | decoder_precision, gate4b | 59 / 59 | 2.711 / 2.711 / 2.711 |
 | mp2 | C6s4 | fixed | cpu | fp16 | no | decoder_precision, gate4b | 60 / 60 | 2.711 / 2.711 / 2.711 |
 | mp2 | C6s4 | multi | ane | fp16 | no | decoder_precision, gate4b | 59 / 59 | 2.711 / 2.711 / 2.711 |
@@ -100,14 +103,10 @@ Eligibility (design revision 8); deployed decoder/joint: FP32. FP16-decoder reco
 | mp2 | C6s8 | fixed | cpu | fp16 | no | decoder_precision, gate4b | 60 / 60 | 2.711 / 2.711 / 2.711 |
 | mp2 | C6s8 | multi | ane | fp16 | no | decoder_precision, gate4b | 59 / 59 | 2.711 / 2.711 / 2.711 |
 | mp2 | C6s8 | multi | cpu | fp16 | no | decoder_precision, gate4b | 60 / 60 | 2.711 / 2.711 / 2.711 |
-| mp2 | C7 | enum | ane | fp16 | no | decoder_precision, gate4b, wer, gate5 | - | - |
-| mp2 | C7 | enum | cpu | fp16 | no | decoder_precision, gate4b, wer, gate5, stress | - | - |
 | mp2 | C7 | fixed | ane | fp16 | no | decoder_precision, gate4b | 59 / 59 | 2.711 / 2.711 / 2.711 |
 | mp2 | C7 | fixed | cpu | fp16 | no | decoder_precision, gate4b, stress | 58 / 58 | 2.711 / 2.711 / 2.711 |
 | mp2 | C7 | multi | ane | fp16 | no | decoder_precision, gate4b | 59 / 59 | 2.711 / 2.711 / 2.711 |
 | mp2 | C7 | multi | cpu | fp16 | no | decoder_precision, gate4b, stress | 59 / 59 | 2.711 / 2.711 / 2.711 |
-| mp2 | C8 | enum | ane | fp16 | no | gate4a, decoder_precision, gate4b, wer, gate5 | - | - |
-| mp2 | C8 | enum | cpu | fp16 | no | gate4a, decoder_precision, gate4b, wer, gate5, stress | - | - |
 | mp2 | C8 | fixed | ane | fp16 | no | decoder_precision | 61 / 61 | 2.711 / 2.711 / 2.711 |
 | mp2 | C8 | fixed | cpu | fp16 | no | decoder_precision, gate4b, stress | 57 / 57 | 2.711 / 2.711 / 2.711 |
 | mp2 | C8 | multi | ane | fp16 | no | decoder_precision | 61 / 61 | 2.711 / 2.711 / 2.711 |

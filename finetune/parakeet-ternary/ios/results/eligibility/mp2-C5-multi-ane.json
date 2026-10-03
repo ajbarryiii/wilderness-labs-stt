@@ -118,8 +118,8 @@
   "results/gate2/mp2-C5.json": "1bd3a0eba34df2755f8abbec21500c314830f9b6bbacab1ecb7634d490a19293",
   "results/gates/v7/mp2-decoder-fp32-cpuOnly-4a.json": "1df69d43b6b988cbb95ee22806905790104135bcd3916c103e8a54414272913d",
   "results/gates/v7/mp2-C5-multi-cpuAndNeuralEngine-dec-fp32.json": "039db839f1ba9e66898921394bd0913757fc8016728b71d52a8834a6d3643666",
-  "results/probes/stress.json": "d9035d169c9147e54d96544275c0ef189c31ebcc0fd1ef7361e17a157dfd0f53"
+  "results/probes/stress.json": "501b9f754c270a26d9f8015b6f3cc5cb2ff876de0e5c16b3cc3669528f0cbe9e"
  },
  "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
- "built": "2026-10-03 02:51"
+ "built": "2026-10-03 07:00"
 }

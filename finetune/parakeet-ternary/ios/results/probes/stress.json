@@ -1,7 +1,12 @@
 {
  "probe": "stress (DESIGN.md 'C7/C8 numerics'; rule of revision 6/7)",
  "design_revision": 7,
- "rule": "per compute unit: an arm fails if it produces inf or NaN (in any output, intermediates included) at a stress level where C4 stays finite on the same unit; real inputs (x1) must always be finite",
+ "rule": "per compute unit: an arm fails if it produces inf or NaN (in any output, intermediates included) at a stress level where C4 stays finite on the same unit; real inputs (x1) must always be finite. ANE-layout arms (<arm>-ane: 1x1 conv2d on (1, C, 1, T)) are compared with C4-ane",
+ "units": [
+  "cpuOnly",
+  "cpuAndNeuralEngine",
+  "cpuAndGPU"
+ ],
  "modules": [
   "layers.0.feed_forward1.linear1",
   "layers.0.feed_forward1.linear2",
@@ -37,6 +42,13 @@
     "nonfinite_at_x1": [],
     "missing_c4_reference": [],
     "nonfinite_cases_total": 6
+   },
+   "gpu": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 2
    }
   },
   "C1": {
@@ -53,6 +65,13 @@
     "nonfinite_at_x1": [],
     "missing_c4_reference": [],
     "nonfinite_cases_total": 5
+   },
+   "gpu": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 0
    }
   },
   "C3": {
@@ -64,6 +83,13 @@
     "nonfinite_cases_total": 2
    },
    "ane": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 2
+   },
+   "gpu": {
     "pass": true,
     "nonfinite_where_c4_finite": [],
     "nonfinite_at_x1": [],
@@ -85,6 +111,13 @@
     "nonfinite_at_x1": [],
     "missing_c4_reference": [],
     "nonfinite_cases_total": 0
+   },
+   "gpu": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 0
    }
   },
   "C6s2": {
@@ -101,6 +134,13 @@
     "nonfinite_at_x1": [],
     "missing_c4_reference": [],
     "nonfinite_cases_total": 5
+   },
+   "gpu": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 2
    }
   },
   "C6s4": {
@@ -117,6 +157,13 @@
     "nonfinite_at_x1": [],
     "missing_c4_reference": [],
     "nonfinite_cases_total": 5
+   },
+   "gpu": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 2
    }
   },
   "C6s8": {
@@ -133,6 +180,13 @@
     "nonfinite_at_x1": [],
     "missing_c4_reference": [],
     "nonfinite_cases_total": 5
+   },
+   "gpu": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 2
    }
   },
   "C6d4": {
@@ -149,6 +203,13 @@
     "nonfinite_at_x1": [],
     "missing_c4_reference": [],
     "nonfinite_cases_total": 5
+   },
+   "gpu": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 2
    }
   },
   "C6d8": {
@@ -165,6 +226,13 @@
     "nonfinite_at_x1": [],
     "missing_c4_reference": [],
     "nonfinite_cases_total": 5
+   },
+   "gpu": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 2
    }
   },
   "C7": {
@@ -190,6 +258,22 @@
     "nonfinite_at_x1": [],
     "missing_c4_reference": [],
     "nonfinite_cases_total": 6
+   },
+   "gpu": {
+    "pass": false,
+    "nonfinite_where_c4_finite": [
+     [
+      "layers.0.feed_forward1.linear2",
+      "x8"
+     ],
+     [
+      "layers.23.feed_forward2.linear2",
+      "abs_x64"
+     ]
+    ],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 4
    }
   },
   "C8": {
@@ -215,6 +299,91 @@
     "nonfinite_at_x1": [],
     "missing_c4_reference": [],
     "nonfinite_cases_total": 6
+   },
+   "gpu": {
+    "pass": false,
+    "nonfinite_where_c4_finite": [
+     [
+      "layers.0.feed_forward1.linear2",
+      "x8"
+     ],
+     [
+      "layers.23.feed_forward2.linear2",
+      "abs_x64"
+     ]
+    ],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 4
+   }
+  },
+  "C4-ane": {
+   "cpu": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 2
+   },
+   "ane": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 2
+   },
+   "gpu": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 2
+   }
+  },
+  "C3-ane": {
+   "cpu": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 2
+   },
+   "ane": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 2
+   },
+   "gpu": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 2
+   }
+  },
+  "C6s8-ane": {
+   "cpu": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 2
+   },
+   "ane": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 2
+   },
+   "gpu": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 2
    }
   }
  },
@@ -335,9 +504,70 @@
       "out_finite": false
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 56.125
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.002072378808003053,
+      "abs_err_out": 0.026474935360245953,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 449.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.002072378808003053,
+      "abs_err_out": 0.026474935360245953,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3592.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.002072378808003053,
+      "abs_err_out": 0.026474935360245953,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 8100.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.0032135929835583233,
+      "abs_err_out": 0.2119316081297008,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C1": {
@@ -457,9 +687,70 @@
       "out_finite": true
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 56.18096160888672
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.0001225379806773389,
+      "abs_err_out": 0.0007798531448671395,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 449.44769287109375
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.00012253797941947346,
+      "abs_err_out": 0.0007798531448671395,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3595.58154296875
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.00012253797949657232,
+      "abs_err_out": 0.0007798531448671395,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 8131.80322265625
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.00022520320866433062,
+      "abs_err_out": 0.0014323469293511168,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "gpu": 3
     }
    },
    "C3": {
@@ -579,9 +870,70 @@
       "out_finite": true
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 56.125
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.002072378808003053,
+      "abs_err_out": 0.026474935360245953,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 449.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.002072378808003053,
+      "abs_err_out": 0.026474935360245953,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3592.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.002072378808003053,
+      "abs_err_out": 0.026474935360245953,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 8100.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.0032135929835583233,
+      "abs_err_out": 0.2119316081297008,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C5": {
@@ -701,9 +1053,70 @@
       "out_finite": true
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 56.375
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.010550640517472414,
+      "abs_err_out": 0.06767280359684524,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 271.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.3788875260515008,
+      "abs_err_out": 3.4196636743203626,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 362.5
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.9044548442193241,
+      "abs_err_out": 6.39374232216818,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 933.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.9172110707339622,
+      "abs_err_out": 25.60671988430078,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 3,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 5
     }
    },
    "C6s2": {
@@ -823,9 +1236,70 @@
       "out_finite": true
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 56.1875
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.00024095657552598957,
+      "abs_err_out": 0.0022215117942339826,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 449.5
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.00024095657552598957,
+      "abs_err_out": 0.0022215117942339826,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3596.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.00024095657552598957,
+      "abs_err_out": 0.0022215117942339826,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 8132.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.0003025185240096113,
+      "abs_err_out": 0.007140933294554158,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C6s4": {
@@ -945,9 +1419,70 @@
       "out_finite": true
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 56.1875
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.00024095657552598957,
+      "abs_err_out": 0.0022215117942339826,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 449.5
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.00024095657552598957,
+      "abs_err_out": 0.0022215117942339826,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3596.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.00024095657552598957,
+      "abs_err_out": 0.0022215117942339826,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 8132.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.0003025185240096113,
+      "abs_err_out": 0.007140933294554158,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C6s8": {
@@ -1067,9 +1602,70 @@
       "out_finite": true
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 56.1875
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.00024095657552598957,
+      "abs_err_out": 0.0022215117942339826,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 449.5
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.00024095657552598957,
+      "abs_err_out": 0.0022215117942339826,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3596.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.00024095657552598957,
+      "abs_err_out": 0.0022215117942339826,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 8132.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.0003025185240096113,
+      "abs_err_out": 0.007140933294554158,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C6d4": {
@@ -1189,9 +1785,70 @@
       "out_finite": true
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 56.125
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.002072378808003053,
+      "abs_err_out": 0.026474935360245953,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 449.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.002072378808003053,
+      "abs_err_out": 0.026474935360245953,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3592.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.002072378808003053,
+      "abs_err_out": 0.026474935360245953,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 8100.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.0032135929835583233,
+      "abs_err_out": 0.2119316081297008,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C6d8": {
@@ -1311,9 +1968,70 @@
       "out_finite": true
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 56.125
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.002072378808003053,
+      "abs_err_out": 0.026474935360245953,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 449.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.002072378808003053,
+      "abs_err_out": 0.026474935360245953,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3592.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.002072378808003053,
+      "abs_err_out": 0.026474935360245953,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 8100.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.0032135929835583233,
+      "abs_err_out": 0.2119316081297008,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C7": {
@@ -1449,9 +2167,78 @@
       "out_finite": true
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 56.09375,
+       "raw": 173.875
+      },
+      "nonfinite_counts": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.0020843748962798346,
+      "abs_err_out": 0.025921612325300564,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 448.75,
+       "raw": 1391.0
+      },
+      "nonfinite_counts": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.0020843748962798346,
+      "abs_err_out": 0.025921612325300564,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3590.0,
+       "raw": 11128.0
+      },
+      "nonfinite_counts": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.0020843748962798346,
+      "abs_err_out": 0.025921612325300564,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 8152.0,
+       "raw": 38336.0
+      },
+      "nonfinite_counts": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.0031615980070344566,
+      "abs_err_out": 0.19728598032829925,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 2,
      "cpu": 3
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 5
     }
    },
    "C8": {
@@ -1619,9 +2406,646 @@
       "out_finite": true
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "raw": 174.125,
+       "out": 56.1875,
+       "P": 86.4375,
+       "N": 88.25
+      },
+      "nonfinite_counts": {
+       "raw": 0,
+       "out": 0,
+       "P": 0,
+       "N": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.0013220889166791034,
+      "abs_err_out": 0.013058628995605207,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "raw": 1393.0,
+       "out": 449.5,
+       "P": 691.5,
+       "N": 706.0
+      },
+      "nonfinite_counts": {
+       "raw": 0,
+       "out": 0,
+       "P": 0,
+       "N": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.0013220889166791034,
+      "abs_err_out": 0.013058628995605207,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "raw": 11144.0,
+       "out": 3596.0,
+       "P": 5532.0,
+       "N": 5648.0
+      },
+      "nonfinite_counts": {
+       "raw": 0,
+       "out": 0,
+       "P": 0,
+       "N": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.0013220889166791034,
+      "abs_err_out": 0.013058628995605207,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "raw": 38336.0,
+       "out": 8152.0,
+       "P": 38336.0,
+       "N": 38336.0
+      },
+      "nonfinite_counts": {
+       "raw": 0,
+       "out": 0,
+       "P": 0,
+       "N": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.01894480521972627,
+      "abs_err_out": 0.19728598032829925,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 4,
      "cpu": 5
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 9
+    }
+   },
+   "C4-ane": {
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 56.15625
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.0034254720497136635,
+      "abs_err_out": 0.04945682777773542,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 449.25
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.0034254720497136635,
+      "abs_err_out": 0.04945682777773542,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3594.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.0034254720497136635,
+      "abs_err_out": 0.04945682777773542,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 8056.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.005084788590722371,
+      "abs_err_out": 0.368575017231442,
+      "out_finite": true
+     }
+    },
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 56.15625
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.0034254720497136635,
+      "abs_err_out": 0.04945682777773542,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 449.25
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.0034254720497136635,
+      "abs_err_out": 0.04945682777773542,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3594.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.0034254720497136635,
+      "abs_err_out": 0.04945682777773542,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 8056.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.005084788590722371,
+      "abs_err_out": 0.368575017231442,
+      "out_finite": true
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 56.1875
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.00024095657552598957,
+      "abs_err_out": 0.0022215117942339826,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 449.5
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.00024095657552598957,
+      "abs_err_out": 0.0022215117942339826,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3596.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.00024095657552598957,
+      "abs_err_out": 0.0022215117942339826,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 8132.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.0003025185240096113,
+      "abs_err_out": 0.007140933294554158,
+      "out_finite": true
+     }
+    },
+    "compute_plan_cpuAndNeuralEngine": {
+     "ane": 3,
+     "cpu": 3
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 5,
+     "gpu": 1
+    }
+   },
+   "C3-ane": {
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 56.15625
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.0034254720497136635,
+      "abs_err_out": 0.04945682777773542,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 449.25
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.0034254720497136635,
+      "abs_err_out": 0.04945682777773542,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3594.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.0034254720497136635,
+      "abs_err_out": 0.04945682777773542,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 8056.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.005084788590722371,
+      "abs_err_out": 0.368575017231442,
+      "out_finite": true
+     }
+    },
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 56.15625
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.0034254720497136635,
+      "abs_err_out": 0.04945682777773542,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 449.25
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.0034254720497136635,
+      "abs_err_out": 0.04945682777773542,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3594.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.0034254720497136635,
+      "abs_err_out": 0.04945682777773542,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 8056.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.005084788590722371,
+      "abs_err_out": 0.368575017231442,
+      "out_finite": true
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 56.1875
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.00024095657552598957,
+      "abs_err_out": 0.0022215117942339826,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 449.5
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.00024095657552598957,
+      "abs_err_out": 0.0022215117942339826,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3596.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.00024095657552598957,
+      "abs_err_out": 0.0022215117942339826,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 8132.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.0003025185240096113,
+      "abs_err_out": 0.007140933294554158,
+      "out_finite": true
+     }
+    },
+    "compute_plan_cpuAndNeuralEngine": {
+     "ane": 3,
+     "cpu": 3
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 5,
+     "gpu": 1
+    }
+   },
+   "C6s8-ane": {
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 56.15625
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.0034254720497136635,
+      "abs_err_out": 0.04945682777773542,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 449.25
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.0034254720497136635,
+      "abs_err_out": 0.04945682777773542,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3594.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.0034254720497136635,
+      "abs_err_out": 0.04945682777773542,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 8056.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.005084788590722371,
+      "abs_err_out": 0.368575017231442,
+      "out_finite": true
+     }
+    },
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 56.15625
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.0034254720497136635,
+      "abs_err_out": 0.04945682777773542,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 449.25
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.0034254720497136635,
+      "abs_err_out": 0.04945682777773542,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3594.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.0034254720497136635,
+      "abs_err_out": 0.04945682777773542,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 8056.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.005084788590722371,
+      "abs_err_out": 0.368575017231442,
+      "out_finite": true
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 56.1875
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 56.18052483423526,
+      "reference_max_abs_raw_rows0_3": 65.80996823590249,
+      "rel_err_out": 0.00024095657552598957,
+      "abs_err_out": 0.0022215117942339826,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 449.5
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 449.44419867388206,
+      "reference_max_abs_raw_rows0_3": 526.4797458872199,
+      "rel_err_out": 0.00024095657552598957,
+      "abs_err_out": 0.0022215117942339826,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3596.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3595.5535893910564,
+      "reference_max_abs_raw_rows0_3": 4211.837967097759,
+      "rel_err_out": 0.00024095657552598957,
+      "abs_err_out": 0.0022215117942339826,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 8132.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 8131.771192448519,
+      "reference_max_abs_raw_rows0_3": 38240.79770869017,
+      "rel_err_out": 0.0003025185240096113,
+      "abs_err_out": 0.007140933294554158,
+      "out_finite": true
+     }
+    },
+    "compute_plan_cpuAndNeuralEngine": {
+     "ane": 3,
+     "cpu": 3
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 5,
+     "gpu": 1
     }
    }
   },
@@ -1733,9 +3157,66 @@
       "out_finite": false
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 6396.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 0.0037589594784126048,
+      "abs_err_out": 0.15135480950449942,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 51168.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "rel_err_out": 0.0037589594784126048,
+      "abs_err_out": 0.15135480950449942,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 851
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "out_finite": false
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 849
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "out_finite": false
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C1": {
@@ -1845,9 +3326,70 @@
       "out_finite": false
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 6411.34228515625
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 6.42524038863376e-05,
+      "abs_err_out": 0.0004310455564103931,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 51290.73828125
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "rel_err_out": 6.425240574214559e-05,
+      "abs_err_out": 0.0004310455564103931,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 410325.90625
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "rel_err_out": 6.425240608580789e-05,
+      "abs_err_out": 0.0004310455564103931,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 414763.71875
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "rel_err_out": 6.408999758945133e-05,
+      "abs_err_out": 0.00042416279666207806,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "gpu": 3
     }
    },
    "C3": {
@@ -1959,9 +3501,66 @@
       "out_finite": false
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 6396.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 0.0037589594784126048,
+      "abs_err_out": 0.15135480950449942,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 51168.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "rel_err_out": 0.0037589594784126048,
+      "abs_err_out": 0.15135480950449942,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 851
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "out_finite": false
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 849
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "out_finite": false
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C5": {
@@ -2081,9 +3680,70 @@
       "out_finite": true
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 6352.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 0.008106393658623375,
+      "abs_err_out": 0.2714118233607853,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 33440.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "rel_err_out": 0.3664346593246969,
+      "abs_err_out": 6.993908537339699,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 44544.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "rel_err_out": 0.9029318513329603,
+      "abs_err_out": 16.97244641369966,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 47968.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "rel_err_out": 0.902587257828318,
+      "abs_err_out": 16.995085676784278,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 3,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 5
     }
    },
    "C6s2": {
@@ -2193,9 +3853,66 @@
       "out_finite": false
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 6412.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 0.00021805677376786177,
+      "abs_err_out": 0.005965230693808414,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 51296.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "rel_err_out": 0.00021805686975528936,
+      "abs_err_out": 0.005965230693808414,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 676
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "out_finite": false
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 672
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "out_finite": false
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C6s4": {
@@ -2305,9 +4022,66 @@
       "out_finite": false
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 6412.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 0.00021805677376786177,
+      "abs_err_out": 0.005965230693808414,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 51296.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "rel_err_out": 0.00021805686975528936,
+      "abs_err_out": 0.005965230693808414,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 676
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "out_finite": false
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 672
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "out_finite": false
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C6s8": {
@@ -2417,9 +4191,66 @@
       "out_finite": false
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 6412.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 0.00021805677376786177,
+      "abs_err_out": 0.005965230693808414,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 51296.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "rel_err_out": 0.00021805686975528936,
+      "abs_err_out": 0.005965230693808414,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 676
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "out_finite": false
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 672
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "out_finite": false
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C6d4": {
@@ -2529,9 +4360,66 @@
       "out_finite": false
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 6396.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 0.0037589594784126048,
+      "abs_err_out": 0.15135480950449942,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 51168.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "rel_err_out": 0.0037589594784126048,
+      "abs_err_out": 0.15135480950449942,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 851
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "out_finite": false
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 849
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "out_finite": false
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C6d8": {
@@ -2641,9 +4529,66 @@
       "out_finite": false
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 6396.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 0.0037589594784126048,
+      "abs_err_out": 0.15135480950449942,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 51168.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "rel_err_out": 0.0037589594784126048,
+      "abs_err_out": 0.15135480950449942,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 851
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "out_finite": false
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 849
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "out_finite": false
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C7": {
@@ -2773,9 +4718,72 @@
       "out_finite": true
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 6408.0,
+       "raw": 21888.0
+      },
+      "nonfinite_counts": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 0.0036331869005810278,
+      "abs_err_out": 0.1425339568670158,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf",
+       "raw": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 480,
+       "raw": 480
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "out_finite": false
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf",
+       "raw": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 40280,
+       "raw": 40280
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "out_finite": false
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf",
+       "raw": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 39668,
+       "raw": 39668
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "out_finite": false
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 2,
      "cpu": 3
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 5
     }
    },
    "C8": {
@@ -2937,9 +4945,604 @@
       "out_finite": true
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "raw": 21888.0,
+       "out": 6408.0,
+       "P": 21888.0,
+       "N": 21888.0
+      },
+      "nonfinite_counts": {
+       "raw": 0,
+       "out": 0,
+       "P": 0,
+       "N": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 0.013630018897919136,
+      "abs_err_out": 0.1425339568670158,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": false,
+      "max_abs": {
+       "raw": "inf",
+       "out": "inf",
+       "P": "inf",
+       "N": "inf"
+      },
+      "nonfinite_counts": {
+       "raw": 1399,
+       "out": 1399,
+       "P": 781,
+       "N": 862
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "out_finite": false
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "raw": null,
+       "out": null,
+       "P": "inf",
+       "N": "inf"
+      },
+      "nonfinite_counts": {
+       "raw": 180224,
+       "out": 180224,
+       "P": 180048,
+       "N": 180048
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "out_finite": false
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "raw": null,
+       "out": null,
+       "P": "inf",
+       "N": "inf"
+      },
+      "nonfinite_counts": {
+       "raw": 180224,
+       "out": 180224,
+       "P": 180048,
+       "N": 180048
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "out_finite": false
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 4,
      "cpu": 5
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 9
+    }
+   },
+   "C4-ane": {
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 6280.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 0.014982522949035217,
+      "abs_err_out": 0.6287275287396087,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 50240.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "rel_err_out": 0.014982522949035217,
+      "abs_err_out": 0.6287275287396087,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 855
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "out_finite": false
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 855
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "out_finite": false
+     }
+    },
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 6280.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 0.014982522949035217,
+      "abs_err_out": 0.6287275287396087,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 50240.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "rel_err_out": 0.014982522949035217,
+      "abs_err_out": 0.6287275287396087,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 855
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "out_finite": false
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 855
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "out_finite": false
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 6412.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 0.00021805677376786177,
+      "abs_err_out": 0.005965230693808414,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 51296.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "rel_err_out": 0.00021805686975528936,
+      "abs_err_out": 0.005965230693808414,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 676
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "out_finite": false
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 672
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "out_finite": false
+     }
+    },
+    "compute_plan_cpuAndNeuralEngine": {
+     "ane": 3,
+     "cpu": 3
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 5,
+     "gpu": 1
+    }
+   },
+   "C3-ane": {
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 6280.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 0.014982522949035217,
+      "abs_err_out": 0.6287275287396087,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 50240.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "rel_err_out": 0.014982522949035217,
+      "abs_err_out": 0.6287275287396087,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 855
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "out_finite": false
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 855
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "out_finite": false
+     }
+    },
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 6280.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 0.014982522949035217,
+      "abs_err_out": 0.6287275287396087,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 50240.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "rel_err_out": 0.014982522949035217,
+      "abs_err_out": 0.6287275287396087,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 855
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "out_finite": false
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 855
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "out_finite": false
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 6412.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 0.00021805677376786177,
+      "abs_err_out": 0.005965230693808414,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 51296.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "rel_err_out": 0.00021805686975528936,
+      "abs_err_out": 0.005965230693808414,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 676
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "out_finite": false
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 672
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "out_finite": false
+     }
+    },
+    "compute_plan_cpuAndNeuralEngine": {
+     "ane": 3,
+     "cpu": 3
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 5,
+     "gpu": 1
+    }
+   },
+   "C6s8-ane": {
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 6280.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 0.014982522949035217,
+      "abs_err_out": 0.6287275287396087,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 50240.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "rel_err_out": 0.014982522949035217,
+      "abs_err_out": 0.6287275287396087,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 855
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "out_finite": false
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 855
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "out_finite": false
+     }
+    },
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 6280.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 0.014982522949035217,
+      "abs_err_out": 0.6287275287396087,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 50240.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "rel_err_out": 0.014982522949035217,
+      "abs_err_out": 0.6287275287396087,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 855
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "out_finite": false
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 855
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "out_finite": false
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 6412.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 6411.351476058972,
+      "reference_max_abs_raw_rows0_3": 21902.33164798795,
+      "rel_err_out": 0.00021805677376786177,
+      "abs_err_out": 0.005965230693808414,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 51296.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 51290.81180847178,
+      "reference_max_abs_raw_rows0_3": 175218.6531839036,
+      "rel_err_out": 0.00021805686975528936,
+      "abs_err_out": 0.005965230693808414,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 676
+      },
+      "reference_max_abs_out": 410326.49446777423,
+      "reference_max_abs_raw_rows0_3": 1401749.2254712288,
+      "out_finite": false
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 672
+      },
+      "reference_max_abs_out": 414765.09701419534,
+      "reference_max_abs_raw_rows0_3": 1416912.291384607,
+      "out_finite": false
+     }
+    },
+    "compute_plan_cpuAndNeuralEngine": {
+     "ane": 3,
+     "cpu": 3
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 5,
+     "gpu": 1
     }
    }
   },
@@ -3057,9 +5660,70 @@
       "out_finite": false
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 646.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 0.004063049890335446,
+      "abs_err_out": 0.2660176799919953,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 5168.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 0.004063049890335446,
+      "abs_err_out": 0.2660176799919953,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 41344.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 0.004063049890335446,
+      "abs_err_out": 0.2660176799919953,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 39360.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "rel_err_out": 0.009370563916268488,
+      "abs_err_out": 0.403676343459101,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C1": {
@@ -3175,9 +5839,70 @@
       "out_finite": false
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 644.0676879882812
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 9.157498150968016e-05,
+      "abs_err_out": 0.0026395051673381,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 5152.54150390625
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 9.157529673283855e-05,
+      "abs_err_out": 0.0026395051673381,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 41220.33203125
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 9.15752982868505e-05,
+      "abs_err_out": 0.0026395051673381,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 39294.6640625
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "rel_err_out": 5.4643990053614665e-05,
+      "abs_err_out": 0.0017686407843365828,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "gpu": 3
     }
    },
    "C3": {
@@ -3297,9 +6022,70 @@
       "out_finite": true
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 646.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 0.004063049890335446,
+      "abs_err_out": 0.2660176799919953,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 5168.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 0.004063049890335446,
+      "abs_err_out": 0.2660176799919953,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 41344.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 0.004063049890335446,
+      "abs_err_out": 0.2660176799919953,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 39360.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "rel_err_out": 0.009370563916268488,
+      "abs_err_out": 0.403676343459101,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C5": {
@@ -3419,9 +6205,70 @@
       "out_finite": true
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 655.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 0.07871663716849353,
+      "abs_err_out": 2.7028349248297903,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 4868.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 0.17543472227593485,
+      "abs_err_out": 6.387380217043657,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 15336.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 0.8777506071994032,
+      "abs_err_out": 46.41362252621919,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 14048.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "rel_err_out": 0.5312307740502803,
+      "abs_err_out": 27.979978431893738,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 3,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 5
     }
    },
    "C6s2": {
@@ -3537,9 +6384,70 @@
       "out_finite": false
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 644.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 0.0002231618117104172,
+      "abs_err_out": 0.02087990147061562,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 5152.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 0.000223161857453589,
+      "abs_err_out": 0.02087990147061562,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 41216.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 0.000223161857453589,
+      "abs_err_out": 0.02087990147061562,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 39296.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "rel_err_out": 0.00021326522937736988,
+      "abs_err_out": 0.011216850029272245,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C6s4": {
@@ -3655,9 +6563,70 @@
       "out_finite": false
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 644.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 0.0002231618117104172,
+      "abs_err_out": 0.02087990147061562,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 5152.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 0.000223161857453589,
+      "abs_err_out": 0.02087990147061562,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 41216.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 0.000223161857453589,
+      "abs_err_out": 0.02087990147061562,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 39296.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "rel_err_out": 0.00021326522937736988,
+      "abs_err_out": 0.011216850029272245,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C6s8": {
@@ -3773,9 +6742,70 @@
       "out_finite": false
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 644.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 0.0002231618117104172,
+      "abs_err_out": 0.02087990147061562,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 5152.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 0.000223161857453589,
+      "abs_err_out": 0.02087990147061562,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 41216.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 0.000223161857453589,
+      "abs_err_out": 0.02087990147061562,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 39296.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "rel_err_out": 0.00021326522937736988,
+      "abs_err_out": 0.011216850029272245,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C6d4": {
@@ -3891,9 +6921,70 @@
       "out_finite": false
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 646.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 0.004063049890335446,
+      "abs_err_out": 0.2660176799919953,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 5168.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 0.004063049890335446,
+      "abs_err_out": 0.2660176799919953,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 41344.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 0.004063049890335446,
+      "abs_err_out": 0.2660176799919953,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 39360.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "rel_err_out": 0.009370563916268488,
+      "abs_err_out": 0.403676343459101,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C6d8": {
@@ -4009,9 +7100,70 @@
       "out_finite": false
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 646.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 0.004063049890335446,
+      "abs_err_out": 0.2660176799919953,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 5168.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 0.004063049890335446,
+      "abs_err_out": 0.2660176799919953,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 41344.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 0.004063049890335446,
+      "abs_err_out": 0.2660176799919953,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 39360.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "rel_err_out": 0.009370563916268488,
+      "abs_err_out": 0.403676343459101,
+      "out_finite": true
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 1,
      "cpu": 2
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 3
     }
    },
    "C7": {
@@ -4145,9 +7297,76 @@
       "out_finite": true
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 641.5,
+       "raw": 662.0
+      },
+      "nonfinite_counts": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 0.004572797652343668,
+      "abs_err_out": 0.294836306104486,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 5132.0,
+       "raw": 5296.0
+      },
+      "nonfinite_counts": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 0.004572797652343668,
+      "abs_err_out": 0.294836306104486,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 41056.0,
+       "raw": 42368.0
+      },
+      "nonfinite_counts": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 0.004572797652343668,
+      "abs_err_out": 0.294836306104486,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": "inf",
+       "raw": "inf"
+      },
+      "nonfinite_counts": {
+       "out": 14,
+       "raw": 14
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "out_finite": false
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 2,
      "cpu": 3
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 5
     }
    },
    "C8": {
@@ -4311,9 +7530,644 @@
       "out_finite": false
      }
     },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "raw": 662.0,
+       "out": 646.5,
+       "P": 662.0,
+       "N": 662.0
+      },
+      "nonfinite_counts": {
+       "raw": 0,
+       "out": 0,
+       "P": 0,
+       "N": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 0.0068757343713681165,
+      "abs_err_out": 0.38077671257703966,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "raw": 5296.0,
+       "out": 5172.0,
+       "P": 5296.0,
+       "N": 5296.0
+      },
+      "nonfinite_counts": {
+       "raw": 0,
+       "out": 0,
+       "P": 0,
+       "N": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 0.0068757343713681165,
+      "abs_err_out": 0.38077671257703966,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "raw": 42368.0,
+       "out": 41376.0,
+       "P": 42368.0,
+       "N": 42368.0
+      },
+      "nonfinite_counts": {
+       "raw": 0,
+       "out": 0,
+       "P": 0,
+       "N": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 0.0068757343713681165,
+      "abs_err_out": 0.38077671257703966,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "raw": "inf",
+       "out": "inf",
+       "P": "inf",
+       "N": "inf"
+      },
+      "nonfinite_counts": {
+       "raw": 14,
+       "out": 14,
+       "P": 7,
+       "N": 7
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "out_finite": false
+     }
+    },
     "compute_plan_cpuAndNeuralEngine": {
      "ane": 4,
      "cpu": 5
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 9
+    }
+   },
+   "C4-ane": {
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 647.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 0.007902438114446624,
+      "abs_err_out": 0.5663534553949519,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 5176.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 0.007902438114445954,
+      "abs_err_out": 0.5663534553949519,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 41408.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 0.007902438114445954,
+      "abs_err_out": 0.5663534553949519,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 39488.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "rel_err_out": 0.039832818401891984,
+      "abs_err_out": 1.281926820434399,
+      "out_finite": true
+     }
+    },
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 647.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 0.007902438114446624,
+      "abs_err_out": 0.5663534553949519,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 5176.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 0.007902438114445954,
+      "abs_err_out": 0.5663534553949519,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 41408.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 0.007902438114445954,
+      "abs_err_out": 0.5663534553949519,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 39488.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "rel_err_out": 0.039832818401891984,
+      "abs_err_out": 1.281926820434399,
+      "out_finite": true
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 644.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 0.0002231618117104172,
+      "abs_err_out": 0.02087990147061562,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 5152.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 0.000223161857453589,
+      "abs_err_out": 0.02087990147061562,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 41216.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 0.000223161857453589,
+      "abs_err_out": 0.02087990147061562,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 39296.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "rel_err_out": 0.00021326522937736988,
+      "abs_err_out": 0.011216850029272245,
+      "out_finite": true
+     }
+    },
+    "compute_plan_cpuAndNeuralEngine": {
+     "ane": 3,
+     "cpu": 3
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 5,
+     "gpu": 1
+    }
+   },
+   "C3-ane": {
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 647.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 0.007902438114446624,
+      "abs_err_out": 0.5663534553949519,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 5176.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 0.007902438114445954,
+      "abs_err_out": 0.5663534553949519,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 41408.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 0.007902438114445954,
+      "abs_err_out": 0.5663534553949519,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 39488.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "rel_err_out": 0.039832818401891984,
+      "abs_err_out": 1.281926820434399,
+      "out_finite": true
+     }
+    },
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 647.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 0.007902438114446624,
+      "abs_err_out": 0.5663534553949519,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 5176.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 0.007902438114445954,
+      "abs_err_out": 0.5663534553949519,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 41408.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 0.007902438114445954,
+      "abs_err_out": 0.5663534553949519,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 39488.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "rel_err_out": 0.039832818401891984,
+      "abs_err_out": 1.281926820434399,
+      "out_finite": true
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 644.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 0.0002231618117104172,
+      "abs_err_out": 0.02087990147061562,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 5152.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 0.000223161857453589,
+      "abs_err_out": 0.02087990147061562,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 41216.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 0.000223161857453589,
+      "abs_err_out": 0.02087990147061562,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 39296.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "rel_err_out": 0.00021326522937736988,
+      "abs_err_out": 0.011216850029272245,
+      "out_finite": true
+     }
+    },
+    "compute_plan_cpuAndNeuralEngine": {
+     "ane": 3,
+     "cpu": 3
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 5,
+     "gpu": 1
+    }
+   },
+   "C6s8-ane": {
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 647.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 0.007902438114446624,
+      "abs_err_out": 0.5663534553949519,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 5176.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 0.007902438114445954,
+      "abs_err_out": 0.5663534553949519,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 41408.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 0.007902438114445954,
+      "abs_err_out": 0.5663534553949519,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 39488.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "rel_err_out": 0.039832818401891984,
+      "abs_err_out": 1.281926820434399,
+      "out_finite": true
+     }
+    },
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 647.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 0.007902438114446624,
+      "abs_err_out": 0.5663534553949519,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 5176.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 0.007902438114445954,
+      "abs_err_out": 0.5663534553949519,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 41408.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 0.007902438114445954,
+      "abs_err_out": 0.5663534553949519,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 39488.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "rel_err_out": 0.039832818401891984,
+      "abs_err_out": 1.281926820434399,
+      "out_finite": true
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 644.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 644.0691773402324,
+      "reference_max_abs_raw_rows0_3": 651.0389662713803,
+      "rel_err_out": 0.0002231618117104172,
+      "abs_err_out": 0.02087990147061562,
+      "out_finite": true
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 5152.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 5152.553418721859,
+      "reference_max_abs_raw_rows0_3": 5208.311730171043,
+      "rel_err_out": 0.000223161857453589,
+      "abs_err_out": 0.02087990147061562,
+      "out_finite": true
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 41216.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 41220.42734977487,
+      "reference_max_abs_raw_rows0_3": 41666.49384136834,
+      "rel_err_out": 0.000223161857453589,
+      "abs_err_out": 0.02087990147061562,
+      "out_finite": true
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 39296.0
+      },
+      "nonfinite_counts": {
+       "out": 0
+      },
+      "reference_max_abs_out": 39294.889428401075,
+      "reference_max_abs_raw_rows0_3": 77710.66971070821,
+      "rel_err_out": 0.00021326522937736988,
+      "abs_err_out": 0.011216850029272245,
+      "out_finite": true
+     }
+    },
+    "compute_plan_cpuAndNeuralEngine": {
+     "ane": 3,
+     "cpu": 3
+    },
+    "compute_plan_cpuAndGPU": {
+     "cpu": 5,
+     "gpu": 1
     }
    }
   }

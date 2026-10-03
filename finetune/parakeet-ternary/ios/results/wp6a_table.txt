@@ -1,0 +1,33 @@
+ANE graph layout (DESIGN.md D) vs plain, multifunction, CPU_AND_NE compute plan: ops on the ANE / ops with usage (estimated ANE cost share), per function
+
+| arm | layout | b2 | b4 | b8 | b15 | CPU ops (b15) | mlmodelc MB | convert s | compile s | build peak MB |
+|---|---|---|---|---|---|---|---|---|---|---|
+| C4 | plain | 1369/1393 (0.998) | 1374/1393 (0.995) | 1374/1393 (0.991) | 1376/1393 (0.994) | 17: identity 1, cast 2, relu 1, add 3, floor_div 3, less 4, sub 3 | 185.0 | 34.7 | 0.99 | 2364.8 |
+| C4 | ane | 4513/4537 (0.996) | 4518/4537 (0.998) | 4518/4537 (0.978) | 4520/4537 (0.987) | 17: identity 1, cast 2, relu 1, add 3, floor_div 3, less 4, sub 3 | 190.1 | 110.2 | 3.03 | 1875.4 |
+| C3 | plain | 1369/1393 (0.998) | 1374/1393 (0.995) | 1374/1393 (0.991) | 1376/1393 (0.994) | 17: identity 1, cast 2, relu 1, add 3, floor_div 3, less 4, sub 3 | 598.7 | 32.0 | 1.07 | 1277.6 |
+| C3 | ane | 4513/4537 (0.996) | 4518/4537 (0.998) | 4518/4537 (0.978) | 4520/4537 (0.987) | 17: identity 1, cast 2, relu 1, add 3, floor_div 3, less 4, sub 3 | 603.8 | 108.5 | 2.84 | 1859.9 |
+| C6s8 | plain | 1369/1393 (0.998) | 1374/1393 (0.995) | 1374/1393 (0.991) | 1376/1393 (0.994) | 17: identity 1, cast 2, relu 1, add 3, floor_div 3, less 4, sub 3 | 303.8 | 40.6 | 1.2 | 1707.2 |
+| C6s8 | ane | 4513/4537 (0.996) | 4518/4537 (0.998) | 4518/4537 (0.978) | 4520/4537 (0.987) | 17: identity 1, cast 2, relu 1, add 3, floor_div 3, less 4, sub 3 | 308.9 | 116.3 | 2.93 | 2105.7 |
+
+Gates and eligibility (FP32 decoder/joint, both deployed paths; load = first / cached, s, per function b2..b15; peak = gate job RSS MB)
+
+| arm | backend | 4a (FP32 build) rel / abs max | 4b enc rel max | identical seqs jd / dj | agree all tok / dur | gate 5 | stress | eligible | load first / cached (s) | peak MB |
+|---|---|---|---|---|---|---|---|---|---|---|
+| C4-ane | ane | 2.3e-06 / 4.2e-05 (pass) | 0.0335 | 62 / 62 | 0.9990 / 0.9921 | True | pass | yes | 38/0.96 42/0.90 48/0.92 50/0.92 | 779.4 |
+| C3-ane | ane | 2.3e-06 / 4.2e-05 (pass) | 0.0351 | 62 / 62 | 0.9990 / 0.9931 | True | pass | yes | 38/0.87 43/0.90 49/0.85 51/0.95 | 1177.8 |
+| C6s8-ane | ane | 2.2e-06 / 3.4e-05 (pass) | 0.0344 | 62 / 62 | 0.9990 / 0.9917 | True | pass | yes | 113/1.01 116/0.98 124/0.97 121/0.97 | 1003.7 |
+| C4 | gpu | 2.0e-06 / 3.1e-05 (pass) | 0.0167 | 64 / 64 | 0.9997 / 0.9990 | True | pass | yes | 4/0.01 4/0.01 4/0.01 4/0.01 | 1823.0 |
+| C7 | gpu | 1.8e-06 / 3.5e-05 (pass) | 0.0221 | 64 / 64 | 1.0000 / 0.9967 | True | FAIL | no | 3/0.01 3/0.01 3/0.01 4/0.01 | 1802.6 |
+| C3 | gpu | 2.0e-06 / 3.1e-05 (pass) | 0.0167 | 64 / 64 | 0.9997 / 0.9990 | True | pass | yes | 2/0.01 3/0.01 3/0.01 3/0.01 | 2203.8 |
+| C6s8 | gpu | 2.0e-06 / 3.1e-05 (pass) | 0.0136 | 64 / 64 | 1.0000 / 0.9983 | True | pass | yes | 312/0.23 312/0.22 308/0.25 315/0.03 | 3089.9 |
+| C1 | gpu | - | not run | - | - | - | pass | no | - | - |
+
+CPU_AND_GPU compute plans (plain multifunction): ops on the GPU / ops with usage (estimated GPU cost share)
+
+| arm | b2 | b4 | b8 | b15 |
+|---|---|---|---|---|
+| C4 | 4/1393 (0.000) | 7/1393 (0.002) | 6/1393 (0.002) | 9/1393 (0.002) |
+| C7 | 4/1633 (0.000) | 7/1633 (0.002) | 6/1633 (0.002) | 9/1633 (0.002) |
+| C3 | 4/1393 (0.000) | 7/1393 (0.002) | 6/1393 (0.002) | 9/1393 (0.002) |
+| C6s8 | 4/1393 (0.000) | 7/1393 (0.002) | 6/1393 (0.002) | 9/1393 (0.002) |
+| C1 | 339/1393 (0.123) | 342/1393 (0.380) | 341/1393 (0.501) | 344/1393 (0.489) |
