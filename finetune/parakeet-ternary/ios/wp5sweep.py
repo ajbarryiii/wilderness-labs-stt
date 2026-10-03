@@ -211,8 +211,12 @@ def mac_build() -> dict:
     from pipegate import check_deployment
 
     commit = check_deployment()
-    exe = mac("shasum -a 256 bench/.build/release/parakeet-bench | cut -d' ' -f1").strip()
-    return {"commit": commit, "executable_sha256": exe}
+    exe = mac(f"shasum -a 256 {MAC_A}/reviewed/parakeet-bench | cut -d' ' -f1").strip()
+    info = json.loads(mac(f"cat {MAC_A}/reviewed/BUILD_INFO.json"))
+    if info.get("executable_sha256") != exe:
+        raise RuntimeError("the Mac binary is not the one build_reviewed.sh stamped")
+    return {"commit": commit, "executable_sha256": exe, "built_from_commit": info.get("commit"),
+            "source_tree": info.get("source_tree")}
 
 
 def cmd_sweep(args) -> int:
@@ -282,7 +286,7 @@ def cmd_verify(args) -> int:
         argv = bench_args(a, halves()["A"]) + ["--pair-c0", f"{MAC_A}/c0", "--c0-out", f"{MAC_A}/wp7/verify-c0.jsonl",
                                                 "--c0-compute-units", "cpuAndNeuralEngine", "--out", f"{MAC_A}/wp7/verify.jsonl",
                                                 "--verify-only"]
-        cmd = "./macguard --rss-cap 1G --timeout 600 -- bench/.build/release/parakeet-bench run " + " ".join(shlex.quote(x) for x in argv)
+        cmd = f"./macguard --rss-cap 1G --timeout 600 -- {MAC_A}/reviewed/parakeet-bench run " + " ".join(shlex.quote(x) for x in argv)
         line = (f"i=0; while :; do {cmd} > {MAC_A}/wp7/verify.out 2>&1; s=$?; [ $s -ne 3 ] && break; i=$((i+1)); "
                 f"[ $i -gt 30 ] && break; sleep 30; done; grep -v '^macguard: ' {MAC_A}/wp7/verify.out; "
                 f"rm -f {MAC_A}/wp7/verify.out; echo \"exit $s\"")

@@ -17,7 +17,7 @@ need=$1 out=$2; shift 2
 [ "$1" = "--" ] && shift
 ios=$(cd -- "$(dirname -- "$0")" && pwd)
 art=/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios
-bench=$ios/bench/.build/release/parakeet-bench
+bench=$art/reviewed/parakeet-bench   # installed by build_reviewed.sh
 cache="$HOME/Library/Caches/parakeet-bench"
 free_kb=$(df -k "$art" 2>/dev/null | awk 'NR == 2 {print $4}')
 case "$free_kb" in ''|*[!0-9]*) echo "pipegate_job.sh: refusing: cannot read free disk space" >&2; exit 5;; esac
@@ -34,7 +34,7 @@ dirty=$(git -C "$ios" status --porcelain --untracked-files=no | wc -l | tr -d ' 
 exe=$(shasum -a 256 "$bench" | cut -d' ' -f1)
 clean=false; [ "$dirty" = 0 ] && clean=true
 # the binary must be the one build_reviewed.sh built from this very commit
-info="$ios/bench/.build/release/BUILD_INFO.json"
+info="$art/reviewed/BUILD_INFO.json"
 built_from=$(sed -n 's/.*"commit": "\([0-9a-f]*\)".*/\1/p' "$info" 2>/dev/null)
 built_exe=$(sed -n 's/.*"executable_sha256": "\([0-9a-f]*\)".*/\1/p' "$info" 2>/dev/null)
 { [ "$built_from" = "$commit" ] && [ "$built_exe" = "$exe" ]; } || clean=false

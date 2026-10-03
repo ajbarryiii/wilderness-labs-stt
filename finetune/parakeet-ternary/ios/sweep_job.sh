@@ -20,7 +20,7 @@ need=$1 out=$2 cached_clip=$3; shift 3
 [ "$1" = "--" ] && shift
 ios=$(cd -- "$(dirname -- "$0")" && pwd)
 art=/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios
-bench=$ios/bench/.build/release/parakeet-bench
+bench=$art/reviewed/parakeet-bench   # installed by build_reviewed.sh
 cache="$HOME/Library/Caches/parakeet-bench"
 free_kb=$(df -k "$art" 2>/dev/null | awk 'NR == 2 {print $4}')
 case "$free_kb" in ''|*[!0-9]*) echo "sweep_job.sh: refusing: cannot read free disk space" >&2; exit 5;; esac
