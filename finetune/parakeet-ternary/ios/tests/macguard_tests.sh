@@ -86,6 +86,19 @@ check "16 supervisor dead before ACK: killed, CMD never ran, no wrapper left, lo
   "$r $(test -e $W/ran16 && echo yes || echo no) $(ps -A -o command= | grep -c '[e]xec-after-gate.*sleep 3016') $(waitfree 10 >/dev/null; st $G --rss-cap 200M --timeout 5 -- true)"
 # 17: a failing end log turns a successful job into 125 (fail closed)
 check "17 end-log failure: 125" 125 "$(st env MACGUARD_TEST_FAULT=end-log-fail $G --rss-cap 200M --timeout 30 -- true)"
+# 18: group not verifiable and the sentinel unreachable: a detached watcher takes the lock (acknowledged); macguard
+# exits 125; the lock stays held until the group is really gone
+rm -f $P; env MACGUARD_TEST_FAULT=killpg-eperm,no-sentinel-handoff $G --rss-cap 200M --timeout 2 -- sh -c "echo \$\$ > $P; exec sleep 300" 2>/dev/null; r=$?
+job=$(cat $P)
+check "18 watcher hand-off: 125, job alive, lock retained" "125 yes 3" "$r $(alive $job) $(st $G --rss-cap 200M --timeout 5 -- true)"
+kill -KILL -- -$job 2>/dev/null; sleep 2
+check "18 after the group is gone: lock released by the watcher" "no 0" "$(alive $job) $(waitfree 10 >/dev/null; st $G --rss-cap 200M --timeout 5 -- true)"
+# 19: the watcher fails to start: macguard must keep the lock itself (it blocks, killing) until the group is gone
+rm -f $P; env MACGUARD_TEST_FAULT=killpg-eperm,no-sentinel-handoff,watcher-fail $G --rss-cap 200M --timeout 2 -- sh -c "echo \$\$ > $P; exec sleep 300" 2>/dev/null & m=$!
+sleep 14; job=$(cat $P)
+check "19 watcher start failed: macguard still running, job alive, lock retained" "yes yes 3" "$(alive $m) $(alive $job) $(st $G --rss-cap 200M --timeout 5 -- true)"
+kill -KILL -- -$job 2>/dev/null; wait $m; r=$?
+check "19 after the group is gone: macguard exits 125 and releases the lock" "125 0" "$r $(waitfree 10 >/dev/null; st $G --rss-cap 200M --timeout 5 -- true)"
 rm -f $W/r6 $W/r7.* $W/ran $W/ran16
 echo "failed checks: $FAILS"
 exit $FAILS

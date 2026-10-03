@@ -38,8 +38,9 @@ Cleanup runs for every outcome, with every signalling and bookkeeping step guard
 5 s grace, then SIGKILL repeated until the kernel reports the group empty (os.killpg(pgid, 0) ->
 ProcessLookupError; any other answer counts as alive), for at most 60 s. Only a group verified empty is
 released. If it cannot be verified, macguard exits 125 and hands the group over: to the sentinel ("watch"),
-or, if the sentinel cannot be reached, to a newly forked detached watcher holding the lock; if even that
-fork fails, the supervisor keeps killing itself. Whoever holds it keeps the lock and keeps sending SIGKILL
+or, if the sentinel cannot be reached, to a newly forked detached watcher holding the lock, which must
+acknowledge its start over a pipe; if the watcher does not start (fork failure, early death, no ack), the
+supervisor itself keeps the lock and keeps killing until the group is empty. Whoever holds it keeps the lock and keeps sending SIGKILL
 until the group is empty. A leader that exits normally with descendants left in its group gets the same
 cleanup. The sentinel catches its own errors: with a registered group it cleans up before it exits (status
 1 after an error), so an erroring sentinel never leaves a live job behind an unlocked file. If the
@@ -60,7 +61,9 @@ inherited descriptors (e.g. Python subprocess with close_fds) loses containment 
 
 Test hooks (tests/macguard_tests.sh only; inert unless set): MACGUARD_TEST_FAULT, a comma-separated list of
 "killpg-eperm" (os.killpg with a real signal raises PermissionError), "die-before-ack" (the supervisor
-SIGKILLs itself right after starting the gated wrapper) and "end-log-fail" (the end log raises OSError);
+SIGKILLs itself right after starting the gated wrapper), "end-log-fail" (the end log raises OSError),
+"no-sentinel-handoff" (the supervisor treats the sentinel as unreachable when handing over a group) and
+"watcher-fail" (the detached watcher dies before acknowledging its start);
 with any fault set the SIGKILL deadline is 3 s instead of 60 s.
 
 Log: <dir>/logs/macguard.log (dir = $MACGUARD_DIR, default
@@ -353,26 +356,47 @@ def sentinel(ctrl_r: int, ack_w: int, lock_fd: int, supervisor: int, log_path: s
 
 
 def spawn_watcher(pgid: int, lock_fd: int, log_path: str) -> bool:
-    """Fork a detached watcher that holds the lock and kills group pgid until it is empty."""
+    """Fork a detached watcher that holds the lock and kills group pgid until it is empty. True only once the
+    watcher itself has acknowledged its start (over a pipe, within ACK_TIMEOUT_S) and the intermediate child exited
+    0; on any failure the caller keeps ownership (review WP4/5 finding 4). Never raises."""
+    try:
+        ack_r, ack_w = os.pipe()
+    except OSError:
+        return False
     try:
         pid = os.fork()
     except OSError:
+        os.close(ack_r); os.close(ack_w)
         return False
     if pid == 0:
+        code = 1
         try:
-            _detach({0, 1, 2, lock_fd})
-            if os.fork() != 0:
+            os.close(ack_r)
+            _detach({0, 1, 2, lock_fd, ack_w})
+            if "watcher-fail" in FAULTS:
+                os._exit(1)
+            grandchild = os.fork()
+            if grandchild != 0:
                 os._exit(0)
+            os.write(ack_w, b"ok")
+            os.close(ack_w)
             log_safe(log_path, f"watcher {os.getpid()}", f"killing group {pgid} until it is empty", False)
             escalate(pgid, kill_deadline=FOREVER)
             log_safe(log_path, f"watcher {os.getpid()}", f"group {pgid} empty; releasing the lock", False)
+            code = 0
         finally:
-            os._exit(0)
+            os._exit(code)
+    os.close(ack_w)
+    ok = False
     try:
-        os.waitpid(pid, 0)
+        _, status = os.waitpid(pid, 0)
+        ready, _, _ = select.select([ack_r], [], [], ACK_TIMEOUT_S)
+        ok = status == 0 and bool(ready) and os.read(ack_r, 2) == b"ok"
     except OSError:
-        pass
-    return True
+        ok = False
+    finally:
+        os.close(ack_r)
+    return ok
 
 
 # --- supervisor ---------------------------------------------------------------------------------------
@@ -518,7 +542,8 @@ class Guard:
                 reason = f"{'logging' if phase == 'start' else 'monitoring'} failed: {exc!r}"
         finally:
             empty = self.cleanup(proc, pgid, reason or internal, problems)
-            self.hand_off(empty, pgid, lock_fd, ctrl_w, sentinel_pid, sentinel_status, reason, problems)
+            self.hand_off(empty, pgid, lock_fd, ctrl_w, sentinel_pid, sentinel_status, reason, problems,
+                          reap=proc.poll if proc is not None else (lambda: None))
             for fd in (ctrl_w, ack_r, lock_fd):  # never LOCK_UN: the lock lasts while any holder lives
                 try:
                     os.close(fd)
@@ -575,7 +600,7 @@ class Guard:
         return empty
 
     def hand_off(self, empty: bool, pgid, lock_fd: int, ctrl_w: int, sentinel_pid: int, sentinel_status, reason,
-                 problems: list) -> None:
+                 problems: list, reap=lambda: None) -> None:
         """Release (group verified empty) or hand the group over to a lock holder that kills it until it is empty.
         Never raises; never lets go of the lock while the group may be alive."""
         if empty:
@@ -596,6 +621,8 @@ class Guard:
             return
         message = f"process group {pgid} not verified empty after cleanup"
         try:
+            if "no-sentinel-handoff" in FAULTS:
+                raise OSError("sentinel hand-off disabled (injected by MACGUARD_TEST_FAULT)")
             os.write(ctrl_w, b"watch\n")
             if self.sentinel_exited(sentinel_pid) is not None:
                 raise OSError("sentinel exited")
@@ -607,7 +634,8 @@ class Guard:
             self.say_safe(f"ERROR: {message}; sentinel unreachable, a detached watcher keeps the lock and kills it")
             return
         self.say_safe(f"ERROR: {message}; no sentinel or watcher; macguard keeps the lock and kills it")
-        escalate(pgid, kill_deadline=FOREVER)
+        escalate(pgid, reap=reap, kill_deadline=FOREVER)  # reap: our own job leader would otherwise stay a zombie
+        self.say_safe(f"group {pgid} empty; macguard releases the lock")
 
 
 def caller_environment(environ) -> dict:
