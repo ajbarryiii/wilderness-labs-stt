@@ -262,12 +262,20 @@ def cmd_sweep(args) -> int:
 def cmd_verify(args) -> int:
     """Deployment check before a sweep (no model loaded, nothing timed): the Mac checkout is this commit and clean,
     its binary is the one the pipeline gates ran, and `parakeet-bench run --verify-only` accepts every arm with its
-    exact sweep arguments (pipeline record + component SHA-256s + WP3 record) and verifies C0 against c0.json."""
+    exact sweep arguments (pipeline record + component SHA-256s + WP3 record) and verifies C0 against c0.json.
+    Archived encoder packages are restored first (mil/archive.py back: guarded, disk-checked, SHA-256-verified) and
+    archived again (mil/archive.py out) once no later arm needs them (review WP7 r2 finding 4)."""
     groups = set(args.groups.split(","))
     todo = [a for a in arms() if a["group"] in groups and (not args.only or a["name"] in args.only.split(","))]
     build = mac_build()
     failures = []
-    for a in todo:
+    restored: set = set()
+    for i, a in enumerate(todo):
+        try:
+            ensure_model(a, restored)
+        except Exception as exc:
+            failures.append(f"{a['name']}: restore failed: {exc}")
+            continue
         rec = json.loads(pipeline_record(a).read_text()) if pipeline_record(a).exists() else {}
         if rec.get("components", {}).get("executable_sha256") != build["executable_sha256"]:
             failures.append(f"{a['name']}: record executable differs from the Mac binary")
@@ -275,9 +283,14 @@ def cmd_verify(args) -> int:
                                                 "--c0-compute-units", "cpuAndNeuralEngine", "--out", f"{MAC_A}/wp7/verify.jsonl",
                                                 "--verify-only"]
         cmd = "./macguard --rss-cap 1G --timeout 600 -- bench/.build/release/parakeet-bench run " + " ".join(shlex.quote(x) for x in argv)
+        line = (f"i=0; while :; do {cmd} > {MAC_A}/wp7/verify.out 2>&1; s=$?; [ $s -ne 3 ] && break; i=$((i+1)); "
+                f"[ $i -gt 30 ] && break; sleep 30; done; grep -v '^macguard: ' {MAC_A}/wp7/verify.out; "
+                f"rm -f {MAC_A}/wp7/verify.out; echo \"exit $s\"")
         try:
-            outp = mac(f"{cmd} 2>&1 | grep -v '^macguard: '")
-            doc = json.loads(outp.strip().splitlines()[-1])
+            outp = mac(f"mkdir -p {MAC_A}/wp7; {line}", timeout=1500).strip().splitlines()
+            if not outp or outp[-1] != "exit 0":
+                raise RuntimeError(" | ".join(outp[-3:]))
+            doc = json.loads(outp[-2])
             ok = doc.get("verified") and doc.get("c0_identity", {}).get("verified")
             print(f"{a['name']}: {'verified' if ok else 'FAILED'}", flush=True)
             if not ok:
@@ -285,6 +298,10 @@ def cmd_verify(args) -> int:
         except Exception as exc:
             failures.append(f"{a['name']}: {str(exc)[-300:]}")
             print(f"{a['name']}: FAILED {str(exc)[-300:]}", flush=True)
+        later = {(b["model"], b["arm"]) for b in todo[i + 1:]}
+        for key in sorted(restored - later):
+            subprocess.run([str(IOS.parent / "python"), str(IOS / "mil" / "archive.py"), "out", *key], check=True)
+            restored.discard(key)
     print(json.dumps({"build": build, "failures": failures}))
     return 1 if failures else 0
 
@@ -335,6 +352,52 @@ def load_records(path: Path) -> list[dict]:
     return [json.loads(l) for l in path.read_text().splitlines() if l.strip()] if path.exists() else []
 
 
+def identity_problems(manifest: dict, a: dict, d: Path) -> list[str]:
+    """Do the run's paired arm, paired C0 and cached-load records describe exactly the manifest's arm and protocol?
+    (review WP7 r2 finding 5: a report must not label one arm's records with another arm's name)"""
+    legacy = bool(manifest.get("legacy"))
+    units = UNITS[a["backend"]]
+    loads = {f: next((r for r in load_records(d / f) if r.get("record") == "load"), {}) for f in ("arm.jsonl", "c0.jsonl", "cached.jsonl")}
+    problems = []
+
+    def want(f: str, key: str, value) -> None:
+        if loads[f].get(key) != value:
+            problems.append(f"{f}: {key} = {loads[f].get(key)!r}, expected {value!r}")
+
+    for f in ("arm.jsonl", "cached.jsonl"):
+        want(f, "arm", a["name"])
+        want(f, "compute_units", units)
+        spec = loads[f].get("arm_spec") or {}
+        if spec.get("front_end") != a["frontend"] or spec.get("decode") != a["decode"] or spec.get("encoder_input") is not None:
+            problems.append(f"{f}: arm_spec {spec} is not front end {a['frontend']} + {a['decode']}")
+        e = loads[f].get("eligibility") or {}
+        if legacy:  # WP5: the encoder record's file name
+            if not isinstance(e, dict) or e.get("record") != f"{a['model']}-{a['arm']}-{a['variant']}-{a['backend']}.json":
+                problems.append(f"{f}: eligibility record {e.get('record') if isinstance(e, dict) else e!r} is not this arm's")
+        else:
+            enc = ((e.get("components") or {}).get("encoder") or {}) if isinstance(e, dict) else {}
+            if not isinstance(e, dict) or e.get("pipeline_record") != pipeline_record(a).name \
+                    or (enc.get("model"), enc.get("arm"), enc.get("variant")) != (a["model"], a["arm"], a["variant"]) \
+                    or (e.get("components") or {}).get("compute_units") != units:
+                problems.append(f"{f}: eligibility is not the pipeline record {pipeline_record(a).name} on {units}")
+    want("arm.jsonl", "mode", "free")
+    want("arm.jsonl", "warmups", manifest.get("warmups", WARMUPS))
+    want("arm.jsonl", "timed", manifest.get("timed", TIMED))
+    want("cached.jsonl", "warmups", 1)
+    want("cached.jsonl", "timed", 0)
+    want("c0.jsonl", "arm", "C0")
+    want("c0.jsonl", "compute_units", "cpuAndNeuralEngine")
+    want("c0.jsonl", "preprocessor_units", "cpuOnly")
+    for key in ("mode", "warmups", "timed"):
+        want("c0.jsonl", key, loads["arm.jsonl"].get(key))
+    if not legacy:
+        want("arm.jsonl", "settle_ms", manifest.get("settle_ms"))
+        want("c0.jsonl", "settle_ms", manifest.get("settle_ms"))
+        if (loads["c0.jsonl"].get("pairing") or {}).get("arm") != a["name"]:
+            problems.append("c0.jsonl: pairing block names another arm")
+    return problems
+
+
 def verified_runs(manifest: dict, name: str) -> list[Path]:
     """The run directories the manifest names for one arm, after every check; SystemExit otherwise."""
     problems, dirs = [], []
@@ -348,6 +411,7 @@ def verified_runs(manifest: dict, name: str) -> list[Path]:
                 or (d / "STATUS").read_text().strip() != "0":
             problems.append(f"{name} half {half}: run directory {d} incomplete or not the manifest's")
             continue
+        problems += [f"{name} half {half}: {x}" for x in identity_problems(manifest, spec_of(name), d)]
         build = manifest.get("build")
         if build:
             for f in ("arm.jsonl", "c0.jsonl", "cached.jsonl"):
@@ -361,6 +425,10 @@ def verified_runs(manifest: dict, name: str) -> list[Path]:
     if problems:
         raise SystemExit("incomplete sweep: " + "; ".join(problems))
     return dirs
+
+
+def spec_of(name: str) -> dict:
+    return {a["name"]: a for a in arms()}[name]
 
 
 def cmd_report(args) -> None:
