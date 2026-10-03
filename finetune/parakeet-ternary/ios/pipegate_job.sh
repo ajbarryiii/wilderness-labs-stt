@@ -7,8 +7,10 @@
 #    an unreadable or non-numeric reading refuses too). NEED_GB is the caller's measured headroom for this arm
 #    (package already on disk + its Core ML cache estimate).
 # 2. Purges this binary's Core ML cache (~/Library/Caches/parakeet-bench) before and after; a failed purge exits 6.
-# 3. `parakeet-bench gate GATE ARGS... --out OUTDIR`, then `python -m pipegate evaluate --gate-dir OUTDIR`
-#    (exit 10 = a gate condition failed; the evaluation is written either way). Returns the first nonzero status.
+# 3. Writes OUTDIR/build.json (checkout commit, whether tracked files are modified, the binary's SHA-256), runs
+#    `parakeet-bench gate GATE ARGS... --out OUTDIR`, then `python -m pipegate evaluate --gate-dir OUTDIR`
+#    (exit 10 = a gate condition failed; the evaluation is written either way) and removes the per-step
+#    diagnostics (diag/) once evaluation.json exists. Returns the first nonzero status.
 set -u
 FLOOR=30
 need=$1 out=$2; shift 2
@@ -26,6 +28,12 @@ fi
 purge() { rm -rf "$cache" && [ ! -e "$cache" ] || { echo "pipegate_job.sh: cache purge failed" >&2; exit 6; }; }
 purge
 mkdir -p "$out"
+# build identity (review WP7 r1 finding 4): the checkout the binary was built from, and the binary itself
+commit=$(git -C "$ios" rev-parse HEAD)
+dirty=$(git -C "$ios" status --porcelain --untracked-files=no | wc -l | tr -d ' ')
+exe=$(shasum -a 256 "$bench" | cut -d' ' -f1)
+clean=false; [ "$dirty" = 0 ] && clean=true
+printf '{"commit": "%s", "clean": %s, "modified_tracked_files": %s, "executable_sha256": "%s"}\n' "$commit" "$clean" "$dirty" "$exe" > "$out/build.json"
 "$bench" gate "$@" --out "$out"
 s1=$?
 echo "cache after gate: $(du -sk "$cache" 2>/dev/null | cut -f1)KB" > "$out/cache.log"
@@ -33,6 +41,8 @@ s2=0
 if [ $s1 -eq 0 ]; then
   (cd "$ios" && pyenv/.venv/bin/python -m pipegate evaluate --gate-dir "$out")
   s2=$?
+  # the per-step diagnostics are large; evaluation.json holds their SHA-256s and every derived number
+  [ -f "$out/evaluation.json" ] && rm -rf "$out/diag"
 fi
 purge
 [ $s1 -ne 0 ] && exit $s1
