@@ -739,14 +739,15 @@ had never been gated end to end. Now they are, in Swift, on all 82 clips:
   ref64_index.json), as gate 5 has used since revision 5. Reason: on the silence clip the FP32 reference front end
   is rounding noise (its features differ from FP64 by rel 1.6e5; the exact features are 0, which front end A
   returns), so the reference encoder output there is noise-driven: refcache vs ref64 encoder outputs differ by rel
-  0.34 on silence and by ≤ 2.6e-6 on every other clip. Against the FP32-feature reference, every pipeline exceeds
-  the ceiling on the silence clip only (rel 0.33); this is kept in every summary as a diagnostic
-  (`encoder.diag_vs_reference_on_fp32_features`).
+  0.34 on silence and by ≤ 2.6e-6 on every other clip. The comparison against the FP32-feature reference is kept in
+  every summary as a diagnostic (`encoder.diag_vs_reference_on_fp32_features`). DESIGN.md revision 9 defines this
+  reference (gate 4, "Deployed-pipeline references").
 - `pipegate.py run` (NixOS) loops over every rev-8 timing-allowed encoder record except G0 (control, C0's weights)
   and MLX (no Swift implementation): restore → measured disk need → guarded job in a unique run directory →
   retrieval into `.part`, atomic rename, `LATEST` → `record`. Summaries: `results/pipegates/<model>-<arm>-<variant>-
   <backend>-vdsp.json`; records: `results/eligibility/pipelines/<…>-vdsp-<decode>.json`; table:
-  `results/eligibility/pipelines/table.txt`.
+  `results/eligibility/pipelines/table.txt`. (Pipeline records are revision 9: DESIGN.md gate 4, "Deployed-pipeline
+  references".)
 
 **Component-bound eligibility (finding 2).** A pipeline record holds `components`: compute units; encoder package
 (model/arm/variant and a SHA-256 over the sorted per-file SHA-256s of the `.mlmodelc`, symlinks refused); front end
@@ -780,22 +781,8 @@ its inputs are unchanged, and the arm's WP3 record still passes.
   backend; GPU-backend jobs get a 6G RSS cap (GPU-visible model memory counts in RSS: C3 on cpuAndGPU with the
   F0/F1 models exceeded 4.19 GB at load).
 
-**Pipeline gate results** (2026-10-03, `results/eligibility/pipelines/table.txt`). Every rev-8 timing-allowed encoder
-record except G0 and MLX: 49 arm × variant × backend combinations (C1, C3, C4, C6s2/s4/s8, C6d4/d8, C7, C8 on
-fixed/multi/enum where WP3 passed them; ANE, CPU and GPU backends; the -ane layouts), each with F2, F0 and F1:
-**147 pipeline records, all timing-allowed.**
-- Encoder (front end A → arm) vs the FP64-feature reference: max rel 0.008–0.036 per combination (ceiling 0.1).
-  Against the FP32-feature reference: the silence clip alone exceeds, rel 0.32–0.33, in all 49 (see above).
-- Free decoding: 62–64/64 identical; WER 2.711% = the reference's in every pipeline.
-- Decisions: decisive agreement token 1.0000, duration ≥ 0.9996; all-step agreement token ≥ 0.9983, duration
-  ≥ 0.9901 (ceiling 0.99, the closest margin in the gate).
-- F2, F0 and F1 give identical tokens and identical argmax decisions within every combination.
-- Jobs: 1–9 min each on the ANE/CPU, 23 min for C6s8 on the GPU (slow GPU loads). GPU- and CPU-backend jobs need
-  the 6G cap (C3/C4/C6s8 on the GPU and C3 multi on the CPU exceeded 4 GB with the decoder models loaded); C3 multi
-  on the ANE was once aborted by macguard on system free memory (24% < 25%) and passed on retry.
-
-**Experiment review.** Under the standing rule (code and experiment plan reviewed before any run), the plan is in
-`plans/wp7.md`. The gates above ran before the rule arrived and await the review's decision; the sweep of the new
-arms is not reported yet (a first pass measured footprints inflated by the hashing leak fixed in b8eac6d; a second
-pass was stopped when the rule arrived).
+**Results: pending rerun after a clean review.** Gate and sweep runs made before the review rule arrived are
+unreviewed and withdrawn: their records and summaries are quarantined under
+`results/eligibility/pipelines/quarantine/pre-review-20261003/` (read by nothing), and their raw-run pointers on
+NixOS were renamed `LATEST.quarantined-pre-review`. The reviewed procedure is `plans/wp7.md`.
 
