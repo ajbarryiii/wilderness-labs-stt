@@ -746,15 +746,15 @@ had never been gated end to end. Now they are, in Swift, on all 82 clips:
   and MLX (no Swift implementation): restore → measured disk need → guarded job in a unique run directory →
   retrieval into `.part`, atomic rename, `LATEST` → `record`. Summaries: `results/pipegates/<model>-<arm>-<variant>-
   <backend>-vdsp.json`; records: `results/eligibility/pipelines/<…>-vdsp-<decode>.json`; table:
-  `results/eligibility/pipelines/table.txt`. (Pipeline records are revision 9: DESIGN.md gate 4, "Deployed-pipeline
-  references".)
+  `results/eligibility/pipelines/table.txt`. (Pipeline records are revision 10: DESIGN.md gate 4, "Deployed-pipeline
+  references" and "Decisions-only decoder models".)
 
 **Component-bound eligibility (finding 2).** A pipeline record holds `components`: compute units; encoder package
 (model/arm/variant and a SHA-256 over the sorted per-file SHA-256s of the `.mlmodelc`, symlinks refused); front end
 (constants manifest SHA-256); decode (F2: native-weights SHA-256, precision fp32; F0/F1: SHA-256 of each Core ML
 decoder model and the precision from the decoder directory's manifest). `parakeet-bench run` rebuilds the same
 description from what it is about to load and refuses unless the record for the exact model-arm-variant-backend-
-front end-decode exists, is revision 9 and timing-allowed, its components match exactly (provenance blocks aside),
+front end-decode exists, is revision 10 and timing-allowed, its components match exactly (provenance blocks aside),
 its inputs are unchanged, and the arm's WP3 record still passes. After pre-run review round 1 the components also
 bind the native manifests (tensor names, offsets, shapes), the decoder manifest, the executable's SHA-256, the model
 configuration and the label-loop constants.
@@ -809,14 +809,29 @@ configuration and the label-loop constants.
   mocked tests (`tests/build_reviewed_tests.sh`, 7/7).
 - 2: F2 captures g, h, c after every prediction, including a terminal one; unit test with a NaN terminal
   prediction that leaves the decision unchanged (unit tests 8/8).
-- 3: every decode loop's diagnostic sections are required with exact dimensions; F1's heads come from a diagnostic
-  reconstruction (FP32 Decoder + JointLogits on F1's own inputs and state; DecoderJoint exposes no logits);
-  self-test 7/7 including missing-section faults.
+- 3: every decode loop's diagnostic sections are required with exact dimensions; self-test 7/7 including
+  missing-section faults. (Superseded by round 3 for F1: its logit errors are unavailable and the Decoder +
+  JointLogits evaluation is only an informational proxy.)
 - 4: `wp5sweep.py verify` restores archived packages first and archives them again (guarded workflow).
 - 5: the report checks each run's arm, eligibility, backend and protocol against the manifest; self-test 3/3.
 - 6: disk preflight (30 GB + estimated writes) in every preparation job (`diskcheck.sh`, `disk_preflight`); the
   self-tests remove their scratch output; pre-review test artifacts removed from the Mac.
 - 7: the plan defines `$A`.
+
+**Pre-run review round 3** (`reviews/wp7-r3.md`; DESIGN.md revision 10):
+- 1: F1's token and duration logit errors are recorded as **unavailable** (DESIGN.md rev. 10, "Decisions-only
+  decoder models"). The Decoder + JointLogits evaluation on F1's own inputs is reported only as a labelled
+  **informational proxy** in its own block, with its consistency to F1 (state, token and duration argmax
+  agreement); no field presents it as F1's head error. Pipeline records are revision 10.
+- 2: decision and probability arrays, capture counts and prediction counts are validated (exact dimensions, valid
+  values) before scoring; self-test 10/10 including broadcast singleton arrays, missing F0 probabilities and zero
+  capture counts.
+- 3: the cached (subsequent fresh-process) run is validated in full: free mode, the prescribed clip, no C0 pairing,
+  exactly one warm-up call with a complete result, an arm-only end record; arm and C0 runs need their end records.
+  wp5sweep self-test 10/10 with WP7-format records.
+- 4: `build_reviewed.sh` builds from a `git archive` of the committed sources (untracked/ignored Swift files never
+  compile) and installs `$A/reviewed/parakeet-bench`; build test 8/8 (Linux and Mac).
+- 5: self-tests clean up in `finally`; the plan lists the cleanup after a guard abort.
 
 **Results: pending rerun after a clean review.** Gate and sweep runs made before the review rule arrived are
 unreviewed and withdrawn: their records and summaries are quarantined under
