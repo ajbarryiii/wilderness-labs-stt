@@ -754,8 +754,10 @@ had never been gated end to end. Now they are, in Swift, on all 82 clips:
 (constants manifest SHA-256); decode (F2: native-weights SHA-256, precision fp32; F0/F1: SHA-256 of each Core ML
 decoder model and the precision from the decoder directory's manifest). `parakeet-bench run` rebuilds the same
 description from what it is about to load and refuses unless the record for the exact model-arm-variant-backend-
-front end-decode exists, is revision 8 and timing-allowed, its components match exactly (provenance blocks aside),
-its inputs are unchanged, and the arm's WP3 record still passes.
+front end-decode exists, is revision 9 and timing-allowed, its components match exactly (provenance blocks aside),
+its inputs are unchanged, and the arm's WP3 record still passes. After pre-run review round 1 the components also
+bind the native manifests (tensor names, offsets, shapes), the decoder manifest, the executable's SHA-256, the model
+configuration and the label-loop constants.
 
 **Other findings.**
 - 3: `native.py gate-frontend`, `gate-frontend-encoder` and `gate-f2` check coverage of every manifest clip and exit
@@ -766,9 +768,10 @@ its inputs are unchanged, and the arm's WP3 record still passes.
 - 5: `sweep_job.sh` and `pipegate_job.sh` refuse when `df -k` cannot be parsed and exit 6 if the cache purge fails;
   the disk need is measured per arm (package size on the Mac + Core ML cache estimate: 4 × package for dense C1,
   whose cache reached 4.6 GB in WP5, else 1 GB); `macpush.py` checks 30 GB + 2 × file size on the Mac first.
-- 6: sweep and gate runs write `<arm>/<run id>/` on both machines, are retrieved completely into a `.part` directory
-  and renamed atomically, with `LATEST`; the report reads only `LATEST` runs with status 0. WP5's raw records were
-  moved into this layout (`wp5-20261003`).
+- 6: sweep and gate runs write `<arm>/<run id>/` on both machines and are retrieved completely into a `.part`
+  directory and renamed atomically. Reports read only the runs an explicit, complete sweep manifest names
+  (`results/wp5/sweeps/<id>.json`; review r1). WP5's raw records were moved into this layout (`wp5-20261003`) and
+  wrapped in a legacy manifest.
 - 7: loads are labelled "post-purge" and "subsequent fresh-process"; neither is claimed cached or uncached.
 - 8: `armreport.py --baseline` requires a C0 baseline with the same pairing block, now carrying a per-process
   session id (WP5's records predate it and are accepted only from one run directory), the same clips.json SHA-256,
@@ -780,6 +783,26 @@ its inputs are unchanged, and the arm's WP3 record still passes.
 - Also: the paired C0 runs as shipped on `--c0-compute-units` (default cpuAndNeuralEngine) whatever the arm's
   backend; GPU-backend jobs get a 6G RSS cap (GPU-visible model memory counts in RSS: C3 on cpuAndGPU with the
   F0/F1 models exceeded 4.19 GB at load).
+
+**Pre-run review round 1** (`reviews/wp7-r1.md`; changes per finding):
+- 1: every decoder output is captured in free decoding and replay and must be finite; head errors (token and
+  duration logits for F2 and F0, the latter through a diagnostic JointLogits on the same inputs; h and c for all
+  three), token-probability differences and margin distributions are reported.
+- 2: native manifests, the executable and the configuration are bound (above); a unit test swaps two equal-sized
+  tensors' offsets and sees the identity change.
+- 3: every C0 load verifies the directory against `c0.json` (sizes, SHA-256, no extra files, vocabulary
+  included) and records `c0_identity`; armreport requires it, on cpuAndNeuralEngine / preprocessor cpuOnly.
+- 4: the FP64-feature reference is checked against the loaded front-end manifest, the reference code, the model and
+  the refcache; gate jobs record `build.json`; `record` accepts only evaluations from this pipegate.py, revision 9
+  and a clean build (`build_reviewed.sh`) of the current commit.
+- 5: `pipegate.py run` validates the requested set, withdraws a combination's records before re-gating it,
+  publishes only complete sets and exits nonzero on any failure.
+- 6: manifest-driven reports (above). 7: `plans/wp7.md` is the full procedure: reviewed build, reference
+  regeneration, gates, record transfer and `wp5sweep.py verify` (`parakeet-bench run --verify-only`), sweep, report.
+- 9: the sweep runs two clip halves in opposite arm orders, with a settle period and thermal-state records per
+  block; the remaining limitations are listed in the plan.
+- `tests/pipegate_selftest.py` checks `evaluate` on a mocked perfect pipeline and three injected faults (passes on
+  the Mac, 4/4). Unit tests 7/7.
 
 **Results: pending rerun after a clean review.** Gate and sweep runs made before the review rule arrived are
 unreviewed and withdrawn: their records and summaries are quarantined under
