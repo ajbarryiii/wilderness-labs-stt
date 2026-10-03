@@ -72,9 +72,11 @@ public final class ArmPipeline {
         let t2 = Clock.now()
         let length = frames.count
         r.effectiveFrames = length
-        let sDec = Signposts.stages.beginInterval("decode", id: callID)
+        let sPro = Signposts.stages.beginInterval("preprojection", id: callID)
         try engine.begin(frames: frames, length: length, diag: diag)
+        Signposts.stages.endInterval("preprojection", sPro)
         let t2b = Clock.now()
+        let sDec = Signposts.stages.beginInterval("decode", id: callID)
         let out: LabelLoop.Output
         switch mode {
         case .free:
@@ -91,6 +93,8 @@ public final class ArmPipeline {
         Signposts.poi.endInterval("call", callState)
         r.tokens = out.tokens
         r.timestamps = out.timestamps
+        r.logicalJointSteps = out.steps
+        r.logicalPredictions = out.predictions
         var times: [String: Double] = ["preprocess": pre == nil ? Clock.ms(t0, t1) : 0,
                                        "encoder": pre == nil ? Clock.ms(t1, t2) : 0,
                                        "preprojection": Clock.ms(t2, t2b), "decode": Clock.ms(t2b, t3),

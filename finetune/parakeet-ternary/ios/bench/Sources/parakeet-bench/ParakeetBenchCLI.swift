@@ -17,8 +17,11 @@ import Foundation
 ///                 f1: --decoder-models DIR (DecoderJoint.mlmodelc or .mlpackage)
 ///                 f2, f1native: --native-weights DIR (native.py weights)
 ///                 [--vocab parakeet_vocab.json]  (default: C0DIR/parakeet_vocab.json if --models is given)
-///                 --eligibility MODEL:ARM  (required with --encoder: passing revision-8 record under
-///                 <ios>/results/eligibility, ios = --ios or the directory of clips.json; C0 is exempt)
+///                 --eligibility MODEL:ARM  (required with --encoder: a passing revision-8 PIPELINE record
+///                 <ios>/results/eligibility/pipelines/<model>-<arm>-<variant>-<backend>-<frontend>-<decode>.json whose
+///                 component SHA-256s (encoder package, front-end constants or preprocessor, F2 weights or decoder
+///                 models + precision) and compute units equal the loaded ones, plus the arm's WP3 record;
+///                 ios = --ios or the directory of clips.json; C0 is exempt)
 ///                 [--pair-c0 C0DIR --c0-out PATH]  (C0 and the arm interleaved clip by clip in this process)
 ///   parakeet-bench features --frontend-constants DIR --clips clips.json --pcm DIR --out DIR [--kinds/--ids]
 ///                       front end A on every clip: <id>.mel.f32 [128, N // 160 + 1] and features.jsonl
@@ -27,6 +30,12 @@ import Foundation
 ///                       the encoder on given features (<DIR>/<id>.mel.f32 for tag vdsp, <id>.<tag>.mel.f32 otherwise,
 ///                       [128, N // 160 + 1]) zero-padded to the bucket, mel_length = N // 160: <id>.<tag>.enc.f32
 ///                       [encoder_length, 1024] time-major + encode.jsonl (gate 5, rev. 5)
+///   parakeet-bench gate --eligibility MODEL:ARM --encoder PATH --encoder-variant V --compute-units U
+///                       --frontend-constants DIR --native-weights DIR --decoder-models DIR --decodes f2,f0,f1
+///                       --clips clips.json --pcm DIR --traces traces.json --out DIR
+///                       deployed-pipeline gate run (untimed): per clip front end A -> encoder (own bucket) once, then
+///                       per decode loop free decoding and forced replay of the trace; gate.jsonl (+ enc/<id>.f32) with
+///                       the components of every pipeline, for ios/pipegate.py
 ///   parakeet-bench plan --models DIR --out DIR [--compute-units cpuAndNeuralEngine] [--preprocessor-units cpuOnly]
 ///   parakeet-bench info --models DIR
 ///
@@ -45,6 +54,10 @@ struct ParakeetBenchCLI {
             case "run": try await run(try Options(args, allowed: runOptions, flags: ["--emit-warmups"]))
             case "features": try await features(try Options(args, allowed: ["--frontend-constants", "--clips", "--pcm",
                                                                              "--out", "--kinds", "--ids"], flags: []))
+            case "gate": try await gate(try Options(args, allowed: ["--clips", "--pcm", "--traces", "--eligibility", "--encoder",
+                                                                     "--encoder-variant", "--compute-units", "--frontend-constants",
+                                                                     "--native-weights", "--decoder-models", "--decodes", "--out",
+                                                                     "--ids"], flags: []))
             case "encode": try await encode(try Options(args, allowed: ["--encoder", "--encoder-variant", "--compute-units",
                                                                          "--clips", "--features", "--tags", "--out", "--kinds",
                                                                          "--ids"], flags: []))
@@ -155,9 +168,16 @@ struct ParakeetBenchCLI {
                     throw BenchError.invalid("--eligibility MODEL:ARM is required to time an encoder arm")
                 }
                 let parts = id.split(separator: ":").map(String.init)
-                eligibility = try Eligibility.check(iosDir: iosDir, model: parts[0], arm: parts[1],
-                                                    variant: LengthVariant(rawValue: try o.string("--encoder-variant"))!,
-                                                    computeUnits: ComputeUnitsName.name(units), encoderPath: URL(fileURLWithPath: enc))
+                let spec = PipelineSpec(model: parts[0], arm: parts[1],
+                                        variant: LengthVariant(rawValue: try o.string("--encoder-variant"))!,
+                                        computeUnits: ComputeUnitsName.name(units), frontEnd: try o.string("--frontend"),
+                                        decode: decodeName, encoderPath: URL(fileURLWithPath: enc),
+                                        frontendConstants: o.values["--frontend-constants"].map { URL(fileURLWithPath: $0) },
+                                        c0Dir: o.values["--models"].map { URL(fileURLWithPath: $0) },
+                                        nativeWeights: o.values["--native-weights"].map { URL(fileURLWithPath: $0) },
+                                        decoderModels: o.values["--decoder-models"].map { URL(fileURLWithPath: $0) })
+                // the exact deployed combination needs its pipeline record; every component is hashed and compared
+                eligibility = try PipelineEligibility.check(iosDir: iosDir, spec: spec)
             } else {
                 eligibility = "n/a: gate harness (external encoder input), not an arm timing"
             }
@@ -382,6 +402,95 @@ struct ParakeetBenchCLI {
             record["replay"] = ["steps": tok.count, "trace_steps": trace.steps, "token_agree": ta, "duration_agree": da]
         }
         return record
+    }
+
+    /// Deployed-pipeline gate run (WP7): untimed; see pipegate.py for the conditions.
+    static func gate(_ o: Options) async throws {
+        let units = try ComputeUnitsName.parse(try o.string("--compute-units", "cpuAndNeuralEngine"))
+        guard let variant = LengthVariant(rawValue: try o.string("--encoder-variant")) else {
+            throw BenchError.invalid("unknown --encoder-variant")
+        }
+        let id = try o.string("--eligibility").split(separator: ":").map(String.init)
+        guard id.count == 2 else { throw BenchError.invalid("--eligibility MODEL:ARM") }
+        let clipsURL = try o.url("--clips")
+        let manifest = try ClipManifest.load(clipsURL)
+        let clips = try selectClips(o, manifest)
+        let probe = TdtConfig()
+        let traces = try TraceFile.load(try o.url("--traces")).validated(
+            for: manifest.clips, manifest: manifest, blank: probe.blankId, durations: probe.durationBins,
+            maxSymbols: probe.maxSymbolsPerStep)
+        let out = try ArtifactPath.check(try o.url("--out"))
+        try FileManager.default.createDirectory(at: out.appendingPathComponent("enc"), withIntermediateDirectories: true)
+        let decodes = try o.string("--decodes", "f2,f0,f1").split(separator: ",").map(String.init)
+        let encURL = try o.url("--encoder")
+        var components: [String: Any] = [:]
+        var engines: [(String, DecodeEngine)] = []
+        let config = C0Models.configuration(units)
+        for d in decodes {
+            let spec = PipelineSpec(model: id[0], arm: id[1], variant: variant, computeUnits: ComputeUnitsName.name(units),
+                                    frontEnd: "vdsp", decode: d, encoderPath: encURL,
+                                    frontendConstants: try o.url("--frontend-constants"), c0Dir: nil,
+                                    nativeWeights: o.values["--native-weights"].map { URL(fileURLWithPath: $0) },
+                                    decoderModels: o.values["--decoder-models"].map { URL(fileURLWithPath: $0) })
+            components[d] = ["record": spec.recordName, "components": try spec.components()]
+            switch d {
+            case "f2": engines.append((d, NativeEngine(weights: try NativeWeights(directory: try o.url("--native-weights")))))
+            case "f0":
+                let dir = try o.url("--decoder-models")
+                engines.append((d, try CoreMLStepEngine(decoder: try MLModel(contentsOf: dir.appendingPathComponent("Decoder.mlmodelc"), configuration: config),
+                                                        joint: try MLModel(contentsOf: dir.appendingPathComponent("JointDecision.mlmodelc"), configuration: config))))
+            case "f1":
+                let dir = try o.url("--decoder-models")
+                engines.append((d, try CoreMLFusedEngine(model: try MLModel(contentsOf: dir.appendingPathComponent("DecoderJoint.mlmodelc"), configuration: config))))
+            default: throw BenchError.invalid("unknown decode \(d)")
+            }
+        }
+        let mel = try MelInput(kind: .vdsp, constantsDir: try o.url("--frontend-constants"), c0Dir: nil, preprocessorUnits: .cpuOnly)
+        let t0 = Clock.now()
+        let encoder = try await EncoderModel(url: encURL, variant: variant, computeUnits: units, compiledDir: nil)
+        let loadMs = Clock.ms(t0, Clock.now())
+        let writer = try JSONLWriter(path: out.appendingPathComponent("gate.jsonl").path)
+        try writer.writeObject(["record": "header", "model": id[0], "arm": id[1], "variant": Eligibility.variants[variant] ?? "",
+                                "compute_units": ComputeUnitsName.name(units), "front_end": "vdsp", "decodes": decodes,
+                                "pipelines": components, "encoder_load_ms": loadMs, "clip_ids": clips.map(\.id),
+                                "clips_json_sha256": manifest.fileSHA256, "os": ProcessInfo.processInfo.operatingSystemVersionString])
+        let loop = LabelLoop()
+        let options = MLPredictionOptions()
+        for clip in clips {
+            let pcm = try readPCM(directory: try o.url("--pcm"), clip: clip)
+            let bucket = try encoder.bucket(forSamples: pcm.count)
+            let (melArray, melLength) = try await mel.mel(pcm, bucket: bucket)
+            let (encOut, length) = try await encoder.predict(mel: melArray, melLength: melLength, bucket: bucket, options: options)
+            let frames = try EncoderFrames(encOut, validLength: length)
+            let enc = try frames.timeMajor()
+            let data = enc.withUnsafeBufferPointer { Data(buffer: $0) }
+            try data.write(to: out.appendingPathComponent("enc/\(clip.id).f32"))
+            var rec: [String: Any] = ["record": "clip", "clip": clip.id, "kind": clip.kind, "bucket": bucket,
+                                      "mel_length": melLength, "encoder_length": frames.count,
+                                      "finite": enc.allSatisfy { $0.isFinite }, "enc_sha256": sha256Hex(data)]
+            let trace = traces[clip.id]!
+            for (d, engine) in engines {
+                var r: [String: Any] = [:]
+                try engine.begin(frames: frames, length: frames.count, diag: nil)
+                let free = try loop.free(engine, length: frames.count, diag: nil)
+                r["tokens"] = free.tokens
+                r["free_steps"] = free.steps
+                if frames.count == trace.numFrames {
+                    let sink = DiagSink()
+                    try engine.begin(frames: frames, length: frames.count, diag: nil)
+                    let rep = try loop.replay(engine, trace: trace, diag: sink)
+                    r["argmax_token"] = sink.ints["argmax_token"] ?? []
+                    r["argmax_duration"] = sink.ints["argmax_duration"] ?? []
+                    r["replay_steps"] = rep.steps
+                    r["replay_predictions"] = rep.predictions
+                } else {
+                    r["replay_error"] = "encoder frames \(frames.count) != trace \(trace.numFrames)"
+                }
+                rec[d] = r
+            }
+            try writer.writeObject(rec)
+        }
+        try writer.writeObject(["record": "end", "seconds": Clock.ms(t0, Clock.now()) / 1000])
     }
 
     /// Gate 5 (rev. 5), encoder part: the encoder on externally computed features (untimed).

@@ -1,0 +1,147 @@
+import CryptoKit
+import Foundation
+
+/// SHA-256 identities of loaded components (WP7, review finding 2).
+public enum ComponentHash {
+    /// Streaming SHA-256 of one file.
+    public static func file(_ url: URL) throws -> String {
+        let handle = try FileHandle(forReadingFrom: url)
+        defer { try? handle.close() }
+        var hasher = SHA256()
+        while let chunk = try handle.read(upToCount: 1 << 22), !chunk.isEmpty { hasher.update(data: chunk) }
+        return hasher.finalize().map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// SHA-256 of a directory (e.g. a compiled .mlmodelc): over the lines "<relative path>\t<file SHA-256>\n" of
+    /// every regular file, sorted by relative path. Symbolic links are refused.
+    public static func directory(_ url: URL) throws -> String {
+        let root = url.standardizedFileURL.resolvingSymlinksInPath()
+        guard let e = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey]) else {
+            throw BenchError.invalid("cannot enumerate \(root.path)")
+        }
+        var lines: [String] = []
+        for case let f as URL in e {
+            let v = try f.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey])
+            if v.isSymbolicLink == true { throw BenchError.invalid("symbolic link in \(root.path): \(f.path)") }
+            guard v.isRegularFile == true else { continue }
+            let rel = String(f.standardizedFileURL.resolvingSymlinksInPath().path.dropFirst(root.path.count + 1))
+            lines.append("\(rel)\t\(try file(f))\n")
+        }
+        guard !lines.isEmpty else { throw BenchError.invalid("\(root.path) has no files") }
+        return sha256Hex(lines.sorted().joined().data(using: .utf8)!)
+    }
+}
+
+/// One deployed pipeline: front end + encoder arm (model, arm, variant, backend) + decode loop (+ its components).
+public struct PipelineSpec {
+    public let model: String
+    public let arm: String
+    public let variant: LengthVariant
+    public let computeUnits: String
+    public let frontEnd: String          // "vdsp" or "c0pre"
+    public let decode: String            // "f0", "f1", "f2"
+    public let encoderPath: URL
+    public let frontendConstants: URL?   // vdsp
+    public let c0Dir: URL?               // c0pre (C0's Preprocessor)
+    public let nativeWeights: URL?       // f2
+    public let decoderModels: URL?       // f0 / f1
+
+    public init(model: String, arm: String, variant: LengthVariant, computeUnits: String, frontEnd: String, decode: String,
+                encoderPath: URL, frontendConstants: URL?, c0Dir: URL?, nativeWeights: URL?, decoderModels: URL?) {
+        self.model = model; self.arm = arm; self.variant = variant; self.computeUnits = computeUnits
+        self.frontEnd = frontEnd; self.decode = decode; self.encoderPath = encoderPath
+        self.frontendConstants = frontendConstants; self.c0Dir = c0Dir; self.nativeWeights = nativeWeights
+        self.decoderModels = decoderModels
+    }
+
+    public var backend: String { Eligibility.backend(computeUnits) ?? computeUnits }
+    public var variantName: String { Eligibility.variants[variant] ?? variant.rawValue }
+    public var recordName: String { "\(model)-\(arm)-\(variantName)-\(backend)-\(frontEnd)-\(decode).json" }
+
+    /// Identities and configuration of every component this pipeline loads.
+    public func components() throws -> [String: Any] {
+        var c: [String: Any] = [
+            "compute_units": computeUnits,
+            "encoder": ["model": model, "arm": arm, "variant": variantName,
+                        "package": "\(model)/\(arm)/\(variantName).mlmodelc", "sha256": try ComponentHash.directory(encoderPath)],
+        ]
+        switch frontEnd {
+        case "vdsp":
+            guard let dir = frontendConstants else { throw BenchError.invalid("vdsp needs front-end constants") }
+            let blob = try NativeBlob(directory: dir, stem: "frontend")  // verifies the blob against its manifest
+            c["front_end"] = ["kind": "vdsp", "constants_sha256": blob.manifest["sha256"] ?? "",
+                              "provenance": blob.manifest["provenance"] ?? [:]]
+        case "c0pre":
+            guard let dir = c0Dir else { throw BenchError.invalid("c0pre needs the C0 directory") }
+            c["front_end"] = ["kind": "c0pre", "preprocessor_sha256": try ComponentHash.directory(dir.appendingPathComponent("Preprocessor.mlmodelc"))]
+        default: throw BenchError.invalid("unknown front end \(frontEnd)")
+        }
+        switch decode {
+        case "f2":
+            guard let dir = nativeWeights else { throw BenchError.invalid("f2 needs native weights") }
+            let w = try NativeWeights(directory: dir)
+            c["decode"] = ["kind": "f2", "precision": "fp32", "native_weights_sha256": w.manifest["sha256"] ?? "",
+                           "provenance": w.manifest["provenance"] ?? [:]]
+        case "f0", "f1":
+            guard let dir = decoderModels else { throw BenchError.invalid("\(decode) needs decoder models") }
+            let names = decode == "f0" ? ["Decoder", "JointDecision"] : ["DecoderJoint"]
+            var models: [String: String] = [:]
+            for n in names { models[n] = try ComponentHash.directory(dir.appendingPathComponent("\(n).mlmodelc")) }
+            var precision = "unknown"
+            if let data = try? Data(contentsOf: dir.appendingPathComponent("manifest.json")),
+               let m = try JSONSerialization.jsonObject(with: data) as? [String: Any], let p = m["precision"] as? String {
+                precision = p
+            }
+            c["decode"] = ["kind": decode, "precision": precision, "models_sha256": models]
+        default: throw BenchError.invalid("unknown decode \(decode)")
+        }
+        return c
+    }
+}
+
+/// Timing gate for deployed pipelines (WP7): the exact combination needs a passing pipeline record
+/// results/eligibility/pipelines/<model>-<arm>-<variant>-<backend>-<frontend>-<decode>.json of the required design
+/// revision whose components (SHA-256 + configuration) equal what this process is about to load, whose input files are
+/// unchanged, and whose encoder arm still has its passing WP3 record.
+public enum PipelineEligibility {
+    public static func check(iosDir: URL, spec: PipelineSpec) throws -> [String: Any] {
+        let url = iosDir.appendingPathComponent("results/eligibility/pipelines/\(spec.recordName)")
+        guard let data = try? Data(contentsOf: url),
+              let rec = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw BenchError.invalid("refusing to time: no pipeline record \(spec.recordName)")
+        }
+        guard (rec["design_revision"] as? Int) == Eligibility.requiredRevision else {
+            throw BenchError.invalid("refusing to time: \(spec.recordName) is not a revision-\(Eligibility.requiredRevision) record")
+        }
+        guard rec["timing_allowed"] as? Bool == true else {
+            let reasons = (rec["reasons"] as? [String])?.joined(separator: "; ") ?? "?"
+            throw BenchError.invalid("refusing to time: pipeline \(spec.recordName) not eligible: \(reasons)")
+        }
+        let encoderRecord = try Eligibility.check(iosDir: iosDir, model: spec.model, arm: spec.arm, variant: spec.variant,
+                                                  computeUnits: spec.computeUnits, encoderPath: spec.encoderPath)
+        let want = try spec.components()
+        guard let have = rec["components"] as? [String: Any],
+              canonical(have) == canonical(want) else {
+            throw BenchError.invalid("refusing to time: loaded components differ from \(spec.recordName) "
+                + "(record \(canonical(rec["components"] ?? [:]).prefix(300)) vs loaded \(canonical(want).prefix(300)))")
+        }
+        var stale: [String] = []
+        for (file, digest) in (rec["inputs"] as? [String: String]) ?? [:] {
+            let d = try? Data(contentsOf: iosDir.appendingPathComponent(file))
+            if d == nil || sha256Hex(d!) != digest { stale.append(file) }
+        }
+        guard stale.isEmpty else { throw BenchError.invalid("refusing to time: \(spec.recordName) inputs changed: \(stale.prefix(5))") }
+        return ["pipeline_record": spec.recordName, "encoder_record": encoderRecord, "components": want, "built": rec["built"] ?? NSNull()]
+    }
+
+    /// Sorted-key JSON text of the identity-bearing fields (provenance blocks excluded).
+    static func canonical(_ x: Any) -> String {
+        func strip(_ v: Any) -> Any {
+            if let d = v as? [String: Any] { return d.filter { $0.key != "provenance" }.mapValues(strip) }
+            if let a = v as? [Any] { return a.map(strip) }
+            return v
+        }
+        guard let data = try? JSONSerialization.data(withJSONObject: strip(x), options: [.sortedKeys]) else { return "" }
+        return String(data: data, encoding: .utf8) ?? ""
+    }
+}

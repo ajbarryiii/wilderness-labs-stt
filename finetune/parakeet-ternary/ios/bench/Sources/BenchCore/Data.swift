@@ -216,7 +216,9 @@ public enum Eligibility {
     public static let requiredRevision = 8
     public static let variants: [LengthVariant: String] = [.fixed15: "fixed", .multifunction: "multi", .enumerated: "enum"]
 
-    public static func backend(_ units: String) -> String? { units == "cpuAndNeuralEngine" ? "ane" : units == "cpuOnly" ? "cpu" : nil }
+    public static func backend(_ units: String) -> String? {
+        ["cpuAndNeuralEngine": "ane", "cpuOnly": "cpu", "cpuAndGPU": "gpu"][units]
+    }
 
     /// The record (as a dictionary) or an error explaining why the arm may not be timed.
     public static func check(iosDir: URL, model: String, arm: String, variant: LengthVariant, computeUnits: String,

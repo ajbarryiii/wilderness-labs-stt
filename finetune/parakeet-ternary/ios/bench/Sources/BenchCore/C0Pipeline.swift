@@ -142,6 +142,9 @@ public struct CallResult: Encodable, Sendable {
     /// Physical calls per decode-loop component (e.g. decoder_model, joint_model, fused_model, native_predict,
     /// native_joint); the logical work (steps, prediction-net runs) is the trace's or the loop's.
     public var physicalCalls: [String: Int] = [:]
+    /// Logical work (DESIGN.md "F"): joint evaluations and prediction-network runs, whatever the physical calls.
+    public var logicalJointSteps = 0
+    public var logicalPredictions = 0
     /// Stages: preprocess (front end), encoder (incl. output materialization), preprojection (joint encoder-side
     /// projection of all frames; 0 where the joint projects per step), decode, total, plus per-component model time.
     public var timesMs: [String: Double] = [:]
@@ -301,6 +304,8 @@ public final class C0Pipeline {
         r.decoderCalls = decoderAcc.count
         r.jointCalls = jointAcc.count
         r.physicalCalls = ["decoder_model": decoderAcc.count, "joint_model": jointAcc.count]
+        r.logicalJointSteps = jointAcc.count       // C0: one JointDecision call per joint evaluation
+        r.logicalPredictions = decoderAcc.count     // and one Decoder call per prediction-network run
         r.timesMs = ["preprocess": Clock.ms(t0, t1), "encoder": Clock.ms(t1, t2), "preprojection": 0, "decode": Clock.ms(t2, t3),
                      "decoder_model": decoderAcc.totalMs, "joint_model": jointAcc.totalMs, "total": Clock.ms(t0, t3)]
         _ = touch

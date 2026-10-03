@@ -63,6 +63,10 @@ public struct LabelLoop {
     public struct Output {
         public var tokens: [Int] = []
         public var timestamps: [Int] = []
+        /// logical work: joint evaluations (steps) and prediction-network runs (SOS + one per emitted token),
+        /// independent of how an engine maps them onto physical calls (F1 fuses both into one call per step)
+        public var steps = 0
+        public var predictions = 0
         /// trace of the free decode (recordTrace; the unit tests validate it with TraceFile.validate)
         public var frame: [Int] = [], token: [Int] = [], duration: [Int] = [], predInput: [Int] = []
         public var symbolsAtFrame: [Int] = [], forcedAdvance: [Int] = [], advance: [Int] = []
@@ -71,9 +75,11 @@ public struct LabelLoop {
     public func free(_ e: DecodeEngine, length: Int, diag: DiagSink?, recordTrace: Bool = false) throws -> Output {
         var out = Output()
         try e.predict(blank, diag: diag)
+        out.predictions = 1
         var t = 0, lastNB = -1, lasts = 0, predInput = blank
         while t < length {
             let (tok, bin) = try e.joint(t, diag: diag)
+            out.steps += 1
             guard bin >= 0 && bin < durations.count else { throw BenchError.invalid("duration bin \(bin)") }
             let dur = durations[bin]
             let emitted = tok != blank
@@ -84,6 +90,7 @@ public struct LabelLoop {
                 lastNB = t
                 out.tokens.append(tok); out.timestamps.append(t)
                 try e.predict(tok, diag: diag)
+                out.predictions += 1
                 if t + advance < length && lasts >= maxSymbols && lastNB == t + advance { advance += 1; forced = true }
             }
             if recordTrace {
@@ -100,13 +107,16 @@ public struct LabelLoop {
     public func replay(_ e: DecodeEngine, trace: TraceClip, diag: DiagSink?) throws -> Output {
         var out = Output()
         try e.predict(blank, diag: diag)
+        out.predictions = 1
         for i in 0..<trace.steps {
             let (tok, bin) = try e.joint(trace.frame[i], diag: diag)
+            out.steps += 1
             diag?.int("argmax_token", tok)
             diag?.int("argmax_duration", bin >= 0 && bin < durations.count ? durations[bin] : -1)
             if trace.predUpdated[i] != 0 {
                 out.tokens.append(trace.token[i]); out.timestamps.append(trace.frame[i])
                 try e.predict(trace.token[i], diag: diag)
+                out.predictions += 1
             }
         }
         return out
