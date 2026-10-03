@@ -179,7 +179,8 @@ struct ParakeetBenchCLI {
                                         nativeWeights: o.values["--native-weights"].map { URL(fileURLWithPath: $0) },
                                         decoderModels: o.values["--decoder-models"].map { URL(fileURLWithPath: $0) })
                 // the exact deployed combination needs its pipeline record; every component is hashed and compared
-                eligibility = try PipelineEligibility.check(iosDir: iosDir, spec: spec)
+                // own autorelease pool: the hashing must not stay in the process's phys_footprint
+                eligibility = try autoreleasepool { try PipelineEligibility.check(iosDir: iosDir, spec: spec) }
             } else {
                 eligibility = "n/a: gate harness (external encoder input), not an arm timing"
             }

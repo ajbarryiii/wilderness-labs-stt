@@ -3,12 +3,18 @@ import Foundation
 
 /// SHA-256 identities of loaded components (WP7, review finding 2).
 public enum ComponentHash {
-    /// Streaming SHA-256 of one file.
+    /// Streaming SHA-256 of one file. Each chunk is read inside its own autorelease pool: FileHandle returns
+    /// bridged, autoreleased data, and the CLI's pool never drains before timing, so without it hashing a model
+    /// package left its whole size in phys_footprint (WP7 sweep: 390 MB before any model was loaded).
     public static func file(_ url: URL) throws -> String {
         let handle = try FileHandle(forReadingFrom: url)
         defer { try? handle.close() }
         var hasher = SHA256()
-        while let chunk = try handle.read(upToCount: 1 << 22), !chunk.isEmpty { hasher.update(data: chunk) }
+        while try autoreleasepool(invoking: { () throws -> Bool in
+            guard let chunk = try handle.read(upToCount: 1 << 22), !chunk.isEmpty else { return false }
+            hasher.update(data: chunk)
+            return true
+        }) {}
         return hasher.finalize().map { String(format: "%02x", $0) }.joined()
     }
 
@@ -29,6 +35,19 @@ public enum ComponentHash {
         }
         guard !lines.isEmpty else { throw BenchError.invalid("\(root.path) has no files") }
         return sha256Hex(lines.sorted().joined().data(using: .utf8)!)
+    }
+
+    /// A native.py blob's manifest (<stem>.json), after streaming the blob file it names against the manifest's
+    /// SHA-256 (no tensors are materialized, so nothing stays in the process's footprint).
+    public static func blobManifest(_ dir: URL, stem: String) throws -> [String: Any] {
+        guard let m = try JSONSerialization.jsonObject(with: Data(contentsOf: dir.appendingPathComponent("\(stem).json"))) as? [String: Any],
+              let file = m["file"] as? String, let digest = m["sha256"] as? String else {
+            throw BenchError.invalid("\(dir.path)/\(stem).json: no file / sha256")
+        }
+        guard try Self.file(dir.appendingPathComponent(file)) == digest else {
+            throw BenchError.invalid("\(dir.path)/\(file): SHA-256 differs from its manifest")
+        }
+        return m
     }
 }
 
@@ -68,9 +87,8 @@ public struct PipelineSpec {
         switch frontEnd {
         case "vdsp":
             guard let dir = frontendConstants else { throw BenchError.invalid("vdsp needs front-end constants") }
-            let blob = try NativeBlob(directory: dir, stem: "frontend")  // verifies the blob against its manifest
-            c["front_end"] = ["kind": "vdsp", "constants_sha256": blob.manifest["sha256"] ?? "",
-                              "provenance": blob.manifest["provenance"] ?? [:]]
+            let m = try ComponentHash.blobManifest(dir, stem: "frontend")  // verifies the blob against its manifest
+            c["front_end"] = ["kind": "vdsp", "constants_sha256": m["sha256"] ?? "", "provenance": m["provenance"] ?? [:]]
         case "c0pre":
             guard let dir = c0Dir else { throw BenchError.invalid("c0pre needs the C0 directory") }
             c["front_end"] = ["kind": "c0pre", "preprocessor_sha256": try ComponentHash.directory(dir.appendingPathComponent("Preprocessor.mlmodelc"))]
@@ -79,9 +97,9 @@ public struct PipelineSpec {
         switch decode {
         case "f2":
             guard let dir = nativeWeights else { throw BenchError.invalid("f2 needs native weights") }
-            let w = try NativeWeights(directory: dir)
-            c["decode"] = ["kind": "f2", "precision": "fp32", "native_weights_sha256": w.manifest["sha256"] ?? "",
-                           "provenance": w.manifest["provenance"] ?? [:]]
+            let m = try ComponentHash.blobManifest(dir, stem: "decoder_joint")
+            c["decode"] = ["kind": "f2", "precision": "fp32", "native_weights_sha256": m["sha256"] ?? "",
+                           "provenance": m["provenance"] ?? [:]]
         case "f0", "f1":
             guard let dir = decoderModels else { throw BenchError.invalid("\(decode) needs decoder models") }
             let names = decode == "f0" ? ["Decoder", "JointDecision"] : ["DecoderJoint"]
