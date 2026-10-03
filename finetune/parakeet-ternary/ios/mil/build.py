@@ -256,13 +256,20 @@ def save_manifest(manifest: dict, out_dir: Path, model: str, arm: str, variant: 
     (RESULTS / f"{model}-{arm}-{variant}.json").write_text(text)
 
 
+def arm_label(arm: str, precision: str = "fp16") -> str:
+    """Directory / record label of an arm build: the arm, or "<arm>-fp32" for gate 4a's FP32-compute build."""
+    return arm if precision == "fp16" else f"{arm}-{precision}"
+
+
 def build_encoder(model: str, arm: str, variant: str, out_root: Path, layers: int | None = None,
-                  compile_: bool = True, plan: bool = True, keep_package: bool = True, tag: str = "") -> dict:
+                  compile_: bool = True, plan: bool = True, keep_package: bool = True, tag: str = "",
+                  precision: str = "fp16") -> dict:
     import artifacts
     from .weights import C0Tensors, N_LAYERS, Source
 
     n_layers = layers or N_LAYERS
-    out_dir = artifacts.check(out_root / model / arm)
+    label = arm_label(arm, precision)
+    out_dir = artifacts.check(out_root / model / label)
     out_dir.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
     act_scales = None
@@ -277,7 +284,7 @@ def build_encoder(model: str, arm: str, variant: str, out_root: Path, layers: in
         if arm == "C5":
             calib = json.loads(calibration_file(model).read_text())
             act_scales = {k: v["scale"] for k, v in calib["sites"].items()}
-        P = enc_mod.ArmProvider(source, arm, n_layers, act_scales)
+        P = enc_mod.ArmProvider(source, arm, n_layers, act_scales, precision=precision)
     pipe, excluded = pipeline_for(arm)
     prog, inputs = make_program(P, variant)
     t_built = time.time()
@@ -292,10 +299,12 @@ def build_encoder(model: str, arm: str, variant: str, out_root: Path, layers: in
     t_saved = time.time()
     weight_bin = package / "Data" / "com.apple.CoreML" / "weights" / "weight.bin"
     manifest = {
-        "schema": 1, "model": model, "arm": arm, "variant": variant, "layers": n_layers,
+        "schema": 1, "model": model, "arm": label, "encoding_arm": arm, "variant": variant, "layers": n_layers,
+        "precision": getattr(P, "precision", "fp16"),
         "exact": arm in encodings.EXACT, "exploratory": arm in ("C5",),
         "provenance": provenance, "opset": P.opset, "minimum_deployment_target": P.opset,
-        "compute_precision": "FLOAT16 (graph authored in FP16; fp32/int32 I/O)",
+        "compute_precision": ("FLOAT32 (gate 4a build: same constexpr chain with FP32 values)" if precision == "fp32"
+                              else "FLOAT16 (graph authored in FP16; fp32/int32 I/O)"),
         "functions": ({"b%d" % b: {"mel": [1, 128, f], "encoder_frames": enc_mod.encoder_frames(f)}
                        for b, f in enc_mod.BUCKETS.items()} if variant == "multi" else
                       {"main": {"mel": [1, 128, 1501] if variant == "fixed" else
@@ -329,7 +338,7 @@ def build_encoder(model: str, arm: str, variant: str, out_root: Path, layers: in
         shutil.rmtree(package)
         manifest["paths"]["mlpackage"] = None
     if not tag and n_layers == N_LAYERS:
-        save_manifest(manifest, out_dir, model, arm, variant)
+        save_manifest(manifest, out_dir, model, label, variant)
     else:
         (out_dir / f"manifest-{name}-{n_layers}L.json").write_text(json.dumps(manifest, indent=1, default=str) + "\n")
     return manifest
@@ -339,23 +348,26 @@ def calibration_file(model: str) -> Path:
     return IOS / "results" / "calibration" / f"{model}-c5-activations.json"
 
 
-def build_decoder(model: str, out_root: Path, plan: bool = True) -> dict:
+def build_decoder(model: str, out_root: Path, plan: bool = True, precision: str = "fp16") -> dict:
     import artifacts
     from . import decoder as dec_mod
     from .weights import Source
 
-    out_dir = artifacts.check(out_root / model / "decoder")
+    label = arm_label("decoder", precision)
+    out_dir = artifacts.check(out_root / model / label)
     out_dir.mkdir(parents=True, exist_ok=True)
     source = Source(model)
-    W = dec_mod.weights(source)
+    W = dec_mod.weights(source, precision)
     manifest = {"schema": 1, "model": model, "provenance": source.provenance, "opset": DECODER_OPSET,
-                "compute_precision": "FLOAT16 (graph authored in FP16; fp32/int32 I/O)", "models": {},
+                "precision": precision,
+                "compute_precision": ("FLOAT32 (gate 4a build)" if precision == "fp32"
+                                      else "FLOAT16 (graph authored in FP16; fp32/int32 I/O)"), "models": {},
                 "environment": environment()}
     pipe, _ = pipeline_for("decoder")
     for name, builder in dec_mod.BUILDERS.items():
         t0 = time.time()
         prog = builder(W)
-        mlmodel, final = convert(prog, DECODER_OPSET, pipe)
+        mlmodel, final = convert(prog, DECODER_OPSET, pipe, precision=precision)
         package = out_dir / f"{name}.mlpackage"
         if package.exists():
             shutil.rmtree(package)
@@ -375,7 +387,7 @@ def build_decoder(model: str, out_root: Path, plan: bool = True) -> dict:
     text = json.dumps(manifest, indent=1, default=str) + "\n"
     (out_dir / "manifest.json").write_text(text)
     RESULTS.mkdir(parents=True, exist_ok=True)
-    (RESULTS / f"{model}-decoder.json").write_text(text)
+    (RESULTS / f"{model}-{label}.json").write_text(text)
     return manifest
 
 
@@ -427,9 +439,12 @@ def main() -> None:
     p.add_argument("--no-compile", action="store_true")
     p.add_argument("--no-plan", action="store_true")
     p.add_argument("--drop-package", action="store_true", help="delete the .mlpackage after compiling (disk)")
+    p.add_argument("--precision", default="fp16", choices=("fp16", "fp32"))
     p = sub.add_parser("decoder")
     p.add_argument("--model", required=True)
     p.add_argument("--out-dir")
+    p.add_argument("--precision", default="fp16", choices=("fp16", "fp32"))
+    p.add_argument("--no-plan", action="store_true")
     p = sub.add_parser("plan")
     p.add_argument("--path", required=True)
     p.add_argument("--units", default="cpuAndNeuralEngine")
@@ -448,11 +463,12 @@ def main() -> None:
     if args.cmd == "encoder":
         m = build_encoder(args.model, args.arm, args.variant, Path(args.out_dir) if args.out_dir else default_out(),
                           args.layers, compile_=not args.no_compile, plan=not args.no_plan,
-                          keep_package=not args.drop_package)
+                          keep_package=not args.drop_package, precision=args.precision)
         print(json.dumps({k: m[k] for k in ("model", "arm", "variant", "sizes", "timing_s", "peak_rss_mb_after_save")}
                          | {"compile": m.get("compile"), "peak_rss_mb_after_compile": m.get("peak_rss_mb_after_compile")}))
     elif args.cmd == "decoder":
-        m = build_decoder(args.model, Path(args.out_dir) if args.out_dir else default_out())
+        m = build_decoder(args.model, Path(args.out_dir) if args.out_dir else default_out(), plan=not args.no_plan,
+                          precision=args.precision)
         print(json.dumps({k: {"mlpackage_bytes": v["mlpackage_bytes"], "compile": v.get("compile")}
                           for k, v in m["models"].items()} | {"peak_rss_mb": m["peak_rss_mb"]}))
     elif args.cmd == "plan":

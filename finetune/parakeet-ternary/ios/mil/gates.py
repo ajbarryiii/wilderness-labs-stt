@@ -24,6 +24,9 @@ decoder: the same heads gate with the reference's own encoder output (isolates D
 g0: G0 vs C0's Encoder on the same mel (15 s window), gate-4 encoder ceilings (G0 is C0's tensors in our
 graph; its FP32 reference would be C0's dequantized weights, which C0 does not ship for linear_pos).
 Results: ios/results/gates/<model>-<arm>-<variant>-<units>.json (per clip and bucket; no weights or audio).
+
+These are the revision 2-5 gates (DESIGN.md), kept for the record and as diagnostics. The revision 7 gates
+(4a/4b, eligibility) are mil/gates7.py.
 """
 from __future__ import annotations
 
@@ -50,23 +53,16 @@ GATE5_KINDS = ("boundary", "silence", "impulse")
 N_DUR = 5
 
 
-_START = time.time()
-
-
 def purge_cache() -> None:
-    """Delete the Core ML (e5rt) cache entries this process created (one device-specialized copy per load, GBs
-    each); call after a model is released. Guarded jobs are serialized, so newer entries are this job's."""
-    cache = Path.home() / "Library" / "Caches" / "python" / "com.apple.e5rt.e5bundlecache"
-    if not cache.is_dir():
-        return
+    """Empty this job's own Core ML (e5rt) cache directory after a model is released (device-specialized copies,
+    GBs each). Only the directory named by WP3_COREML_CACHE (set by mil/job.sh: ~/Library/Caches/wp3py, used by
+    no other process) is touched; nothing happens without it. Shared caches are never purged (review finding 6)."""
+    import os
     import shutil
 
-    for entry in cache.glob("*/*"):
-        try:
-            if entry.stat().st_mtime >= _START - 1:
-                shutil.rmtree(entry, ignore_errors=True)
-        except FileNotFoundError:
-            pass
+    cache = os.environ.get("WP3_COREML_CACHE")
+    if cache and Path(cache).name == "wp3py" and Path(cache).is_dir():
+        shutil.rmtree(cache, ignore_errors=True)
 
 
 def units_of(name: str):
@@ -268,6 +264,7 @@ def encoder_gate(args) -> dict:
         "gate4_encoder": {"pass": all(r["pass"] for r in g4), "cases": len(g4),
                           "rel_max": max(r["rel"] for r in g4), "abs_max": max(r["abs"] for r in g4),
                           "rel_median": float(np.median([r["rel"] for r in g4])),
+                          "failing_cases": sum(1 for r in rows.values() if not r["pass"]),
                           "failures": [k for k, r in rows.items() if not r["pass"]][:40],
                           "per_bucket": {b: {"cases": sum(1 for r in g4 if r["bucket"] == b),
                                              "rel_max": max((r["rel"] for r in g4 if r["bucket"] == b), default=None),

@@ -51,6 +51,7 @@ import numpy as np
 from . import IOS, encodings  # noqa: E402
 
 PROBES = IOS / "results" / "probes"
+STRESS_ARMS = ("C4", "C1", "C3", "C5", "C6s2", "C6s4", "C6s8", "C6d4", "C6d8", "C7", "C8")  # C4 first: the rule's reference
 PROBE_ARMS = ("C1", "C3", "C4", "C7", "C8", "C6s2", "C6s4", "C6s8", "C6d4", "C6d8", "C5")
 STRESS_MODULES = (("layers.0.feed_forward1.linear1", "ff1_in"), ("layers.0.feed_forward1.linear2", "ff1_mid"),
                   ("layers.23.feed_forward2.linear2", "ff2_mid"))
@@ -349,7 +350,7 @@ def adversarial(codes: np.ndarray) -> np.ndarray:
     return c
 
 
-def _stress_program(arm: str, codes, scale, t: int):
+def _stress_program(arm: str, codes, scale, t: int, act_scale: float | None = None):
     import coremltools as ct
     from coremltools.converters.mil import Builder as mb
     from coremltools.converters.mil.mil import types
@@ -359,6 +360,8 @@ def _stress_program(arm: str, codes, scale, t: int):
     @mb.program(input_specs=[mb.TensorSpec(shape=(1, t, codes.shape[1]), dtype=types.fp32)], opset_version=ct.target.iOS26)
     def prog(x):
         x16 = mb.cast(x=x, dtype="fp16")
+        if arm == "C5":  # the arm's int8 activation quantization with the site's calibrated scale
+            x16 = encodings.quantize_activation(x16, act_scale, "act")
         w = encodings.weight_var(enc, "w")
         y = mb.linear(x=x16, weight=w, name="mm")
         outs = []
@@ -399,7 +402,12 @@ def stress(args) -> None:
         w64 = codes.astype(np.float64) * fp16_scale(scale).astype(np.float64)[:, None]
         inputs = {"x1": x0, "x8": 8 * x0, "x64": 64 * x0, "abs_x64": 64 * np.abs(x0)}
         for arm in arms:
-            prog = _stress_program(arm, codes, scale, x0.shape[0])
+            act = None
+            if arm == "C5":
+                from .build import calibration_file
+
+                act = json.loads(calibration_file("mp2").read_text())["sites"][f"layers.{layer}.{site}"]["scale"]
+            prog = _stress_program(arm, codes, scale, x0.shape[0], act)
             model = ct.convert(prog, convert_to="mlprogram", minimum_deployment_target=ct.target.iOS26,
                                compute_precision=ct.precision.FLOAT16, compute_units=ct.ComputeUnit.CPU_ONLY,
                                skip_model_load=True)
@@ -424,30 +432,70 @@ def stress(args) -> None:
                            "reference_max_abs_raw_rows0_3": float(np.abs(x.astype(np.float64) @ codes[:4].T.astype(np.float64)).max())}
                     if np.isfinite(pred["out"]).all():
                         row["rel_err_out"], row["abs_err_out"] = refcache.errors(pred["out"][0], ref, 1e-3)
+                    row["out_finite"] = bool(np.isfinite(pred["out"]).all())
                     results.setdefault(module, {}).setdefault(arm, {}).setdefault(uname, {})[iname] = row
                 del m
+                from .gates import purge_cache
+                purge_cache()
             results[module][arm]["compute_plan_cpuAndNeuralEngine"] = plan["ops_with_usage_by_preferred_device"]
             print(module, arm, json.dumps({u: {i: (r["finite"], {k: round(v, 1) if v else v for k, v in r["max_abs"].items()})
                                                for i, r in d.items()} for u, d in results[module][arm].items()
                                            if u in units}), flush=True)
-    verdict = {}
-    for arm in arms:
-        bad = [(mod, u, i) for mod in results for u in units for i, r in results[mod][arm][u].items() if not r["finite"]]
-        verdict[arm] = {"any_nonfinite": bool(bad), "nonfinite_cases": bad}
-    doc = {"probe": "C7/C8 stress (DESIGN.md 'C7/C8 numerics')", "modules": [m for m, _ in STRESS_MODULES],
+    verdict = stress_verdict(results, arms, units)
+    doc = {"probe": "stress (DESIGN.md 'C7/C8 numerics'; rule of revision 6/7)", "design_revision": 7,
+           "rule": "per compute unit: an arm fails if it produces inf or NaN (in any output, intermediates included) "
+                   "at a stress level where C4 stays finite on the same unit; real inputs (x1) must always be finite",
+           "modules": [m for m, _ in STRESS_MODULES],
            "adversarial_rows": {"0": "all +1", "1": "all -1", "2": "alternating runs of 256 (+1, -1, ...)",
                                 "3": "first half +1, second half -1"},
            "inputs": {"x1": "layer activation of the probe clip (1x clip RMS)", "x8": "x 8", "x64": "x 64",
                       "abs_x64": "|activation| x 64 (all-positive: maximizes the all +1 row)"},
            "probe_clip": json.loads((refcache.default_out("mp2") / "probe_inputs.json").read_text())["clip"],
-           "outputs": "C7: raw (matmul before the row scale), out; C8: P, N, raw = P - N, out; C1/C4: out. "
-                      "Exposing intermediates as outputs may change the compiled graph.",
+           "outputs": "C7: raw (matmul before the row scale), out; C8: P, N, raw = P - N, out; others: out. "
+                      "Exposing intermediates as outputs may change the compiled graph. Non-finite maxima are "
+                      "written as the strings inf/nan (strict JSON).",
            "accumulation": "backend-defined (not exposed by Core ML); recorded as such",
            "verdict": verdict, "results": results, "environment": environment()}
     PROBES.mkdir(parents=True, exist_ok=True)
-    (PROBES / "stress.json").write_text(json.dumps(doc, indent=1) + "\n")
+    from .gates7 import jsonable
+
+    (PROBES / "stress.json").write_text(json.dumps(jsonable(doc), indent=1, allow_nan=False) + "\n")
     shutil.rmtree(out_dir, ignore_errors=True)
-    print(json.dumps(verdict, indent=1))
+    print(json.dumps(jsonable(verdict), indent=1))
+    if not all(v[u]["pass"] for v in verdict.values() for u in v if u in BACKENDS.values()):
+        sys.exit(10)
+
+
+BACKENDS = {"cpuOnly": "cpu", "cpuAndNeuralEngine": "ane"}
+
+
+def stress_verdict(results: dict, arms, units) -> dict:
+    """The relative stress rule per arm and backend (needs C4's results on the same modules and units)."""
+    out = {}
+    for arm in arms:
+        per = {}
+        for uname, backend in BACKENDS.items():
+            if uname not in units:
+                continue
+            fails, x1_bad, ref_missing = [], [], []
+            for mod in results:
+                arm_runs = results[mod].get(arm, {}).get(uname, {})
+                c4_runs = results[mod].get("C4", {}).get(uname, {})
+                for level, r in arm_runs.items():
+                    if level == "x1" and not r["finite"]:
+                        x1_bad.append(mod)
+                    if level not in c4_runs:
+                        ref_missing.append((mod, level))
+                    elif not r["finite"] and c4_runs[level]["finite"]:
+                        fails.append((mod, level))
+            per[backend] = {"pass": not fails and not x1_bad and not ref_missing, "nonfinite_where_c4_finite": fails,
+                            "nonfinite_at_x1": x1_bad, "missing_c4_reference": ref_missing,
+                            "nonfinite_cases_total": sum(1 for mod in results for r in results[mod].get(arm, {}).get(uname, {}).values()
+                                                         if isinstance(r, dict) and not r.get("finite", True))}
+        out[arm] = per
+    return out
+
+
 
 
 def summary(args) -> None:
@@ -477,7 +525,7 @@ def main() -> None:
     p.add_argument("--out")
     sub.add_parser("folding")
     p = sub.add_parser("stress")
-    p.add_argument("--arms", default="C7,C8,C1,C4")
+    p.add_argument("--arms", default=",".join(STRESS_ARMS))
     p = sub.add_parser("summary")
     p.add_argument("--cap-gb", type=float, default=6.0)
     args = parser.parse_args()

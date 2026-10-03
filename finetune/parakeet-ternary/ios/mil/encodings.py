@@ -79,7 +79,7 @@ class Encoded:
         """Stored bytes per const (sub-byte packed) plus post scale."""
         out = {k: packed_bytes(v.size, self.bits[k]) for k, v in self.consts.items()}
         if self.post_scale is not None:
-            out["post_scale"] = self.post_scale.size * 2
+            out["post_scale"] = self.post_scale.nbytes
         return out
 
     def describe(self) -> dict:
@@ -88,7 +88,7 @@ class Encoded:
             return f"uint{self.bits[k]}" if v.dtype == np.uint8 and self.bits[k] < 8 else str(v.dtype)
         d = {k: {"dtype": dt(k, v), "shape": list(v.shape)} for k, v in self.consts.items()}
         if self.post_scale is not None:
-            d["post_scale"] = {"dtype": "float16", "shape": list(self.post_scale.shape)}
+            d["post_scale"] = {"dtype": str(self.post_scale.dtype), "shape": list(self.post_scale.shape)}
         return d
 
 
@@ -97,15 +97,18 @@ def _shape(rank: int, *dims: int) -> tuple:
     return dims if rank == 2 else dims[:2] + (1,) + dims[2:]
 
 
-def encode(arm: str, codes: np.ndarray, scale: np.ndarray, rank: int) -> Encoded:
+def encode(arm: str, codes: np.ndarray, scale: np.ndarray, rank: int, dtype=np.float16) -> Encoded:
+    """dtype float32 builds the same chain with FP32 LUT/scale/weight values (the FP16-rounded scales, exactly
+    representable): the gate-4a FP32-compute build of the arm's graph topology."""
     out, inp = codes.shape
-    s16 = fp16_scale(scale)
+    s16 = fp16_scale(scale).astype(dtype)
+    dt = dtype
     fam = family(arm)
     enc = Encoded(arm, out, inp, rank)
     w_shape = _shape(rank, out, inp)
     if fam == "C1":
-        enc.consts["weight"] = (codes.astype(np.float16) * s16[:, None]).reshape(w_shape)
-        enc.bits["weight"] = 16
+        enc.consts["weight"] = (codes.astype(dt) * s16[:, None]).reshape(w_shape)
+        enc.bits["weight"] = 8 * np.dtype(dt).itemsize
     elif fam == "F32":  # diagnostic (mil/diag.py): FP32 graph, dense codes x FP16(s) in FP32
         enc.consts["weight"] = (codes.astype(np.float32) * s16.astype(np.float32)[:, None]).reshape(w_shape)
         enc.bits["weight"] = 32
@@ -113,23 +116,23 @@ def encode(arm: str, codes: np.ndarray, scale: np.ndarray, rank: int) -> Encoded
         enc.consts["data"] = codes.reshape(w_shape)
         enc.bits["data"] = 8
         enc.consts["scale"] = s16.reshape(_shape(rank, out, 1))
-        enc.bits["scale"] = 16
+        enc.bits["scale"] = 8 * np.dtype(dt).itemsize
     elif fam in ("C4", "C7"):
         enc.consts["indices"] = (codes + 1).astype(np.uint8).reshape(w_shape).astype(_sub_byte("uint2"))
         enc.bits["indices"] = 2
-        enc.consts["lut"] = np.array([-1, 0, 1, 0], dtype=np.float16).reshape(_shape(rank, 1, 1, 4, 1))
-        enc.bits["lut"] = 16
+        enc.consts["lut"] = np.array([-1, 0, 1, 0], dtype=dt).reshape(_shape(rank, 1, 1, 4, 1))
+        enc.bits["lut"] = 8 * np.dtype(dt).itemsize
         if fam == "C4":
             enc.consts["scale"] = s16.reshape(_shape(rank, out, 1))
-            enc.bits["scale"] = 16
+            enc.bits["scale"] = 8 * np.dtype(dt).itemsize
         else:
             enc.post_scale = s16
     elif fam == "C8":
         planes = np.concatenate([(codes == 1), (codes == -1)], axis=0).astype(np.uint8)
         enc.consts["indices"] = planes.reshape(_shape(rank, 2 * out, inp)).astype(_sub_byte("uint1"))
         enc.bits["indices"] = 1
-        enc.consts["lut"] = np.array([0, 1], dtype=np.float16).reshape(_shape(rank, 1, 1, 2, 1))
-        enc.bits["lut"] = 16
+        enc.consts["lut"] = np.array([0, 1], dtype=dt).reshape(_shape(rank, 1, 1, 2, 1))
+        enc.bits["lut"] = 8 * np.dtype(dt).itemsize
         enc.post_scale = s16
     elif fam == "C6s":
         g = group_size(arm)
@@ -141,11 +144,11 @@ def encode(arm: str, codes: np.ndarray, scale: np.ndarray, rank: int) -> Encoded
         enc.bits["indices_mask"] = 1
         enc.consts["indices_nonzero_data"] = idx[mask].astype(_sub_byte(f"uint{nbits}"))
         enc.bits["indices_nonzero_data"] = nbits
-        lut = np.empty((out // g, 2 * g), dtype=np.float16)
+        lut = np.empty((out // g, 2 * g), dtype=dt)
         lut[:, 0::2] = s16.reshape(out // g, g)
         lut[:, 1::2] = -s16.reshape(out // g, g)
         enc.consts["lut"] = lut.reshape(_shape(rank, out // g, 1, 2 * g, 1))
-        enc.bits["lut"] = 16
+        enc.bits["lut"] = 8 * np.dtype(dt).itemsize
     elif fam == "C6d":
         g = group_size(arm)
         nbits = {4: 4, 8: 6}[g]
@@ -153,11 +156,11 @@ def encode(arm: str, codes: np.ndarray, scale: np.ndarray, rank: int) -> Encoded
         idx = np.where(codes == 0, 0, 1 + 2 * k + (codes < 0)).astype(np.uint8)
         enc.consts["indices"] = idx.reshape(w_shape).astype(_sub_byte(f"uint{nbits}"))
         enc.bits["indices"] = nbits
-        lut = np.zeros((out // g, 2 ** nbits), dtype=np.float16)
+        lut = np.zeros((out // g, 2 ** nbits), dtype=dt)
         lut[:, 1:2 * g + 1:2] = s16.reshape(out // g, g)
         lut[:, 2:2 * g + 2:2] = -s16.reshape(out // g, g)
         enc.consts["lut"] = lut.reshape(_shape(rank, out // g, 1, 2 ** nbits, 1))
-        enc.bits["lut"] = 16
+        enc.bits["lut"] = 8 * np.dtype(dt).itemsize
     else:
         raise KeyError(f"unknown arm {arm}")
     return enc

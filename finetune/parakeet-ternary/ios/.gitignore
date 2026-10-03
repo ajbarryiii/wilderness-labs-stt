@@ -17,3 +17,5 @@ DerivedData/
 *.f32
 *.f32bin
 *.f16bin
+# WP3 local configuration (hosts, wrapper paths): never in Git
+mil/local.json

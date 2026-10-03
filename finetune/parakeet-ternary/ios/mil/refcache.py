@@ -174,6 +174,7 @@ def run(args) -> None:
                         "<v>_h / <v>_c": "[S, 2, 640] LSTM state producing each step's prediction"},
              "free_tokens": {k: {kk: vv for kk, vv in v.items() if "free" in kk} for k, v in results.items()},
              "traces_json_sha256": hashlib.sha256((IOS / "traces.json").read_bytes()).hexdigest(),
+             "reference_py_sha256": hashlib.sha256((IOS / "reference.py").read_bytes()).hexdigest(),
              "clips_json_sha256": hashlib.sha256((IOS / "clips.json").read_bytes()).hexdigest(),
              "torch": torch.__version__, "seconds": round(time.time() - t0, 1)}
     (out / "index.json").write_text(json.dumps(index) + "\n")
@@ -250,6 +251,40 @@ def calibrate(model, manifest, pcm_dir: Path, out: Path) -> None:
     np.savez(out / "probe_inputs.npz", **{k.replace(".", "_"): v for k, v in captured.items()})
     (out / "probe_inputs.json").write_text(json.dumps({"clip": probe_clip["id"], "keys": sorted(captured)}) + "\n")
     print(f"calibrated {len(maxima)} sites on {len(chosen)} clips; probe inputs from {probe_clip['id']}", flush=True)
+
+
+IDENTITY_KEYS = ("export_sha256", "digest", "file_sha256")
+
+
+def validate(model: str, build_provenance: dict | None = None, root: Path | None = None) -> dict:
+    """The cache's index, after checking that it still describes this model and these inputs (review finding 8):
+    clips.json, traces.json (and reference.py, when recorded) hash as when the cache was written, the model's
+    current source identity (export SHA-256 / surrogate digest) equals the cached one, and, if given, the
+    tested build's recorded provenance names the same weights. ValueError otherwise."""
+    from .weights import Source
+
+    root = Path(root or default_out(model))
+    index = json.loads((root / "index.json").read_text())
+    problems = []
+    for key, name in (("clips_json_sha256", "clips.json"), ("traces_json_sha256", "traces.json"),
+                      ("reference_py_sha256", "reference.py")):
+        if key in index and index[key] != hashlib.sha256((IOS / name).read_bytes()).hexdigest():
+            problems.append(f"{name} changed since the cache was written")
+    current = Source(model).provenance
+    for prov, label in ((current, "current model source"), (build_provenance, "tested build")):
+        if prov is None:
+            continue
+        shared = [k for k in IDENTITY_KEYS if k in prov and k in index["provenance"]]
+        if not shared:
+            problems.append(f"{label}: no comparable identity key")
+        for k in shared:
+            if prov[k] != index["provenance"][k]:
+                problems.append(f"{label}: {k} {prov[k]} != cached {index['provenance'][k]}")
+    if index.get("model") != model:
+        problems.append(f"cache is for {index.get('model')}, not {model}")
+    if problems:
+        raise ValueError(f"reference cache {root} is stale: " + "; ".join(problems))
+    return index
 
 
 def load_clip(model: str, clip_id: str, root: Path | None = None) -> dict:

@@ -1,4 +1,4 @@
-"""Move compiled WP3 models off the shared Mac to NixOS storage and back (disk floor: Mac free > 60 GB).
+"""Move compiled WP3 models off the shared Mac to NixOS storage and back (Mac disk floor 30 GB).
 
   ./python ios/mil/archive.py out MODEL ARM      # Mac <artifacts>/arms/MODEL/ARM/*.mlmodelc,*.mlpackage -> /mnt/hd
   ./python ios/mil/archive.py back MODEL ARM [fixed.mlmodelc,...]   # restore (all or some) to the Mac
@@ -6,7 +6,12 @@
 Runs on NixOS. out: per-file SHA-256 on the Mac, a tar stream over SSH (each Mac side as a macguard job,
 512 MB cap), extraction under /mnt/hd/wilderness-labs-stt/parakeet-ios/arms-archive/MODEL/ARM, verification
 of every checksum, then deletion of the models on the Mac; the manifests stay and ARCHIVED.json records
-what moved where. back: the reverse (tar stream into the Mac, checksums verified there, ARCHIVED.json removed).
+what moved where. back: the Mac pulls a tar stream from a one-shot token-gated HTTP server on this machine
+(the SSH wrapper gives no stdin), after checking inside the guarded job that 30 GB + the archive's size are free.
+
+Local configuration (not in Git): environment variables, or the untracked file mil/local.json with the same keys:
+  WP3_MAC_RUN    command that runs a remote shell command on the Mac: `$WP3_MAC_RUN --repo DIR -- CMD...`
+  WP3_SERVE_HOST address of this machine as the Mac reaches it (the restore server binds to it)
 """
 from __future__ import annotations
 
@@ -19,7 +24,19 @@ import sys
 import time
 from pathlib import Path
 
-RUN = str(Path.home() / ".codex/skills/macos-ssh/scripts/run.sh")
+FLOOR_GB = 30
+
+
+def local_config(key: str) -> str:
+    """WP3_* setting from the environment or the untracked mil/local.json (no host names in tracked code)."""
+    if os.environ.get(key):
+        return os.environ[key]
+    path = Path(__file__).with_name("local.json")
+    if path.exists() and json.loads(path.read_text()).get(key):
+        return json.loads(path.read_text())[key]
+    raise SystemExit(f"set {key} in the environment or in {path} (untracked)")
+
+
 MAC_IOS = "/Users/ajbarry/workspace/github.com/wilderness-labs-stt/finetune/parakeet-ternary/ios"
 MAC_ARMS = "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms"
 LOCAL = Path("/mnt/hd/wilderness-labs-stt/parakeet-ios/arms-archive")
@@ -27,7 +44,7 @@ LOCAL = Path("/mnt/hd/wilderness-labs-stt/parakeet-ios/arms-archive")
 
 def guarded(cmd: str) -> list[str]:
     inner = f"./macguard --rss-cap 512M --timeout 3600 -- sh -c {shlex.quote(cmd)} 2>/dev/null"
-    return [RUN, "--repo", MAC_IOS, "--", "sh", "-c", inner]
+    return [local_config("WP3_MAC_RUN"), "--repo", MAC_IOS, "--", "sh", "-c", inner]
 
 
 def mac(cmd: str, tries: int = 40) -> str:
@@ -88,7 +105,7 @@ def out(model: str, arm: str) -> None:
     print(json.dumps(note))
 
 
-def back(model: str, arm: str, only: list[str] | None = None, host: str = "100.81.222.117") -> None:
+def back(model: str, arm: str, only: list[str] | None = None) -> None:
     """Restore: the Mac pulls a tar stream from a one-shot, token-gated HTTP server bound to this machine's
     tailnet address (run.sh gives SSH no stdin), extracts it and verifies every SHA-256."""
     import http.server
@@ -102,6 +119,8 @@ def back(model: str, arm: str, only: list[str] | None = None, host: str = "100.8
         names = [n for n in names if n in only]
         sums = "".join(line + "\n" for line in sums.splitlines() if line.split(None, 1)[1].split("/", 1)[0] in names)
     token = secrets.token_hex(16)
+    host = local_config("WP3_SERVE_HOST")
+    need_gb = -(-sum(f.stat().st_size for n in names for f in (src / n).rglob("*") if f.is_file()) // 10 ** 9) + 1
 
     class Handler(http.server.BaseHTTPRequestHandler):
         def do_GET(self):  # noqa: N802
@@ -123,7 +142,9 @@ def back(model: str, arm: str, only: list[str] | None = None, host: str = "100.8
     try:
         url = f"http://{host}:{server.server_address[1]}/{token}.tar"
         base = f"{MAC_ARMS}/{model}/{arm}"
-        mac(f"cd {base} && curl -fsS {url} | tar xf - && printf %s {shlex.quote(sums)} | shasum -a 256 -c --quiet")
+        mac(f"free=$(df -g {base} | awk 'NR == 2 {{print $4}}'); [ \"$free\" -ge {FLOOR_GB + need_gb} ] || "
+            f"{{ echo 'refusing restore: '$free' GB free < {FLOOR_GB} + {need_gb} GB' >&2; exit 5; }}; "
+            f"cd {base} && curl -fsS {url} | tar xf - && printf %s {shlex.quote(sums)} | shasum -a 256 -c --quiet")
     finally:
         server.shutdown()
     print(f"restored {names} to {MAC_ARMS}/{model}/{arm}")

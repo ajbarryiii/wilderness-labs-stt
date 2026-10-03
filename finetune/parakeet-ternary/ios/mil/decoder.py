@@ -27,20 +27,22 @@ DURATIONS = 5
 ENC = 1024
 
 
-def weights(source) -> dict:
-    """FP16 arrays of the prediction and joint networks (FP32 sums of the two LSTM biases, then cast)."""
+def weights(source, precision: str = "fp16") -> dict:
+    """FP16 arrays of the prediction and joint networks (FP32 sums of the two LSTM biases, then cast); precision
+    "fp32" keeps FP32 (gate 4a's FP32-compute build of the same graphs)."""
     f = source.floating
-    W = {"embed": f("decoder.prediction.embed.weight").astype(np.float16)}
+    npdt = np.float32 if precision == "fp32" else np.float16
+    W = {"_dt": "fp32" if precision == "fp32" else "fp16", "embed": f("decoder.prediction.embed.weight").astype(npdt)}
     if W["embed"].shape != (VOCAB_BLANK, H) or W["embed"][VOCAB_BLANK - 1].any():
         raise ValueError("embedding must be [1025, 640] with a zero blank row")
     for l in range(LAYERS):
         p = f"decoder.prediction.dec_rnn.lstm."
-        W[f"w_ih{l}"] = f(p + f"weight_ih_l{l}").astype(np.float16)
-        W[f"w_hh{l}"] = f(p + f"weight_hh_l{l}").astype(np.float16)
-        W[f"b{l}"] = (f(p + f"bias_ih_l{l}") + f(p + f"bias_hh_l{l}")).astype(np.float16)
+        W[f"w_ih{l}"] = f(p + f"weight_ih_l{l}").astype(npdt)
+        W[f"w_hh{l}"] = f(p + f"weight_hh_l{l}").astype(npdt)
+        W[f"b{l}"] = (f(p + f"bias_ih_l{l}") + f(p + f"bias_hh_l{l}")).astype(npdt)
     for k, key in (("enc", "joint.enc"), ("pred", "joint.pred"), ("out", "joint.joint_net.2")):
-        W[f"{k}_w"] = f(key + ".weight").astype(np.float16)
-        W[f"{k}_b"] = f(key + ".bias").astype(np.float16)
+        W[f"{k}_w"] = f(key + ".weight").astype(npdt)
+        W[f"{k}_b"] = f(key + ".bias").astype(npdt)
     return W
 
 
@@ -48,8 +50,8 @@ def _decoder_body(W, targets, h_in, c_in):
     from coremltools.converters.mil import Builder as mb
 
     x = mb.gather(x=W["embed"], indices=mb.reshape(x=targets, shape=[1]), axis=0, name="embed")  # [1, 640]
-    h16 = mb.cast(x=h_in, dtype="fp16", name="h_in_fp16")
-    c16 = mb.cast(x=c_in, dtype="fp16", name="c_in_fp16")
+    h16 = mb.cast(x=h_in, dtype=W["_dt"], name="h_in_c")
+    c16 = mb.cast(x=c_in, dtype=W["_dt"], name="c_in_c")
     hs, cs = [], []
     for l in range(LAYERS):
         h = mb.squeeze(x=mb.slice_by_index(x=h16, begin=[l, 0, 0], end=[l + 1, 1, H]), axes=[0], name=f"h{l}")
@@ -89,13 +91,13 @@ def _decision(logits):
     return token_id, token_prob, duration
 
 
-def _step_inputs(enc_step, dec_step=None):
+def _step_inputs(enc_step, dec_step=None, dt: str = "fp16"):
     from coremltools.converters.mil import Builder as mb
 
-    f16 = mb.reshape(x=mb.cast(x=enc_step, dtype="fp16"), shape=[1, ENC], name="encoder_step_fp16")
+    f16 = mb.reshape(x=mb.cast(x=enc_step, dtype=dt), shape=[1, ENC], name="encoder_step_c")
     if dec_step is None:
         return f16
-    g16 = mb.reshape(x=mb.cast(x=dec_step, dtype="fp16"), shape=[1, H], name="decoder_step_fp16")
+    g16 = mb.reshape(x=mb.cast(x=dec_step, dtype=dt), shape=[1, H], name="decoder_step_c")
     return f16, g16
 
 
@@ -127,7 +129,7 @@ def joint_decision_program(W):
 
     @mb.program(input_specs=_specs(((1, ENC, 1), types.fp32), ((1, H, 1), types.fp32)), opset_version=ct.target.iOS26)
     def prog(encoder_step, decoder_step):
-        f16, g16 = _step_inputs(encoder_step, decoder_step)
+        f16, g16 = _step_inputs(encoder_step, decoder_step, W["_dt"])
         return _decision(_joint_logits(W, f16, g16))
 
     return prog
@@ -140,7 +142,7 @@ def joint_logits_program(W):
 
     @mb.program(input_specs=_specs(((1, ENC, 1), types.fp32), ((1, H, 1), types.fp32)), opset_version=ct.target.iOS26)
     def prog(encoder_step, decoder_step):
-        f16, g16 = _step_inputs(encoder_step, decoder_step)
+        f16, g16 = _step_inputs(encoder_step, decoder_step, W["_dt"])
         logits = _joint_logits(W, f16, g16)
         tok = mb.slice_by_index(x=logits, begin=[0, 0], end=[1, VOCAB_BLANK])
         dur = mb.slice_by_index(x=logits, begin=[0, VOCAB_BLANK], end=[1, VOCAB_BLANK + DURATIONS])
@@ -158,7 +160,7 @@ def decoder_joint_program(W):
                                    ((1, ENC, 1), types.fp32)), opset_version=ct.target.iOS26)
     def prog(targets, h_in, c_in, encoder_step):
         x, h_out, c_out = _decoder_body(W, targets, h_in, c_in)
-        token_id, token_prob, duration = _decision(_joint_logits(W, _step_inputs(encoder_step), x))
+        token_id, token_prob, duration = _decision(_joint_logits(W, _step_inputs(encoder_step, None, W["_dt"]), x))
         return token_id, token_prob, duration, h_out, c_out
 
     return prog

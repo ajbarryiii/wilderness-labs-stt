@@ -63,7 +63,9 @@ def main() -> None:
             e4, e5, h = s["gate4_encoder"], s["gate5_buckets_vs_15s"], s["gate4_heads"]
             row[f"gates_{units}"] = {
                 "g4_encoder": e4["pass"], "g4_rel_max": round(e4["rel_max"], 4), "g4_abs_max": round(e4["abs_max"], 3),
-                "g4_rel_median": round(e4["rel_median"], 4), "g4_failing_cases": len(e4["failures"]),
+                "g4_rel_median": round(e4["rel_median"], 4),
+                # counted from the per-case records: the summary's failure list is capped at 40 examples
+                "g4_failing_cases": sum(1 for r in g["encoder_cases"].values() if not r["pass"]),
                 "g5": e5.get("pass"), "g5_rel_max": e5.get("gated_rel_max"),
                 "heads": h["pass"], "token_agree": h["token"]["agreement_on_decisive"],
                 "duration_agree": h["duration"]["agreement_on_decisive"],

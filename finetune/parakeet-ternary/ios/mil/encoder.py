@@ -82,7 +82,8 @@ def slice_positions(table: np.ndarray, t: int) -> np.ndarray:
 class ArmProvider:
     """Encoder weights of a benchmark model in one arm's encoding (cached, so functions share arrays)."""
 
-    def __init__(self, source: Source, arm: str, n_layers: int = N_LAYERS, act_scales: dict | None = None) -> None:
+    def __init__(self, source: Source, arm: str, n_layers: int = N_LAYERS, act_scales: dict | None = None,
+                 precision: str = "fp16") -> None:
         if arm not in encodings.ENCODER_ARMS + ("F32",):
             raise KeyError(arm)
         self.source, self.arm, self.n_layers = source, arm, n_layers
@@ -94,7 +95,11 @@ class ArmProvider:
         self._dense: dict[str, np.ndarray] = {}
         self.opset = "iOS26"  # iOS26 target (iOS18 op definitions); see README WP3 "opset"
         # "F32" is a diagnostic arm (mil/diag.py): the same graph in FP32 with dense codes x FP16(s) weights
-        self.dt, self.np = ("fp32", np.float32) if arm == "F32" else ("fp16", np.float16)
+        # precision "fp32": gate 4a's FP32-compute build of the same arm (same constexpr chain, FP32 LUT/scale values
+        # equal to the FP16-rounded scales, FP32 activations); "F32" is the older dense diagnostic (mil/diag.py)
+        fp32 = arm == "F32" or precision == "fp32"
+        self.precision = "fp32" if fp32 else "fp16"
+        self.dt, self.np = ("fp32", np.float32) if fp32 else ("fp16", np.float16)
 
     def dense(self, key: str) -> np.ndarray:
         if key not in self._dense:
@@ -119,7 +124,8 @@ class ArmProvider:
         key = f"layers.{i}.{suffix}"
         if key not in self._modules:
             codes, scale = self.source.ternary(f"encoder.{key}")
-            self._modules[key] = encodings.encode(self.arm, codes, scale, 3 if suffix in CONV_MODULES else 2)
+            self._modules[key] = encodings.encode(self.arm, codes, scale, 3 if suffix in CONV_MODULES else 2,
+                                                  dtype=self.np)
         return self._modules[key]
 
     def project(self, x, i: int, suffix: str):
@@ -150,7 +156,8 @@ class ArmProvider:
         for enc in mods:
             for k, v in enc.nbytes().items():
                 totals[k] = totals.get(k, 0) + v
-        return {"arm": self.arm, "chain": encodings.CHAINS[encodings.family(self.arm)], "modules": len(mods),
+        return {"arm": self.arm, "precision": self.precision, "chain": encodings.CHAINS[encodings.family(self.arm)],
+                "modules": len(mods),
                 "constexpr_inputs_by_module": by_kind, "encoded_bytes_by_const": totals,
                 "encoded_bytes_total": sum(totals.values()),
                 "position_tables": {"layers": len(self._pos), "dtype": "float16", "full_shape": [1, HEADS, D_K, 2 * MAX_T - 1],
