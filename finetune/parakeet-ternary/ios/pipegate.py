@@ -55,13 +55,35 @@ sys.path.insert(0, str(IOS.parent))
 
 DESIGN_REVISION = 9          # pipeline records (DESIGN.md revision 9)
 ENCODER_RECORD_REVISION = 8  # WP3's encoder records
-CODE_VERSION = "wp7-pipegate-3"
+CODE_VERSION = "wp7-pipegate-4"
 T = {"encoder_rel": 0.1, "tau": 1e-3, "decisive_margin": 1.0, "agree_decisive": 0.995, "agree_all": 0.99,
      "decisive_min": 0.5, "identical_min": 61, "wer_points": 0.2, "diag_head_rel": 2e-2}
 DURATIONS = (0, 1, 2, 3, 4)
 N_DUR = 5
 DECODES = ("f2", "f0", "f1")
 STATE_SECTIONS = {"f2": ("h", "c"), "f0": ("h_step", "c_step"), "f1": ("h_out", "c_out")}
+# replay diagnostics every decode loop must deliver (review WP7 r2 finding 3): name -> (row shape, rows per clip:
+# "steps" = trace steps, "predictions" = 1 + emitted tokens). F1's logits / recon_* are the diagnostic reconstruction
+# (FP32 Decoder + JointLogits on F1's own inputs and state; DecoderJoint exposes no logits).
+REQUIRED_SECTIONS = {
+    "f2": {"logits": ([1030], "steps"), "h": ([2, 640], "steps"), "c": ([2, 640], "steps"),
+           "pred_g": ([640], "predictions"), "pred_h": ([2, 640], "predictions"), "pred_c": ([2, 640], "predictions")},
+    "f0": {"logits": ([1030], "steps"), "h_step": ([2, 640], "steps"), "c_step": ([2, 640], "steps"),
+           "decoder_out": ([640], "predictions"), "h": ([2, 640], "predictions"), "c": ([2, 640], "predictions")},
+    "f1": {"logits": ([1030], "steps"), "h_out": ([2, 640], "steps"), "c_out": ([2, 640], "steps"),
+           "recon_h": ([2, 640], "steps"), "recon_c": ([2, 640], "steps")},
+}
+
+
+def section_problems(dec: str, sec: dict, steps: int, predictions: int) -> list[str]:
+    out = []
+    for name, (shape, rows) in REQUIRED_SECTIONS[dec].items():
+        want = [steps if rows == "steps" else predictions, *shape]
+        if name not in sec:
+            out.append(f"section {name} missing")
+        elif list(sec[name].shape) != want:
+            out.append(f"section {name} shape {list(sec[name].shape)} != {want}")
+    return out
 MAC_REPO = "/Users/ajbarry/workspace/github.com/wilderness-labs-stt"
 MAC_IOS = MAC_REPO + "/finetune/parakeet-ternary/ios"
 MAC_A = "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios"
@@ -78,6 +100,20 @@ def sha(path: Path) -> str:
 
 def sha_text(text: str) -> str:
     return hashlib.sha256(text.encode()).hexdigest()
+
+
+def disk_preflight(need_gb: float, floor_gb: float = 30) -> None:
+    """Refuse (SystemExit 5) unless the artifact volume has the 30 GB floor + need_gb free (review r2 finding 6)."""
+    import artifacts
+
+    try:
+        st = os.statvfs(artifacts.root())
+        free = st.f_bavail * st.f_frsize / 2 ** 30
+    except OSError as exc:
+        raise SystemExit(f"refusing: cannot read free disk space ({exc})") from None
+    if free < floor_gb + need_gb:
+        print(f"refusing: {free:.1f} GB free < {floor_gb} GB floor + {need_gb} GB", file=sys.stderr)
+        raise SystemExit(5)
 
 
 # --- ref64 (Mac) -------------------------------------------------------------------------------------------------
@@ -111,6 +147,7 @@ def cmd_ref64(args) -> int:
     from mil.weights import Source
     from native import fp64_features, load_blob
 
+    disk_preflight(1)  # 82 reference arrays, about 30 MB
     torch.set_grad_enabled(False)
     t0 = time.time()
     index = refcache.validate(args.model)
@@ -254,6 +291,7 @@ def cmd_evaluate(args) -> int:
         dur = {"all": 0, "ok": 0, "dec": 0, "dec_ok": 0, "ref_margin": [], "own_margin": [], "disagree_ref_margin": []}
         head_err = {"token_logits": [], "duration_logits": [], "h": [], "c": []}
         prob_diff = []
+        recon = {"state_rel": [], "steps": 0, "token_argmax_equal": 0}
         nonfinite = {"free": 0, "replay": 0, "replay_recount": 0, "values": 0}
         missing, free_rows = [], {}
         for cid, r in rows.items():
@@ -269,10 +307,19 @@ def cmd_evaluate(args) -> int:
             sec = load_diag(d, x["diag"])
             nonfinite["replay_recount"] += sum(int((~np.isfinite(v)).sum()) for v in sec.values())
             steps = traces[cid]["steps"]
-            own = sec.get("logits")
-            if own is not None and own.shape[0] != steps:
-                problems.append(f"{dec} {cid}: {own.shape[0]} logit rows != {steps} steps")
-                own = None
+            predictions = 1 + sum(traces[cid]["pred_updated"])
+            bad = section_problems(dec, sec, steps, predictions)
+            if x.get("replay_predictions") != predictions:
+                bad.append(f"replay_predictions {x.get('replay_predictions')} != {predictions}")
+            if bad:  # a missing or malformed diagnostic fails coverage (no silently absent head errors)
+                missing.append(f"{cid}: " + "; ".join(bad))
+                continue
+            own = sec["logits"]
+            if dec == "f1":
+                recon["state_rel"].append(max(refcache.errors(sec["recon_h"], sec["h_out"], T["tau"])[0],
+                                              refcache.errors(sec["recon_c"], sec["c_out"], T["tau"])[0]))
+                recon["steps"] += steps
+                recon["token_argmax_equal"] += int((own[:, :-N_DUR].argmax(1) == np.asarray(x["argmax_token"])).sum())
             for head, at, sl, vals in ((tok, x["argmax_token"], slice(0, -N_DUR), None),
                                        (dur, x["argmax_duration"], slice(-N_DUR, None), DURATIONS)):
                 lg = logits[:, sl]
@@ -292,11 +339,8 @@ def cmd_evaluate(args) -> int:
                 head_err["token_logits"].append(refcache.errors(own[:, :-N_DUR], logits[:, :-N_DUR], T["tau"]))
                 head_err["duration_logits"].append(refcache.errors(own[:, -N_DUR:], logits[:, -N_DUR:], T["tau"]))
             hn, cn = STATE_SECTIONS[dec]
-            if hn in sec and sec[hn].shape[0] == steps:
-                head_err["h"].append(refcache.errors(sec[hn].reshape(ref["fp16s_h"].shape), ref["fp16s_h"], T["tau"]))
-                head_err["c"].append(refcache.errors(sec[cn].reshape(ref["fp16s_c"].shape), ref["fp16s_c"], T["tau"]))
-            else:
-                problems.append(f"{dec} {cid}: state sections missing or of the wrong length")
+            head_err["h"].append(refcache.errors(sec[hn].reshape(ref["fp16s_h"].shape), ref["fp16s_h"], T["tau"]))
+            head_err["c"].append(refcache.errors(sec[cn].reshape(ref["fp16s_c"].shape), ref["fp16s_c"], T["tau"]))
             # token probability of the pipeline's chosen token vs the reference softmax at that token (diagnostic)
             tl = logits[:, :-N_DUR].astype(np.float64)
             p_ref = np.exp(tl - tl.max(1, keepdims=True))
@@ -322,8 +366,12 @@ def cmd_evaluate(args) -> int:
                            "abs_max": max(e[1] for e in v), "clips_over_diag_ceiling": sum(r > T["diag_head_rel"] for r in rels)}
             else:
                 errs[k] = None
-        if not head_err["token_logits"]:
-            errs["logits_note"] = "DecoderJoint exposes no logits" if dec == "f1" else "no logits captured"
+        if dec == "f1":
+            errs["logits_note"] = ("F1 logits are a diagnostic reconstruction: FP32 Decoder + JointLogits on F1's own inputs "
+                                   "(pending token, F1's input state, the same encoder frame); DecoderJoint exposes none")
+            errs["reconstruction_consistency"] = {
+                "state_rel_max_vs_decoderjoint": max(recon["state_rel"]) if recon["state_rel"] else None,
+                "token_argmax_equal_to_f1_decisions": recon["token_argmax_equal"] / max(recon["steps"], 1)}
         ref_tokens = {c: index["free_tokens"][c]["fp16s_free_tokens"] for c in free_rows}
         identical = sum(free_rows[c] == ref_tokens[c] for c in free_rows)
         n_nat = sum(1 for c in clips.values() if c["kind"] == "natural")

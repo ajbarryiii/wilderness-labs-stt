@@ -492,7 +492,15 @@ struct ParakeetBenchCLI {
                 engines.append((d, f0))
             case "f1":
                 let dir = try o.url("--decoder-models")
-                engines.append((d, try CoreMLFusedEngine(model: try MLModel(contentsOf: dir.appendingPathComponent("DecoderJoint.mlmodelc"), configuration: config))))
+                let f1 = try CoreMLFusedEngine(model: try MLModel(contentsOf: dir.appendingPathComponent("DecoderJoint.mlmodelc"), configuration: config))
+                // diagnostic reconstruction of F1's heads (DecoderJoint exposes no logits): Decoder + JointLogits on
+                // F1's own inputs and state; untimed, reported, never part of the timed pipeline
+                let dec = dir.appendingPathComponent("Decoder.mlmodelc"), jl = dir.appendingPathComponent("JointLogits.mlmodelc")
+                f1.diagDecoder = try MLModel(contentsOf: dec, configuration: config)
+                f1.logitsModel = try MLModel(contentsOf: jl, configuration: config)
+                components["f1_diagnostic_models_sha256"] = ["Decoder": try ComponentHash.directory(dec),
+                                                             "JointLogits": try ComponentHash.directory(jl)]
+                engines.append((d, f1))
             default: throw BenchError.invalid("unknown decode \(d)")
             }
         }
@@ -508,7 +516,10 @@ struct ParakeetBenchCLI {
                                 "executable_sha256": BuildIdentity.executableSHA256,
                                 "diag_sections": ["f2": "logits [1030], h, c [2, 640] per step",
                                                   "f0": "logits [1030] (diagnostic JointLogits on the same inputs), h_step, c_step [2, 640] per step; decoder_out, h, c per Decoder call",
-                                                  "f1": "h_out, c_out [2, 640] per step (DecoderJoint exposes no logits)"]])
+                                                  "f2_predictions": "pred_g [640], pred_h, pred_c [2, 640] per prediction-network run",
+                                                  "f1": "h_out, c_out [2, 640] per step; logits [1030] and recon_h, recon_c per step "
+                                                      + "reconstructed (diagnostic) by the FP32 Decoder + JointLogits on F1's own "
+                                                      + "inputs and state, because DecoderJoint exposes no logits"]])
         let loop = LabelLoop()
         let options = MLPredictionOptions()
         for clip in clips {

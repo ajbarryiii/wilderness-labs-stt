@@ -461,6 +461,11 @@ public final class CoreMLFusedEngine: DecodeEngine {
     var frames: EncoderFrames?
     var pending = 1024, started = false
     var acc = Accumulator()
+    /// Diagnostic only (untimed gate runs; review WP7 r2 finding 3): DecoderJoint exposes no logits, so the heads
+    /// are reconstructed from F1's own inputs (the pending token, F1's input state h_in/c_in, the same encoder frame)
+    /// through the FP32 Decoder and JointLogits models of the same decoder directory. Never set when timing.
+    public var diagDecoder: MLModel?, logitsModel: MLModel?
+    lazy var diagBuffers: C0Pipeline.StepBuffers? = try? C0Pipeline.StepBuffers()
 
     public init(model: MLModel) throws {
         self.model = model
@@ -503,6 +508,26 @@ public final class CoreMLFusedEngine: DecodeEngine {
             diag.float("token_prob", Double(d.prob))
             diag.append("h_out", rowShape: [2, 640], copyFloats(after.0))
             diag.append("c_out", rowShape: [2, 640], copyFloats(after.1))
+            if let diagDecoder, let logitsModel {
+                guard let db = diagBuffers else { throw BenchError.invalid("diagnostic buffers") }
+                db.target[0] = NSNumber(value: pending)
+                let dout = try diagDecoder.prediction(from: try MLDictionaryFeatureProvider(dictionary: [
+                    "targets": MLFeatureValue(multiArray: db.target), "target_length": MLFeatureValue(multiArray: db.targetLength),
+                    "h_in": MLFeatureValue(multiArray: before.0), "c_in": MLFeatureValue(multiArray: before.1)]))
+                guard let proj = dout.featureValue(for: "decoder")?.multiArrayValue,
+                      let rh = dout.featureValue(for: "h_out")?.multiArrayValue,
+                      let rc = dout.featureValue(for: "c_out")?.multiArrayValue else { throw BenchError.invalid("diagnostic decoder outputs") }
+                try copyStep(proj, into: db.decoderStep, hidden: 640)
+                try frames!.copyFrame(t, into: db.encDest, destStride: db.encDestStride)
+                let lo = try logitsModel.prediction(from: db.jointInput)
+                guard let tl = lo.featureValue(for: "token_logits")?.multiArrayValue,
+                      let dl = lo.featureValue(for: "duration_logits")?.multiArrayValue, tl.count == 1025, dl.count == 5 else {
+                    throw BenchError.invalid("JointLogits outputs")
+                }
+                diag.append("logits", rowShape: [1030], copyFloats(tl) + copyFloats(dl))
+                diag.append("recon_h", rowShape: [2, 640], copyFloats(rh))   // Decoder's state vs DecoderJoint's h_out
+                diag.append("recon_c", rowShape: [2, 640], copyFloats(rc))
+            }
         }
         return (d.token, d.bin)
     }
