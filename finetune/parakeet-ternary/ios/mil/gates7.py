@@ -58,7 +58,7 @@ from . import IOS, refcache  # noqa: E402
 from .gates import BUCKETS, GATE5_KINDS, arms_root, clips_manifest, padded, purge_cache, traces_by_id, units_of
 
 DESIGN_REVISION = 8
-GATE_CODE_VERSION = "wp3-gates7-2"
+GATE_CODE_VERSION = "wp6a-gates7-3"  # + ANE layout labels, GPU backend, cached-load timing
 OUT = IOS / "results" / "gates" / "v7"
 EXIT_FAIL = 10
 TAU16, TAU32 = 1e-3, 1e-6
@@ -69,7 +69,7 @@ REV5 = {"encoder_rel": 2e-2, "encoder_abs": 0.25, "heads_rel": 2e-2}
 BLANK, N_DUR, H = 1024, 5, 640
 DURATIONS = (0, 1, 2, 3, 4)
 MAX_SYMBOLS = 10
-BACKEND = {"cpuAndNeuralEngine": "ane", "cpuOnly": "cpu"}
+BACKEND = {"cpuAndNeuralEngine": "ane", "cpuOnly": "cpu", "cpuAndGPU": "gpu"}
 TOPOLOGY = {"C1": "dense", "C3": "dense", "C4": "dense", "C6s2": "dense", "C6s4": "dense", "C6s8": "dense",
             "C6d4": "dense", "C6d8": "dense", "C7": "post_scale", "C8": "planes"}
 
@@ -132,7 +132,11 @@ def bucket_runs(model: str, label: str, variant: str, units: str, clips: list[di
                 purge_cache()
             t0 = time.time()
             m = ct.models.CompiledMLModel(str(path), compute_units=cu, function_name=fn)
-            yield None, b, None, round(time.time() - t0, 2)  # load-time marker
+            first = time.time() - t0
+            del m  # second load of the same function: served from the device-specialization cache
+            t0 = time.time()
+            m = ct.models.CompiledMLModel(str(path), compute_units=cu, function_name=fn)
+            yield None, b, None, {"first_s": round(first, 2), "cached_s": round(time.time() - t0, 3)}
         for clip in clips:
             if clip["bucket"] > b:
                 continue
@@ -146,9 +150,13 @@ def bucket_runs(model: str, label: str, variant: str, units: str, clips: list[di
 
 # --- 4a ------------------------------------------------------------------------------------------------
 
+def label_of(arm: str, layout: str, precision: str = "fp16") -> str:
+    return arm + ("-ane" if layout == "ane" else "") + ("-fp32" if precision == "fp32" else "")
+
+
 def gate4a(args) -> int:
     t0 = time.time()
-    label = f"{args.arm}-fp32"
+    label = label_of(args.arm, args.layout, "fp32")
     man = build_manifest(args.model, label, args.variant)
     if man.get("precision") != "fp32":
         raise ValueError(f"{label}/{args.variant} is not an FP32 build")
@@ -167,7 +175,8 @@ def gate4a(args) -> int:
         rows[f"{clip['id']}@{b}"] = {"bucket": b, "kind": clip["kind"], "rel": rel, "abs": ab, "length_ok": length == e,
                                      "finite": bool(np.isfinite(valid).all()), "pass": ok}
     fails = [k for k, r in rows.items() if not r["pass"]]
-    doc = header("4a", model=args.model, arm=args.arm, label=label, variant=args.variant, units="cpuOnly",
+    doc = header("4a", model=args.model, arm=label_of(args.arm, args.layout), layout=args.layout, label=label,
+                 variant=args.variant, units="cpuOnly",
                  topology=TOPOLOGY.get(args.arm), thresholds=G4A, build_provenance=man["provenance"],
                  build_chain=man["encoding"].get("chain"))
     doc["pass"] = not fails and len(rows) > 0
@@ -367,7 +376,7 @@ def free_stats(per_clip: dict) -> dict:
 
 def gate4b(args) -> int:
     t0 = time.time()
-    label = args.arm
+    label = label_of(args.arm, args.layout)
     man = build_manifest(args.model, label, args.variant)
     index = refcache.validate(args.model, man["provenance"])
     clips = clips_manifest()
@@ -430,8 +439,8 @@ def gate4b(args) -> int:
     }
     passed = (summary["encoder_4b"]["pass"] and heads_pool["pass"] and free_pool["pass_identity"]
               and summary["gate5"]["pass"] is not False)
-    doc = header("4b", model=args.model, decoder_precision=args.decoder_precision,
-                 arm=args.arm, label=label, variant=args.variant, units=args.units,
+    doc = header("4b", model=args.model, decoder_precision=args.decoder_precision, layout=args.layout,
+                 arm=label, encoding_arm=args.arm, label=label, variant=args.variant, units=args.units,
                  backend=BACKEND[args.units], thresholds=G4B, rev5_diagnostic_thresholds=REV5,
                  build_provenance=man["provenance"], build_chain=man["encoding"].get("chain"),
                  decoder_models=paths_manifest(args.model, args.decoder_precision))
@@ -532,6 +541,7 @@ def main() -> None:
     p.add_argument("--model", required=True)
     p.add_argument("--arm", required=True)
     p.add_argument("--variant", required=True, choices=("fixed", "multi", "enum"))
+    p.add_argument("--layout", default="plain", choices=("plain", "ane"))
     p = sub.add_parser("4a-decoder")
     p.add_argument("--model", required=True)
     p = sub.add_parser("4b-decoder")
@@ -542,6 +552,7 @@ def main() -> None:
     p.add_argument("--arm", required=True)
     p.add_argument("--variant", required=True, choices=("fixed", "multi", "enum"))
     p.add_argument("--units", required=True, choices=tuple(BACKEND))
+    p.add_argument("--layout", default="plain", choices=("plain", "ane"))
     p.add_argument("--decoder-precision", default="fp32", choices=("fp16", "fp32"),
                    help="fp32 (revision 8 deployed decoder/joint) or fp16 (recorded, ineligible)")
     args = parser.parse_args()

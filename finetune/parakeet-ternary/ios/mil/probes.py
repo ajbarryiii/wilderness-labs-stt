@@ -51,7 +51,8 @@ import numpy as np
 from . import IOS, encodings  # noqa: E402
 
 PROBES = IOS / "results" / "probes"
-STRESS_ARMS = ("C4", "C1", "C3", "C5", "C6s2", "C6s4", "C6s8", "C6d4", "C6d8", "C7", "C8")  # C4 first: the rule's reference
+STRESS_ARMS = ("C4", "C1", "C3", "C5", "C6s2", "C6s4", "C6s8", "C6d4", "C6d8", "C7", "C8",
+               "C4-ane", "C3-ane", "C6s8-ane")  # C4 / C4-ane: the rule's references (plain / ANE layout)
 PROBE_ARMS = ("C1", "C3", "C4", "C7", "C8", "C6s2", "C6s4", "C6s8", "C6d4", "C6d8", "C5")
 STRESS_MODULES = (("layers.0.feed_forward1.linear1", "ff1_in"), ("layers.0.feed_forward1.linear2", "ff1_mid"),
                   ("layers.23.feed_forward2.linear2", "ff2_mid"))
@@ -351,30 +352,41 @@ def adversarial(codes: np.ndarray) -> np.ndarray:
 
 
 def _stress_program(arm: str, codes, scale, t: int, act_scale: float | None = None):
+    """One stressed matmul in the arm's encoding; "<arm>-ane" builds it as the ANE layout's 1x1 conv2d on
+    (1, in, 1, T) (outputs transposed back to (1, T, out) so every arm's outputs compare alike)."""
     import coremltools as ct
     from coremltools.converters.mil import Builder as mb
     from coremltools.converters.mil.mil import types
 
-    enc = encodings.encode(arm, codes, scale, 2)
+    ane = arm.endswith("-ane")
+    base = arm[:-4] if ane else arm
+    enc = encodings.encode(base, codes, scale, 4 if ane else 2)
+
+    def tok(v, name):  # (1, C, 1, T) -> (1, T, C) for the outputs
+        return mb.transpose(x=mb.squeeze(x=v, axes=[2]), perm=[0, 2, 1], name=name) if ane else v
 
     @mb.program(input_specs=[mb.TensorSpec(shape=(1, t, codes.shape[1]), dtype=types.fp32)], opset_version=ct.target.iOS26)
     def prog(x):
         x16 = mb.cast(x=x, dtype="fp16")
-        if arm == "C5":  # the arm's int8 activation quantization with the site's calibrated scale
+        if base == "C5":  # the arm's int8 activation quantization with the site's calibrated scale
             x16 = encodings.quantize_activation(x16, act_scale, "act")
+        if ane:
+            x16 = mb.expand_dims(x=mb.transpose(x=x16, perm=[0, 2, 1]), axes=[2], name="x_cf")
         w = encodings.weight_var(enc, "w")
-        y = mb.linear(x=x16, weight=w, name="mm")
+        y = mb.conv(x=x16, weight=w, name="mm") if ane else mb.linear(x=x16, weight=w, name="mm")
+        axis = 1 if ane else -1
+        post = None if enc.post_scale is None else (enc.post_scale.reshape(1, -1, 1, 1) if ane else enc.post_scale)
         outs = []
-        if arm == "C7":
-            outs.append(mb.cast(x=y, dtype="fp32", name="raw"))
-            y = mb.mul(x=y, y=enc.post_scale, name="scaled")
-        elif arm == "C8":
-            p, n = mb.split(x=y, num_splits=2, axis=-1, name="pn")
-            d = mb.sub(x=p, y=n, name="diff")
-            outs += [mb.cast(x=p, dtype="fp32", name="P"), mb.cast(x=n, dtype="fp32", name="N"),
-                     mb.cast(x=d, dtype="fp32", name="raw")]
-            y = mb.mul(x=d, y=enc.post_scale, name="scaled")
-        outs.append(mb.cast(x=y, dtype="fp32", name="out"))
+        if base == "C7":
+            outs.append(mb.cast(x=tok(y, "raw_t"), dtype="fp32", name="raw"))
+            y = mb.mul(x=y, y=post, name="scaled")
+        elif base == "C8":
+            pp, n = mb.split(x=y, num_splits=2, axis=axis, name="pn")
+            d = mb.sub(x=pp, y=n, name="diff")
+            outs += [mb.cast(x=tok(pp, "P_t"), dtype="fp32", name="P"), mb.cast(x=tok(n, "N_t"), dtype="fp32", name="N"),
+                     mb.cast(x=tok(d, "raw_t"), dtype="fp32", name="raw")]
+            y = mb.mul(x=d, y=post, name="scaled")
+        outs.append(mb.cast(x=tok(y, "out_t"), dtype="fp32", name="out"))
         return tuple(outs)
 
     return prog
@@ -392,7 +404,9 @@ def stress(args) -> None:
     out_dir = art_root() / "probes" / "stress"
     out_dir.mkdir(parents=True, exist_ok=True)
     arms = args.arms.split(",")
-    units = {"cpuOnly": ct.ComputeUnit.CPU_ONLY, "cpuAndNeuralEngine": ct.ComputeUnit.CPU_AND_NE}
+    all_units = {"cpuOnly": ct.ComputeUnit.CPU_ONLY, "cpuAndNeuralEngine": ct.ComputeUnit.CPU_AND_NE,
+                 "cpuAndGPU": ct.ComputeUnit.CPU_AND_GPU}
+    units = {u: all_units[u] for u in args.units.split(",")}
     results = {}
     for module, site in STRESS_MODULES:
         codes, scale = source.ternary(f"encoder.{module}")
@@ -403,7 +417,7 @@ def stress(args) -> None:
         inputs = {"x1": x0, "x8": 8 * x0, "x64": 64 * x0, "abs_x64": 64 * np.abs(x0)}
         for arm in arms:
             act = None
-            if arm == "C5":
+            if arm.split("-")[0] == "C5":
                 from .build import calibration_file
 
                 act = json.loads(calibration_file("mp2").read_text())["sites"][f"layers.{layer}.{site}"]["scale"]
@@ -418,7 +432,8 @@ def stress(args) -> None:
             from .build import drop_temp_package
             drop_temp_package(model)
             comp = compile_model(pkg, out_dir / f"{module}-{arm}.mlmodelc")
-            plan = compute_plan(Path(comp["mlmodelc"]), "cpuAndNeuralEngine")["functions"]["main"]
+            plans = {u: compute_plan(Path(comp["mlmodelc"]), u)["functions"]["main"]
+                     for u in units if u != "cpuOnly"}
             for uname, cu in units.items():
                 m = ct.models.CompiledMLModel(comp["mlmodelc"], compute_units=cu)
                 for iname, x in inputs.items():
@@ -437,14 +452,17 @@ def stress(args) -> None:
                 del m
                 from .gates import purge_cache
                 purge_cache()
-            results[module][arm]["compute_plan_cpuAndNeuralEngine"] = plan["ops_with_usage_by_preferred_device"]
+            for u, plan in plans.items():
+                results[module][arm][f"compute_plan_{u}"] = plan.get("ops_with_usage_by_preferred_device")
             print(module, arm, json.dumps({u: {i: (r["finite"], {k: round(v, 1) if v else v for k, v in r["max_abs"].items()})
                                                for i, r in d.items()} for u, d in results[module][arm].items()
                                            if u in units}), flush=True)
     verdict = stress_verdict(results, arms, units)
     doc = {"probe": "stress (DESIGN.md 'C7/C8 numerics'; rule of revision 6/7)", "design_revision": 7,
            "rule": "per compute unit: an arm fails if it produces inf or NaN (in any output, intermediates included) "
-                   "at a stress level where C4 stays finite on the same unit; real inputs (x1) must always be finite",
+                   "at a stress level where C4 stays finite on the same unit; real inputs (x1) must always be finite. "
+                   "ANE-layout arms (<arm>-ane: 1x1 conv2d on (1, C, 1, T)) are compared with C4-ane",
+           "units": list(units),
            "modules": [m for m, _ in STRESS_MODULES],
            "adversarial_rows": {"0": "all +1", "1": "all -1", "2": "alternating runs of 256 (+1, -1, ...)",
                                 "3": "first half +1, second half -1"},
@@ -466,7 +484,7 @@ def stress(args) -> None:
         sys.exit(10)
 
 
-BACKENDS = {"cpuOnly": "cpu", "cpuAndNeuralEngine": "ane"}
+BACKENDS = {"cpuOnly": "cpu", "cpuAndNeuralEngine": "ane", "cpuAndGPU": "gpu"}
 
 
 def stress_verdict(results: dict, arms, units) -> dict:
@@ -480,7 +498,8 @@ def stress_verdict(results: dict, arms, units) -> dict:
             fails, x1_bad, ref_missing = [], [], []
             for mod in results:
                 arm_runs = results[mod].get(arm, {}).get(uname, {})
-                c4_runs = results[mod].get("C4", {}).get(uname, {})
+                ref_arm = "C4-ane" if arm.endswith("-ane") else "C4"  # same graph layout
+                c4_runs = results[mod].get(ref_arm, {}).get(uname, {})
                 for level, r in arm_runs.items():
                     if level == "x1" and not r["finite"]:
                         x1_bad.append(mod)
@@ -526,6 +545,7 @@ def main() -> None:
     sub.add_parser("folding")
     p = sub.add_parser("stress")
     p.add_argument("--arms", default=",".join(STRESS_ARMS))
+    p.add_argument("--units", default="cpuOnly,cpuAndNeuralEngine,cpuAndGPU")
     p = sub.add_parser("summary")
     p.add_argument("--cap-gb", type=float, default=6.0)
     args = parser.parse_args()

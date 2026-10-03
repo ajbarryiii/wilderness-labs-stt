@@ -49,9 +49,11 @@ CODE_VERSION = "wp3-eligibility-2"
 ACCEPTED_REVISIONS = {"4a": {7, 8}, "stress": {7, 8}, "4b": {8}, "4b_fp16_decoder": {7, 8}}
 DEPLOYED_DECODER = "fp32"
 EXIT_INELIGIBLE = 10
-BACKENDS = {"ane": "cpuAndNeuralEngine", "cpu": "cpuOnly"}
+BACKENDS = {"ane": "cpuAndNeuralEngine", "cpu": "cpuOnly", "gpu": "cpuAndGPU"}
+MATRIX_BACKENDS = ("ane", "cpu")  # records always written for these; others (gpu) only where a 4b run exists
 SCOPE_EXCLUDED = {"C5": "exploratory W8A8 (DESIGN.md: scope reduction; numerics fail)"}
 TOPOLOGY_REP = {"dense": "C4", "post_scale": "C7", "planes": "C8"}
+# ANE-layout arms ("<arm>-ane") are their own topology: their own FP32 build must pass 4a.
 TOPOLOGY = {"C1": "dense", "C3": "dense", "C4": "dense", "C6s2": "dense", "C6s4": "dense", "C6s8": "dense",
             "C6d4": "dense", "C6d8": "dense", "C7": "post_scale", "C8": "planes", "C5": "dense+activation_quantization"}
 WER_POINTS = 0.2
@@ -135,12 +137,11 @@ def build(args) -> int:
         d = load(p)
         if d.get("gate") != "4b":
             continue
-        for dec in ("fp32", "fp16"):
-            built.add((d["model"], d["arm"], d["variant"], d["backend"], dec))
+        built.add((d["model"], d["arm"], d["variant"], d["backend"], d.get("decoder_precision", "fp16")))
     expected = set(built)
     for arm in ("C1", "C3", "C4", "C5", "C6s2", "C6s4", "C6s8", "C6d4", "C6d8", "C7", "C8"):
         for variant in ("fixed", "multi"):
-            for backend in BACKENDS:
+            for backend in MATRIX_BACKENDS:
                 for dec in ("fp32", "fp16"):
                     expected.add(("mp2", arm, variant, backend, dec))
     for model, arm, variant, backend, decoder in sorted(expected):
@@ -253,7 +254,8 @@ def build_g0(stress) -> list[dict]:
     is finite and matches C0 exactly on every clip where masking is moot (M mod 8 in {0, 7})."""
     out = []
     clips = {c["id"]: c for c in json.loads((IOS / "clips.json").read_text())["clips"]}
-    for backend, units in BACKENDS.items():
+    for backend in MATRIX_BACKENDS:
+        units = BACKENDS[backend]
         path = RES / "gates" / f"c0-G0-fixed-{units}.json"
         d = load(path)
         checks, reasons, inputs = {}, [], {}

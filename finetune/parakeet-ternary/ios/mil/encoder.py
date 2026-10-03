@@ -83,7 +83,7 @@ class ArmProvider:
     """Encoder weights of a benchmark model in one arm's encoding (cached, so functions share arrays)."""
 
     def __init__(self, source: Source, arm: str, n_layers: int = N_LAYERS, act_scales: dict | None = None,
-                 precision: str = "fp16") -> None:
+                 precision: str = "fp16", layout: str = "plain") -> None:
         if arm not in encodings.ENCODER_ARMS + ("F32",):
             raise KeyError(arm)
         self.source, self.arm, self.n_layers = source, arm, n_layers
@@ -99,6 +99,9 @@ class ArmProvider:
         # equal to the FP16-rounded scales, FP32 activations); "F32" is the older dense diagnostic (mil/diag.py)
         fp32 = arm == "F32" or precision == "fp32"
         self.precision = "fp32" if fp32 else "fp16"
+        if layout not in ("plain", "ane"):
+            raise KeyError(layout)
+        self.layout = layout  # "ane": every ternary matmul is a 1x1 conv2d on (1, C, 1, T) (mil/encoder_ane.py)
         self.dt, self.np = ("fp32", np.float32) if fp32 else ("fp16", np.float16)
 
     def dense(self, key: str) -> np.ndarray:
@@ -124,8 +127,8 @@ class ArmProvider:
         key = f"layers.{i}.{suffix}"
         if key not in self._modules:
             codes, scale = self.source.ternary(f"encoder.{key}")
-            self._modules[key] = encodings.encode(self.arm, codes, scale, 3 if suffix in CONV_MODULES else 2,
-                                                  dtype=self.np)
+            rank = 4 if self.layout == "ane" else (3 if suffix in CONV_MODULES else 2)
+            self._modules[key] = encodings.encode(self.arm, codes, scale, rank, dtype=self.np)
         return self._modules[key]
 
     def project(self, x, i: int, suffix: str):
@@ -156,7 +159,8 @@ class ArmProvider:
         for enc in mods:
             for k, v in enc.nbytes().items():
                 totals[k] = totals.get(k, 0) + v
-        return {"arm": self.arm, "precision": self.precision, "chain": encodings.CHAINS[encodings.family(self.arm)],
+        return {"arm": self.arm, "precision": self.precision, "layout": self.layout,
+                "chain": encodings.CHAINS[encodings.family(self.arm)],
                 "modules": len(mods),
                 "constexpr_inputs_by_module": by_kind, "encoded_bytes_by_const": totals,
                 "encoded_bytes_total": sum(totals.values()),

@@ -68,7 +68,8 @@ def purge_cache() -> None:
 def units_of(name: str):
     import coremltools as ct
 
-    return {"cpuAndNeuralEngine": ct.ComputeUnit.CPU_AND_NE, "cpuOnly": ct.ComputeUnit.CPU_ONLY}[name]
+    return {"cpuAndNeuralEngine": ct.ComputeUnit.CPU_AND_NE, "cpuOnly": ct.ComputeUnit.CPU_ONLY,
+            "cpuAndGPU": ct.ComputeUnit.CPU_AND_GPU}[name]
 
 
 def arms_root() -> Path:

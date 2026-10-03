@@ -93,8 +93,9 @@ class Encoded:
 
 
 def _shape(rank: int, *dims: int) -> tuple:
-    """[out, in] weights get rank 2; pointwise convs [out, in, 1] rank 3 (the LUT/scale get a 1 inserted)."""
-    return dims if rank == 2 else dims[:2] + (1,) + dims[2:]
+    """[out, in] weights get rank 2; pointwise convs [out, in, 1] rank 3 and 1x1 conv2d [out, in, 1, 1] rank 4
+    (the ANE layout); the LUT/scale get the same 1s inserted after their first two dimensions."""
+    return dims if rank == 2 else dims[:2] + (1,) * (rank - 2) + dims[2:]
 
 
 def encode(arm: str, codes: np.ndarray, scale: np.ndarray, rank: int, dtype=np.float16) -> Encoded:
@@ -207,7 +208,7 @@ def apply(enc: Encoded, x, name: str):
     if fam == "C8":
         p, n = mb.split(x=y, num_splits=2, axis=axis, name=name + "_pn")
         y = mb.sub(x=p, y=n, name=name + "_diff")
-    s = enc.post_scale if enc.rank == 2 else enc.post_scale.reshape(1, -1, 1)
+    s = enc.post_scale if enc.rank == 2 else enc.post_scale.reshape((1, -1) + (1,) * (enc.rank - 2))
     return mb.mul(x=y, y=s, name=name + "_scaled")
 
 

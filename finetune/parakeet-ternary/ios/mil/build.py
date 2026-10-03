@@ -79,12 +79,17 @@ def make_program(P, variant: str):
 
     opset = target(P.opset)
     prog = Program()
+    builder = enc_mod.function
+    if getattr(P, "layout", "plain") == "ane":
+        from . import encoder_ane
+
+        builder = encoder_ane.function
     if variant == "fixed":
-        prog.add_function("main", enc_mod.function(P, enc_mod.BUCKETS[15], opset))
+        prog.add_function("main", builder(P, enc_mod.BUCKETS[15], opset))
         return prog, None
     if variant == "multi":
         for b, frames in enc_mod.BUCKETS.items():
-            prog.add_function(f"b{b}", enc_mod.function(P, frames, opset))
+            prog.add_function(f"b{b}", builder(P, frames, opset))
         prog.default_function_name = "b15"
         prog.export_as_multifunction = True
         return prog, None
@@ -256,19 +261,20 @@ def save_manifest(manifest: dict, out_dir: Path, model: str, arm: str, variant: 
     (RESULTS / f"{model}-{arm}-{variant}.json").write_text(text)
 
 
-def arm_label(arm: str, precision: str = "fp16") -> str:
-    """Directory / record label of an arm build: the arm, or "<arm>-fp32" for gate 4a's FP32-compute build."""
-    return arm if precision == "fp16" else f"{arm}-{precision}"
+def arm_label(arm: str, precision: str = "fp16", layout: str = "plain") -> str:
+    """Directory / record label of an arm build: the arm, "-ane" for the ANE graph layout (DESIGN.md D), and
+    "-fp32" for gate 4a's FP32-compute build (e.g. C4, C4-ane, C4-ane-fp32)."""
+    return arm + ("-ane" if layout == "ane" else "") + ("" if precision == "fp16" else f"-{precision}")
 
 
 def build_encoder(model: str, arm: str, variant: str, out_root: Path, layers: int | None = None,
                   compile_: bool = True, plan: bool = True, keep_package: bool = True, tag: str = "",
-                  precision: str = "fp16") -> dict:
+                  precision: str = "fp16", layout: str = "plain") -> dict:
     import artifacts
     from .weights import C0Tensors, N_LAYERS, Source
 
     n_layers = layers or N_LAYERS
-    label = arm_label(arm, precision)
+    label = arm_label(arm, precision, layout)
     out_dir = artifacts.check(out_root / model / label)
     out_dir.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
@@ -284,7 +290,7 @@ def build_encoder(model: str, arm: str, variant: str, out_root: Path, layers: in
         if arm == "C5":
             calib = json.loads(calibration_file(model).read_text())
             act_scales = {k: v["scale"] for k, v in calib["sites"].items()}
-        P = enc_mod.ArmProvider(source, arm, n_layers, act_scales, precision=precision)
+        P = enc_mod.ArmProvider(source, arm, n_layers, act_scales, precision=precision, layout=layout)
     pipe, excluded = pipeline_for(arm)
     prog, inputs = make_program(P, variant)
     t_built = time.time()
@@ -300,7 +306,7 @@ def build_encoder(model: str, arm: str, variant: str, out_root: Path, layers: in
     weight_bin = package / "Data" / "com.apple.CoreML" / "weights" / "weight.bin"
     manifest = {
         "schema": 1, "model": model, "arm": label, "encoding_arm": arm, "variant": variant, "layers": n_layers,
-        "precision": getattr(P, "precision", "fp16"),
+        "precision": getattr(P, "precision", "fp16"), "layout": getattr(P, "layout", "plain"),
         "exact": arm in encodings.EXACT, "exploratory": arm in ("C5",),
         "provenance": provenance, "opset": P.opset, "minimum_deployment_target": P.opset,
         "compute_precision": ("FLOAT32 (gate 4a build: same constexpr chain with FP32 values)" if precision == "fp32"
@@ -440,6 +446,7 @@ def main() -> None:
     p.add_argument("--no-plan", action="store_true")
     p.add_argument("--drop-package", action="store_true", help="delete the .mlpackage after compiling (disk)")
     p.add_argument("--precision", default="fp16", choices=("fp16", "fp32"))
+    p.add_argument("--layout", default="plain", choices=("plain", "ane"))
     p = sub.add_parser("decoder")
     p.add_argument("--model", required=True)
     p.add_argument("--out-dir")
@@ -463,7 +470,7 @@ def main() -> None:
     if args.cmd == "encoder":
         m = build_encoder(args.model, args.arm, args.variant, Path(args.out_dir) if args.out_dir else default_out(),
                           args.layers, compile_=not args.no_compile, plan=not args.no_plan,
-                          keep_package=not args.drop_package, precision=args.precision)
+                          keep_package=not args.drop_package, precision=args.precision, layout=args.layout)
         print(json.dumps({k: m[k] for k in ("model", "arm", "variant", "sizes", "timing_s", "peak_rss_mb_after_save")}
                          | {"compile": m.get("compile"), "peak_rss_mb_after_compile": m.get("peak_rss_mb_after_compile")}))
     elif args.cmd == "decoder":
