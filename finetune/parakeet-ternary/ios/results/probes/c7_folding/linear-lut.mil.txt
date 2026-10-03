@@ -1,0 +1,10 @@
+
+main[CoreML9](%x: (1, 8, 256, fp32)(Tensor)) {
+  block0() {
+    %w: (256, 256, fp16)(Tensor) = constexpr_lut_to_dense(indices=%w_indices_0, lut=[[[[-1.0], [0.0], [1.0], [0.0]]]], name="w")
+    %cast_0: (1, 8, 256, fp16)(Tensor) = cast(x=%x, dtype="fp16", name="cast_7")
+    %mm: (1, 8, 256, fp16)(Tensor) = linear(x=%cast_0, weight=%w, bias=%mm_bias_0, name="mm")
+    %row_scale: (1, 8, 256, fp16)(Tensor) = mul(x=%mm, y=%row_scale_y_0, name="row_scale")
+    %out: (1, 8, 256, fp32)(Tensor) = cast(x=%row_scale, dtype="fp32", name="cast_6")
+  } -> (%out)
+}

@@ -1,0 +1,15 @@
+program(1.3)
+[buildInfo = dict<string, string>({{"coremlc-component-MIL", "3600.16.1"}, {"coremlc-version", "3600.25.2"}, {"coremltools-component-milinternal", ""}, {"coremltools-version", "9.0"}})]
+{
+    func main<ios19>(tensor<fp32, [1, 8, 256]> x) {
+            string cast_0_dtype_0 = const()[name = string("cast_0_dtype_0"), val = string("fp16")];
+            tensor<fp16, [256, 256]> w = constexpr_lut_to_dense(indices = tensor<uint2, [256, 256]>(BLOBFILE(path = string("@model_path/weights/weight.bin"), offset = uint64(64))), lut = tensor<fp16, [1, 1, 4, 1]>([[[[-0x1p+0], [0x0p+0], [0x1p+0], [0x0p+0]]]]))[name = string("w")];
+            tensor<fp16, [256]> mm_bias_0 = const()[name = string("mm_bias_0"), val = tensor<fp16, [256]>(BLOBFILE(path = string("@model_path/weights/weight.bin"), offset = uint64(16512)))];
+            tensor<fp16, [1, 8, 256]> cast_0 = cast(dtype = cast_0_dtype_0, x = x)[name = string("cast_7")];
+            tensor<fp16, [1, 8, 256]> mm = linear(bias = mm_bias_0, weight = w, x = cast_0)[name = string("mm")];
+            tensor<fp16, [256]> row_scale_y_0 = const()[name = string("row_scale_y_0"), val = tensor<fp16, [256]>(BLOBFILE(path = string("@model_path/weights/weight.bin"), offset = uint64(17088)))];
+            tensor<fp16, [1, 8, 256]> row_scale = mul(x = mm, y = row_scale_y_0)[name = string("row_scale")];
+            string out_dtype_0 = const()[name = string("out_dtype_0"), val = string("fp32")];
+            tensor<fp32, [1, 8, 256]> out = cast(dtype = out_dtype_0, x = row_scale)[name = string("cast_6")];
+        } -> (out);
+}

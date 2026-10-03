@@ -1,0 +1,947 @@
+{
+ "schema": 1,
+ "model": "mp2",
+ "arm": "C8",
+ "variant": "enum",
+ "layers": 24,
+ "exact": true,
+ "exploratory": false,
+ "provenance": {
+  "name": "mp2",
+  "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+  "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+ },
+ "opset": "iOS26",
+ "minimum_deployment_target": "iOS26",
+ "compute_precision": "FLOAT16 (graph authored in FP16; fp32/int32 I/O)",
+ "functions": {
+  "main": {
+   "mel": {
+    "enumerated": [
+     [
+      1,
+      128,
+      201
+     ],
+     [
+      1,
+      128,
+      401
+     ],
+     [
+      1,
+      128,
+      801
+     ],
+     [
+      1,
+      128,
+      1501
+     ]
+    ],
+    "default": [
+     1,
+     128,
+     1501
+    ]
+   },
+   "encoder_frames": [
+    26,
+    51,
+    101,
+    188
+   ]
+  }
+ },
+ "default_function": "main",
+ "encoding": {
+  "arm": "C8",
+  "chain": "constexpr_lut_to_dense(uint1 [P; N], fp16 LUT {0,1}); matmul; split; sub; mul(fp16 per-row scale)",
+  "modules": 240,
+  "constexpr_inputs_by_module": {
+   "feed_forward1.linear1": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint1",
+      "shape": [
+       8192,
+       1024
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       2,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       4096
+      ]
+     }
+    }
+   },
+   "feed_forward1.linear2": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint1",
+      "shape": [
+       2048,
+       4096
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       2,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       1024
+      ]
+     }
+    }
+   },
+   "self_attn.linear_q": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint1",
+      "shape": [
+       2048,
+       1024
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       2,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       1024
+      ]
+     }
+    }
+   },
+   "self_attn.linear_k": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint1",
+      "shape": [
+       2048,
+       1024
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       2,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       1024
+      ]
+     }
+    }
+   },
+   "self_attn.linear_v": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint1",
+      "shape": [
+       2048,
+       1024
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       2,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       1024
+      ]
+     }
+    }
+   },
+   "self_attn.linear_out": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint1",
+      "shape": [
+       2048,
+       1024
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       2,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       1024
+      ]
+     }
+    }
+   },
+   "conv.pointwise_conv1": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint1",
+      "shape": [
+       4096,
+       1024,
+       1
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       1,
+       2,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       2048
+      ]
+     }
+    }
+   },
+   "conv.pointwise_conv2": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint1",
+      "shape": [
+       2048,
+       1024,
+       1
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       1,
+       2,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       1024
+      ]
+     }
+    }
+   },
+   "feed_forward2.linear1": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint1",
+      "shape": [
+       8192,
+       1024
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       2,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       4096
+      ]
+     }
+    }
+   },
+   "feed_forward2.linear2": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint1",
+      "shape": [
+       2048,
+       4096
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       2,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       1024
+      ]
+     }
+    }
+   }
+  },
+  "encoded_bytes_by_const": {
+   "indices": 144703488,
+   "lut": 960,
+   "post_scale": 835584
+  },
+  "encoded_bytes_total": 145540032,
+  "position_tables": {
+   "layers": 24,
+   "dtype": "float16",
+   "full_shape": [
+    1,
+    8,
+    128,
+    375
+   ],
+   "note": "linear_pos folded: pos_emb @ (codes x FP16(s))^T in FP32, cast to FP16; per bucket the middle 2T-1 columns"
+  },
+  "activation_quantization": null
+ },
+ "pass_pipeline": {
+  "name": "DEFAULT",
+  "excluded": [],
+  "passes": [
+   "common::lower_complex_dialect_ops",
+   "common::update_output_dtypes",
+   "common::cast_optimization",
+   "common::noop_elimination",
+   "common::int_op_canonicalization",
+   "common::nullify_redundant_quantization_zero_point",
+   "common::dequantize_quantize_pair_elimination",
+   "common::distributive_quantized_binary_op_scale_normalization",
+   "common::dequantize_to_constexpr",
+   "common::canonicalize_quantized_lut_pattern",
+   "common::const_elimination",
+   "common::sanitize_input_output_names",
+   "common::divide_to_multiply",
+   "common::select_optimization",
+   "common::add_conv_transpose_output_shape",
+   "common::const_elimination",
+   "common::const_deduplication",
+   "common::loop_invariant_elimination",
+   "common::remove_symbolic_reshape",
+   "common::noop_elimination",
+   "common::fuse_matmul_weight_bias",
+   "common::fuse_linear_bias",
+   "common::fuse_gelu_tanh_approximation",
+   "common::fuse_gelu_exact",
+   "common::fuse_leaky_relu",
+   "common::rank0_expand_dims_swap",
+   "common::fuse_squeeze_expand_dims",
+   "common::compose_conv1d",
+   "common::use_reflection_padding",
+   "common::merge_consecutive_paddings",
+   "common::fuse_pad_conv",
+   "common::image_input_preprocess",
+   "common::replace_stack_reshape",
+   "common::reduce_transposes",
+   "common::fuse_dilated_conv",
+   "common::fuse_conv_scale",
+   "common::fuse_conv_bias",
+   "common::fuse_onehot_matmul_to_gather",
+   "common::fuse_layernorm_or_instancenorm",
+   "common::fuse_elementwise_to_batchnorm",
+   "common::fuse_reduce_mean",
+   "common::fuse_conv_batchnorm",
+   "common::fuse_conv_scale",
+   "common::fuse_conv_bias",
+   "common::fuse_conv_batchnorm",
+   "common::detect_concat_interleave",
+   "common::concat_to_pixel_shuffle",
+   "common::fuse_prelu",
+   "common::prelu_to_lrelu",
+   "common::merge_consecutive_relus",
+   "common::merge_consecutive_reshapes",
+   "common::merge_consecutive_transposes",
+   "common::fuse_transpose_matmul",
+   "common::expand_high_rank_reshape_and_transpose",
+   "common::fuse_stack_split",
+   "common::reduce_transposes",
+   "common::remove_redundant_ops",
+   "common::dedup_op_and_var_names",
+   "common::add_fp16_cast",
+   "common::add_int16_cast",
+   "common::update_output_dtypes",
+   "common::guard_negative_gather_indices",
+   "common::const_elimination",
+   "common::dead_code_elimination",
+   "common::cast_optimization",
+   "common::dead_code_elimination",
+   "common::add_int16_cast",
+   "common::const_elimination",
+   "common::dead_code_elimination",
+   "common::cast_optimization",
+   "common::dead_code_elimination",
+   "common::const_elimination",
+   "common::canonicalize_inplace_pattern",
+   "common::prefer_state_in_downstream",
+   "common::const_elimination",
+   "common::dead_code_elimination",
+   "common::dead_code_elimination",
+   "common::const_elimination",
+   "common::cast_optimization",
+   "common::dead_code_elimination",
+   "common::const_elimination",
+   "common::const_deduplication",
+   "common::dead_code_elimination",
+   "common::merge_affine_dequantize_with_consecutive_ops",
+   "common::expand_dynamic_linear",
+   "common::fuse_transpose_matmul",
+   "common::dead_code_elimination",
+   "common::const_deduplication",
+   "common::loop_invariant_elimination",
+   "common::noop_elimination",
+   "common::dedup_op_and_var_names",
+   "common::reduce_transposes",
+   "common::remove_redundant_ops",
+   "common::topological_reorder",
+   "common::dead_code_elimination"
+  ],
+  "multifunction": null
+ },
+ "program": {
+  "main": {
+   "ops": 6250,
+   "op_histogram": {
+    "add": 172,
+    "cast": 64,
+    "concat": 74,
+    "const": 3649,
+    "constexpr_lut_to_dense": 240,
+    "conv": 77,
+    "expand_dims": 9,
+    "floor_div": 3,
+    "gather": 29,
+    "identity": 1,
+    "layer_norm": 120,
+    "less": 5,
+    "linear": 193,
+    "logical_and": 1,
+    "logical_not": 2,
+    "matmul": 72,
+    "mul": 340,
+    "pad": 48,
+    "range_1d": 5,
+    "relu": 3,
+    "reshape": 171,
+    "select": 72,
+    "shape": 29,
+    "sigmoid": 24,
+    "silu": 72,
+    "slice_by_index": 72,
+    "softmax": 24,
+    "split": 264,
+    "sub": 244,
+    "transpose": 171
+   },
+   "constexpr_inputs": {
+    "constexpr_lut_to_dense": {
+     "indices: uint1 [8192, 1024], lut: fp16 [1, 1, 2, 1]": 48,
+     "indices: uint1 [2048, 4096], lut: fp16 [1, 1, 2, 1]": 48,
+     "indices: uint1 [2048, 1024], lut: fp16 [1, 1, 2, 1]": 96,
+     "indices: uint1 [4096, 1024, 1], lut: fp16 [1, 1, 1, 2, 1]": 24,
+     "indices: uint1 [2048, 1024, 1], lut: fp16 [1, 1, 1, 2, 1]": 24
+    }
+   },
+   "matmul_followed_by_mul": 0,
+   "consts_with_shared_weight_id": 0,
+   "inputs": {
+    "mel": "fp32 [1, 128, is0]",
+    "mel_length": "int32 [1]"
+   },
+   "outputs": {
+    "encoder": "fp32 [1, 1024, is2296]",
+    "encoder_length": "int32 [1]"
+   }
+  }
+ },
+ "sizes": {
+  "mlpackage_bytes": 174773085,
+  "weight_bin_bytes": 173796800
+ },
+ "timing_s": {
+  "build_graph": 4.3,
+  "convert": 11.4,
+  "save": 0.1
+ },
+ "peak_rss_mb_after_save": 1660.7,
+ "environment": {
+  "coremltools": "9.0",
+  "numpy": "2.2.6",
+  "python": "3.12.14",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "machine": "arm64"
+ },
+ "paths": {
+  "mlpackage": null,
+  "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/C8/enum.mlmodelc"
+ },
+ "compile": {
+  "compile_s": 0.41,
+  "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/C8/enum.mlmodelc",
+  "mlmodelc_bytes": 174808819
+ },
+ "peak_rss_mb_after_compile": 1693.2,
+ "compute_plan": {
+  "cpuAndNeuralEngine": {
+   "compute_units": "cpuAndNeuralEngine",
+   "tool": "mil/computeplan.swift (MLComputePlan, functionName set)",
+   "functions": {
+    "main": {
+     "compute_units": "cpuAndNeuralEngine",
+     "cpu_ops": [
+      {
+       "cost": 0,
+       "op": "ios18.cast",
+       "outputs": [
+        "mel_fp16"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.transpose",
+       "outputs": [
+        "transpose_0"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.expand_dims",
+       "outputs": [
+        "mel_nchw"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "shape",
+       "outputs": [
+        "shape_0"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.cast",
+       "outputs": [
+        "shape_0_to_int16"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.gather",
+       "outputs": [
+        "gather_0_cast_uint16"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.cast",
+       "outputs": [
+        "gather_0_cast_uint16_to_int32"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "range_1d",
+       "outputs": [
+        "range_1d_0"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.less",
+       "outputs": [
+        "less_0"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.cast",
+       "outputs": [
+        "cast_0"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.expand_dims",
+       "outputs": [
+        "mask0"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.mul",
+       "outputs": [
+        "sub_in_masked"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.conv",
+       "outputs": [
+        "sub_conv0"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_0"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_0"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.add",
+       "outputs": [
+        "len1"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "shape",
+       "outputs": [
+        "shape_1"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.cast",
+       "outputs": [
+        "shape_1_to_uint16"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.gather",
+       "outputs": [
+        "gather_1_cast_uint16"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.cast",
+       "outputs": [
+        "gather_1_cast_uint16_to_int32"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "range_1d",
+       "outputs": [
+        "range_1d_1"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.less",
+       "outputs": [
+        "less_1"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.cast",
+       "outputs": [
+        "cast_1"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.expand_dims",
+       "outputs": [
+        "mask1"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.mul",
+       "outputs": [
+        "sub_masked1"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.conv",
+       "outputs": [
+        "sub_dw1"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.conv",
+       "outputs": [
+        "sub_pw1"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_1"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_1"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.add",
+       "outputs": [
+        "len2"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "shape",
+       "outputs": [
+        "shape_2"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.cast",
+       "outputs": [
+        "shape_2_to_uint16"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.gather",
+       "outputs": [
+        "gather_2_cast_uint16"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.cast",
+       "outputs": [
+        "gather_2_cast_uint16_to_int32"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "range_1d",
+       "outputs": [
+        "range_1d_2"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.less",
+       "outputs": [
+        "less_2"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.cast",
+       "outputs": [
+        "cast_2"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.expand_dims",
+       "outputs": [
+        "mask2"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.mul",
+       "outputs": [
+        "sub_masked2"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.conv",
+       "outputs": [
+        "sub_dw2"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.conv",
+       "outputs": [
+        "sub_pw2"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_2"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_2"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.add",
+       "outputs": [
+        "len3"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "shape",
+       "outputs": [
+        "shape_3"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.cast",
+       "outputs": [
+        "shape_3_to_uint16"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.gather",
+       "outputs": [
+        "gather_3_cast_uint16"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios18.cast",
+       "outputs": [
+        "gather_3_cast_uint16_to_int32"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "range_1d",
+       "outputs": [
+        "range_1d_3"
+       ]
+      },
+      {
+       "cost": 0,
+       "op": "ios19.less",
+       "outputs": [
+        "less_3"
+       ]
+      }
+     ],
+     "estimated_cost_share_by_preferred_device": {
+      "cpu": 0
+     },
+     "operators_by_preferred_device": {
+      "cpu": {
+       "identity": 1,
+       "ios18.cast": 64,
+       "ios18.conv": 77,
+       "ios18.gather": 29,
+       "ios18.layer_norm": 120,
+       "ios18.linear": 193,
+       "ios18.logical_not": 2,
+       "ios18.matmul": 72,
+       "ios18.sigmoid": 24,
+       "ios18.silu": 72,
+       "ios18.softmax": 24,
+       "ios19.add": 172,
+       "ios19.concat": 74,
+       "ios19.expand_dims": 9,
+       "ios19.floor_div": 3,
+       "ios19.less": 5,
+       "ios19.logical_and": 1,
+       "ios19.mul": 340,
+       "ios19.reshape": 171,
+       "ios19.select": 72,
+       "ios19.slice_by_index": 72,
+       "ios19.split": 264,
+       "ios19.sub": 244,
+       "ios19.transpose": 171,
+       "pad": 48,
+       "range_1d": 5,
+       "shape": 29
+      }
+     },
+     "ops_with_usage_by_preferred_device": {
+      "cpu": 2358
+     },
+     "ops_without_usage": {
+      "const": 3169,
+      "ios18.relu": 3,
+      "ios19.constexpr_lut_to_dense": 240
+     },
+     "plan_load_s": 138.34824204444885
+    }
+   }
+  }
+ }
+}

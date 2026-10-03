@@ -1,0 +1,1280 @@
+{
+ "runs": {
+  "C1/fixed/1L": {
+   "model": "mp2",
+   "arm": "C1",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 57780676,
+    "weight_bin_bytes": 57741120
+   },
+   "timing_s": {
+    "build_graph": 2.6,
+    "convert": 0.5,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 407.8,
+   "compile": {
+    "compile_s": 0.09,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C1/fixed.mlmodelc",
+    "mlmodelc_bytes": 57782562
+   },
+   "peak_rss_mb_after_compile": 416.9,
+   "wall_s": 3.6,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C1",
+    "function": "main",
+    "modules_checked": 10,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "const -> linear": 8,
+     "const -> conv": 2
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 404
+   }
+  },
+  "C1/fixed/2L": {
+   "model": "mp2",
+   "arm": "C1",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 106852678,
+    "weight_bin_bytes": 106790272
+   },
+   "timing_s": {
+    "build_graph": 2.2,
+    "convert": 0.7,
+    "save": 0.1
+   },
+   "peak_rss_mb_after_save": 460.3,
+   "compile": {
+    "compile_s": 0.08,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C1/fixed.mlmodelc",
+    "mlmodelc_bytes": 106855724
+   },
+   "peak_rss_mb_after_compile": 460.3,
+   "wall_s": 3.5,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C1",
+    "function": "main",
+    "modules_checked": 20,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "const -> linear": 16,
+     "const -> conv": 4
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 499
+   }
+  },
+  "C1/multi/1L": {
+   "model": "mp2",
+   "arm": "C1",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 58626190,
+    "weight_bin_bytes": 58471232
+   },
+   "timing_s": {
+    "build_graph": 2.0,
+    "convert": 4.1,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 428.8,
+   "compile": {
+    "compile_s": 0.11,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C1/multi.mlmodelc",
+    "mlmodelc_bytes": 58634686
+   },
+   "peak_rss_mb_after_compile": 434.4,
+   "wall_s": 6.6
+  },
+  "C1/multi/2L": {
+   "model": "mp2",
+   "arm": "C1",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 108489821,
+    "weight_bin_bytes": 108243520
+   },
+   "timing_s": {
+    "build_graph": 2.3,
+    "convert": 7.1,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 473.8,
+   "compile": {
+    "compile_s": 0.14,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C1/multi.mlmodelc",
+    "mlmodelc_bytes": 108503044
+   },
+   "peak_rss_mb_after_compile": 495.1,
+   "wall_s": 10.0
+  },
+  "C3/fixed/1L": {
+   "model": "mp2",
+   "arm": "C3",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 33699956,
+    "weight_bin_bytes": 33659328
+   },
+   "timing_s": {
+    "build_graph": 1.6,
+    "convert": 0.4,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 377.3,
+   "compile": {
+    "compile_s": 0.07,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C3/fixed.mlmodelc",
+    "mlmodelc_bytes": 33702216
+   },
+   "peak_rss_mb_after_compile": 386.4,
+   "wall_s": 2.5,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C3",
+    "function": "main",
+    "modules_checked": 10,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_blockwise_shift_scale -> linear": 8,
+     "constexpr_blockwise_shift_scale -> conv": 2
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 397
+   }
+  },
+  "C3/fixed/2L": {
+   "model": "mp2",
+   "arm": "C3",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 58691238,
+    "weight_bin_bytes": 58626688
+   },
+   "timing_s": {
+    "build_graph": 1.6,
+    "convert": 0.6,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 409.1,
+   "compile": {
+    "compile_s": 0.08,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C3/fixed.mlmodelc",
+    "mlmodelc_bytes": 58695030
+   },
+   "peak_rss_mb_after_compile": 419.8,
+   "wall_s": 2.7,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C3",
+    "function": "main",
+    "modules_checked": 20,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_blockwise_shift_scale -> linear": 16,
+     "constexpr_blockwise_shift_scale -> conv": 4
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 421
+   }
+  },
+  "C3/multi/1L": {
+   "model": "mp2",
+   "arm": "C3",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 34548686,
+    "weight_bin_bytes": 34389440
+   },
+   "timing_s": {
+    "build_graph": 1.7,
+    "convert": 2.1,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 530.4,
+   "compile": {
+    "compile_s": 0.11,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C3/multi.mlmodelc",
+    "mlmodelc_bytes": 34558678
+   },
+   "peak_rss_mb_after_compile": 547.1,
+   "wall_s": 4.4
+  },
+  "C3/multi/2L": {
+   "model": "mp2",
+   "arm": "C3",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 60334813,
+    "weight_bin_bytes": 60079936
+   },
+   "timing_s": {
+    "build_graph": 1.7,
+    "convert": 3.3,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 562.9,
+   "compile": {
+    "compile_s": 0.15,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C3/multi.mlmodelc",
+    "mlmodelc_bytes": 60351007
+   },
+   "peak_rss_mb_after_compile": 584.9,
+   "wall_s": 5.6
+  },
+  "C4/fixed/1L": {
+   "model": "mp2",
+   "arm": "C4",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 15614668,
+    "weight_bin_bytes": 15571392
+   },
+   "timing_s": {
+    "build_graph": 1.6,
+    "convert": 0.4,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 375.6,
+   "compile": {
+    "compile_s": 0.07,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C4/fixed.mlmodelc",
+    "mlmodelc_bytes": 15617157
+   },
+   "peak_rss_mb_after_compile": 385.0,
+   "wall_s": 2.4,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C4",
+    "function": "main",
+    "modules_checked": 10,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_lut_to_dense -> constexpr_blockwise_shift_scale -> linear": 8,
+     "constexpr_lut_to_dense -> constexpr_blockwise_shift_scale -> conv": 2
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 499
+   }
+  },
+  "C4/fixed/2L": {
+   "model": "mp2",
+   "arm": "C4",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 22520662,
+    "weight_bin_bytes": 22450816
+   },
+   "timing_s": {
+    "build_graph": 1.6,
+    "convert": 0.7,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 410.7,
+   "compile": {
+    "compile_s": 0.08,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C4/fixed.mlmodelc",
+    "mlmodelc_bytes": 22524915
+   },
+   "peak_rss_mb_after_compile": 421.7,
+   "wall_s": 2.8,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C4",
+    "function": "main",
+    "modules_checked": 20,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_lut_to_dense -> constexpr_blockwise_shift_scale -> linear": 16,
+     "constexpr_lut_to_dense -> constexpr_blockwise_shift_scale -> conv": 4
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 532
+   }
+  },
+  "C4/multi/1L": {
+   "model": "mp2",
+   "arm": "C4",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 16471342,
+    "weight_bin_bytes": 16301504
+   },
+   "timing_s": {
+    "build_graph": 1.6,
+    "convert": 2.3,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 528.6,
+   "compile": {
+    "compile_s": 0.12,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C4/multi.mlmodelc",
+    "mlmodelc_bytes": 16482250
+   },
+   "peak_rss_mb_after_compile": 545.8,
+   "wall_s": 4.4
+  },
+  "C4/multi/2L": {
+   "model": "mp2",
+   "arm": "C4",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 24180125,
+    "weight_bin_bytes": 23904064
+   },
+   "timing_s": {
+    "build_graph": 1.7,
+    "convert": 3.6,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 561.7,
+   "compile": {
+    "compile_s": 0.17,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C4/multi.mlmodelc",
+    "mlmodelc_bytes": 24198163
+   },
+   "peak_rss_mb_after_compile": 562.6,
+   "wall_s": 5.9
+  },
+  "C7/fixed/1L": {
+   "model": "mp2",
+   "arm": "C7",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 15615796,
+    "weight_bin_bytes": 15571392
+   },
+   "timing_s": {
+    "build_graph": 1.5,
+    "convert": 0.4,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 378.3,
+   "compile": {
+    "compile_s": 0.07,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C7/fixed.mlmodelc",
+    "mlmodelc_bytes": 15618363
+   },
+   "peak_rss_mb_after_compile": 387.8,
+   "wall_s": 2.4,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C7",
+    "function": "main",
+    "modules_checked": 10,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_lut_to_dense -> linear -> mul": 8,
+     "constexpr_lut_to_dense -> conv -> mul": 2
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 486
+   }
+  },
+  "C7/fixed/2L": {
+   "model": "mp2",
+   "arm": "C7",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 22522918,
+    "weight_bin_bytes": 22450816
+   },
+   "timing_s": {
+    "build_graph": 1.6,
+    "convert": 0.7,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 410.8,
+   "compile": {
+    "compile_s": 0.08,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C7/fixed.mlmodelc",
+    "mlmodelc_bytes": 22527327
+   },
+   "peak_rss_mb_after_compile": 421.8,
+   "wall_s": 2.8,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C7",
+    "function": "main",
+    "modules_checked": 20,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_lut_to_dense -> linear -> mul": 16,
+     "constexpr_lut_to_dense -> conv -> mul": 4
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 520
+   }
+  },
+  "C7/multi/1L": {
+   "model": "mp2",
+   "arm": "C7",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 16475824,
+    "weight_bin_bytes": 16301504
+   },
+   "timing_s": {
+    "build_graph": 1.9,
+    "convert": 2.3,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 495.0,
+   "compile": {
+    "compile_s": 0.14,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C7/multi.mlmodelc",
+    "mlmodelc_bytes": 16487054
+   },
+   "peak_rss_mb_after_compile": 511.5,
+   "wall_s": 4.7
+  },
+  "C7/multi/2L": {
+   "model": "mp2",
+   "arm": "C7",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 24189089,
+    "weight_bin_bytes": 23904064
+   },
+   "timing_s": {
+    "build_graph": 1.8,
+    "convert": 3.5,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 551.7,
+   "compile": {
+    "compile_s": 0.16,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C7/multi.mlmodelc",
+    "mlmodelc_bytes": 24207771
+   },
+   "peak_rss_mb_after_compile": 572.0,
+   "wall_s": 5.9
+  },
+  "C8/fixed/1L": {
+   "model": "mp2",
+   "arm": "C8",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 15634070,
+    "weight_bin_bytes": 15581632
+   },
+   "timing_s": {
+    "build_graph": 1.6,
+    "convert": 0.5,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 406.9,
+   "compile": {
+    "compile_s": 0.08,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C8/fixed.mlmodelc",
+    "mlmodelc_bytes": 15636163
+   },
+   "peak_rss_mb_after_compile": 416.5,
+   "wall_s": 2.6,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C8",
+    "function": "main",
+    "modules_checked": 10,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_lut_to_dense -> linear -> split-sub-mul": 8,
+     "constexpr_lut_to_dense -> conv -> split-sub-mul": 2
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 580
+   }
+  },
+  "C8/fixed/2L": {
+   "model": "mp2",
+   "arm": "C8",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 22549226,
+    "weight_bin_bytes": 22461056
+   },
+   "timing_s": {
+    "build_graph": 1.7,
+    "convert": 0.9,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 463.2,
+   "compile": {
+    "compile_s": 0.09,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C8/fixed.mlmodelc",
+    "mlmodelc_bytes": 22552687
+   },
+   "peak_rss_mb_after_compile": 475.0,
+   "wall_s": 3.1,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C8",
+    "function": "main",
+    "modules_checked": 20,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_lut_to_dense -> linear -> split-sub-mul": 16,
+     "constexpr_lut_to_dense -> conv -> split-sub-mul": 4
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 639
+   }
+  },
+  "C8/multi/1L": {
+   "model": "mp2",
+   "arm": "C8",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 16518110,
+    "weight_bin_bytes": 16311744
+   },
+   "timing_s": {
+    "build_graph": 1.7,
+    "convert": 2.8,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 746.5,
+   "compile": {
+    "compile_s": 0.13,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C8/multi.mlmodelc",
+    "mlmodelc_bytes": 16527474
+   },
+   "peak_rss_mb_after_compile": 765.3,
+   "wall_s": 5.0
+  },
+  "C8/multi/2L": {
+   "model": "mp2",
+   "arm": "C8",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 24263421,
+    "weight_bin_bytes": 23914304
+   },
+   "timing_s": {
+    "build_graph": 1.8,
+    "convert": 4.5,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 807.2,
+   "compile": {
+    "compile_s": 0.17,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C8/multi.mlmodelc",
+    "mlmodelc_bytes": 24278371
+   },
+   "peak_rss_mb_after_compile": 834.4,
+   "wall_s": 6.9
+  },
+  "C6s2/fixed/1L": {
+   "model": "mp2",
+   "arm": "C6s2",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 16706830,
+    "weight_bin_bytes": 16661952
+   },
+   "timing_s": {
+    "build_graph": 1.6,
+    "convert": 0.5,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 433.1,
+   "compile": {
+    "compile_s": 0.07,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6s2/fixed.mlmodelc",
+    "mlmodelc_bytes": 16709555
+   },
+   "peak_rss_mb_after_compile": 442.6,
+   "wall_s": 2.6,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C6s2",
+    "function": "main",
+    "modules_checked": 10,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_lut_to_sparse -> constexpr_sparse_to_dense -> linear": 8,
+     "constexpr_lut_to_sparse -> constexpr_sparse_to_dense -> conv": 2
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 516
+   }
+  },
+  "C6s2/fixed/2L": {
+   "model": "mp2",
+   "arm": "C6s2",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 24672538,
+    "weight_bin_bytes": 24599488
+   },
+   "timing_s": {
+    "build_graph": 1.8,
+    "convert": 0.8,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 483.9,
+   "compile": {
+    "compile_s": 0.08,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6s2/fixed.mlmodelc",
+    "mlmodelc_bytes": 24677264
+   },
+   "peak_rss_mb_after_compile": 495.0,
+   "wall_s": 3.1,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C6s2",
+    "function": "main",
+    "modules_checked": 20,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_lut_to_sparse -> constexpr_sparse_to_dense -> linear": 16,
+     "constexpr_lut_to_sparse -> constexpr_sparse_to_dense -> conv": 4
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 568
+   }
+  },
+  "C6s2/multi/1L": {
+   "model": "mp2",
+   "arm": "C6s2",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 17568310,
+    "weight_bin_bytes": 17392064
+   },
+   "timing_s": {
+    "build_graph": 1.9,
+    "convert": 2.5,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 521.0,
+   "compile": {
+    "compile_s": 0.12,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6s2/multi.mlmodelc",
+    "mlmodelc_bytes": 17580162
+   },
+   "peak_rss_mb_after_compile": 538.1,
+   "wall_s": 4.9
+  },
+  "C6s2/multi/2L": {
+   "model": "mp2",
+   "arm": "C6s2",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 26341613,
+    "weight_bin_bytes": 26052736
+   },
+   "timing_s": {
+    "build_graph": 2.0,
+    "convert": 3.9,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 567.4,
+   "compile": {
+    "compile_s": 0.16,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6s2/multi.mlmodelc",
+    "mlmodelc_bytes": 26361543
+   },
+   "peak_rss_mb_after_compile": 591.9,
+   "wall_s": 6.5
+  },
+  "C6s4/fixed/1L": {
+   "model": "mp2",
+   "arm": "C6s4",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 18741454,
+    "weight_bin_bytes": 18696576
+   },
+   "timing_s": {
+    "build_graph": 1.7,
+    "convert": 0.5,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 433.6,
+   "compile": {
+    "compile_s": 0.07,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6s4/fixed.mlmodelc",
+    "mlmodelc_bytes": 18744181
+   },
+   "peak_rss_mb_after_compile": 443.0,
+   "wall_s": 2.6,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C6s4",
+    "function": "main",
+    "modules_checked": 10,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_lut_to_sparse -> constexpr_sparse_to_dense -> linear": 8,
+     "constexpr_lut_to_sparse -> constexpr_sparse_to_dense -> conv": 2
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 530
+   }
+  },
+  "C6s4/fixed/2L": {
+   "model": "mp2",
+   "arm": "C6s4",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 28725658,
+    "weight_bin_bytes": 28652608
+   },
+   "timing_s": {
+    "build_graph": 1.8,
+    "convert": 0.9,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 483.0,
+   "compile": {
+    "compile_s": 0.07,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6s4/fixed.mlmodelc",
+    "mlmodelc_bytes": 28730385
+   },
+   "peak_rss_mb_after_compile": 494.1,
+   "wall_s": 3.2,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C6s4",
+    "function": "main",
+    "modules_checked": 20,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_lut_to_sparse -> constexpr_sparse_to_dense -> linear": 16,
+     "constexpr_lut_to_sparse -> constexpr_sparse_to_dense -> conv": 4
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 537
+   }
+  },
+  "C6s4/multi/1L": {
+   "model": "mp2",
+   "arm": "C6s4",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 19602934,
+    "weight_bin_bytes": 19426688
+   },
+   "timing_s": {
+    "build_graph": 1.8,
+    "convert": 2.5,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 553.2,
+   "compile": {
+    "compile_s": 0.12,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6s4/multi.mlmodelc",
+    "mlmodelc_bytes": 19614794
+   },
+   "peak_rss_mb_after_compile": 570.4,
+   "wall_s": 4.9
+  },
+  "C6s4/multi/2L": {
+   "model": "mp2",
+   "arm": "C6s4",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 30394733,
+    "weight_bin_bytes": 30105856
+   },
+   "timing_s": {
+    "build_graph": 2.0,
+    "convert": 4.0,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 530.4,
+   "compile": {
+    "compile_s": 0.16,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6s4/multi.mlmodelc",
+    "mlmodelc_bytes": 30414667
+   },
+   "peak_rss_mb_after_compile": 555.5,
+   "wall_s": 6.7
+  },
+  "C6s8/fixed/1L": {
+   "model": "mp2",
+   "arm": "C6s8",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 20776206,
+    "weight_bin_bytes": 20731328
+   },
+   "timing_s": {
+    "build_graph": 1.7,
+    "convert": 0.5,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 433.0,
+   "compile": {
+    "compile_s": 0.08,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6s8/fixed.mlmodelc",
+    "mlmodelc_bytes": 20778941
+   },
+   "peak_rss_mb_after_compile": 442.3,
+   "wall_s": 2.6,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C6s8",
+    "function": "main",
+    "modules_checked": 10,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_lut_to_sparse -> constexpr_sparse_to_dense -> linear": 8,
+     "constexpr_lut_to_sparse -> constexpr_sparse_to_dense -> conv": 2
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 656
+   }
+  },
+  "C6s8/fixed/2L": {
+   "model": "mp2",
+   "arm": "C6s8",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 32778842,
+    "weight_bin_bytes": 32705792
+   },
+   "timing_s": {
+    "build_graph": 1.8,
+    "convert": 0.8,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 487.3,
+   "compile": {
+    "compile_s": 0.08,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6s8/fixed.mlmodelc",
+    "mlmodelc_bytes": 32783585
+   },
+   "peak_rss_mb_after_compile": 498.3,
+   "wall_s": 3.1,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C6s8",
+    "function": "main",
+    "modules_checked": 20,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_lut_to_sparse -> constexpr_sparse_to_dense -> linear": 16,
+     "constexpr_lut_to_sparse -> constexpr_sparse_to_dense -> conv": 4
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 638
+   }
+  },
+  "C6s8/multi/1L": {
+   "model": "mp2",
+   "arm": "C6s8",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 21637686,
+    "weight_bin_bytes": 21461440
+   },
+   "timing_s": {
+    "build_graph": 1.8,
+    "convert": 2.5,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 548.2,
+   "compile": {
+    "compile_s": 0.12,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6s8/multi.mlmodelc",
+    "mlmodelc_bytes": 21649578
+   },
+   "peak_rss_mb_after_compile": 565.6,
+   "wall_s": 4.9
+  },
+  "C6s8/multi/2L": {
+   "model": "mp2",
+   "arm": "C6s8",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 34447917,
+    "weight_bin_bytes": 34159040
+   },
+   "timing_s": {
+    "build_graph": 2.0,
+    "convert": 4.0,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 602.8,
+   "compile": {
+    "compile_s": 0.16,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6s8/multi.mlmodelc",
+    "mlmodelc_bytes": 34467915
+   },
+   "peak_rss_mb_after_compile": 626.2,
+   "wall_s": 6.5
+  },
+  "C6d4/fixed/1L": {
+   "model": "mp2",
+   "arm": "C6d4",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 21745820,
+    "weight_bin_bytes": 21705152
+   },
+   "timing_s": {
+    "build_graph": 1.6,
+    "convert": 0.4,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 469.5,
+   "compile": {
+    "compile_s": 0.07,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6d4/fixed.mlmodelc",
+    "mlmodelc_bytes": 21748032
+   },
+   "peak_rss_mb_after_compile": 478.8,
+   "wall_s": 2.5,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C6d4",
+    "function": "main",
+    "modules_checked": 10,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_lut_to_dense -> linear": 8,
+     "constexpr_lut_to_dense -> conv": 2
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 622
+   }
+  },
+  "C6d4/fixed/2L": {
+   "model": "mp2",
+   "arm": "C6d4",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 34782966,
+    "weight_bin_bytes": 34718336
+   },
+   "timing_s": {
+    "build_graph": 1.7,
+    "convert": 0.7,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 498.8,
+   "compile": {
+    "compile_s": 0.08,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6d4/fixed.mlmodelc",
+    "mlmodelc_bytes": 34786662
+   },
+   "peak_rss_mb_after_compile": 509.5,
+   "wall_s": 2.8,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C6d4",
+    "function": "main",
+    "modules_checked": 20,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_lut_to_dense -> linear": 16,
+     "constexpr_lut_to_dense -> conv": 4
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 655
+   }
+  },
+  "C6d4/multi/1L": {
+   "model": "mp2",
+   "arm": "C6d4",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 22594670,
+    "weight_bin_bytes": 22435264
+   },
+   "timing_s": {
+    "build_graph": 1.6,
+    "convert": 2.1,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 527.8,
+   "compile": {
+    "compile_s": 0.11,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6d4/multi.mlmodelc",
+    "mlmodelc_bytes": 22604470
+   },
+   "peak_rss_mb_after_compile": 544.4,
+   "wall_s": 4.3
+  },
+  "C6d4/multi/2L": {
+   "model": "mp2",
+   "arm": "C6d4",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 36426781,
+    "weight_bin_bytes": 36171584
+   },
+   "timing_s": {
+    "build_graph": 1.8,
+    "convert": 3.3,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 564.0,
+   "compile": {
+    "compile_s": 0.14,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6d4/multi.mlmodelc",
+    "mlmodelc_bytes": 36442591
+   },
+   "peak_rss_mb_after_compile": 586.1,
+   "wall_s": 5.7
+  },
+  "C6d8/fixed/1L": {
+   "model": "mp2",
+   "arm": "C6d8",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 27914396,
+    "weight_bin_bytes": 27873728
+   },
+   "timing_s": {
+    "build_graph": 1.5,
+    "convert": 0.4,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 468.4,
+   "compile": {
+    "compile_s": 0.06,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6d8/fixed.mlmodelc",
+    "mlmodelc_bytes": 27916606
+   },
+   "peak_rss_mb_after_compile": 477.5,
+   "wall_s": 2.3,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C6d8",
+    "function": "main",
+    "modules_checked": 10,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_lut_to_dense -> linear": 8,
+     "constexpr_lut_to_dense -> conv": 2
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 1329
+   }
+  },
+  "C6d8/fixed/2L": {
+   "model": "mp2",
+   "arm": "C6d8",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 47120118,
+    "weight_bin_bytes": 47055488
+   },
+   "timing_s": {
+    "build_graph": 1.6,
+    "convert": 0.6,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 499.6,
+   "compile": {
+    "compile_s": 0.07,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6d8/fixed.mlmodelc",
+    "mlmodelc_bytes": 47123810
+   },
+   "peak_rss_mb_after_compile": 510.2,
+   "wall_s": 2.7,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C6d8",
+    "function": "main",
+    "modules_checked": 20,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_lut_to_dense -> linear": 16,
+     "constexpr_lut_to_dense -> conv": 4
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 1361
+   }
+  },
+  "C6d8/multi/1L": {
+   "model": "mp2",
+   "arm": "C6d8",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 28763246,
+    "weight_bin_bytes": 28603840
+   },
+   "timing_s": {
+    "build_graph": 1.7,
+    "convert": 2.1,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 526.3,
+   "compile": {
+    "compile_s": 0.11,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6d8/multi.mlmodelc",
+    "mlmodelc_bytes": 28773038
+   },
+   "peak_rss_mb_after_compile": 542.7,
+   "wall_s": 4.3
+  },
+  "C6d8/multi/2L": {
+   "model": "mp2",
+   "arm": "C6d8",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 48763933,
+    "weight_bin_bytes": 48508736
+   },
+   "timing_s": {
+    "build_graph": 1.8,
+    "convert": 3.3,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 558.3,
+   "compile": {
+    "compile_s": 0.16,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C6d8/multi.mlmodelc",
+    "mlmodelc_bytes": 48779727
+   },
+   "peak_rss_mb_after_compile": 580.2,
+   "wall_s": 5.8
+  },
+  "C5/fixed/1L": {
+   "model": "mp2",
+   "arm": "C5",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 33705586,
+    "weight_bin_bytes": 33659328
+   },
+   "timing_s": {
+    "build_graph": 1.5,
+    "convert": 0.4,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 379.3,
+   "compile": {
+    "compile_s": 0.08,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C5/fixed.mlmodelc",
+    "mlmodelc_bytes": 33707782
+   },
+   "peak_rss_mb_after_compile": 388.8,
+   "wall_s": 2.4,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C5",
+    "function": "main",
+    "modules_checked": 10,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_blockwise_shift_scale -> linear": 8,
+     "constexpr_blockwise_shift_scale -> conv": 2
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 394
+   }
+  },
+  "C5/fixed/2L": {
+   "model": "mp2",
+   "arm": "C5",
+   "variant": "fixed",
+   "sizes": {
+    "mlpackage_bytes": 58702536,
+    "weight_bin_bytes": 58626688
+   },
+   "timing_s": {
+    "build_graph": 1.5,
+    "convert": 0.6,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 409.6,
+   "compile": {
+    "compile_s": 0.08,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C5/fixed.mlmodelc",
+    "mlmodelc_bytes": 58706206
+   },
+   "peak_rss_mb_after_compile": 421.2,
+   "wall_s": 2.6,
+   "gate2": {
+    "model": "mp2",
+    "arm": "C5",
+    "function": "main",
+    "modules_checked": 20,
+    "bit_exact": true,
+    "failures": [],
+    "chains": {
+     "constexpr_blockwise_shift_scale -> linear": 16,
+     "constexpr_blockwise_shift_scale -> conv": 4
+    },
+    "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+    "peak_rss_mb": 424
+   }
+  },
+  "C5/multi/1L": {
+   "model": "mp2",
+   "arm": "C5",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 34571296,
+    "weight_bin_bytes": 34389440
+   },
+   "timing_s": {
+    "build_graph": 1.6,
+    "convert": 2.3,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 529.2,
+   "compile": {
+    "compile_s": 0.12,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C5/multi.mlmodelc",
+    "mlmodelc_bytes": 34581048
+   },
+   "peak_rss_mb_after_compile": 547.5,
+   "wall_s": 4.5
+  },
+  "C5/multi/2L": {
+   "model": "mp2",
+   "arm": "C5",
+   "variant": "multi",
+   "sizes": {
+    "mlpackage_bytes": 60380095,
+    "weight_bin_bytes": 60079936
+   },
+   "timing_s": {
+    "build_graph": 1.8,
+    "convert": 3.6,
+    "save": 0.0
+   },
+   "peak_rss_mb_after_save": 562.4,
+   "compile": {
+    "compile_s": 0.18,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/probes/arms/mp2/C5/multi.mlmodelc",
+    "mlmodelc_bytes": 60395833
+   },
+   "peak_rss_mb_after_compile": 579.3,
+   "wall_s": 6.1
+  }
+ }
+}

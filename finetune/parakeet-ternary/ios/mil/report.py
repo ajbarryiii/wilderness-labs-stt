@@ -1,6 +1,7 @@
 """WP3 summary: builds, gate 2, gates 3-5, compute plans and probes in one table (pure JSON; any machine).
 
-  python mil/report.py      # reads ios/results/{builds,gate2,gates,probes,diag}, writes results/wp3_summary.{json,md}
+  python mil/report.py   # reads ios/results/{builds,gate2,gates,probes,diag}; writes results/wp3_summary.json and
+                         # results/wp3_summary_table.txt (a Markdown table; *.md under results/ is git-ignored)
 """
 from __future__ import annotations
 
@@ -55,6 +56,10 @@ def main() -> None:
             if not g:
                 continue
             s = g["summary"]
+            if "gate4_encoder" not in s:  # G0: compared with C0's encoder, no heads
+                row[f"gates_{units}"] = {"g0_vs_c0": s.get("pass"), "g4_rel_max": round(s["rel_max"], 4),
+                                         "g4_abs_max": round(s["abs_max"], 3), "g4_rel_median": round(s["rel_median"], 4)}
+                continue
             e4, e5, h = s["gate4_encoder"], s["gate5_buckets_vs_15s"], s["gate4_heads"]
             row[f"gates_{units}"] = {
                 "g4_encoder": e4["pass"], "g4_rel_max": round(e4["rel_max"], 4), "g4_abs_max": round(e4["abs_max"], 3),
@@ -71,7 +76,7 @@ def main() -> None:
            "g0": {p.stem: load(p)["summary"] for p in (RES / "gates").glob("c0-G0-*.json")},
            "probes": load(RES / "probes" / "summary.json"), "diag": load(RES / "diag" / "fp16_depth.json")}
     (RES / "wp3_summary.json").write_text(json.dumps(doc, indent=1) + "\n")
-    lines = ["| model | arm | variant | mlmodelc MB | compile s | convert s | peak RSS MB | gate 2 | ANE cost share (plan, per function) | "
+    lines = ["| model | arm | variant | mlmodelc MB | compile s | convert s | peak RSS MB | gate 2 (fixed build) | ANE cost share (plan, per function) | "
              "g4 enc ANE (rel max / abs max / failing) | g5 ANE | heads ANE | g4 enc CPU (rel max / failing) | heads CPU |",
              "|" + "---|" * 14]
 
@@ -82,6 +87,11 @@ def main() -> None:
         if r["variant"] == "-":
             continue
         a, c = r.get("gates_cpuAndNeuralEngine"), r.get("gates_cpuOnly")
+        if a and "g0_vs_c0" in a:
+            lines.append(f"| {r['model']} | {r['arm']} | {r['variant']} | {r['mlmodelc_mb']} | {r['compile_s']} | {r['convert_s']} | "
+                         f"{r['peak_rss_mb']} | - | {fmt_plan(r['plan'])} | vs C0: {'pass' if a['g0_vs_c0'] else 'FAIL'} "
+                         f"{a['g4_rel_max']} / {a['g4_abs_max']} (median {a['g4_rel_median']}) | - | - | - | - |")
+            continue
         lines.append("| " + " | ".join(str(x) for x in (
             r["model"], r["arm"], r["variant"], r["mlmodelc_mb"], r["compile_s"], r["convert_s"], r["peak_rss_mb"],
             ("bit-exact" if r["gate2"]["bit_exact"] else "FAIL") + f" ({r['gate2']['modules']})" if "gate2" in r else "-",
@@ -91,7 +101,7 @@ def main() -> None:
             ("pass" if a["heads"] else "FAIL") if a else "-",
             f"{'pass' if c['g4_encoder'] else 'FAIL'} {c['g4_rel_max']} / {c['g4_failing_cases']}" if c else "-",
             ("pass" if c["heads"] else "FAIL") if c else "-")) + " |")
-    (RES / "wp3_summary.md").write_text("\n".join(lines) + "\n")
+    (RES / "wp3_summary_table.txt").write_text("\n".join(lines) + "\n")  # *.md under results/ is git-ignored
     print("\n".join(lines))
 
 

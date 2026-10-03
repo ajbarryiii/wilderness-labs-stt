@@ -1,0 +1,8 @@
+
+main[CoreML9](%x: (1, 256, 8, fp32)(Tensor)) {
+  block3() {
+    %cast_3: (1, 256, 8, fp16)(Tensor) = cast(x=%x, dtype="fp16", name="cast_3")
+    %row_scale: (1, 256, 8, fp16)(Tensor) = conv(x=%cast_3, weight=%row_scale_weight_1, bias=%row_scale_bias_1, strides=[1], pad_type="valid", pad=[0, 0], dilations=[1], groups=1, name="row_scale")
+    %out: (1, 256, 8, fp32)(Tensor) = cast(x=%row_scale, dtype="fp32", name="cast_2")
+  } -> (%out)
+}

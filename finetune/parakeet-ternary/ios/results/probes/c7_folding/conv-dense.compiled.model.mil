@@ -1,0 +1,18 @@
+program(1.3)
+[buildInfo = dict<string, string>({{"coremlc-component-MIL", "3600.16.1"}, {"coremlc-version", "3600.25.2"}, {"coremltools-component-milinternal", ""}, {"coremltools-version", "9.0"}})]
+{
+    func main<ios19>(tensor<fp32, [1, 256, 8]> x) {
+            string cast_3_dtype_0 = const()[name = string("cast_3_dtype_0"), val = string("fp16")];
+            tensor<int32, [1]> mm_strides_1 = const()[name = string("mm_strides_1"), val = tensor<int32, [1]>([1])];
+            string mm_pad_type_1 = const()[name = string("mm_pad_type_1"), val = string("valid")];
+            tensor<int32, [2]> mm_pad_1 = const()[name = string("mm_pad_1"), val = tensor<int32, [2]>([0, 0])];
+            tensor<int32, [1]> mm_dilations_1 = const()[name = string("mm_dilations_1"), val = tensor<int32, [1]>([1])];
+            int32 mm_groups_1 = const()[name = string("mm_groups_1"), val = int32(1)];
+            tensor<fp16, [256, 256, 1]> row_scale_weight_1 = const()[name = string("row_scale_weight_1"), val = tensor<fp16, [256, 256, 1]>(BLOBFILE(path = string("@model_path/weights/weight.bin"), offset = uint64(64)))];
+            tensor<fp16, [256]> row_scale_bias_1 = const()[name = string("row_scale_bias_1"), val = tensor<fp16, [256]>(BLOBFILE(path = string("@model_path/weights/weight.bin"), offset = uint64(131200)))];
+            tensor<fp16, [1, 256, 8]> cast_3 = cast(dtype = cast_3_dtype_0, x = x)[name = string("cast_3")];
+            tensor<fp16, [1, 256, 8]> row_scale = conv(bias = row_scale_bias_1, dilations = mm_dilations_1, groups = mm_groups_1, pad = mm_pad_1, pad_type = mm_pad_type_1, strides = mm_strides_1, weight = row_scale_weight_1, x = cast_3)[name = string("row_scale")];
+            string out_dtype_3 = const()[name = string("out_dtype_3"), val = string("fp32")];
+            tensor<fp32, [1, 256, 8]> out = cast(dtype = out_dtype_3, x = row_scale)[name = string("cast_2")];
+        } -> (out);
+}

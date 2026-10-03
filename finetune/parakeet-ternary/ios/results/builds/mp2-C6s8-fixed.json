@@ -1,0 +1,1566 @@
+{
+ "schema": 1,
+ "model": "mp2",
+ "arm": "C6s8",
+ "variant": "fixed",
+ "layers": 24,
+ "exact": true,
+ "exploratory": false,
+ "provenance": {
+  "name": "mp2",
+  "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+  "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+ },
+ "opset": "iOS26",
+ "minimum_deployment_target": "iOS26",
+ "compute_precision": "FLOAT16 (graph authored in FP16; fp32/int32 I/O)",
+ "functions": {
+  "main": {
+   "mel": [
+    1,
+    128,
+    1501
+   ],
+   "encoder_frames": 188
+  }
+ },
+ "default_function": "main",
+ "encoding": {
+  "arm": "C6s8",
+  "chain": "constexpr_lut_to_sparse(uint1 mask, uintB nonzero indices, fp16 grouped LUT {+-s_r}) -> constexpr_sparse_to_dense",
+  "modules": 240,
+  "constexpr_inputs_by_module": {
+   "feed_forward1.linear1": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       4096,
+       1024
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint4",
+      "shape": [
+       2857811
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       512,
+       1,
+       16,
+       1
+      ]
+     }
+    }
+   },
+   "feed_forward1.linear2": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       1024,
+       4096
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint4",
+      "shape": [
+       2761321
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       128,
+       1,
+       16,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_q": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       1024,
+       1024
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint4",
+      "shape": [
+       719121
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       128,
+       1,
+       16,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_k": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       1024,
+       1024
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint4",
+      "shape": [
+       710171
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       128,
+       1,
+       16,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_v": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       1024,
+       1024
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint4",
+      "shape": [
+       704156
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       128,
+       1,
+       16,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_out": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       1024,
+       1024
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint4",
+      "shape": [
+       714287
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       128,
+       1,
+       16,
+       1
+      ]
+     }
+    }
+   },
+   "conv.pointwise_conv1": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       2048,
+       1024,
+       1
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint4",
+      "shape": [
+       1425781
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       256,
+       1,
+       1,
+       16,
+       1
+      ]
+     }
+    }
+   },
+   "conv.pointwise_conv2": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       1024,
+       1024,
+       1
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint4",
+      "shape": [
+       709268
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       128,
+       1,
+       1,
+       16,
+       1
+      ]
+     }
+    }
+   },
+   "feed_forward2.linear1": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       4096,
+       1024
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint4",
+      "shape": [
+       2859193
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       512,
+       1,
+       16,
+       1
+      ]
+     }
+    }
+   },
+   "feed_forward2.linear2": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       1024,
+       4096
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint4",
+      "shape": [
+       2816435
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       128,
+       1,
+       16,
+       1
+      ]
+     }
+    }
+   }
+  },
+  "encoded_bytes_by_const": {
+   "indices_mask": 72351744,
+   "indices_nonzero_data": 195856381,
+   "lut": 1671168
+  },
+  "encoded_bytes_total": 269879293,
+  "position_tables": {
+   "layers": 24,
+   "dtype": "float16",
+   "full_shape": [
+    1,
+    8,
+    128,
+    375
+   ],
+   "note": "linear_pos folded: pos_emb @ (codes x FP16(s))^T in FP32, cast to FP16; per bucket the middle 2T-1 columns"
+  },
+  "activation_quantization": null
+ },
+ "pass_pipeline": {
+  "name": "DEFAULT",
+  "excluded": [],
+  "passes": [
+   "common::lower_complex_dialect_ops",
+   "common::update_output_dtypes",
+   "common::cast_optimization",
+   "common::noop_elimination",
+   "common::int_op_canonicalization",
+   "common::nullify_redundant_quantization_zero_point",
+   "common::dequantize_quantize_pair_elimination",
+   "common::distributive_quantized_binary_op_scale_normalization",
+   "common::dequantize_to_constexpr",
+   "common::canonicalize_quantized_lut_pattern",
+   "common::const_elimination",
+   "common::sanitize_input_output_names",
+   "common::divide_to_multiply",
+   "common::select_optimization",
+   "common::add_conv_transpose_output_shape",
+   "common::const_elimination",
+   "common::const_deduplication",
+   "common::loop_invariant_elimination",
+   "common::remove_symbolic_reshape",
+   "common::noop_elimination",
+   "common::fuse_matmul_weight_bias",
+   "common::fuse_linear_bias",
+   "common::fuse_gelu_tanh_approximation",
+   "common::fuse_gelu_exact",
+   "common::fuse_leaky_relu",
+   "common::rank0_expand_dims_swap",
+   "common::fuse_squeeze_expand_dims",
+   "common::compose_conv1d",
+   "common::use_reflection_padding",
+   "common::merge_consecutive_paddings",
+   "common::fuse_pad_conv",
+   "common::image_input_preprocess",
+   "common::replace_stack_reshape",
+   "common::reduce_transposes",
+   "common::fuse_dilated_conv",
+   "common::fuse_conv_scale",
+   "common::fuse_conv_bias",
+   "common::fuse_onehot_matmul_to_gather",
+   "common::fuse_layernorm_or_instancenorm",
+   "common::fuse_elementwise_to_batchnorm",
+   "common::fuse_reduce_mean",
+   "common::fuse_conv_batchnorm",
+   "common::fuse_conv_scale",
+   "common::fuse_conv_bias",
+   "common::fuse_conv_batchnorm",
+   "common::detect_concat_interleave",
+   "common::concat_to_pixel_shuffle",
+   "common::fuse_prelu",
+   "common::prelu_to_lrelu",
+   "common::merge_consecutive_relus",
+   "common::merge_consecutive_reshapes",
+   "common::merge_consecutive_transposes",
+   "common::fuse_transpose_matmul",
+   "common::expand_high_rank_reshape_and_transpose",
+   "common::fuse_stack_split",
+   "common::reduce_transposes",
+   "common::remove_redundant_ops",
+   "common::dedup_op_and_var_names",
+   "common::add_fp16_cast",
+   "common::add_int16_cast",
+   "common::update_output_dtypes",
+   "common::guard_negative_gather_indices",
+   "common::const_elimination",
+   "common::dead_code_elimination",
+   "common::cast_optimization",
+   "common::dead_code_elimination",
+   "common::add_int16_cast",
+   "common::const_elimination",
+   "common::dead_code_elimination",
+   "common::cast_optimization",
+   "common::dead_code_elimination",
+   "common::const_elimination",
+   "common::canonicalize_inplace_pattern",
+   "common::prefer_state_in_downstream",
+   "common::const_elimination",
+   "common::dead_code_elimination",
+   "common::dead_code_elimination",
+   "common::const_elimination",
+   "common::cast_optimization",
+   "common::dead_code_elimination",
+   "common::const_elimination",
+   "common::const_deduplication",
+   "common::dead_code_elimination",
+   "common::merge_affine_dequantize_with_consecutive_ops",
+   "common::expand_dynamic_linear",
+   "common::fuse_transpose_matmul",
+   "common::dead_code_elimination",
+   "common::const_deduplication",
+   "common::loop_invariant_elimination",
+   "common::noop_elimination",
+   "common::dedup_op_and_var_names",
+   "common::reduce_transposes",
+   "common::remove_redundant_ops",
+   "common::topological_reorder",
+   "common::dead_code_elimination"
+  ],
+  "multifunction": null
+ },
+ "program": {
+  "main": {
+   "ops": 4560,
+   "op_histogram": {
+    "add": 171,
+    "cast": 6,
+    "const": 2687,
+    "constexpr_lut_to_sparse": 240,
+    "constexpr_sparse_to_dense": 240,
+    "conv": 77,
+    "expand_dims": 9,
+    "floor_div": 3,
+    "identity": 1,
+    "layer_norm": 120,
+    "less": 4,
+    "linear": 193,
+    "logical_and": 1,
+    "logical_not": 2,
+    "matmul": 72,
+    "mul": 100,
+    "pad": 48,
+    "relu": 3,
+    "reshape": 145,
+    "select": 72,
+    "sigmoid": 24,
+    "silu": 72,
+    "slice_by_index": 48,
+    "softmax": 24,
+    "split": 24,
+    "sub": 3,
+    "transpose": 171
+   },
+   "constexpr_inputs": {
+    "constexpr_lut_to_sparse": {
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2857811], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2761321], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [719121], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [710171], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [704156], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [714287], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1425781], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [709268], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2859193], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2816435], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2828235], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2784279], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [719176], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [712698], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [706390], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [717736], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1431256], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [712788], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2848298], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2686985], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2863726], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2818165], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [717959], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [717656], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [716553], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [719675], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1433610], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [714109], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2856280], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2700239], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2865387], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2759884], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [716730], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [717384], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [716883], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [718053], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1435478], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [715176], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2853231], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2652289], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2863309], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2734894], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [716188], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [718932], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [715954], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [718160], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1436722], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [715216], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2854133], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2652497], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2868251], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2764965], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [716664], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [719545], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [715651], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [716863], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1437471], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [714612], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2854009], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2754406], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2864198], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2765017], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [715432], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [719174], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [715113], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [718434], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1436724], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [713261], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2854456], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2797894], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2865949], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2781162], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [716817], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [714958], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [703257], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [718826], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1436490], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [714148], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2853755], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2794758], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2861031], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2789616], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [717294], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [718112], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [714001], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [716265], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1436749], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [714874], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2854696], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2811926], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2853056], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2795592], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [719150], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [721449], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [717036], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [717917], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1437727], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [712852], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2851087], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2852759], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2843150], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2827082], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [720543], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [720567], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [715721], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [716442], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1436320], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [713548], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2853951], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2852971], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2847926], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2842936], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [719435], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [719190], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [711619], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [718614], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1435153], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [714800], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2858195], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2849284], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2850945], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2838172], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [719462], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [719559], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [710429], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [718926], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1428809], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [715326], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2863780], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2851306], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2852773], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2824930], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [717680], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [718142], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [710204], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [719057], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1431045], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [716978], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2864620], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2849169], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2857290], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2811980], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [718503], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [718683], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [712631], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [717620], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1428691], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [718747], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2864365], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2845808], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2859169], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2803736], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [720855], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [719623], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [717214], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [719507], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1431039], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [716902], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2865655], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2842728], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2861878], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2812460], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [718656], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [720786], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [717032], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [717601], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1431951], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [716585], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2866129], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2862837], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2863080], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2850208], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [719791], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [718114], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [716220], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [717275], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1433865], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [715644], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2867670], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2860970], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2864418], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2856244], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [719251], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [720652], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [718186], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [715563], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1433247], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [714872], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2868150], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2862153], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2865528], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2854431], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [719910], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [721240], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [716687], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [716686], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1432987], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [713686], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2866346], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2861453], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2864087], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2847966], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [718517], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [718857], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [717048], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [716146], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1432170], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [712202], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2865705], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2855074], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2861454], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2841487], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [716252], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [719738], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [714395], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [712703], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1429526], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [708912], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2861687], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2836832], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2855736], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2824609], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [715571], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [718478], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [710215], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [706218], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1426090], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [702287], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2857880], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2718381], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2852817], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2766431], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [717066], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [718662], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [706062], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024], indices_nonzero_data: uint4 [702026], lut: fp16 [128, 1, 16, 1]": 1,
+     "indices_mask: uint1 [2048, 1024, 1], indices_nonzero_data: uint4 [1420596], lut: fp16 [256, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 1024, 1], indices_nonzero_data: uint4 [691616], lut: fp16 [128, 1, 1, 16, 1]": 1,
+     "indices_mask: uint1 [4096, 1024], indices_nonzero_data: uint4 [2856885], lut: fp16 [512, 1, 16, 1]": 1,
+     "indices_mask: uint1 [1024, 4096], indices_nonzero_data: uint4 [2399016], lut: fp16 [128, 1, 16, 1]": 1
+    },
+    "constexpr_sparse_to_dense": {
+     "nonzero_data: fp16 [2857811], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2761321], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [719121], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [710171], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [704156], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [714287], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1425781], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [709268], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2859193], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2816435], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2828235], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2784279], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [719176], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [712698], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [706390], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [717736], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1431256], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [712788], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2848298], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2686985], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2863726], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2818165], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [717959], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [717656], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [716553], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [719675], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1433610], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [714109], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2856280], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2700239], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2865387], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2759884], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [716730], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [717384], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [716883], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [718053], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1435478], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [715176], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2853231], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2652289], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2863309], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2734894], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [716188], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [718932], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [715954], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [718160], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1436722], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [715216], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2854133], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2652497], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2868251], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2764965], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [716664], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [719545], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [715651], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [716863], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1437471], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [714612], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2854009], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2754406], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2864198], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2765017], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [715432], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [719174], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [715113], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [718434], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1436724], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [713261], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2854456], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2797894], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2865949], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2781162], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [716817], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [714958], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [703257], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [718826], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1436490], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [714148], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2853755], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2794758], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2861031], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2789616], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [717294], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [718112], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [714001], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [716265], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1436749], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [714874], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2854696], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2811926], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2853056], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2795592], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [719150], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [721449], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [717036], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [717917], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1437727], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [712852], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2851087], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2852759], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2843150], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2827082], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [720543], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [720567], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [715721], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [716442], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1436320], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [713548], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2853951], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2852971], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2847926], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2842936], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [719435], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [719190], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [711619], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [718614], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1435153], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [714800], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2858195], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2849284], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2850945], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2838172], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [719462], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [719559], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [710429], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [718926], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1428809], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [715326], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2863780], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2851306], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2852773], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2824930], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [717680], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [718142], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [710204], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [719057], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1431045], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [716978], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2864620], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2849169], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2857290], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2811980], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [718503], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [718683], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [712631], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [717620], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1428691], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [718747], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2864365], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2845808], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2859169], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2803736], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [720855], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [719623], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [717214], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [719507], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1431039], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [716902], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2865655], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2842728], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2861878], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2812460], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [718656], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [720786], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [717032], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [717601], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1431951], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [716585], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2866129], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2862837], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2863080], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2850208], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [719791], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [718114], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [716220], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [717275], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1433865], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [715644], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2867670], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2860970], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2864418], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2856244], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [719251], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [720652], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [718186], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [715563], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1433247], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [714872], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2868150], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2862153], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2865528], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2854431], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [719910], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [721240], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [716687], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [716686], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1432987], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [713686], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2866346], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2861453], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2864087], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2847966], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [718517], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [718857], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [717048], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [716146], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1432170], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [712202], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2865705], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2855074], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2861454], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2841487], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [716252], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [719738], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [714395], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [712703], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1429526], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [708912], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2861687], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2836832], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2855736], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2824609], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [715571], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [718478], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [710215], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [706218], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1426090], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [702287], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2857880], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2718381], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [2852817], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2766431], mask: uint1 [1024, 4096]": 1,
+     "nonzero_data: fp16 [717066], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [718662], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [706062], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [702026], mask: uint1 [1024, 1024]": 1,
+     "nonzero_data: fp16 [1420596], mask: uint1 [2048, 1024, 1]": 1,
+     "nonzero_data: fp16 [691616], mask: uint1 [1024, 1024, 1]": 1,
+     "nonzero_data: fp16 [2856885], mask: uint1 [4096, 1024]": 1,
+     "nonzero_data: fp16 [2399016], mask: uint1 [1024, 4096]": 1
+    }
+   },
+   "matmul_followed_by_mul": 48,
+   "consts_with_shared_weight_id": 0,
+   "inputs": {
+    "mel": "fp32 [1, 128, 1501]",
+    "mel_length": "int32 [1]"
+   },
+   "outputs": {
+    "encoder": "fp32 [1, 1024, 188]",
+    "encoder_length": "int32 [1]"
+   }
+  }
+ },
+ "sizes": {
+  "mlpackage_bytes": 298861897,
+  "weight_bin_bytes": 298161664
+ },
+ "timing_s": {
+  "build_graph": 8.9,
+  "convert": 8.5,
+  "save": 0.3
+ },
+ "peak_rss_mb_after_save": 1560.0,
+ "environment": {
+  "coremltools": "9.0",
+  "numpy": "2.2.6",
+  "python": "3.12.14",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "machine": "arm64"
+ },
+ "paths": {
+  "mlpackage": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/C6s8/fixed.mlpackage",
+  "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/C6s8/fixed.mlmodelc"
+ },
+ "compile": {
+  "compile_s": 0.39,
+  "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/C6s8/fixed.mlmodelc",
+  "mlmodelc_bytes": 298911355
+ },
+ "compute_plan": {
+  "cpuAndNeuralEngine": {
+   "compute_units": "cpuAndNeuralEngine",
+   "tool": "mil/computeplan.swift (MLComputePlan, functionName set)",
+   "functions": {
+    "main": {
+     "compute_units": "cpuAndNeuralEngine",
+     "cpu_ops": [
+      {
+       "cost": 0.00012774706702963347,
+       "op": "ios18.cast",
+       "outputs": [
+        "mel_fp16"
+       ]
+      },
+      {
+       "cost": 8.321299049986793e-07,
+       "op": "ios19.less",
+       "outputs": [
+        "less_0"
+       ]
+      },
+      {
+       "cost": 0.0028051536002448676,
+       "op": "ios18.relu",
+       "outputs": [
+        "sub_relu0"
+       ]
+      },
+      {
+       "cost": 1.2389424556778567e-09,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_0"
+       ]
+      },
+      {
+       "cost": 1.3298120735096753e-09,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_0"
+       ]
+      },
+      {
+       "cost": 1.2389424556778567e-09,
+       "op": "ios19.add",
+       "outputs": [
+        "len1"
+       ]
+      },
+      {
+       "cost": 4.1656363202690575e-07,
+       "op": "ios19.less",
+       "outputs": [
+        "less_1"
+       ]
+      },
+      {
+       "cost": 1.2389424556778567e-09,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_1"
+       ]
+      },
+      {
+       "cost": 1.3298120735096753e-09,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_1"
+       ]
+      },
+      {
+       "cost": 1.2389424556778567e-09,
+       "op": "ios19.add",
+       "outputs": [
+        "len2"
+       ]
+      },
+      {
+       "cost": 2.0878049554101902e-07,
+       "op": "ios19.less",
+       "outputs": [
+        "less_2"
+       ]
+      },
+      {
+       "cost": 1.2389424556778567e-09,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_2"
+       ]
+      },
+      {
+       "cost": 1.3298120735096753e-09,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_2"
+       ]
+      },
+      {
+       "cost": 1.2389424556778567e-09,
+       "op": "ios19.add",
+       "outputs": [
+        "len3"
+       ]
+      },
+      {
+       "cost": 1.0461188311609445e-07,
+       "op": "ios19.less",
+       "outputs": [
+        "less_3"
+       ]
+      },
+      {
+       "cost": 8.865413823397835e-10,
+       "op": "identity",
+       "outputs": [
+        "encoder_length"
+       ]
+      },
+      {
+       "cost": 0.0001280023909477473,
+       "op": "ios18.cast",
+       "outputs": [
+        "encoder"
+       ]
+      }
+     ],
+     "estimated_cost_share_by_preferred_device": {
+      "ane": 0.9944110002904663,
+      "cpu": 0.005588999709533697
+     },
+     "operators_by_preferred_device": {
+      "ane": {
+       "ios18.cast": 4,
+       "ios18.conv": 77,
+       "ios18.layer_norm": 120,
+       "ios18.linear": 193,
+       "ios18.logical_not": 2,
+       "ios18.matmul": 72,
+       "ios18.relu": 2,
+       "ios18.sigmoid": 24,
+       "ios18.silu": 72,
+       "ios18.softmax": 24,
+       "ios19.add": 168,
+       "ios19.expand_dims": 9,
+       "ios19.logical_and": 1,
+       "ios19.mul": 100,
+       "ios19.reshape": 145,
+       "ios19.select": 72,
+       "ios19.slice_by_index": 48,
+       "ios19.split": 24,
+       "ios19.transpose": 171,
+       "pad": 48
+      },
+      "cpu": {
+       "identity": 1,
+       "ios18.cast": 2,
+       "ios18.relu": 1,
+       "ios19.add": 3,
+       "ios19.floor_div": 3,
+       "ios19.less": 4,
+       "ios19.sub": 3
+      }
+     },
+     "ops_with_usage_by_preferred_device": {
+      "ane": 1376,
+      "cpu": 17
+     },
+     "ops_without_usage": {
+      "const": 1967,
+      "ios18.constexpr_lut_to_sparse": 240,
+      "ios19.constexpr_sparse_to_dense": 240
+     },
+     "plan_load_s": 114.09967803955078
+    }
+   }
+  },
+  "cpuOnly": {
+   "compute_units": "cpuOnly",
+   "tool": "mil/computeplan.swift (MLComputePlan, functionName set)",
+   "functions": {
+    "main": {
+     "compute_units": "cpuOnly",
+     "cpu_ops": [
+      {
+       "cost": 8.479872387418343e-06,
+       "op": "ios18.cast",
+       "outputs": [
+        "mel_fp16"
+       ]
+      },
+      {
+       "cost": 0.0001144214614599886,
+       "op": "ios19.transpose",
+       "outputs": [
+        "transpose_0"
+       ]
+      },
+      {
+       "cost": 5.653277682663984e-06,
+       "op": "ios19.expand_dims",
+       "outputs": [
+        "mel_nchw"
+       ]
+      },
+      {
+       "cost": 5.5236926907343304e-08,
+       "op": "ios19.less",
+       "outputs": [
+        "less_0"
+       ]
+      },
+      {
+       "cost": 3.3124501513352904e-08,
+       "op": "ios18.cast",
+       "outputs": [
+        "cast_0"
+       ]
+      },
+      {
+       "cost": 4.42542751730693e-08,
+       "op": "ios19.expand_dims",
+       "outputs": [
+        "mask0"
+       ]
+      },
+      {
+       "cost": 1.2737823080977378e-05,
+       "op": "ios19.mul",
+       "outputs": [
+        "sub_in_masked"
+       ]
+      },
+      {
+       "cost": 0.003150816360047901,
+       "op": "ios18.conv",
+       "outputs": [
+        "sub_conv0"
+       ]
+      },
+      {
+       "cost": 0.00018620658078721808,
+       "op": "ios18.relu",
+       "outputs": [
+        "sub_relu0"
+       ]
+      },
+      {
+       "cost": 8.224121432913869e-11,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_0"
+       ]
+      },
+      {
+       "cost": 8.827315526543078e-11,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_0"
+       ]
+      },
+      {
+       "cost": 8.224121432913869e-11,
+       "op": "ios19.add",
+       "outputs": [
+        "len1"
+       ]
+      },
+      {
+       "cost": 2.765156588689619e-08,
+       "op": "ios19.less",
+       "outputs": [
+        "less_1"
+       ]
+      },
+      {
+       "cost": 1.6573284901084628e-08,
+       "op": "ios18.cast",
+       "outputs": [
+        "cast_1"
+       ]
+      },
+      {
+       "cost": 2.2185986356711604e-08,
+       "op": "ios19.expand_dims",
+       "outputs": [
+        "mask1"
+       ]
+      },
+      {
+       "cost": 0.0008094894495015856,
+       "op": "ios19.mul",
+       "outputs": [
+        "sub_masked1"
+       ]
+      },
+      {
+       "cost": 0.0007887529636338288,
+       "op": "ios18.conv",
+       "outputs": [
+        "sub_dw1"
+       ]
+      },
+      {
+       "cost": 0.0005185567301621356,
+       "op": "ios18.conv",
+       "outputs": [
+        "sub_pw1"
+       ]
+      },
+      {
+       "cost": 4.661363140878428e-05,
+       "op": "ios18.relu",
+       "outputs": [
+        "sub_relu1"
+       ]
+      },
+      {
+       "cost": 8.224121432913869e-11,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_1"
+       ]
+      },
+      {
+       "cost": 8.827315526543078e-11,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_1"
+       ]
+      },
+      {
+       "cost": 8.224121432913869e-11,
+       "op": "ios19.add",
+       "outputs": [
+        "len2"
+       ]
+      },
+      {
+       "cost": 1.3858885376672632e-08,
+       "op": "ios19.less",
+       "outputs": [
+        "less_2"
+       ]
+      },
+      {
+       "cost": 8.297676594950493e-09,
+       "op": "ios18.cast",
+       "outputs": [
+        "cast_2"
+       ]
+      },
+      {
+       "cost": 1.1151841948532757e-08,
+       "op": "ios19.expand_dims",
+       "outputs": [
+        "mask2"
+       ]
+      },
+      {
+       "cost": 0.0002026542004189471,
+       "op": "ios19.mul",
+       "outputs": [
+        "sub_masked2"
+       ]
+      },
+      {
+       "cost": 0.0001971882409084572,
+       "op": "ios18.conv",
+       "outputs": [
+        "sub_dw2"
+       ]
+      },
+      {
+       "cost": 0.0001296391825405339,
+       "op": "ios18.conv",
+       "outputs": [
+        "sub_pw2"
+       ]
+      },
+      {
+       "cost": 1.165340785219607e-05,
+       "op": "ios18.relu",
+       "outputs": [
+        "sub_relu2"
+       ]
+      },
+      {
+       "cost": 8.224121432913869e-11,
+       "op": "ios19.sub",
+       "outputs": [
+        "sub_2"
+       ]
+      },
+      {
+       "cost": 8.827315526543078e-11,
+       "op": "ios19.floor_div",
+       "outputs": [
+        "floor_div_2"
+       ]
+      },
+      {
+       "cost": 8.224121432913869e-11,
+       "op": "ios19.add",
+       "outputs": [
+        "len3"
+       ]
+      },
+      {
+       "cost": 6.9441548808805545e-09,
+       "op": "ios19.less",
+       "outputs": [
+        "less_3"
+       ]
+      },
+      {
+       "cost": 4.1488382974752464e-09,
+       "op": "ios18.cast",
+       "outputs": [
+        "cast_3"
+       ]
+      },
+      {
+       "cost": 5.620057551899093e-09,
+       "op": "ios19.expand_dims",
+       "outputs": [
+        "mask3"
+       ]
+      },
+      {
+       "cost": 5.066973386527685e-05,
+       "op": "ios19.mul",
+       "outputs": [
+        "sub_out_masked"
+       ]
+      },
+      {
+       "cost": 0.00045859582909674716,
+       "op": "ios19.transpose",
+       "outputs": [
+        "transpose_1"
+       ]
+      },
+      {
+       "cost": 2.2658277161766745e-05,
+       "op": "ios19.reshape",
+       "outputs": [
+        "sub_flat"
+       ]
+      },
+      {
+       "cost": 0.014226528907536047,
+       "op": "ios18.linear",
+       "outputs": [
+        "sub_out"
+       ]
+      },
+      {
+       "cost": 5.884877017695385e-11,
+       "op": "identity",
+       "outputs": [
+        "encoder_length"
+       ]
+      },
+      {
+       "cost": 2.795316583405308e-09,
+       "op": "ios19.expand_dims",
+       "outputs": [
+        "expand_dims_0"
+       ]
+      },
+      {
+       "cost": 2.795316583405308e-09,
+       "op": "ios19.expand_dims",
+       "outputs": [
+        "expand_dims_1"
+       ]
+      },
+      {
+       "cost": 2.62759758840099e-07,
+       "op": "ios19.logical_and",
+       "outputs": [
+        "logical_and_0"
+       ]
+      },
+      {
+       "cost": 5.199877332835642e-07,
+       "op": "ios18.logical_not",
+       "outputs": [
+        "logical_not_0"
+       ]
+      },
+      {
+       "cost": 5.200465820537412e-07,
+       "op": "ios19.expand_dims",
+       "outputs": [
+        "att_mask"
+       ]
+      },
+      {
+       "cost": 2.765892198316831e-09,
+       "op": "ios18.logical_not",
+       "outputs": [
+        "logical_not_1"
+       ]
+      },
+      {
+       "cost": 2.824740968493785e-09,
+       "op": "ios19.expand_dims",
+       "outputs": [
+        "pad_mask"
+       ]
+      },
+      {
+       "cost": 5.66454722215287e-06,
+       "op": "ios18.layer_norm",
+       "outputs": [
+        "l0_norm_feed_forward1"
+       ]
+      },
+      {
+       "cost": 0.00031955220313776477,
+       "op": "ios18.linear",
+       "outputs": [
+        "l0_feed_forward1_linear1_mm"
+       ]
+      },
+      {
+       "cost": 2.284859327147679e-05,
+       "op": "ios18.silu",
+       "outputs": [
+        "l0_ff1_silu"
+       ]
+      }
+     ],
+     "estimated_cost_share_by_preferred_device": {
+      "cpu": 1
+     },
+     "operators_by_preferred_device": {
+      "cpu": {
+       "identity": 1,
+       "ios18.cast": 6,
+       "ios18.conv": 77,
+       "ios18.layer_norm": 120,
+       "ios18.linear": 193,
+       "ios18.logical_not": 2,
+       "ios18.matmul": 72,
+       "ios18.relu": 3,
+       "ios18.sigmoid": 24,
+       "ios18.silu": 72,
+       "ios18.softmax": 24,
+       "ios19.add": 171,
+       "ios19.expand_dims": 9,
+       "ios19.floor_div": 3,
+       "ios19.less": 4,
+       "ios19.logical_and": 1,
+       "ios19.mul": 100,
+       "ios19.reshape": 145,
+       "ios19.select": 72,
+       "ios19.slice_by_index": 48,
+       "ios19.split": 24,
+       "ios19.sub": 3,
+       "ios19.transpose": 171,
+       "pad": 48
+      }
+     },
+     "ops_with_usage_by_preferred_device": {
+      "cpu": 1393
+     },
+     "ops_without_usage": {
+      "const": 1967,
+      "ios18.constexpr_lut_to_sparse": 240,
+      "ios19.constexpr_sparse_to_dense": 240
+     },
+     "plan_load_s": 68.6035670042038
+    }
+   }
+  }
+ },
+ "peak_rss_mb_after_compile": 1776.1
+}

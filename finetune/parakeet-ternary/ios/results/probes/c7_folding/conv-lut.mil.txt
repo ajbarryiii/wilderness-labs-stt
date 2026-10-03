@@ -1,0 +1,10 @@
+
+main[CoreML9](%x: (1, 256, 8, fp32)(Tensor)) {
+  block2() {
+    %w: (256, 256, 1, fp16)(Tensor) = constexpr_lut_to_dense(indices=%w_indices_1, lut=[[[[[-1.0], [0.0], [1.0], [0.0]]]]], name="w")
+    %cast_2: (1, 256, 8, fp16)(Tensor) = cast(x=%x, dtype="fp16", name="cast_3")
+    %mm: (1, 256, 8, fp16)(Tensor) = conv(x=%cast_2, weight=%w, strides=[1], pad_type="valid", pad=[0, 0], dilations=[1], groups=1, name="mm")
+    %row_scale: (1, 256, 8, fp16)(Tensor) = mul(x=%mm, y=%row_scale_y_2, name="row_scale")
+    %out: (1, 256, 8, fp32)(Tensor) = cast(x=%row_scale, dtype="fp32", name="cast_2")
+  } -> (%out)
+}

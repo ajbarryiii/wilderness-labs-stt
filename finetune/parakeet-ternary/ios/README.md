@@ -226,3 +226,238 @@ Results (2026-10-02; Mac = M1 Pro, macOS 27.0, Swift 6.3.1, Mac shared; all late
   - Transcripts of all three arms: WER 0 on these 8 clips, as C0's.
 - **Replay smoke** of the custom F0 and F2 arms (2 clips, with diagnostics): physical calls equal the trace's logical work (129 joint steps, 127 prediction runs), and 97.7% of C0's own argmax tokens agree with the trace.
 - **Not exercised yet:** F1 and the multifunction/enumerated encoder variants, because WP3's models do not exist yet. Their code paths compile, and F1's call structure is unit-tested through its native test double.
+
+## WP3: Core ML encoder arms, decoder models, probes and gates (S1 core)
+
+The encoder arms are authored directly as MIL programs from NumPy weights (coremltools 9.0 builder),
+in the **plain** layout, which mirrors `reference.py` op for op. The ANE layout (DESIGN.md D) is not built
+yet.
+
+| File | What |
+| --- | --- |
+| `mil/weights.py` | Tensor sources: M_P2 (`ExportSource`, int8 codes + FP32 row scales), surrogates (verified safetensors), and C0's `Encoder.mlmodelc` tensors for G0 (g0probe's parser: 294 palettized + 320 dense FP16 tensors mapped to our roles). |
+| `mil/encodings.py` | One constexpr chain per arm (C1, C3, C4, C7, C8, C6s(2/4/8), C6d(4/8), C5), the byte accounting, and the effective matrices for gate 2. |
+| `mil/encoder.py` | The plain FastConformer graph in FP16. `linear_pos` is folded per bucket into FP32-computed position tables, then cast. BatchNorm is folded into the depthwise conv. Masking follows `mil/MASKING.md`. Providers: `ArmProvider` (C arms, plus the FP32 diagnostic `F32`) and `G0Provider`. |
+| `mil/decoder.py` | `Decoder`, `JointDecision` (C0's contracts), `JointLogits` and the fused `DecoderJoint`, in FP16 from the same model's weights. |
+| `mil/build.py` | Build → convert → save → compile (`.mlmodelc`) → per-function `MLComputePlan` → manifest. Fixed / multifunction (`b2,b4,b8,b15`, weights shared by cross-function constant deduplication) / enumerated variants. |
+| `mil/computeplan.swift` | Standalone `MLComputePlan` dumper that sets `functionName`; coremltools' Python API only reports a model's default function. |
+| `mil/probes.py` | One- and two-layer probes per encoding (memory, time, size, extrapolation, gate 2), the C7 folding probe, and the C7/C8 stress probe. |
+| `mil/refcache.py` | Cached FP32 reference outputs per clip, at FP32 and FP16-rounded scales. Gate 3. C5 activation calibration. Probe inputs. |
+| `mil/gates.py` | Gates 4 (encoder and TDT heads) and 5, G0 vs C0, decoder-only heads. Summary table. |
+| `mil/diag.py` | The same graph in FP32 vs FP16 vs the FP32 reference, at reduced depth. This is a diagnostic, not a gate. |
+| `mil/report.py` | `results/wp3_summary.json` and `results/wp3_summary_table.txt` from all result files. |
+| `mil/macrun.sh` | Mac step runner: one macguard job per step, retry on refusal. It deletes each step's Core ML cache entries and stops below 60 GB free. |
+| `mil/contract.json`, `mil/MASKING.md` | I/O contract for the Swift harness; padding and masking contract. |
+
+Results (committed, text only): `results/builds/<model>-<arm>-<variant>.json` (build manifests),
+`results/gate2/`, `results/gates/` (per arm × variant × compute units, per clip and bucket),
+`results/probes/` (memory/time/size with extrapolations, C7 folding with the saved MIL, stress),
+`results/calibration/`, `results/diag/`, `results/wp3_summary.json` and `results/wp3_summary_table.txt`. Models live in
+`<artifacts>/arms/<model>/<arm>/{fixed,multi,enum}.mlmodelc` and `<artifacts>/arms/<model>/decoder/`.
+
+Commands (Mac, from `finetune/parakeet-ternary/ios`, each through `macguard` or `mil/macrun.sh`):
+
+```sh
+P=pyenv/.venv/bin/python
+$P -m mil.refcache run --model mp2                          # 6G cap; peak 2.9 GB, 197 s
+$P -m mil.probes memory; $P -m mil.probes folding; $P -m mil.probes stress; $P -m mil.probes summary
+$P -m mil.build decoder --model mp2
+$P -m mil.build encoder --model mp2 --arm C4 --variant fixed          # then gate 2 on the package:
+$P -m mil.probes gate2 --package <A>/arms/mp2/C4/fixed.mlpackage --model mp2 --arm C4 --out results/gate2/mp2-C4.json
+$P -m mil.build encoder --model mp2 --arm C4 --variant multi --drop-package
+$P -m mil.gates encoder --model mp2 --arm C4 --variant multi --units cpuAndNeuralEngine
+$P -m mil.gates decoder --model mp2 --units cpuAndNeuralEngine; $P -m mil.gates g0
+$P -m mil.diag depth --layers 1,2,4,8,12
+python3 mil/report.py                                       # any machine
+```
+
+Results (2026-10-02; Mac = M1 Pro, macOS 27.0, coremltools 9.0, Python 3.12. The Mac was shared and
+heavily loaded, so load times are informational. Full table: `results/wp3_summary_table.txt`.)
+
+- **Deployment target.** Every C arm and every decoder model targets **iOS26**, with the iOS18 op
+  definitions; G0 targets iOS17, as C0 does.
+  - Why: at an iOS18 target, coremltools' `common::canonicalize_quantized_lut_pattern` rewrites C4's
+    `lut_to_dense → blockwise_shift_scale` into a per-row LUT (`shift_scale(LUT) → lut_to_dense`). The
+    pass's own comment says the LUT-first order is only supported from iOS26.
+  - At iOS26 every chain is kept exactly as DESIGN.md lists it. This is checked in each build manifest's
+    constexpr literals.
+- **Reference cache and gate 3** (M_P2, 82 clips, peak 2.9 GB, 197 s). FP16-rounded vs FP32 row scales:
+  - encoder: rel ≤ 7.8e-4 (median 2.6e-4), abs ≤ 0.012;
+  - token logits: rel ≤ 1.7e-4; duration logits: rel ≤ 6.2e-4;
+  - h and c: identical, because in forced replay the prediction network never sees the encoder;
+  - greedy decodes: identical on 82/82 clips.
+- **Probes** (`results/probes/`). Built with 1 and 2 layers of M_P2, fixed and multifunction, and
+  extrapolated as v24 = v1 + 23 (v2 − v1).
+  - Projected 24-layer peak RSS: 0.9–2.4 GB, so every full build fits the 6 GB cap with a 2× margin.
+  - Actual full-build peaks: 1.0–2.5 GB, including compile and compute plan (C1 is the highest).
+  - Conversion: 5–10 s fixed, 30–77 s multifunction. Compile to `.mlmodelc`: 0.3–1.4 s.
+- **Gate 2: bit-exact for every arm.** Checked on 10 modules at 1 layer and 20 at 2 layers, then on all
+  240 ternary modules of every full fixed build (C1, C3, C4, C5's C3 weights, C7, C8, all five C6
+  variants). The check rebuilds each effective matrix with coremltools' own constexpr decompression
+  and compares FP16 bit patterns.
+- **Encoded sizes** (240 encoder matmuls, 552.6M weights; `weight.bin` adds about 27 MB for
+  subsampling, norms and the 15 s position tables):
+
+  | | C1 | C3 / C5 | C4 / C7 / C8 | C6s2 | C6s4 | C6s8 | C6d4 | C6d8 |
+  | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+  | encoded MB | 1104 | 553 | 139 | 164 | 211 | 257 | 279 | 420 |
+  | fixed `.mlmodelc` MB | 1132 | 580 | 166 | 192 | 238 | 285 | 307 | 448 |
+
+  - Multifunction packages are 17–19 MB larger than the fixed ones. That difference is exactly the
+    b2/b4/b8 position tables (17 MB), so the matmul weights are stored once.
+  - Not measured: whether the weights also stay resident once when several functions are loaded.
+    That needs the Swift harness.
+- **C7 folding probe** (`results/probes/c7_folding.json`, with the saved MIL text). With the pinned
+  `DEFAULT` pipeline:
+  - The per-row `mul` after a LUT-weight `linear` and after a LUT-weight 1×1 `conv` survives
+    conversion. It is still present in the compiled `model.mil`.
+  - Control: with a dense const weight, `common::fuse_conv_scale` absorbs it for the conv, but not for
+    the linear.
+  - So no pass is excluded for C7.
+  - Device compiler: on CPU_AND_NE, C4 and C7 give **identical** per-case errors on all 282 fixed and
+    multifunction cases. On CPU_ONLY they differ. This strongly suggests that the ANE compilation folds
+    C7's scale, making C7 the same as C4 on the ANE. It cannot be proven from outside the compiler
+    (DESIGN.md), so it is recorded as evidence, not as established.
+- **C7/C8 stress** (`results/probes/stress.json`). Setup:
+  - modules: layer 0 FF1 linear1 and linear2, and layer 23 FF2 linear2;
+  - adversarial rows: all +1, all −1, runs of 256, and half +1 / half −1;
+  - inputs: the clip activation ×1, ×8, ×64, and |x| ×64;
+  - compute units: CPU_ONLY and CPU_AND_NE.
+
+  Outcome:
+  - **C7 and C8 produce inf, so they fail the preregistered rule.** Layer-0 FF1 linear2 overflows at
+    ×8 on both units; layer 23 overflows at ×64 on the ANE.
+  - C1 and C4 overflow too: on the ANE at ×8, and on the CPU at ×64. At ×8 the true layer-0 output is
+    51,291, close to the FP16 maximum of 65,504. The stress levels therefore exceed this model's FP16
+    headroom for every encoding.
+  - C7 and C8 still overflow strictly earlier: at ×8 on CPU_ONLY, C1/C4 stay finite and C7/C8 do not.
+  - At ×1 everything is finite.
+  - C8 also loses precision on the CPU at ×1, because P and N are each about 21,900: rel 0.0136 vs
+    0.0038 for C1.
+  - The rule is the design's; it is reported here, not applied as a drop.
+- **Compute plans, CPU_AND_NE** (`MLComputePlan` per function, through `mil/computeplan.swift`):
+  - **C3, C4, C5, C6\*, C7, C8: 99.1–99.8% of estimated cost on the ANE in every function.** The
+    shares are b2 0.998, b4 0.995, b8 0.991, b15 0.994. The 17–24 CPU ops are length arithmetic, mask
+    casts and `identity`.
+  - **C1 (dense FP16, 1.13 GB): every op on the CPU, in every function.** The ANE does not take this
+    model on the M1 Pro. Its CPU_AND_NE gate run was aborted by the guard on its first load (swap +1.44
+    GB in 16 s), so C1 is gated on CPU_ONLY only (multifunction). It has an unresolved CPU fallback on the Mac; the
+    phone (A17 Pro) is to be checked in S2.
+  - Decoder, JointDecision, JointLogits and DecoderJoint: all CPU, as C0's are.
+- **FP16 execution vs the gate-4 encoder ceiling** (`results/diag/fp16_depth.json`).
+  - **The FP32 build of the same graph matches the FP32 reference to about 1e-6 rel at every depth
+    (1–12 layers),** so the graph, masking, rel-pos folding and BatchNorm folding are exact.
+  - The FP16 error of C4 grows with depth on the ANE: median rel 0.0011 at 1 layer, 0.0075 at 8, 0.010
+    at 12 and 0.012 at 24. On the CPU it stays around 0.0045.
+  - M_P2's layer-0 FF outputs reach 2,700–6,400, a tenth of the FP16 range.
+  - The decoder/joint models fed with the reference encoder output pass gate 4 on both units: token
+    rel 0.0022, duration 0.0051, h 0.0076, c 0.0052; 100% agreement on 96–98% decisive steps.
+- **Gates 4 and 5 per arm** (`results/gates/`, all 82 clips in every bucket they fit):
+  - **CPU_AND_NE, fixed and multifunction: every exact arm fails gate 4's encoder ceiling on 7 of 82
+    clips at 15 s** (16–19 cases over all buckets).
+    - rel max 0.028–0.036, abs max 0.40–0.50, median rel about 0.012;
+    - worst clip `n02-2428-83699-0004` (rel 0.034);
+    - by kind: silence 0.021, boundary `b04-N32160` 0.022.
+  - Duration logits exceed rel 0.02 on 3–5 clips (max 0.039). Token logits (≤ 0.011), h and c pass,
+    and **token and duration argmax agree on 100% of decisive steps** (92–97% of steps decisive). So
+    the heads gate fails only on the duration-logit rel ceiling.
+  - **Gate 5 passes for every multifunction arm.** Buckets vs 15 s on the boundary, silence and
+    impulse clips: rel ≤ 0.0031; over all clips ≤ 0.0083. On the ANE, b4 and b8 give exactly the 15 s
+    output (rel 0) on the valid frames in all 900 cases; only b2 differs slightly.
+  - Equal outputs: C4 = C7, and C6s2 = C6s4 = C6s8 = C6d4 = C6d8. C3 differs.
+  - **CPU_ONLY, multifunction:**
+    - C7 and C6s8 pass every gate (rel max 0.0112 and 0.0115);
+    - C1, C3 and C4 (identical dense FP16 on the CPU) fail on one clip (rel 0.0215, abs 0.31);
+    - C8 fails on 27 cases and in the heads, from the cancellation in P − N.
+  - **Enumerated shapes, CPU_AND_NE: C4 and C7 pass gates 4 and 5** (rel max 0.0109 and 0.0067),
+    with an error profile unlike the fixed/multifunction ANE runs (C4 ≠ C7 here).
+    - Why: **the enumerated models fall back entirely to the CPU.** Their compute plan places all ops
+      (1,638 for C4, 1,878 for C7) on the CPU.
+    - Our shape-generic graph needs `shape`, `gather`, `range_1d`, dynamic `slice_by_index` and
+      `concat` to derive T, the masks and the position-table slice. Core ML does not place it on the
+      ANE on this Mac.
+    - So the enumerated control currently measures a CPU encoder, not ANE shape specialization. Making
+      it ANE-eligible (shape-free masks, a static position table per enumerated shape) is an S3 item.
+    - Their CPU-only compute plans fail: Core ML rejects `functionName = "main"` for these models;
+      fixed in `build.py` for later builds.
+  - **C5 (W8A8, exploratory) is not usable as calibrated** (rel 0.82–2.4). A per-tensor max/127 int8
+    scale cannot represent activations up to |x| = 76 (layer 0, `conv_mid`); it needs its own
+    calibration or QAT study (DESIGN.md).
+- **G0 vs C0** (`results/gates/c0-G0-fixed-cpuAndNeuralEngine.json`). G0 is C0's own 294 palettized
+  and 320 dense tensors in our graph, targeting iOS17. Its `weight.bin` is 445,187,200 bytes, the size
+  of C0's. Its compute plan puts 99.4% of cost on the ANE.
+  - **On all 25 clips with M mod 8 ∈ {0, 7}, and only on those, G0's output equals C0's exactly** (rel 0). On the other 57
+    it differs (rel 0.0026–0.27; median 0.016 over all clips).
+  - Cause: **C0's subsampling has no masking.** Its `model.mil` runs conv → relu → conv → conv → relu
+    with no `mul` or `select`, and computes the lengths in FP16 floats. NeMo's `MaskedConvSequential`,
+    which our reference and G0 follow (gate 1), zeroes padded frames before each stage.
+  - The masking only matters when an intermediate length L1 or L2 is odd: then a stride-2 conv reaches
+    a padded frame that C0 leaves at `relu(bias)`. M mod 8 ∈ {0, 7} are exactly the residues where L1
+    and L2 are both even.
+  - So C0's encoder lets its 15 s window padding into the last valid frames, which attention then
+    spreads. This is a fourth C0 deviation from NeMo; it belongs to the product baseline.
+  - G0 fails gate 4's ceilings against C0 because the two graphs mask differently, not because the
+    weights or op layout differ. Where masking is moot, the two are identical.
+- **Surrogate seed 0** (weight-independence builds: C1, C4, C7, fixed and multifunction; gates on
+  CPU_AND_NE, and CPU_ONLY for C1).
+  - Gate 2 is bit-exact on all 240 modules of each fixed build.
+  - Gate 3: encoder rel ≤ 0.0021, logits rel ≤ 2.9e-4; free decodes identical on 79/82 clips.
+  - The encoder behaves as on M_P2 (C4 = C7 on the ANE: rel median 0.015, max 0.021, failing on 17
+    of 82 clips; gate 5 passes). C1 multifunction on CPU_ONLY: rel max 0.029, 40 failing cases.
+  - **The heads fail for every seed-0 model, including the decoder alone:** h and c rel about 1.0,
+    logits about 0.25, decisive fraction 0.11–0.21.
+  - This is the surrogate, not the models. Its i.i.d. LSTM weights are chaotic (‖W_hh‖₂ = 27 and 36,
+    hidden units saturated at ±1). Rounding them to FP16, even with FP32 arithmetic, makes h diverge
+    about 1.5× per step, reaching rel ≈ 1 after about 15 of the 109 steps of the longest trace.
+  - Surrogates measure execution cost only (DESIGN.md); their heads cannot be gated in FP16.
+- **Mac resources** (lessons for later stages):
+  - Core ML keeps a device-specialized copy of every model loaded in
+    `~/Library/Caches/<process>/com.apple.e5rt.e5bundlecache`, GBs per load: 28 GB for `python` and
+    24 GB for the plan tool after the first runs. These are now purged after every load.
+  - coremltools leaves temporary `.mlpackage` directories in `$TMPDIR`; these are deleted too.
+  - Three jobs were aborted by macguard's swap-growth limit while the user's own work loaded the Mac
+    (load up to 16): C1's ANE load, C6s2's CPU-only multifunction gate, and C8's enumerated CPU plan.
+    `mil/macrun.sh` now retries such aborts once the Mac is calm (at most twice), with the limits
+    unchanged.
+  - CPU_ONLY gates were limited to C1, C3, C4, C7, C8 and C6s8, and CPU-only compute plans of later
+    builds were skipped (all-CPU by construction).
+  - Compiled models are archived to `/mnt/hd/wilderness-labs-stt/parakeet-ios/arms-archive/` with
+    SHA-256 lists, and removed from the Mac once gated (`mil/archive.py`; restore with
+    `archive.py back MODEL ARM [names]`). C4 fixed/multi and the decoder models stay on the Mac for the
+    harness.
+
+WP3 deviations from the task or the design, and open problems:
+
+1. **Gate 4's encoder ceiling (rel ≤ 2e-2, abs ≤ 0.25) is narrowly missed by FP16 execution of M_P2
+   on the ANE, for every exact arm** (7 of 82 clips at 15 s). So is the duration-logit ceiling (3–5
+   clips).
+   - The FP32 graph is exact (about 1e-6), and decisions agree 100% on decisive steps. The failure is
+     FP16 arithmetic on a model whose layer-0 FF outputs reach a tenth of the FP16 range.
+   - Under DESIGN.md every exact arm is therefore dropped on the Mac (only C7 and C6s8 pass, on
+     CPU_ONLY). Thresholds were not touched; the gate definition (e.g. ceilings for FP16 execution, or
+     an FP16-emulating reference) is the design's to revisit.
+2. **The C7/C8 stress rule fails C7 and C8**, but the same stress levels overflow C1 and C4 too. The
+   rule is reported; whether it drops C7/C8 is for the design.
+3. **C1 has no ANE placement on the M1 Pro**, and its CPU_AND_NE load was guard-aborted. It is gated on
+   CPU_ONLY only.
+4. **The enumerated-shape variant runs on the CPU** (see above).
+   - Built and gated: C4, C7, C8, C6s2 and C6s4. All pass gates 4 and 5 on that CPU fallback (rel max
+     0.0067–0.0128).
+   - **Not built: the enumerated C1, C3, C5, C6s8, C6d4 and C6d8.** They were stopped because the
+     shared Mac was under heavy load (macguard swap aborts, waits for calm) and they add no new
+     information. The step lists for them are in `mil/` (`mil.build encoder --variant enum`, then
+     `replan`, then `gates`).
+5. **G0** has C0's fixed window only, at iOS17 (DESIGN.md: same shapes and target as C0). It is gated
+   against C0, not an FP32 reference: C0 ships `linear_pos` only folded, so no FP32 reference exists.
+   G0 ≠ C0 traces to C0's missing subsampling masking.
+6. **seed0:** fixed and multifunction only (no enumerated builds). Its heads cannot be gated in FP16
+   (chaotic surrogate LSTM).
+7. **CPU_ONLY coverage:** gates for C1, C3, C4, C7, C8 and C6s8 (multifunction) only, plus the
+   decoders. CPU-only compute plans were skipped for later builds (all-CPU by construction).
+8. **Not done in WP3** (these need the Swift harness or the phone):
+   - the ANE layout (DESIGN.md D);
+   - Instruments placement traces (gate 6);
+   - "prepare and cache" load events;
+   - resident memory with several functions loaded.
+9. **C5's int8 activation calibration** (per-tensor max/127) is unusable for accuracy. Speed-only, as
+   designed.

@@ -1,0 +1,19 @@
+program(1.3)
+[buildInfo = dict<string, string>({{"coremlc-component-MIL", "3600.16.1"}, {"coremlc-version", "3600.25.2"}, {"coremltools-component-milinternal", ""}, {"coremltools-version", "9.0"}})]
+{
+    func main<ios19>(tensor<fp32, [1, 256, 8]> x) {
+            string cast_2_dtype_0 = const()[name = string("cast_2_dtype_0"), val = string("fp16")];
+            tensor<fp16, [256, 256, 1]> w = constexpr_lut_to_dense(indices = tensor<uint2, [256, 256, 1]>(BLOBFILE(path = string("@model_path/weights/weight.bin"), offset = uint64(64))), lut = tensor<fp16, [1, 1, 1, 4, 1]>([[[[[-0x1p+0], [0x0p+0], [0x1p+0], [0x0p+0]]]]]))[name = string("w")];
+            tensor<int32, [1]> mm_strides_0 = const()[name = string("mm_strides_0"), val = tensor<int32, [1]>([1])];
+            string mm_pad_type_0 = const()[name = string("mm_pad_type_0"), val = string("valid")];
+            tensor<int32, [2]> mm_pad_0 = const()[name = string("mm_pad_0"), val = tensor<int32, [2]>([0, 0])];
+            tensor<int32, [1]> mm_dilations_0 = const()[name = string("mm_dilations_0"), val = tensor<int32, [1]>([1])];
+            int32 mm_groups_0 = const()[name = string("mm_groups_0"), val = int32(1)];
+            tensor<fp16, [1, 256, 8]> cast_2 = cast(dtype = cast_2_dtype_0, x = x)[name = string("cast_3")];
+            tensor<fp16, [1, 256, 8]> mm = conv(dilations = mm_dilations_0, groups = mm_groups_0, pad = mm_pad_0, pad_type = mm_pad_type_0, strides = mm_strides_0, weight = w, x = cast_2)[name = string("mm")];
+            tensor<fp16, [1, 256, 1]> row_scale_y_2 = const()[name = string("row_scale_y_2"), val = tensor<fp16, [1, 256, 1]>(BLOBFILE(path = string("@model_path/weights/weight.bin"), offset = uint64(16512)))];
+            tensor<fp16, [1, 256, 8]> row_scale = mul(x = mm, y = row_scale_y_2)[name = string("row_scale")];
+            string out_dtype_2 = const()[name = string("out_dtype_2"), val = string("fp32")];
+            tensor<fp32, [1, 256, 8]> out = cast(dtype = out_dtype_2, x = row_scale)[name = string("cast_2")];
+        } -> (out);
+}

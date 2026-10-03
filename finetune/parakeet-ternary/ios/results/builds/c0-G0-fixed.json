@@ -1,0 +1,414 @@
+{
+ "schema": 1,
+ "model": "c0",
+ "arm": "G0",
+ "variant": "fixed",
+ "layers": 24,
+ "exact": false,
+ "exploratory": false,
+ "provenance": {
+  "name": "c0-encoder",
+  "model": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/c0/Encoder.mlmodelc",
+  "weight_bin_sha256": "4adc7ad44f9d05e1bffeb2b06d3bb02861a5c7602dff63a6b494aed3bf8a6c3e",
+  "model_mil_sha256": "ed7b19156ca29fa7dfd6891deb9fda4b0e8893f68597c985d135736546a43808",
+  "lut_tensors": 294,
+  "dense_tensors": 318
+ },
+ "opset": "iOS17",
+ "minimum_deployment_target": "iOS17",
+ "compute_precision": "FLOAT16 (graph authored in FP16; fp32/int32 I/O)",
+ "functions": {
+  "main": {
+   "mel": [
+    1,
+    128,
+    1501
+   ],
+   "encoder_frames": 188
+  }
+ },
+ "default_function": "main",
+ "encoding": {
+  "arm": "G0",
+  "chain": "C0's iOS16 constexpr_lut_to_dense (packed 6-bit uint8 indices, fp16 LUT[64]) verbatim",
+  "c0": {
+   "name": "c0-encoder",
+   "model": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/c0/Encoder.mlmodelc",
+   "weight_bin_sha256": "4adc7ad44f9d05e1bffeb2b06d3bb02861a5c7602dff63a6b494aed3bf8a6c3e",
+   "model_mil_sha256": "ed7b19156ca29fa7dfd6891deb9fda4b0e8893f68597c985d135736546a43808",
+   "lut_tensors": 294,
+   "dense_tensors": 318
+  },
+  "lut_tensors": 294,
+  "index_bytes": 444437568,
+  "lut_bytes": 37632,
+  "constexpr_inputs": {
+   "indices": "uint8 packed 6-bit (iOS16 layout)",
+   "lut": "float16 [64]",
+   "shape": "uint32"
+  },
+  "note": "all 294 palettized tensors (incl. subsampling, depthwise with BatchNorm folded, folded linear_pos tables [1, 8, 128, 375]) and 320 dense FP16 consts taken from C0's weight.bin"
+ },
+ "pass_pipeline": {
+  "name": "DEFAULT",
+  "excluded": [],
+  "passes": [
+   "common::lower_complex_dialect_ops",
+   "common::update_output_dtypes",
+   "common::cast_optimization",
+   "common::noop_elimination",
+   "common::int_op_canonicalization",
+   "common::nullify_redundant_quantization_zero_point",
+   "common::dequantize_quantize_pair_elimination",
+   "common::distributive_quantized_binary_op_scale_normalization",
+   "common::dequantize_to_constexpr",
+   "common::canonicalize_quantized_lut_pattern",
+   "common::const_elimination",
+   "common::sanitize_input_output_names",
+   "common::divide_to_multiply",
+   "common::select_optimization",
+   "common::add_conv_transpose_output_shape",
+   "common::const_elimination",
+   "common::const_deduplication",
+   "common::loop_invariant_elimination",
+   "common::remove_symbolic_reshape",
+   "common::noop_elimination",
+   "common::fuse_matmul_weight_bias",
+   "common::fuse_linear_bias",
+   "common::fuse_gelu_tanh_approximation",
+   "common::fuse_gelu_exact",
+   "common::fuse_leaky_relu",
+   "common::rank0_expand_dims_swap",
+   "common::fuse_squeeze_expand_dims",
+   "common::compose_conv1d",
+   "common::use_reflection_padding",
+   "common::merge_consecutive_paddings",
+   "common::fuse_pad_conv",
+   "common::image_input_preprocess",
+   "common::replace_stack_reshape",
+   "common::reduce_transposes",
+   "common::fuse_dilated_conv",
+   "common::fuse_conv_scale",
+   "common::fuse_conv_bias",
+   "common::fuse_onehot_matmul_to_gather",
+   "common::fuse_layernorm_or_instancenorm",
+   "common::fuse_elementwise_to_batchnorm",
+   "common::fuse_reduce_mean",
+   "common::fuse_conv_batchnorm",
+   "common::fuse_conv_scale",
+   "common::fuse_conv_bias",
+   "common::fuse_conv_batchnorm",
+   "common::detect_concat_interleave",
+   "common::concat_to_pixel_shuffle",
+   "common::fuse_prelu",
+   "common::prelu_to_lrelu",
+   "common::merge_consecutive_relus",
+   "common::merge_consecutive_reshapes",
+   "common::merge_consecutive_transposes",
+   "common::fuse_transpose_matmul",
+   "common::expand_high_rank_reshape_and_transpose",
+   "common::fuse_stack_split",
+   "common::reduce_transposes",
+   "common::remove_redundant_ops",
+   "common::dedup_op_and_var_names",
+   "common::add_fp16_cast",
+   "common::add_int16_cast",
+   "common::update_output_dtypes",
+   "common::guard_negative_gather_indices",
+   "common::const_elimination",
+   "common::dead_code_elimination",
+   "common::cast_optimization",
+   "common::dead_code_elimination",
+   "common::add_int16_cast",
+   "common::const_elimination",
+   "common::dead_code_elimination",
+   "common::cast_optimization",
+   "common::dead_code_elimination",
+   "common::const_elimination",
+   "common::canonicalize_inplace_pattern",
+   "common::prefer_state_in_downstream",
+   "common::const_elimination",
+   "common::dead_code_elimination",
+   "common::dead_code_elimination",
+   "common::const_elimination",
+   "common::cast_optimization",
+   "common::dead_code_elimination",
+   "common::const_elimination",
+   "common::const_deduplication",
+   "common::dead_code_elimination",
+   "common::merge_affine_dequantize_with_consecutive_ops",
+   "common::expand_dynamic_linear",
+   "common::fuse_transpose_matmul",
+   "common::dead_code_elimination",
+   "common::const_deduplication",
+   "common::loop_invariant_elimination",
+   "common::noop_elimination",
+   "common::dedup_op_and_var_names",
+   "common::reduce_transposes",
+   "common::remove_redundant_ops",
+   "common::topological_reorder",
+   "common::dead_code_elimination"
+  ],
+  "multifunction": null
+ },
+ "program": {
+  "main": {
+   "ops": 4482,
+   "op_histogram": {
+    "add": 171,
+    "cast": 6,
+    "const": 2795,
+    "constexpr_lut_to_dense": 294,
+    "conv": 77,
+    "expand_dims": 9,
+    "floor_div": 3,
+    "identity": 1,
+    "layer_norm": 120,
+    "less": 4,
+    "linear": 193,
+    "logical_and": 1,
+    "logical_not": 2,
+    "matmul": 72,
+    "mul": 100,
+    "pad": 48,
+    "relu": 3,
+    "reshape": 145,
+    "select": 72,
+    "sigmoid": 24,
+    "silu": 72,
+    "slice_by_index": 48,
+    "softmax": 24,
+    "split": 24,
+    "sub": 3,
+    "transpose": 171
+   },
+   "constexpr_inputs": {
+    "constexpr_lut_to_dense": {
+     "indices: uint8 [1728], lut: fp16 [64], shape: uint32 [4]": 3,
+     "indices: uint8 [49152], lut: fp16 [64], shape: uint32 [4]": 2,
+     "indices: uint8 [3145728], lut: fp16 [64], shape: uint32 [2]": 97,
+     "indices: uint8 [288000], lut: fp16 [64], shape: uint32 [4]": 24,
+     "indices: uint8 [786432], lut: fp16 [64], shape: uint32 [2]": 96,
+     "indices: uint8 [1572864], lut: fp16 [64], shape: uint32 [3]": 24,
+     "indices: uint8 [6912], lut: fp16 [64], shape: uint32 [3]": 24,
+     "indices: uint8 [786432], lut: fp16 [64], shape: uint32 [3]": 24
+    }
+   },
+   "matmul_followed_by_mul": 48,
+   "consts_with_shared_weight_id": 0,
+   "inputs": {
+    "mel": "fp32 [1, 128, 1501]",
+    "mel_length": "int32 [1]"
+   },
+   "outputs": {
+    "encoder": "fp32 [1, 1024, 188]",
+    "encoder_length": "int32 [1]"
+   }
+  }
+ },
+ "sizes": {
+  "mlpackage_bytes": 445798259,
+  "weight_bin_bytes": 445187200
+ },
+ "timing_s": {
+  "build_graph": 4.5,
+  "convert": 5.8,
+  "save": 0.2
+ },
+ "peak_rss_mb_after_save": 1166.3,
+ "environment": {
+  "coremltools": "9.0",
+  "numpy": "2.2.6",
+  "python": "3.12.14",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "machine": "arm64"
+ },
+ "paths": {
+  "mlpackage": null,
+  "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/c0/G0/fixed.mlmodelc"
+ },
+ "compile": {
+  "compile_s": 0.36,
+  "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/c0/G0/fixed.mlmodelc",
+  "mlmodelc_bytes": 445935091
+ },
+ "peak_rss_mb_after_compile": 1166.3,
+ "compute_plan": {
+  "cpuAndNeuralEngine": {
+   "compute_units": "cpuAndNeuralEngine",
+   "tool": "mil/computeplan.swift (MLComputePlan, functionName set)",
+   "functions": {
+    "main": {
+     "compute_units": "cpuAndNeuralEngine",
+     "cpu_ops": [
+      {
+       "cost": 0.00018257235176578784,
+       "op": "ios17.cast",
+       "outputs": [
+        "mel_fp16"
+       ]
+      },
+      {
+       "cost": 1.189255591245854e-06,
+       "op": "ios17.less",
+       "outputs": [
+        "less_0"
+       ]
+      },
+      {
+       "cost": 0.0040090430392595265,
+       "op": "ios16.relu",
+       "outputs": [
+        "sub_relu0"
+       ]
+      },
+      {
+       "cost": 1.770660126256487e-09,
+       "op": "ios17.sub",
+       "outputs": [
+        "sub_0"
+       ]
+      },
+      {
+       "cost": 1.900528312018944e-09,
+       "op": "ios17.floor_div",
+       "outputs": [
+        "floor_div_0"
+       ]
+      },
+      {
+       "cost": 1.770660126256487e-09,
+       "op": "ios17.add",
+       "outputs": [
+        "len1"
+       ]
+      },
+      {
+       "cost": 5.953404937399342e-07,
+       "op": "ios17.less",
+       "outputs": [
+        "less_1"
+       ]
+      },
+      {
+       "cost": 1.770660126256487e-09,
+       "op": "ios17.sub",
+       "outputs": [
+        "sub_1"
+       ]
+      },
+      {
+       "cost": 1.900528312018944e-09,
+       "op": "ios17.floor_div",
+       "outputs": [
+        "floor_div_1"
+       ]
+      },
+      {
+       "cost": 1.770660126256487e-09,
+       "op": "ios17.add",
+       "outputs": [
+        "len2"
+       ]
+      },
+      {
+       "cost": 2.983829449869742e-07,
+       "op": "ios17.less",
+       "outputs": [
+        "less_2"
+       ]
+      },
+      {
+       "cost": 1.770660126256487e-09,
+       "op": "ios17.sub",
+       "outputs": [
+        "sub_2"
+       ]
+      },
+      {
+       "cost": 1.900528312018944e-09,
+       "op": "ios17.floor_div",
+       "outputs": [
+        "floor_div_2"
+       ]
+      },
+      {
+       "cost": 1.770660126256487e-09,
+       "op": "ios17.add",
+       "outputs": [
+        "len3"
+       ]
+      },
+      {
+       "cost": 1.4950822721215692e-07,
+       "op": "ios17.less",
+       "outputs": [
+        "less_3"
+       ]
+      },
+      {
+       "cost": 1.267018874679296e-09,
+       "op": "identity",
+       "outputs": [
+        "encoder_length"
+       ]
+      },
+      {
+       "cost": 0.00018293725320169546,
+       "op": "ios17.cast",
+       "outputs": [
+        "encoder"
+       ]
+      }
+     ],
+     "estimated_cost_share_by_preferred_device": {
+      "ane": 0.9944110002904664,
+      "cpu": 0.005588999709533704
+     },
+     "operators_by_preferred_device": {
+      "ane": {
+       "ios16.relu": 2,
+       "ios16.sigmoid": 24,
+       "ios16.silu": 72,
+       "ios16.softmax": 24,
+       "ios17.add": 168,
+       "ios17.cast": 4,
+       "ios17.conv": 77,
+       "ios17.expand_dims": 9,
+       "ios17.layer_norm": 120,
+       "ios17.linear": 193,
+       "ios17.logical_and": 1,
+       "ios17.logical_not": 2,
+       "ios17.matmul": 72,
+       "ios17.mul": 100,
+       "ios17.reshape": 145,
+       "ios17.slice_by_index": 48,
+       "ios17.transpose": 171,
+       "pad": 48,
+       "select": 72,
+       "split": 24
+      },
+      "cpu": {
+       "identity": 1,
+       "ios16.relu": 1,
+       "ios17.add": 3,
+       "ios17.cast": 2,
+       "ios17.floor_div": 3,
+       "ios17.less": 4,
+       "ios17.sub": 3
+      }
+     },
+     "ops_with_usage_by_preferred_device": {
+      "ane": 1376,
+      "cpu": 17
+     },
+     "ops_without_usage": {
+      "const": 1913,
+      "ios16.constexpr_lut_to_dense": 294
+     },
+     "plan_load_s": 31.482751965522766
+    }
+   }
+  }
+ }
+}
