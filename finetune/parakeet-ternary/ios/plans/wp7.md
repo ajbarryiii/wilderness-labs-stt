@@ -1,6 +1,6 @@
 # WP7 experiment plan: deployed-pipeline gates and the informational sweep of the new arms
 
-Revision 2 (after pre-run review round 1, `reviews/wp7-r1.md`). DESIGN.md revision 9 is authoritative. Nothing in
+Revision 3 (after pre-run reviews round 1 and 2, `reviews/wp7-r1.md`, `reviews/wp7-r2.md`). DESIGN.md revision 9 is authoritative. Nothing in
 this plan runs until the review comes back clean. Tests (unit tests, macguard suite, pipegate self-test, the
 `--verify-only` deployment check) are not experiments and may run.
 
@@ -16,26 +16,41 @@ Everything below is rerun from scratch with the reviewed commit.
 
 ## 1. Deploy the reviewed commit to the Mac
 
+Every Mac command below runs in `/Users/ajbarry/workspace/github.com/wilderness-labs-stt/finetune/parakeet-ternary`
+with
+```
+A=/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios     # the Mac artifact area (outside git)
+```
+**Disk.** Every job that writes checks first, fail closed (`ios/diskcheck.sh NEED_GB`, or the same check in
+Python): 30 GB floor + the job's estimated writes. Build 3 GB (inside `build_reviewed.sh`); macguard suite 1 GB;
+pipegate self-test 2 GB (inside the test; it removes its scratch directory); reference 1 GB (inside `ref64`); every
+restore (`mil/archive.py back`: 30 GB + the archive's size); every gate and sweep job (`pipegate_job.sh`,
+`sweep_job.sh`: 30 GB + measured package + cache estimate + 1 GB).
 ```
 # NixOS: the reviewed commit is pushed to parakeet-ios
 # Mac (repo root): GIT_SSH_COMMAND="ssh -o BatchMode=yes" git pull -q --ff-only
-# Mac (finetune/parakeet-ternary):
 ios/macguard --rss-cap 4G --timeout 1800 -- sh ios/build_reviewed.sh
 ```
-`build_reviewed.sh` refuses a checkout with modified tracked files, builds release, runs the unit tests (7) and
-writes `bench/.build/release/BUILD_INFO.json` (commit, executable SHA-256). Gate jobs count as "clean" only when
+`build_reviewed.sh` removes any previous stamp first, checks the disk, refuses a checkout with modified tracked
+files, runs `swift build -c release` and `swift test` checking each one's own exit status (unit tests: 8), and only
+then writes `bench/.build/release/BUILD_INFO.json` (commit, executable SHA-256). Gate jobs count as "clean" only when
 that file names their checkout's commit and the binary they run. Then the tests:
 ```
-MACGUARD_DIR=$A sh ios/tests/macguard_tests.sh "$PWD/ios/macguard" /usr/bin/python3 $A/macguard-test-wp4   # Mac
-(cd ios && ./macguard --rss-cap 2G --timeout 900 -- pyenv/.venv/bin/python tests/pipegate_selftest.py)      # Mac
+sh ios/diskcheck.sh 1 && MACGUARD_DIR="$A" sh ios/tests/macguard_tests.sh "$PWD/ios/macguard" /usr/bin/python3 "$A/macguard-test-wp4"
+(cd ios && ./macguard --rss-cap 2G --timeout 900 -- pyenv/.venv/bin/python tests/pipegate_selftest.py)
+sh ios/tests/build_reviewed_tests.sh                                   # mocked; NixOS or Mac
+CUDA_VISIBLE_DEVICES= ./python ios/tests/wp5sweep_selftest.py         # NixOS
 ```
-The self-test mocks a perfect pipeline from WP3's reference and three faults (NaN in a decoder state, a missing
-clip, 5% flipped decisions) and requires `evaluate` to pass / fail exactly as expected.
+The pipegate self-test mocks a perfect pipeline from WP3's reference and six faults (NaN in a decoder state, a
+missing clip, 5% flipped decisions, missing F1 logits, a short F2 prediction section, a missing F0 decoder output)
+and requires `evaluate` to pass / fail exactly as expected. The wp5sweep self-test requires the report to refuse
+another arm's records and a C0 run on the wrong compute units.
 
 ## 2. Regenerate the FP64-feature reference
 
 ```
 (cd ios && ./macguard --rss-cap 6G --timeout 1800 -- pyenv/.venv/bin/python -m pipegate ref64)   # Mac, about 1 min
+# (the pre-review reference was deleted from $A/refcache/mp2-ref64; this regenerates it)
 ```
 FP32 reference encoder with FP16-rounded scales (WP3 refcache `fp16s`) on `native.fp64_features` of every clip
 (DESIGN.md rev. 9, gate 4, "Deployed-pipeline references"). Its index records the clips.json SHA-256, the front-end
@@ -87,9 +102,18 @@ failure (that combination has no records).
 
 **What `parakeet-bench gate` captures per clip and decode loop.** Free decoding: tokens, logical steps, and every
 decoder output (finiteness counted). Forced replay of the clip's B0 trace: argmax token / duration per step, logical
-steps / predictions, every decoder output (finiteness counted) and per-step diagnostics: F2 logits [1030], h, c;
-F0 h, c and, as a diagnostic, JointLogits on the same joint inputs (raw logits behind JointDecision); F1 h_out,
-c_out (DecoderJoint exposes no logits). Header: components of every pipeline (below), executable SHA-256.
+steps / predictions, every decoder output (finiteness counted) and diagnostics, all required with exact dimensions
+(missing or malformed = coverage failure):
+- F2: per step logits [1030], h, c [2, 640]; per prediction-network run pred_g [640], pred_h, pred_c (so a terminal
+  prediction no joint step reads is still checked);
+- F0: per step h_step, c_step and, diagnostic, JointLogits on the same joint inputs (the raw logits behind
+  JointDecision); per Decoder call decoder_out, h, c;
+- F1: per step h_out, c_out; and, because DecoderJoint exposes no logits, a **diagnostic reconstruction** of its
+  heads from F1's own inputs (the pending token, F1's input state, the same encoder frame) through the FP32
+  `Decoder` and `JointLogits` of the same directory: logits, recon_h, recon_c. Its consistency with F1 (state
+  error vs DecoderJoint's h_out/c_out, argmax agreement with F1's decisions) is reported. This path is untimed and
+  never part of the timed pipeline.
+Header: components of every pipeline (below), executable SHA-256, the diagnostic models' SHA-256s.
 
 **Pass criteria per pipeline** (DESIGN.md rev. 9, gate 4b; all must hold):
 - coverage: all 82 clips; every trace replayed in full; all 64 natural clips free-decoded; clips.json unchanged;
@@ -101,7 +125,8 @@ c_out (DecoderJoint exposes no logits). Header: components of every pipeline (be
   top-1 margin ≥ 1.0) ≥ 50%; agreement ≥ 99.5% on decisive and ≥ 99% on all steps;
 - free decoding: ≥ 61/64 natural clips identical to the FP32-feature reference tokens; WER ≤ reference + 0.2 points;
 - decoder precision fp32; the arm's WP3 record still revision 8 and timing-allowed.
-Reported, not gated: head errors (token logits, duration logits for F2 and F0; h and c for all three), token-
+Reported, not gated: head errors (token logits, duration logits and h, c for F2, F0 and F1 — F1's logits from the
+diagnostic reconstruction), token-
 probability difference vs the reference softmax, margin distributions (reference, pipeline's own where logits
 exist, reference margins of disagreeing steps), encoder errors vs the FP32-feature reference (diagnostic).
 
@@ -125,9 +150,13 @@ git commit; git push                                     # text only, checked wi
 CUDA_VISIBLE_DEVICES= ./python ios/wp5sweep.py verify --groups c
 ```
 `verify` checks that the Mac checkout is the new commit and clean, that the Mac binary's SHA-256 equals the
-`executable_sha256` in every sweep arm's records, and runs `parakeet-bench run --verify-only` with each arm's exact
-sweep arguments (pipeline record, component hashes, WP3 record, C0 identity against c0.json); nothing is loaded or
-timed.
+`executable_sha256` in every sweep arm's records, restores archived encoder packages (`mil/archive.py back`:
+guarded, disk-checked, SHA-256-verified), runs `parakeet-bench run --verify-only` with each arm's exact sweep
+arguments (pipeline record, component hashes, WP3 record, C0 identity against c0.json; nothing is loaded or timed)
+and archives the restored packages again (`mil/archive.py out`) once no later arm needs them.
+
+**Cleanup of disposable test artifacts.** The pipegate and wp5sweep self-tests remove their scratch directories;
+`$A/wp7/verify.out` is removed after each check. Nothing else is written by the tests.
 
 ## 5. Informational paired sweep of the new arms (WP7 item 4)
 
@@ -157,8 +186,10 @@ failed runs are not published. Exit 0 only if all 14 runs have status 0.
 
 **Report.** `CUDA_VISIBLE_DEVICES= ./python ios/wp5sweep.py report --sweep wp7-<time> --tag wp7` reads only the
 runs the manifest names and refuses unless the manifest is complete, every run is status 0 with all files, every
-load record carries the manifest's executable, each run's clips equal its half, and the halves cover the 64 natural
-clips exactly once. Per arm, armreport merges the two halves (identical arm, units, eligibility, protocol,
+load record carries the manifest's executable, each run's clips equal its half, the halves cover the 64 natural
+clips exactly once, and every run's paired-arm, paired-C0 and cached-load records describe the manifest's arm:
+arm name, compute units, front end and decode, the pipeline record and encoder identity in the eligibility, mode,
+warm-ups/timed, settle; C0 on cpuAndNeuralEngine / cpuOnly with the same protocol and a pairing block naming the arm. Per arm, armreport merges the two halves (identical arm, units, eligibility, protocol,
 executable, C0 identity required; disjoint clips) and checks each half's pairing (session id, clips.json SHA-256,
 clip ids, warm-ups/timed, mode) and C0 identity.
 
