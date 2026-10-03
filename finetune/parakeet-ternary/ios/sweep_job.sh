@@ -40,7 +40,7 @@ args=""
 skip=0
 for a in "$@"; do
   if [ $skip -eq 1 ]; then skip=0; continue; fi
-  case "$a" in --pair-c0|--c0-out|--ids|--kinds|--limit|--warmups|--timed|--diag-dir) skip=1; continue;; esac
+  case "$a" in --pair-c0|--c0-out|--c0-compute-units|--ids|--kinds|--limit|--warmups|--timed|--diag-dir) skip=1; continue;; esac
   args="$args $(printf '%s' "$a" | sed "s/'/'\\\\''/g; s/^/'/; s/\$/'/")"
 done
 eval "\"\$bench\" run $args --ids \"\$cached_clip\" --warmups 1 --timed 0 --emit-warmups --out \"\$out/cached.jsonl\""

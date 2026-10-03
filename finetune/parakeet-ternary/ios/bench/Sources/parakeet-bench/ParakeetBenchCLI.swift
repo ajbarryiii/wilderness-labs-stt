@@ -22,7 +22,8 @@ import Foundation
 ///                 component SHA-256s (encoder package, front-end constants or preprocessor, F2 weights or decoder
 ///                 models + precision) and compute units equal the loaded ones, plus the arm's WP3 record;
 ///                 ios = --ios or the directory of clips.json; C0 is exempt)
-///                 [--pair-c0 C0DIR --c0-out PATH]  (C0 and the arm interleaved clip by clip in this process)
+///                 [--pair-c0 C0DIR --c0-out PATH]  (C0 and the arm interleaved clip by clip in this process;
+///                 C0 runs as shipped on --c0-compute-units, default cpuAndNeuralEngine, whatever the arm's units)
 ///   parakeet-bench features --frontend-constants DIR --clips clips.json --pcm DIR --out DIR [--kinds/--ids]
 ///                       front end A on every clip: <id>.mel.f32 [128, N // 160 + 1] and features.jsonl
 ///   parakeet-bench encode --encoder PATH --encoder-variant fixed15 --clips clips.json --features DIR --tags vdsp,ref64
@@ -78,7 +79,7 @@ struct ParakeetBenchCLI {
                                           "--out", "--diag-dir", "--arm", "--arm-name", "--decode", "--frontend",
                                           "--frontend-constants", "--encoder", "--encoder-variant", "--encoder-input",
                                           "--decoder-models", "--native-weights", "--vocab", "--eligibility", "--ios",
-                                          "--pair-c0", "--c0-out"]
+                                          "--pair-c0", "--c0-out", "--c0-compute-units"]
 
     struct Options {
         var values: [String: String] = [:]
@@ -158,6 +159,7 @@ struct ParakeetBenchCLI {
         }
         let units = try ComputeUnitsName.parse(try o.string("--compute-units", "cpuAndNeuralEngine"))
         let preUnits = try ComputeUnitsName.parse(try o.string("--preprocessor-units", "cpuOnly"))
+        let c0Units = try ComputeUnitsName.parse(try o.string("--c0-compute-units", "cpuAndNeuralEngine"))
         let clipsURL = try o.url("--clips")
         let iosDir = o.values["--ios"].map { URL(fileURLWithPath: $0) } ?? clipsURL.deletingLastPathComponent()
         // Timing gate (DESIGN.md revision 8): a Core ML encoder arm needs a passing eligibility record.
@@ -228,7 +230,7 @@ struct ParakeetBenchCLI {
         }
         var paired: (C0Pipeline, C0Models, JSONLWriter)? = nil
         if let c0Dir = o.values["--pair-c0"], let c0OutURL {
-            let models = try C0Models(directory: URL(fileURLWithPath: c0Dir), computeUnits: units, preprocessorUnits: preUnits)
+            let models = try C0Models(directory: URL(fileURLWithPath: c0Dir), computeUnits: c0Units, preprocessorUnits: preUnits)
             let w = try JSONLWriter(path: c0OutURL.path)
             paired = (C0Pipeline(models: models), models, w)
         }
@@ -243,7 +245,7 @@ struct ParakeetBenchCLI {
         load["pairing"] = pairing
         if let (_, models, w) = paired {
             try w.writeObject([
-                "record": "load", "arm": "C0", "compute_units": ComputeUnitsName.name(units),
+                "record": "load", "arm": "C0", "compute_units": ComputeUnitsName.name(c0Units),
                 "preprocessor_units": ComputeUnitsName.name(preUnits), "load_ms": models.loadMs,
                 "decode": "c0 (FluidAudio 0.7.8 loop, per-step Decoder + JointDecision)",
                 "eligibility": "exempt: C0 is the product baseline", "pairing": pairing,
@@ -267,7 +269,7 @@ struct ParakeetBenchCLI {
         let t0 = Clock.now()
         for (index, (clip, pcm)) in zip(clips, pcms).enumerated() {
             let mode: DecodeMode = modeName == "replay" ? .replay(traces[clip.id]!) : .free
-            func block(_ r: Runner, _ w: JSONLWriter, _ name: String, _ vocab: [Int: String]) async throws {
+            func block(_ r: Runner, _ w: JSONLWriter, _ name: String, _ vocab: [Int: String], _ cu: MLComputeUnits) async throws {
                 for rep in 0..<(proto.warmups + proto.timed) {
                     let warm = rep < proto.warmups
                     let result: CallResult
@@ -276,7 +278,7 @@ struct ParakeetBenchCLI {
                     case .custom(let arm): result = try await arm.run(clip: clip, pcm: pcm, mode: mode)
                     }
                     if !warm || proto.emitWarmups || rep == 0 {
-                        try w.write(CallRecord(arm: name, mode: modeName, computeUnits: ComputeUnitsName.name(units),
+                        try w.write(CallRecord(arm: name, mode: modeName, computeUnits: ComputeUnitsName.name(cu),
                                                clip: clip, rep: rep, warmup: warm, text: detokenize(result.tokens, vocabulary: vocab),
                                                result: result))
                     }
@@ -284,14 +286,14 @@ struct ParakeetBenchCLI {
             }
             if let (pipeline, models, w) = paired {
                 if index % 2 == 0 {
-                    try await block(.c0(pipeline, models), w, "C0", models.vocabulary)
-                    try await block(runner, writer, armName, vocabulary)
+                    try await block(.c0(pipeline, models), w, "C0", models.vocabulary, c0Units)
+                    try await block(runner, writer, armName, vocabulary, units)
                 } else {
-                    try await block(runner, writer, armName, vocabulary)
-                    try await block(.c0(pipeline, models), w, "C0", models.vocabulary)
+                    try await block(runner, writer, armName, vocabulary, units)
+                    try await block(.c0(pipeline, models), w, "C0", models.vocabulary, c0Units)
                 }
             } else {
-                try await block(runner, writer, armName, vocabulary)
+                try await block(runner, writer, armName, vocabulary, units)
             }
             if let diagDir {
                 switch runner {

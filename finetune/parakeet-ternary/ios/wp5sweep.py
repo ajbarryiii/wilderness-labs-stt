@@ -136,7 +136,7 @@ def run_arm(a: dict, cap: str = "4G") -> dict:
     need = disk_need_gb(a)
     run_id = time.strftime("%Y%m%d-%H%M%S")
     out = f"{MAC_A}/results/wp5/{a['name']}/{run_id}"  # unique per run: never reuses or deletes an earlier run
-    args = bench_args(a) + ["--pair-c0", f"{MAC_A}/c0", "--c0-out", f"{out}/c0.jsonl"]
+    args = bench_args(a) + ["--pair-c0", f"{MAC_A}/c0", "--c0-out", f"{out}/c0.jsonl", "--c0-compute-units", "cpuAndNeuralEngine"]
     quoted = " ".join("'" + x.replace("'", "'\\''") + "'" for x in args)
     line = (f"mkdir -p {out}; i=0; while :; do ./macguard --rss-cap {cap} --timeout 3600 -- sh sweep_job.sh {need} {out} "
             f"{CACHED_CLIP} -- {quoted} > {out}/job.log 2>&1; s=$?; [ $s -ne 3 ] && break; i=$((i+1)); "
