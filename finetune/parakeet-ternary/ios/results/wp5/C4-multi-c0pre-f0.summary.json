@@ -1,12 +1,18 @@
 {
  "label": "baseline-eligible",
  "label_note": null,
- "results_file": "arm.jsonl",
+ "results_file": [
+  "/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/C4-multi-c0pre-f0/wp5-20261003/arm.jsonl"
+ ],
  "arm": "C4-multi-c0pre-f0",
  "arm_spec": {
   "decode": "f0",
   "encoder_input": null,
   "front_end": "c0pre"
+ },
+ "executable_sha256": null,
+ "thermal": {
+  "recorded": false
  },
  "mode": "free",
  "compute_units": "cpuAndNeuralEngine",
@@ -330,7 +336,9 @@
   ]
  },
  "paired_vs_baseline": {
-  "baseline_file": "c0.jsonl",
+  "baseline_file": [
+   "/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/C4-multi-c0pre-f0/wp5-20261003/c0.jsonl"
+  ],
   "baseline_arm": "C0",
   "baseline_completeness": {
    "clips": 64,
@@ -339,6 +347,11 @@
    "clip_ids_recorded": true
   },
   "pairing_evidence": "same run directory (records written before session ids, WP5)",
+  "c0_identity": "unverified: WP5 run recorded before C0 identity checks",
+  "baseline_compute_units": "cpuAndNeuralEngine",
+  "baseline_thermal": {
+   "recorded": false
+  },
   "method": "per-clip ratios arm/baseline; typical = median over clips; p95 = HD p95 ratio of pooled calls; percentile bootstrap (2000 resamples of clips, pairs kept together), seed 0",
   "per_bucket": {
    "2": {

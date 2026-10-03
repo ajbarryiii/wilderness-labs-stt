@@ -1,9 +1,15 @@
 {
  "label": "baseline-eligible",
  "label_note": null,
- "results_file": "c0.jsonl",
+ "results_file": [
+  "/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/G0-fixed-vdsp-f2/wp5-20261003/c0.jsonl"
+ ],
  "arm": "C0",
  "arm_spec": null,
+ "executable_sha256": null,
+ "thermal": {
+  "recorded": false
+ },
  "mode": "free",
  "compute_units": "cpuAndNeuralEngine",
  "preprocessor_units": "cpuOnly",

@@ -1,28 +1,34 @@
-"""WP5: informational Mac latency sweep of the eligible arms, each paired with C0 in the same guarded job (NixOS).
+"""WP5/WP7: informational Mac latency sweeps of eligible deployed pipelines, each paired with C0 in the same guarded job.
 
 DESIGN.md "Measurements" and "Repetition and statistics" (3 warm-up + 10 timed calls per clip, 64 natural clips);
-the Mac is shared, so every number here is informational and no claim rests on it. Arms (WP5 package):
-  (a) encoder comparison, front end A + F2: every encoder arm with a passing revision-8 eligibility record as a
-      multifunction model on cpuAndNeuralEngine, plus C4 fixed 15 s and G0 (graph control, C0's weights; F2 and
-      front end A with B0's decoder/joint and constants);
-  (b) pipeline factors on C4 multifunction: front end {c0pre, vdsp} x decode {f0, f1, f2}; F0/F1 use the FP32
-      decoder models (DESIGN.md revision 8, "Decoder and joint precision");
-  (c) WP7, new arms with front end A + F2: the ANE-layout builds C4-ane, C3-ane, C6s8-ane (cpuAndNeuralEngine) and
-      C4, C3, C6s8 multifunction on the GPU backend (cpuAndGPU), plus C6s8 multifunction on cpuAndNeuralEngine
-      re-timed in the same session as a within-session anchor.
-Every timed combination needs its deployed-pipeline record (ios/pipegate.py; the Swift runner verifies it).
+the Mac is shared, so every number here is informational and no claim rests on it. Arm groups:
+  (a) WP5 encoder comparison, front end A + F2 (multifunction on cpuAndNeuralEngine, C4 fixed 15 s, G0);
+  (b) WP5 pipeline factors on C4 multifunction: front end {c0pre, vdsp} x decode {f0, f1, f2};
+  (c) WP7, front end A + F2: the ANE-layout builds C4-ane, C3-ane, C6s8-ane (cpuAndNeuralEngine), C4, C3, C6s8
+      multifunction on the GPU backend (cpuAndGPU), and C6s8 multifunction on cpuAndNeuralEngine (within-session anchor).
+Every timed combination needs its revision-9 deployed-pipeline record (ios/pipegate.py); the Swift runner verifies
+it, component SHA-256s and executable included, and verifies C0 against c0.json.
 
-  ./python ios/wp5sweep.py plan                 # arms and their eligibility (mil.eligibility.check)
-  ./python ios/wp5sweep.py run [--only A,B]     # restore models, time on the Mac, fetch, archive restored arms out
-  ./python ios/wp5sweep.py report               # armreport per arm (paired vs its C0 block) + results/wp5 table
+  ./python ios/wp5sweep.py plan [--groups c]
+  ./python ios/wp5sweep.py sweep --name wp7 --groups c [--settle-ms 500]   # counterbalanced, manifest-driven
+  ./python ios/wp5sweep.py report --sweep SWEEP_ID --tag wp7                # from the sweep manifest only
+  ./python ios/wp5sweep.py wp5-manifest                                     # manifest of WP5's migrated runs
 
-Per arm, one macguard job (ios/sweep_job.sh): Core ML cache purged, C0 and the arm interleaved clip by clip
-("post-purge loads"), then a fresh process for the arm alone ("subsequent fresh-process load", arm-only footprint),
-cache purged. Disk headroom per arm is measured (package size + Core ML cache estimate, ios/pipegate.disk_need_gb).
-The Swift CLI itself refuses an arm without a passing pipeline record; C0 is exempt (baseline).
-Raw records: /mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/<arm>/<run id>/ (Mac: <artifacts>/results/wp5/<arm>/
-<run id>/), published atomically with <arm>/LATEST naming the run; report reads LATEST runs with status 0 only.
-Summaries: ios/results/wp5/ (groups a, b) and ios/results/wp7/ (group c).
+Sweep design (review WP7 r1 finding 9): the 64 natural clips are split into halves A and B (alternate clips of each
+bucket in clips.json order: 8 + 8 per bucket); half A runs the arms in the listed order, half B in reverse, so every
+arm's position in the session is counterbalanced and each arm's 64 clips come from both ends of the session. Per run
+one macguard job (ios/sweep_job.sh): disk check, Core ML cache purge, C0 and the arm interleaved clip by clip in one
+process ("post-purge loads"; C0 first on even clips), then a fresh process for the arm alone ("subsequent
+fresh-process load", arm-only footprint), purge. Before every block parakeet-bench waits --settle-ms and, while
+ProcessInfo.thermalState is serious or critical, up to 120 s; block records hold the thermal states.
+
+Manifest (review WP7 r1 finding 6): /mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/sweeps/<sweep id>.json lists
+the commit and executable SHA-256 the sweep must use, the halves, the order, and every (arm, half) run with its run
+id and status, rewritten atomically after each run. Runs land in <arm>/<run id>/ on both machines (never reused),
+retrieved completely into a .part directory and renamed. report reads only the runs a complete manifest names
+(every expected run status 0, the reviewed executable in every load record, 64-clip coverage per arm) and refuses
+anything else; no "latest run" pointer is consulted.
+Summaries: ios/results/<tag>/.
 """
 from __future__ import annotations
 
@@ -95,7 +101,7 @@ def eligibility(a: dict) -> tuple[bool, str]:
     if not p.exists():
         return False, f"no pipeline record {p.name}"
     prec = json.loads(p.read_text())
-    if prec.get("design_revision") != 8 or not prec.get("timing_allowed"):
+    if prec.get("design_revision") != 9 or not prec.get("timing_allowed"):
         return False, f"pipeline record {p.name}: not timing-allowed ({prec.get('reasons')})"
     return True, f"revision {rec.get('design_revision')} encoder and pipeline records, timing allowed"
 
@@ -110,9 +116,10 @@ def mac(cmd: str, timeout: int = 600) -> str:
     return out.stdout
 
 
-def bench_args(a: dict) -> list[str]:
+def bench_args(a: dict, ids: list[str] | None = None) -> list[str]:
     weights = "b0" if a["model"] == "c0" else "mp2"
-    args = ["--clips", f"{MAC_IOS}/clips.json", "--pcm", f"{MAC_A}/clips", "--kinds", "natural", "--mode", "free",
+    select = ["--ids", ",".join(ids)] if ids else ["--kinds", "natural"]
+    args = ["--clips", f"{MAC_IOS}/clips.json", "--pcm", f"{MAC_A}/clips", *select, "--mode", "free",
             "--warmups", str(WARMUPS), "--timed", str(TIMED), "--compute-units", UNITS[a["backend"]],
             "--arm", "custom", "--arm-name", a["name"], "--models", f"{MAC_A}/c0", "--frontend", a["frontend"],
             "--encoder", f"{MAC_A}/arms/{a['model']}/{a['arm']}/{a['variant']}.mlmodelc",
@@ -128,21 +135,44 @@ def bench_args(a: dict) -> list[str]:
 
 
 RAW = ("arm.jsonl", "c0.jsonl", "cached.jsonl", "cache.log", "job.log")
+SWEEPS = LOCAL / "sweeps"
 
 
-def run_arm(a: dict, cap: str = "4G") -> dict:
+def write_atomic(path: Path, doc: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.part")
+    tmp.write_text(json.dumps(doc, indent=1) + "\n")
+    os.replace(tmp, path)
+
+
+def halves() -> dict[str, list[str]]:
+    """Natural clips split alternately within each bucket (clips.json order): A = 0th, 2nd, ...; B = 1st, 3rd, ..."""
+    clips = [c for c in json.loads((IOS / "clips.json").read_text())["clips"] if c["kind"] == "natural"]
+    out = {"A": [], "B": []}
+    for b in sorted({c["bucket"] for c in clips}):
+        mine = [c["id"] for c in clips if c["bucket"] == b]
+        out["A"] += mine[0::2]
+        out["B"] += mine[1::2]
+    return out
+
+
+def run_arm(a: dict, ids: list[str], settle_ms: int) -> dict:
+    """One guarded job for one arm on the given clips; returns the run's entry (published only if status 0)."""
     from pipegate import disk_need_gb
 
+    cap = "6G" if a["arm"] == "C1" or a["backend"] != "ane" else "4G"  # C1, GPU: see README
+    timeout = 7200 if a["backend"] == "gpu" else 3600  # C6s8's GPU load alone took about 310 s per function (WP6a)
     need = disk_need_gb(a)
     run_id = time.strftime("%Y%m%d-%H%M%S")
     out = f"{MAC_A}/results/wp5/{a['name']}/{run_id}"  # unique per run: never reuses or deletes an earlier run
-    args = bench_args(a) + ["--pair-c0", f"{MAC_A}/c0", "--c0-out", f"{out}/c0.jsonl", "--c0-compute-units", "cpuAndNeuralEngine"]
-    quoted = " ".join("'" + x.replace("'", "'\\''") + "'" for x in args)
-    timeout = 7200 if a["backend"] == "gpu" else 3600  # C6s8's GPU load alone took about 310 s per function (WP6a)
+    args = bench_args(a, ids) + ["--pair-c0", f"{MAC_A}/c0", "--c0-out", f"{out}/c0.jsonl",
+                                 "--c0-compute-units", "cpuAndNeuralEngine", "--settle-ms", str(settle_ms)]
+    quoted = " ".join(shlex.quote(x) for x in args)
     line = (f"mkdir -p {out}; i=0; while :; do ./macguard --rss-cap {cap} --timeout {timeout} -- sh sweep_job.sh {need} {out} "
             f"{CACHED_CLIP} -- {quoted} > {out}/job.log 2>&1; s=$?; [ $s -ne 3 ] && break; i=$((i+1)); "
             f"[ $i -gt 120 ] && break; sleep 60; done; echo $s > {out}/STATUS")
     mac(f"nohup sh -c {shlex.quote(line)} > /dev/null 2>&1 < /dev/null & echo started")
+    entry = {"run": run_id, "rss_cap": cap, "timeout_s": timeout, "need_gb": need, "clips": len(ids), "status": None}
     t0, status = time.time(), ""
     while not status and time.time() - t0 < 5 * 3600:
         time.sleep(60)
@@ -150,37 +180,96 @@ def run_arm(a: dict, cap: str = "4G") -> dict:
             status = mac(f"cat {out}/STATUS 2>/dev/null || true").strip()
         except Exception as exc:  # transient SSH failure: keep polling
             print(f"poll: {exc}", file=sys.stderr, flush=True)
+    entry["minutes"] = round((time.time() - t0) / 60, 1)
     if not status.lstrip("-").isdigit():
-        raise RuntimeError(f"{a['name']}: no status from {out}; stopping")
-    result = {"name": a["name"], "status": int(status), "rss_cap": cap, "need_gb": need, "run": run_id}
+        entry["error"] = f"no status from {out}"
+        return entry
+    entry["status"] = int(status)
     if int(status) != 0:
-        return result  # nothing is published for a failed run
-    # complete retrieval into a temporary directory, then an atomic rename and LATEST (review WP4/5 finding 6)
+        return entry  # nothing is published for a failed run
+    # complete retrieval into a temporary directory, then an atomic rename (review WP4/5 finding 6)
     final = LOCAL / a["name"] / run_id
     tmp = LOCAL / a["name"] / f".{run_id}.part"
     tmp.mkdir(parents=True, exist_ok=False)
-    for f in RAW:
-        (tmp / f).write_text(mac(f"cat {out}/{f}"))  # any missing file raises: no partial publish
-    for f in ("arm.jsonl", "c0.jsonl", "cached.jsonl"):
-        if not load_records(tmp / f):
-            raise RuntimeError(f"{a['name']}: empty {f}; not published")
+    try:
+        for f in RAW:
+            (tmp / f).write_text(mac(f"cat {out}/{f}"))  # any missing file raises: no partial publish
+        for f in ("arm.jsonl", "c0.jsonl", "cached.jsonl"):
+            if not load_records(tmp / f):
+                raise RuntimeError(f"empty {f}")
+    except Exception as exc:
+        entry.update({"status": None, "error": f"retrieval failed: {exc}"})
+        return entry
     (tmp / "STATUS").write_text(status + "\n")
     os.replace(tmp, final)
-    latest = LOCAL / a["name"] / ".LATEST.part"
-    latest.write_text(run_id + "\n")
-    os.replace(latest, LOCAL / a["name"] / "LATEST")
-    return result
+    entry["dir"] = str(final)
+    return entry
 
 
-def latest_run(name: str) -> Path | None:
-    """The published run of an arm (LATEST), only if it completed with status 0."""
-    p = LOCAL / name / "LATEST"
-    if not p.exists():
-        return None
-    d = LOCAL / name / p.read_text().strip()
-    if not (d / "STATUS").exists() or (d / "STATUS").read_text().strip() != "0" or not all((d / f).exists() for f in RAW):
-        return None
-    return d
+def mac_build() -> dict:
+    from pipegate import check_deployment
+
+    commit = check_deployment()
+    exe = mac("shasum -a 256 bench/.build/release/parakeet-bench | cut -d' ' -f1").strip()
+    return {"commit": commit, "executable_sha256": exe}
+
+
+def cmd_sweep(args) -> int:
+    groups = set(args.groups.split(","))
+    todo = [a for a in arms() if a["group"] in groups and (not args.only or a["name"] in args.only.split(","))]
+    if args.only and len(todo) != len(args.only.split(",")):
+        print("unknown arm names in --only", file=sys.stderr)
+        return 1
+    blocked = [(a["name"], why) for a in todo for ok, why in [eligibility(a)] if not ok]
+    if blocked:
+        print(f"refusing: not eligible: {blocked}", file=sys.stderr)
+        return 1
+    build = mac_build()
+    h = halves()
+    order = [(a["name"], "A") for a in todo] + [(a["name"], "B") for a in reversed(todo)]
+    sweep_id = f"{args.name}-{time.strftime('%Y%m%d-%H%M%S')}"
+    manifest = {"sweep_id": sweep_id, "build": build, "settle_ms": args.settle_ms, "warmups": WARMUPS, "timed": TIMED,
+                "arms": [a["name"] for a in todo], "halves": h, "order": order, "runs": {}, "complete": False,
+                "design": "half A in the listed arm order, half B in reverse (position counterbalanced)"}
+    path = SWEEPS / f"{sweep_id}.json"
+    write_atomic(path, manifest)
+    by_name = {a["name"]: a for a in todo}
+    restored: set = set()
+    for i, (name, half) in enumerate(order):
+        a = by_name[name]
+        ensure_model(a, restored)
+        entry = run_arm(a, h[half], args.settle_ms)
+        entry["position"] = i
+        manifest["runs"].setdefault(name, {})[half] = entry
+        write_atomic(path, manifest)
+        print(json.dumps({"arm": name, "half": half, **entry}), flush=True)
+        later = {(by_name[n]["model"], by_name[n]["arm"]) for n, _ in order[i + 1:]}
+        for key in sorted(restored - later):  # archive arms this run restored once no later run needs them
+            subprocess.run([str(IOS.parent / "python"), str(IOS / "mil" / "archive.py"), "out", *key], check=True)
+            restored.discard(key)
+    manifest["complete"] = all(manifest["runs"].get(n, {}).get(hh, {}).get("status") == 0 for n, hh in order)
+    write_atomic(path, manifest)
+    print(json.dumps({"sweep_id": sweep_id, "complete": manifest["complete"], "manifest": str(path)}))
+    return 0 if manifest["complete"] else 1
+
+
+def cmd_wp5_manifest(args) -> int:
+    """A manifest for WP5's runs (migrated into <arm>/wp5-20261003/; one run of all 64 clips per arm, no halves,
+    build not recorded then): makes the WP5 report manifest-driven too. Marked legacy."""
+    names = [a["name"] for a in arms() if a["group"] in ("a", "b")]
+    runs = {}
+    for n in names:
+        d = LOCAL / n / "wp5-20261003"
+        status = (d / "STATUS").read_text().strip() if (d / "STATUS").exists() else None
+        runs[n] = {"all": {"run": "wp5-20261003", "status": int(status) if status else None, "dir": str(d)}}
+    natural = [c["id"] for c in json.loads((IOS / "clips.json").read_text())["clips"] if c["kind"] == "natural"]
+    manifest = {"sweep_id": "wp5-20261003", "legacy": "WP5 runs, before manifests, session ids, C0 identity and build "
+                "identity were recorded", "build": None, "arms": names, "halves": {"all": natural},
+                "order": [(n, "all") for n in names], "runs": runs,
+                "complete": all(v["all"]["status"] == 0 for v in runs.values())}
+    write_atomic(SWEEPS / "wp5-20261003.json", manifest)
+    print(json.dumps({"complete": manifest["complete"], "arms": len(names)}))
+    return 0
 
 
 def ensure_model(a: dict, restored: set) -> None:
@@ -193,34 +282,12 @@ def ensure_model(a: dict, restored: set) -> None:
 
 
 def cmd_plan(args) -> None:
-    for a in arms():
+    groups = set(args.groups.split(","))
+    h = halves()
+    print(f"halves: A {len(h['A'])} clips, B {len(h['B'])} clips")
+    for a in [a for a in arms() if a["group"] in groups]:
         ok, why = eligibility(a)
         print(f"{a['name']:24s} {'TIME' if ok else 'skip'}  {why[:150]}")
-
-
-def cmd_run(args) -> None:
-    only = set(args.only.split(",")) if args.only else None
-    restored: set = set()
-    log = []
-    todo = [a for a in arms() if not only or a["name"] in only]
-    for i, a in enumerate(todo):
-        ok, why = eligibility(a)
-        if not ok:
-            log.append({"name": a["name"], "skipped": why})
-            print(f"skip {a['name']}: {why}", flush=True)
-            continue
-        ensure_model(a, restored)
-        t0 = time.time()
-        r = run_arm(a, "6G" if a["arm"] == "C1" or a["backend"] == "gpu" else args.cap)  # C1, GPU: see README
-        r["minutes"] = round((time.time() - t0) / 60, 1)
-        log.append(r)
-        print(json.dumps(r), flush=True)
-        later = {(b["model"], b["arm"]) for b in todo[i + 1:]}
-        for key in sorted(restored - later):  # archive arms this run restored once no later arm needs them
-            subprocess.run([str(IOS.parent / "python"), str(IOS / "mil" / "archive.py"), "out", *key], check=True)
-            restored.discard(key)
-    LOCAL.mkdir(parents=True, exist_ok=True)
-    (LOCAL / f"run-{time.strftime('%Y%m%d-%H%M%S')}.json").write_text(json.dumps(log, indent=1) + "\n")
 
 
 LOAD_NOTE = ("Loads: 'post-purge load' = the first load after this binary's Core ML cache directory was purged; "
@@ -232,31 +299,63 @@ def load_records(path: Path) -> list[dict]:
     return [json.loads(l) for l in path.read_text().splitlines() if l.strip()] if path.exists() else []
 
 
+def verified_runs(manifest: dict, name: str) -> list[Path]:
+    """The run directories the manifest names for one arm, after every check; SystemExit otherwise."""
+    problems, dirs = [], []
+    for half in manifest["halves"]:
+        e = manifest["runs"].get(name, {}).get(half)
+        if not e or e.get("status") != 0 or not e.get("dir"):
+            problems.append(f"{name} half {half}: {e and (e.get('status'), e.get('error'))}")
+            continue
+        d = Path(e["dir"])
+        if d.parent != LOCAL / name or d.name != e["run"] or not all((d / f).exists() for f in RAW) \
+                or (d / "STATUS").read_text().strip() != "0":
+            problems.append(f"{name} half {half}: run directory {d} incomplete or not the manifest's")
+            continue
+        build = manifest.get("build")
+        if build:
+            for f in ("arm.jsonl", "c0.jsonl", "cached.jsonl"):
+                load = next((r for r in load_records(d / f) if r.get("record") == "load"), {})
+                if load.get("executable_sha256") != build["executable_sha256"]:
+                    problems.append(f"{name} half {half}: {f} was not made by the sweep's executable")
+            load = next(r for r in load_records(d / "arm.jsonl") if r.get("record") == "load")
+            if sorted(load.get("clip_ids") or []) != sorted(manifest["halves"][half]):
+                problems.append(f"{name} half {half}: clips differ from the manifest's half")
+        dirs.append(d)
+    if problems:
+        raise SystemExit("incomplete sweep: " + "; ".join(problems))
+    return dirs
+
+
 def cmd_report(args) -> None:
-    groups = set(args.groups.split(","))
+    manifest = json.loads((SWEEPS / f"{args.sweep}.json").read_text())
+    if not manifest.get("complete"):
+        raise SystemExit(f"sweep {args.sweep} is not complete: refusing to report")
+    natural = sorted(c["id"] for c in json.loads((IOS / "clips.json").read_text())["clips"] if c["kind"] == "natural")
+    if sorted(c for v in manifest["halves"].values() for c in v) != natural:
+        raise SystemExit("the sweep's halves do not cover the 64 natural clips exactly once")
     summary_dir = IOS / "results" / args.tag
     summary_dir.mkdir(parents=True, exist_ok=True)
+    spec = {a["name"]: a for a in arms()}
     rows = []
-    for a in arms():
-        if a["group"] not in groups:
-            continue
-        d = latest_run(a["name"])
-        if d is None:
-            print(f"{a['name']}: no published status-0 run; not reported", file=sys.stderr)
-            continue
+    for name in manifest["arms"]:
+        a = spec[name]
+        dirs = verified_runs(manifest, name)
         out = summary_dir / f"{a['name']}.summary.json"
         ref = [] if a["model"] == "c0" else ["--ref", "/mnt/hd/wilderness-labs-stt/parakeet-ios/native/mp2"]
-        subprocess.run([str(IOS.parent / "python"), str(IOS / "armreport.py"), str(d / "arm.jsonl"), "--baseline",
-                        str(d / "c0.jsonl"), "--out", str(out), *ref], check=True, stdout=subprocess.DEVNULL)
-        c0out = summary_dir / f"{a['name']}.c0block.summary.json"
-        subprocess.run([str(IOS.parent / "python"), str(IOS / "armreport.py"), str(d / "c0.jsonl"), "--out", str(c0out)],
+        subprocess.run([str(IOS.parent / "python"), str(IOS / "armreport.py"), *[str(d / "arm.jsonl") for d in dirs],
+                        "--baseline", *[str(d / "c0.jsonl") for d in dirs], "--out", str(out), *ref],
                        check=True, stdout=subprocess.DEVNULL)
+        c0out = summary_dir / f"{a['name']}.c0block.summary.json"
+        subprocess.run([str(IOS.parent / "python"), str(IOS / "armreport.py"), *[str(d / "c0.jsonl") for d in dirs],
+                        "--out", str(c0out)], check=True, stdout=subprocess.DEVNULL)
         s, c0s = json.loads(out.read_text()), json.loads(c0out.read_text())
-        arm_load = next((r for r in load_records(d / "arm.jsonl") if r.get("record") == "load"), {})
-        cached = load_records(d / "cached.jsonl")
-        cload = next((r for r in cached if r.get("record") == "load"), {})
-        cend = next((r for r in cached if r.get("record") == "end"), {})
-        enc_load = (arm_load.get("encoder") or {})
+        arm_loads = [next((r for r in load_records(d / "arm.jsonl") if r.get("record") == "load"), {}) for d in dirs]
+        cached = [load_records(d / "cached.jsonl") for d in dirs]
+        cloads = [next((r for r in c if r.get("record") == "load"), {}) for c in cached]
+        cends = [next((r for r in c if r.get("record") == "end"), {}) for c in cached]
+        enc_loads = [(l.get("encoder") or {}) for l in arm_loads]
+        peaks = [e.get("phys_footprint_peak_mb") for e in cends if e.get("phys_footprint_peak_mb") is not None]
         rows.append({
             "arm": a["name"], "group": a["group"], "label": s["label"],
             "wer": s.get("wer_vs_reference", {}).get("wer"),
@@ -271,22 +370,28 @@ def cmd_report(args) -> None:
             "decode_ms_typical": {b: v.get("decode_ms_typical") for b, v in s["per_bucket"].items()},
             "paired_p95_ratio": {b: {"ratio": v["total"]["p95_ratio"], "ci95": v["total"]["p95_ratio_ci95"]}
                                  for b, v in s["paired_vs_baseline"]["per_bucket"].items()},
-            "run": d.name, "backend": a["backend"],
-            "c0_post_purge_load_ms": next((r for r in load_records(d / "c0.jsonl") if r.get("record") == "load"), {}).get("load_ms"),
+            "runs": [d.name for d in dirs], "positions": [manifest["runs"][name][h].get("position") for h in manifest["halves"]],
+            "backend": a["backend"], "thermal": s.get("thermal"),
+            "c0_post_purge_load_ms": [next((r for r in load_records(d / "c0.jsonl") if r.get("record") == "load"), {}).get("load_ms")
+                                      for d in dirs],
             "wer_b0_same_clips": s.get("b0_wer_vs_reference_same_clips", {}).get("wer"),
-            "rss_cap": "6G" if a["arm"] == "C1" or a["backend"] == "gpu" else "4G",
+            "rss_cap": "6G" if a["arm"] == "C1" or a["backend"] != "ane" else "4G",
             "c0_total_ms_typical": {b: v.get("total_ms_typical") for b, v in c0s["per_bucket"].items()},
             "physical_calls": s["calls"]["physical_totals"],
-            "post_purge_load_ms": {"encoder": enc_load.get("load_ms"), "encoder_total": enc_load.get("total_ms"),
-                              "compile_ms": enc_load.get("compile_ms"), "decode": arm_load.get("decode_load_ms")},
-            "subsequent_fresh_process_load_ms": {"encoder": (cload.get("encoder") or {}).get("load_ms"),
-                               "encoder_total": (cload.get("encoder") or {}).get("total_ms"),
-                               "decode": cload.get("decode_load_ms")},
-            "phys_footprint_peak_mb_arm_only": cend.get("phys_footprint_peak_mb"),
+            "post_purge_load_ms": {"encoder": [e.get("load_ms") for e in enc_loads],
+                                   "encoder_total": [e.get("total_ms") for e in enc_loads],
+                                   "compile_ms": [e.get("compile_ms") for e in enc_loads],
+                                   "decode": [l.get("decode_load_ms") for l in arm_loads]},
+            "subsequent_fresh_process_load_ms": {"encoder": [(c.get("encoder") or {}).get("load_ms") for c in cloads],
+                                                 "encoder_total": [(c.get("encoder") or {}).get("total_ms") for c in cloads],
+                                                 "decode": [c.get("decode_load_ms") for c in cloads]},
+            "phys_footprint_peak_mb_arm_only": max(peaks) if peaks else None,
             "phys_footprint_peak_mb_with_c0": s["phys_footprint_mb"]["peak"],
-            "cache_log": (d / "cache.log").read_text().strip().splitlines() if (d / "cache.log").exists() else None,
+            "cache_log": [(d / "cache.log").read_text().strip().splitlines() for d in dirs],
         })
     (summary_dir / "sweep.json").write_text(json.dumps({"informational": "Mac (M1 Pro) is shared; no claims",
+                                                       "sweep_id": manifest["sweep_id"], "build": manifest.get("build"),
+                                                       "design": manifest.get("design") or manifest.get("legacy"),
                                                        "load_labels": LOAD_NOTE, "rows": rows}, indent=1) + "\n")
     lines = ["| arm | total ratio vs C0 (2 / 4 / 8 / 15 s) [95% CI] | encoder ms (2 / 4 / 8 / 15 s) | load post-purge / "
              "subsequent fresh process (enc ms) | footprint MB |",
@@ -295,9 +400,9 @@ def cmd_report(args) -> None:
         ratio = " / ".join(f"{r['paired_total'][b]['typical_ratio']:.2f} [{r['paired_total'][b]['typical_ratio_ci95'][0]:.2f}, "
                            f"{r['paired_total'][b]['typical_ratio_ci95'][1]:.2f}]" for b in ("2", "4", "8", "15") if b in r["paired_total"])
         enc = " / ".join(f"{r['encoder_ms_typical'][b]:.1f}" for b in ("2", "4", "8", "15") if b in r["encoder_ms_typical"])
-        fl = r["post_purge_load_ms"]["encoder_total"]
-        cl = r["subsequent_fresh_process_load_ms"]["encoder_total"]
-        lines.append(f"| {r['arm']} | {ratio} | {enc} | {fl and round(fl)} / {cl and round(cl)} | "
+        fl = ", ".join(str(round(x)) if x is not None else "-" for x in r["post_purge_load_ms"]["encoder_total"])
+        cl = ", ".join(str(round(x)) if x is not None else "-" for x in r["subsequent_fresh_process_load_ms"]["encoder_total"])
+        lines.append(f"| {r['arm']} | {ratio} | {enc} | {fl} / {cl} | "
                      f"{r['phys_footprint_peak_mb_arm_only'] and round(r['phys_footprint_peak_mb_arm_only'])} |")
     lines += ["", "| arm | WER % | tokens = mp2 FP32 reference | preprocess / decode ms (15 s) | physical calls (64 clips, 1 call each) | C0 encoder post-purge load ms |",
               "|---|---|---|---|---|---|"]
@@ -306,8 +411,8 @@ def cmd_report(args) -> None:
         lines.append(f"| {r['arm']} | {100 * r['wer']:.2f} | {eq['clips'] if eq else '-'}/{eq['of'] if eq else '-'} | "
                      f"{r['preprocess_ms_typical'].get('15', 0):.1f} / {r['decode_ms_typical'].get('15', 0):.1f} | "
                      f"{', '.join(f'{k} {v}' for k, v in r['physical_calls'].items())} | "
-                     f"{round((r['c0_post_purge_load_ms'] or {}).get('Encoder', 0))} |")
-    (summary_dir / "sweep_table.md").write_text("Informational (shared Mac M1 Pro, macOS 27; no claims). " + LOAD_NOTE
+                     f"{', '.join(str(round((x or {}).get('Encoder', 0))) for x in r['c0_post_purge_load_ms'])} |")
+    (summary_dir / "sweep_table.md").write_text(f"Sweep {manifest['sweep_id']}. Informational (shared Mac M1 Pro, macOS 27; no claims). " + LOAD_NOTE
                                                  + "\n\n" + "\n".join(lines) + "\n")
     print("\n".join(lines))
 
@@ -315,17 +420,17 @@ def cmd_report(args) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     sub = parser.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("plan").set_defaults(func=cmd_plan)
-    p = sub.add_parser("run"); p.add_argument("--only")
-    p.add_argument("--cap", default="4G", help="macguard RSS cap; 6G for dense FP16 multifunction arms whose mapped "
-                   "per-function programs exceed 4 GB of group RSS (justified in README)")
-    p.set_defaults(func=cmd_run)
-    p = sub.add_parser("report")
-    p.add_argument("--groups", default="a,b", help="arm groups to report (a,b = WP5; c = WP7)")
-    p.add_argument("--tag", default="wp5", help="summary directory under ios/results (wp5 or wp7)")
+    p = sub.add_parser("plan"); p.add_argument("--groups", default="a,b,c"); p.set_defaults(func=cmd_plan)
+    p = sub.add_parser("sweep"); p.add_argument("--name", required=True); p.add_argument("--groups", default="c")
+    p.add_argument("--only", help="comma-separated arm names (default: every arm of the groups)")
+    p.add_argument("--settle-ms", type=int, default=500)
+    p.set_defaults(func=cmd_sweep)
+    p = sub.add_parser("report"); p.add_argument("--sweep", required=True, help="sweep id (manifest under results/wp5/sweeps)")
+    p.add_argument("--tag", required=True, help="summary directory under ios/results (wp5 or wp7)")
     p.set_defaults(func=cmd_report)
+    sub.add_parser("wp5-manifest").set_defaults(func=cmd_wp5_manifest)
     args = parser.parse_args()
-    args.func(args)
+    sys.exit(args.func(args) or 0)
 
 
 if __name__ == "__main__":

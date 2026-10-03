@@ -1,5 +1,8 @@
 {
  "informational": "Mac (M1 Pro) is shared; no claims",
+ "sweep_id": "wp5-20261003",
+ "build": null,
+ "design": "WP5 runs, before manifests, session ids, C0 identity and build identity were recorded",
  "load_labels": "Loads: 'post-purge load' = the first load after this binary's Core ML cache directory was purged; 'subsequent fresh-process load' = a new process loading the arm afterwards. Whether Core ML specialized or reused a cache in either is not established (no Instruments cache events).",
  "rows": [
   {
@@ -155,14 +158,24 @@
      ]
     }
    },
-   "run": "wp5-20261003",
+   "runs": [
+    "wp5-20261003"
+   ],
+   "positions": [
+    null
+   ],
    "backend": "ane",
-   "c0_post_purge_load_ms": {
-    "Decoder": 72.69516666666667,
-    "Encoder": 29161.728708333332,
-    "JointDecision": 43.129333333333335,
-    "Preprocessor": 63.054541666666665
+   "thermal": {
+    "recorded": false
    },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 72.69516666666667,
+     "Encoder": 29161.728708333332,
+     "JointDecision": 43.129333333333335,
+     "Preprocessor": 63.054541666666665
+    }
+   ],
    "wer_b0_same_clips": 0.017726798748696558,
    "rss_cap": "6G",
    "c0_total_ms_typical": {
@@ -176,31 +189,47 @@
     "native_predict": 1958
    },
    "post_purge_load_ms": {
-    "encoder": {
-     "b2": 2345.083125,
-     "b4": 2408.1452083333334,
-     "b8": 2368.3655,
-     "b15": 2713.23875
-    },
-    "encoder_total": 9835.057958333335,
-    "compile_ms": null,
-    "decode": 41.166125
+    "encoder": [
+     {
+      "b2": 2345.083125,
+      "b4": 2408.1452083333334,
+      "b8": 2368.3655,
+      "b15": 2713.23875
+     }
+    ],
+    "encoder_total": [
+     9835.057958333335
+    ],
+    "compile_ms": [
+     null
+    ],
+    "decode": [
+     41.166125
+    ]
    },
    "subsequent_fresh_process_load_ms": {
-    "encoder": {
-     "b2": 283.83325,
-     "b4": 255.07525,
-     "b8": 254.592375,
-     "b15": 257.9558333333333
-    },
-    "encoder_total": 1051.6473333333333,
-    "decode": 33.2365
+    "encoder": [
+     {
+      "b2": 283.83325,
+      "b4": 255.07525,
+      "b8": 254.592375,
+      "b15": 257.9558333333333
+     }
+    ],
+    "encoder_total": [
+     1051.6473333333333
+    ],
+    "decode": [
+     33.2365
+    ]
    },
    "phys_footprint_peak_mb_arm_only": 145.4225845336914,
    "phys_footprint_peak_mb_with_c0": 273.73851776123047,
    "cache_log": [
-    "cache before run 1: KB",
-    "cache after run 1: 4615780KB"
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 4615780KB"
+    ]
    ]
   },
   {
@@ -356,14 +385,24 @@
      ]
     }
    },
-   "run": "wp5-20261003",
+   "runs": [
+    "wp5-20261003"
+   ],
+   "positions": [
+    null
+   ],
    "backend": "ane",
-   "c0_post_purge_load_ms": {
-    "Decoder": 68.786125,
-    "Encoder": 28997.17445833333,
-    "JointDecision": 41.77879166666666,
-    "Preprocessor": 60.78
+   "thermal": {
+    "recorded": false
    },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 68.786125,
+     "Encoder": 28997.17445833333,
+     "JointDecision": 41.77879166666666,
+     "Preprocessor": 60.78
+    }
+   ],
    "wer_b0_same_clips": 0.017726798748696558,
    "rss_cap": "4G",
    "c0_total_ms_typical": {
@@ -377,31 +416,47 @@
     "native_predict": 1955
    },
    "post_purge_load_ms": {
-    "encoder": {
-     "b2": 17914.972041666668,
-     "b4": 17256.80579166667,
-     "b8": 21322.683791666666,
-     "b15": 22169.2775
-    },
-    "encoder_total": 78663.962,
-    "compile_ms": null,
-    "decode": 29.8015
+    "encoder": [
+     {
+      "b2": 17914.972041666668,
+      "b4": 17256.80579166667,
+      "b8": 21322.683791666666,
+      "b15": 22169.2775
+     }
+    ],
+    "encoder_total": [
+     78663.962
+    ],
+    "compile_ms": [
+     null
+    ],
+    "decode": [
+     29.8015
+    ]
    },
    "subsequent_fresh_process_load_ms": {
-    "encoder": {
-     "b2": 322.23991666666666,
-     "b4": 307.1133333333333,
-     "b8": 310.945625,
-     "b15": 314.755125
-    },
-    "encoder_total": 1255.2633333333333,
-    "decode": 34.03358333333333
+    "encoder": [
+     {
+      "b2": 322.23991666666666,
+      "b4": 307.1133333333333,
+      "b8": 310.945625,
+      "b15": 314.755125
+     }
+    ],
+    "encoder_total": [
+     1255.2633333333333
+    ],
+    "decode": [
+     34.03358333333333
+    ]
    },
    "phys_footprint_peak_mb_arm_only": 147.7975845336914,
    "phys_footprint_peak_mb_with_c0": 275.79781341552734,
    "cache_log": [
-    "cache before run 1: KB",
-    "cache after run 1: 18448KB"
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 18448KB"
+    ]
    ]
   },
   {
@@ -557,14 +612,24 @@
      ]
     }
    },
-   "run": "wp5-20261003",
+   "runs": [
+    "wp5-20261003"
+   ],
+   "positions": [
+    null
+   ],
    "backend": "ane",
-   "c0_post_purge_load_ms": {
-    "Decoder": 70.44883333333333,
-    "Encoder": 29509.354333333333,
-    "JointDecision": 39.397625,
-    "Preprocessor": 57.59575
+   "thermal": {
+    "recorded": false
    },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 70.44883333333333,
+     "Encoder": 29509.354333333333,
+     "JointDecision": 39.397625,
+     "Preprocessor": 57.59575
+    }
+   ],
    "wer_b0_same_clips": 0.017726798748696558,
    "rss_cap": "4G",
    "c0_total_ms_typical": {
@@ -578,31 +643,47 @@
     "native_predict": 1955
    },
    "post_purge_load_ms": {
-    "encoder": {
-     "b2": 17680.34375,
-     "b4": 16981.767583333334,
-     "b8": 20916.65975,
-     "b15": 20577.799916666667
-    },
-    "encoder_total": 76156.76,
-    "compile_ms": null,
-    "decode": 31.904958333333333
+    "encoder": [
+     {
+      "b2": 17680.34375,
+      "b4": 16981.767583333334,
+      "b8": 20916.65975,
+      "b15": 20577.799916666667
+     }
+    ],
+    "encoder_total": [
+     76156.76
+    ],
+    "compile_ms": [
+     null
+    ],
+    "decode": [
+     31.904958333333333
+    ]
    },
    "subsequent_fresh_process_load_ms": {
-    "encoder": {
-     "b2": 356.591375,
-     "b4": 344.16404166666666,
-     "b8": 336.4515,
-     "b15": 331.1106666666667
-    },
-    "encoder_total": 1368.5035416666667,
-    "decode": 33.337125
+    "encoder": [
+     {
+      "b2": 356.591375,
+      "b4": 344.16404166666666,
+      "b8": 336.4515,
+      "b15": 331.1106666666667
+     }
+    ],
+    "encoder_total": [
+     1368.5035416666667
+    ],
+    "decode": [
+     33.337125
+    ]
    },
    "phys_footprint_peak_mb_arm_only": 152.7663345336914,
    "phys_footprint_peak_mb_with_c0": 235.98524475097656,
    "cache_log": [
-    "cache before run 1: KB",
-    "cache after run 1: 18448KB"
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 18448KB"
+    ]
    ]
   },
   {
@@ -758,14 +839,24 @@
      ]
     }
    },
-   "run": "wp5-20261003",
+   "runs": [
+    "wp5-20261003"
+   ],
+   "positions": [
+    null
+   ],
    "backend": "ane",
-   "c0_post_purge_load_ms": {
-    "Decoder": 72.78125,
-    "Encoder": 29564.868375,
-    "JointDecision": 44.007041666666666,
-    "Preprocessor": 202.27620833333333
+   "thermal": {
+    "recorded": false
    },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 72.78125,
+     "Encoder": 29564.868375,
+     "JointDecision": 44.007041666666666,
+     "Preprocessor": 202.27620833333333
+    }
+   ],
    "wer_b0_same_clips": 0.017726798748696558,
    "rss_cap": "4G",
    "c0_total_ms_typical": {
@@ -779,31 +870,47 @@
     "native_predict": 1955
    },
    "post_purge_load_ms": {
-    "encoder": {
-     "b2": 119463.18295833333,
-     "b4": 121814.46375,
-     "b8": 126119.68233333333,
-     "b15": 125452.749
-    },
-    "encoder_total": 492850.303625,
-    "compile_ms": null,
-    "decode": 43.04779166666666
+    "encoder": [
+     {
+      "b2": 119463.18295833333,
+      "b4": 121814.46375,
+      "b8": 126119.68233333333,
+      "b15": 125452.749
+     }
+    ],
+    "encoder_total": [
+     492850.303625
+    ],
+    "compile_ms": [
+     null
+    ],
+    "decode": [
+     43.04779166666666
+    ]
    },
    "subsequent_fresh_process_load_ms": {
-    "encoder": {
-     "b2": 414.80075,
-     "b4": 387.07395833333334,
-     "b8": 388.71341666666666,
-     "b15": 419.91908333333333
-    },
-    "encoder_total": 1610.6923333333332,
-    "decode": 34.78179166666666
+    "encoder": [
+     {
+      "b2": 414.80075,
+      "b4": 387.07395833333334,
+      "b8": 388.71341666666666,
+      "b15": 419.91908333333333
+     }
+    ],
+    "encoder_total": [
+     1610.6923333333332
+    ],
+    "decode": [
+     34.78179166666666
+    ]
    },
    "phys_footprint_peak_mb_arm_only": 156.8444595336914,
    "phys_footprint_peak_mb_with_c0": 265.45406341552734,
    "cache_log": [
-    "cache before run 1: KB",
-    "cache after run 1: 18448KB"
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 18448KB"
+    ]
    ]
   },
   {
@@ -959,14 +1066,24 @@
      ]
     }
    },
-   "run": "wp5-20261003",
+   "runs": [
+    "wp5-20261003"
+   ],
+   "positions": [
+    null
+   ],
    "backend": "ane",
-   "c0_post_purge_load_ms": {
-    "Decoder": 69.71075,
-    "Encoder": 29129.04095833333,
-    "JointDecision": 42.544958333333334,
-    "Preprocessor": 64.37233333333333
+   "thermal": {
+    "recorded": false
    },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 69.71075,
+     "Encoder": 29129.04095833333,
+     "JointDecision": 42.544958333333334,
+     "Preprocessor": 64.37233333333333
+    }
+   ],
    "wer_b0_same_clips": 0.017726798748696558,
    "rss_cap": "4G",
    "c0_total_ms_typical": {
@@ -980,31 +1097,47 @@
     "native_predict": 1955
    },
    "post_purge_load_ms": {
-    "encoder": {
-     "b2": 122823.77954166668,
-     "b4": 126231.513,
-     "b8": 126245.529,
-     "b15": 128023.70841666668
-    },
-    "encoder_total": 503324.72266666667,
-    "compile_ms": null,
-    "decode": 29.604458333333334
+    "encoder": [
+     {
+      "b2": 122823.77954166668,
+      "b4": 126231.513,
+      "b8": 126245.529,
+      "b15": 128023.70841666668
+     }
+    ],
+    "encoder_total": [
+     503324.72266666667
+    ],
+    "compile_ms": [
+     null
+    ],
+    "decode": [
+     29.604458333333334
+    ]
    },
    "subsequent_fresh_process_load_ms": {
-    "encoder": {
-     "b2": 404.8570833333333,
-     "b4": 373.5349583333333,
-     "b8": 368.1134583333333,
-     "b15": 374.13166666666666
-    },
-    "encoder_total": 1520.8737083333333,
-    "decode": 35.14
+    "encoder": [
+     {
+      "b2": 404.8570833333333,
+      "b4": 373.5349583333333,
+      "b8": 368.1134583333333,
+      "b15": 374.13166666666666
+     }
+    ],
+    "encoder_total": [
+     1520.8737083333333
+    ],
+    "decode": [
+     35.14
+    ]
    },
    "phys_footprint_peak_mb_arm_only": 156.7975845336914,
    "phys_footprint_peak_mb_with_c0": 256.31334686279297,
    "cache_log": [
-    "cache before run 1: KB",
-    "cache after run 1: 18448KB"
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 18448KB"
+    ]
    ]
   },
   {
@@ -1160,14 +1293,24 @@
      ]
     }
    },
-   "run": "wp5-20261003",
+   "runs": [
+    "wp5-20261003"
+   ],
+   "positions": [
+    null
+   ],
    "backend": "ane",
-   "c0_post_purge_load_ms": {
-    "Decoder": 74.584625,
-    "Encoder": 30038.41533333333,
-    "JointDecision": 49.89475,
-    "Preprocessor": 64.186
+   "thermal": {
+    "recorded": false
    },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 74.584625,
+     "Encoder": 30038.41533333333,
+     "JointDecision": 49.89475,
+     "Preprocessor": 64.186
+    }
+   ],
    "wer_b0_same_clips": 0.017726798748696558,
    "rss_cap": "4G",
    "c0_total_ms_typical": {
@@ -1181,31 +1324,47 @@
     "native_predict": 1955
    },
    "post_purge_load_ms": {
-    "encoder": {
-     "b2": 95233.72683333333,
-     "b4": 94345.54675,
-     "b8": 99470.8335,
-     "b15": 98604.71120833333
-    },
-    "encoder_total": 387655.00783333334,
-    "compile_ms": null,
-    "decode": 30.245083333333334
+    "encoder": [
+     {
+      "b2": 95233.72683333333,
+      "b4": 94345.54675,
+      "b8": 99470.8335,
+      "b15": 98604.71120833333
+     }
+    ],
+    "encoder_total": [
+     387655.00783333334
+    ],
+    "compile_ms": [
+     null
+    ],
+    "decode": [
+     30.245083333333334
+    ]
    },
    "subsequent_fresh_process_load_ms": {
-    "encoder": {
-     "b2": 396.4386666666667,
-     "b4": 406.69866666666667,
-     "b8": 374.7574583333333,
-     "b15": 364.34791666666666
-    },
-    "encoder_total": 1542.414625,
-    "decode": 32.47591666666667
+    "encoder": [
+     {
+      "b2": 396.4386666666667,
+      "b4": 406.69866666666667,
+      "b8": 374.7574583333333,
+      "b15": 364.34791666666666
+     }
+    ],
+    "encoder_total": [
+     1542.414625
+    ],
+    "decode": [
+     32.47591666666667
+    ]
    },
    "phys_footprint_peak_mb_arm_only": 156.7819595336914,
    "phys_footprint_peak_mb_with_c0": 257.64156341552734,
    "cache_log": [
-    "cache before run 1: KB",
-    "cache after run 1: 18448KB"
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 18448KB"
+    ]
    ]
   },
   {
@@ -1361,14 +1520,24 @@
      ]
     }
    },
-   "run": "wp5-20261003",
+   "runs": [
+    "wp5-20261003"
+   ],
+   "positions": [
+    null
+   ],
    "backend": "ane",
-   "c0_post_purge_load_ms": {
-    "Decoder": 81.968,
-    "Encoder": 30856.325791666666,
-    "JointDecision": 41.275166666666664,
-    "Preprocessor": 57.17
+   "thermal": {
+    "recorded": false
    },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 81.968,
+     "Encoder": 30856.325791666666,
+     "JointDecision": 41.275166666666664,
+     "Preprocessor": 57.17
+    }
+   ],
    "wer_b0_same_clips": 0.017726798748696558,
    "rss_cap": "4G",
    "c0_total_ms_typical": {
@@ -1382,31 +1551,47 @@
     "native_predict": 1955
    },
    "post_purge_load_ms": {
-    "encoder": {
-     "b2": 33234.427875,
-     "b4": 34792.04858333334,
-     "b8": 38341.69933333334,
-     "b15": 38657.3535
-    },
-    "encoder_total": 145025.699125,
-    "compile_ms": null,
-    "decode": 32.64675
+    "encoder": [
+     {
+      "b2": 33234.427875,
+      "b4": 34792.04858333334,
+      "b8": 38341.69933333334,
+      "b15": 38657.3535
+     }
+    ],
+    "encoder_total": [
+     145025.699125
+    ],
+    "compile_ms": [
+     null
+    ],
+    "decode": [
+     32.64675
+    ]
    },
    "subsequent_fresh_process_load_ms": {
-    "encoder": {
-     "b2": 339.5187916666667,
-     "b4": 308.4825833333333,
-     "b8": 338.992,
-     "b15": 330.633
-    },
-    "encoder_total": 1317.804625,
-    "decode": 32.6505
+    "encoder": [
+     {
+      "b2": 339.5187916666667,
+      "b4": 308.4825833333333,
+      "b8": 338.992,
+      "b15": 330.633
+     }
+    ],
+    "encoder_total": [
+     1317.804625
+    ],
+    "decode": [
+     32.6505
+    ]
    },
    "phys_footprint_peak_mb_arm_only": 148.0163345336914,
    "phys_footprint_peak_mb_with_c0": 320.06346130371094,
    "cache_log": [
-    "cache before run 1: KB",
-    "cache after run 1: 18448KB"
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 18448KB"
+    ]
    ]
   },
   {
@@ -1562,14 +1747,24 @@
      ]
     }
    },
-   "run": "wp5-20261003",
+   "runs": [
+    "wp5-20261003"
+   ],
+   "positions": [
+    null
+   ],
    "backend": "ane",
-   "c0_post_purge_load_ms": {
-    "Decoder": 74.88541666666667,
-    "Encoder": 29361.12525,
-    "JointDecision": 38.025375,
-    "Preprocessor": 68.09179166666667
+   "thermal": {
+    "recorded": false
    },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 74.88541666666667,
+     "Encoder": 29361.12525,
+     "JointDecision": 38.025375,
+     "Preprocessor": 68.09179166666667
+    }
+   ],
    "wer_b0_same_clips": 0.017726798748696558,
    "rss_cap": "4G",
    "c0_total_ms_typical": {
@@ -1583,31 +1778,47 @@
     "native_predict": 1955
    },
    "post_purge_load_ms": {
-    "encoder": {
-     "b2": 32290.286291666667,
-     "b4": 39021.22116666666,
-     "b8": 35951.38408333334,
-     "b15": 36203.38895833334
-    },
-    "encoder_total": 143466.45666666667,
-    "compile_ms": null,
-    "decode": 28.737
+    "encoder": [
+     {
+      "b2": 32290.286291666667,
+      "b4": 39021.22116666666,
+      "b8": 35951.38408333334,
+      "b15": 36203.38895833334
+     }
+    ],
+    "encoder_total": [
+     143466.45666666667
+    ],
+    "compile_ms": [
+     null
+    ],
+    "decode": [
+     28.737
+    ]
    },
    "subsequent_fresh_process_load_ms": {
-    "encoder": {
-     "b2": 336.40375,
-     "b4": 317.48475,
-     "b8": 313.5734166666667,
-     "b15": 323.541375
-    },
-    "encoder_total": 1291.190375,
-    "decode": 34.40045833333333
+    "encoder": [
+     {
+      "b2": 336.40375,
+      "b4": 317.48475,
+      "b8": 313.5734166666667,
+      "b15": 323.541375
+     }
+    ],
+    "encoder_total": [
+     1291.190375
+    ],
+    "decode": [
+     34.40045833333333
+    ]
    },
    "phys_footprint_peak_mb_arm_only": 148.0007095336914,
    "phys_footprint_peak_mb_with_c0": 315.18846130371094,
    "cache_log": [
-    "cache before run 1: KB",
-    "cache after run 1: 18448KB"
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 18448KB"
+    ]
    ]
   },
   {
@@ -1763,14 +1974,24 @@
      ]
     }
    },
-   "run": "wp5-20261003",
+   "runs": [
+    "wp5-20261003"
+   ],
+   "positions": [
+    null
+   ],
    "backend": "ane",
-   "c0_post_purge_load_ms": {
-    "Decoder": 84.84666666666668,
-    "Encoder": 35415.540791666666,
-    "JointDecision": 57.632416666666664,
-    "Preprocessor": 58.224875
+   "thermal": {
+    "recorded": false
    },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 84.84666666666668,
+     "Encoder": 35415.540791666666,
+     "JointDecision": 57.632416666666664,
+     "Preprocessor": 58.224875
+    }
+   ],
    "wer_b0_same_clips": 0.017726798748696558,
    "rss_cap": "4G",
    "c0_total_ms_typical": {
@@ -1784,31 +2005,47 @@
     "native_predict": 1955
    },
    "post_purge_load_ms": {
-    "encoder": {
-     "b2": 19114.548166666667,
-     "b4": 19841.25795833333,
-     "b8": 26049.407916666667,
-     "b15": 24032.766875
-    },
-    "encoder_total": 89038.15758333333,
-    "compile_ms": null,
-    "decode": 29.4245
+    "encoder": [
+     {
+      "b2": 19114.548166666667,
+      "b4": 19841.25795833333,
+      "b8": 26049.407916666667,
+      "b15": 24032.766875
+     }
+    ],
+    "encoder_total": [
+     89038.15758333333
+    ],
+    "compile_ms": [
+     null
+    ],
+    "decode": [
+     29.4245
+    ]
    },
    "subsequent_fresh_process_load_ms": {
-    "encoder": {
-     "b2": 371.5699166666667,
-     "b4": 352.9705,
-     "b8": 333.0294583333333,
-     "b15": 321.9234583333333
-    },
-    "encoder_total": 1379.6635,
-    "decode": 33.51625
+    "encoder": [
+     {
+      "b2": 371.5699166666667,
+      "b4": 352.9705,
+      "b8": 333.0294583333333,
+      "b15": 321.9234583333333
+     }
+    ],
+    "encoder_total": [
+     1379.6635
+    ],
+    "decode": [
+     33.51625
+    ]
    },
    "phys_footprint_peak_mb_arm_only": 153.5632095336914,
    "phys_footprint_peak_mb_with_c0": 239.32899475097656,
    "cache_log": [
-    "cache before run 1: KB",
-    "cache after run 1: 18448KB"
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 18448KB"
+    ]
    ]
   },
   {
@@ -1964,14 +2201,24 @@
      ]
     }
    },
-   "run": "wp5-20261003",
+   "runs": [
+    "wp5-20261003"
+   ],
+   "positions": [
+    null
+   ],
    "backend": "ane",
-   "c0_post_purge_load_ms": {
-    "Decoder": 81.13866666666667,
-    "Encoder": 30487.623625,
-    "JointDecision": 38.66254166666666,
-    "Preprocessor": 58.923875
+   "thermal": {
+    "recorded": false
    },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 81.13866666666667,
+     "Encoder": 30487.623625,
+     "JointDecision": 38.66254166666666,
+     "Preprocessor": 58.923875
+    }
+   ],
    "wer_b0_same_clips": 0.017726798748696558,
    "rss_cap": "4G",
    "c0_total_ms_typical": {
@@ -1985,31 +2232,47 @@
     "native_predict": 1955
    },
    "post_purge_load_ms": {
-    "encoder": {
-     "b2": 92710.268125,
-     "b4": 96502.25479166667,
-     "b8": 102612.34479166668,
-     "b15": 118801.56383333333
-    },
-    "encoder_total": 410626.61425,
-    "compile_ms": null,
-    "decode": 38.105
+    "encoder": [
+     {
+      "b2": 92710.268125,
+      "b4": 96502.25479166667,
+      "b8": 102612.34479166668,
+      "b15": 118801.56383333333
+     }
+    ],
+    "encoder_total": [
+     410626.61425
+    ],
+    "compile_ms": [
+     null
+    ],
+    "decode": [
+     38.105
+    ]
    },
    "subsequent_fresh_process_load_ms": {
-    "encoder": {
-     "b2": 434.2799166666667,
-     "b4": 399.8739583333333,
-     "b8": 408.417125,
-     "b15": 407.7500833333333
-    },
-    "encoder_total": 1650.5183333333332,
-    "decode": 34.248875
+    "encoder": [
+     {
+      "b2": 434.2799166666667,
+      "b4": 399.8739583333333,
+      "b8": 408.417125,
+      "b15": 407.7500833333333
+     }
+    ],
+    "encoder_total": [
+     1650.5183333333332
+    ],
+    "decode": [
+     34.248875
+    ]
    },
    "phys_footprint_peak_mb_arm_only": 166.5788345336914,
    "phys_footprint_peak_mb_with_c0": 236.14156341552734,
    "cache_log": [
-    "cache before run 1: KB",
-    "cache after run 1: 18448KB"
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 18448KB"
+    ]
    ]
   },
   {
@@ -2165,14 +2428,24 @@
      ]
     }
    },
-   "run": "wp5-20261003",
+   "runs": [
+    "wp5-20261003"
+   ],
+   "positions": [
+    null
+   ],
    "backend": "ane",
-   "c0_post_purge_load_ms": {
-    "Decoder": 76.49445833333333,
-    "Encoder": 30293.443875,
-    "JointDecision": 52.007333333333335,
-    "Preprocessor": 59.63316666666666
+   "thermal": {
+    "recorded": false
    },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 76.49445833333333,
+     "Encoder": 30293.443875,
+     "JointDecision": 52.007333333333335,
+     "Preprocessor": 59.63316666666666
+    }
+   ],
    "wer_b0_same_clips": 0.017726798748696558,
    "rss_cap": "4G",
    "c0_total_ms_typical": {
@@ -2186,25 +2459,41 @@
     "native_predict": 1954
    },
    "post_purge_load_ms": {
-    "encoder": {
-     "main": 20041.267333333333
-    },
-    "encoder_total": 20041.44283333333,
-    "compile_ms": null,
-    "decode": 29.020958333333333
+    "encoder": [
+     {
+      "main": 20041.267333333333
+     }
+    ],
+    "encoder_total": [
+     20041.44283333333
+    ],
+    "compile_ms": [
+     null
+    ],
+    "decode": [
+     29.020958333333333
+    ]
    },
    "subsequent_fresh_process_load_ms": {
-    "encoder": {
-     "main": 106.98575
-    },
-    "encoder_total": 107.164,
-    "decode": 35.339375
+    "encoder": [
+     {
+      "main": 106.98575
+     }
+    ],
+    "encoder_total": [
+     107.164
+    ],
+    "decode": [
+     35.339375
+    ]
    },
    "phys_footprint_peak_mb_arm_only": 167.8132553100586,
    "phys_footprint_peak_mb_with_c0": 206.18841552734375,
    "cache_log": [
-    "cache before run 1: KB",
-    "cache after run 1: 17884KB"
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 17884KB"
+    ]
    ]
   },
   {
@@ -2356,14 +2645,24 @@
      ]
     }
    },
-   "run": "wp5-20261003",
+   "runs": [
+    "wp5-20261003"
+   ],
+   "positions": [
+    null
+   ],
    "backend": "ane",
-   "c0_post_purge_load_ms": {
-    "Decoder": 72.2855,
-    "Encoder": 29800.911083333332,
-    "JointDecision": 41.383208333333336,
-    "Preprocessor": 55.849291666666666
+   "thermal": {
+    "recorded": false
    },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 72.2855,
+     "Encoder": 29800.911083333332,
+     "JointDecision": 41.383208333333336,
+     "Preprocessor": 55.849291666666666
+    }
+   ],
    "wer_b0_same_clips": 0.017726798748696558,
    "rss_cap": "4G",
    "c0_total_ms_typical": {
@@ -2377,25 +2676,41 @@
     "native_predict": 1955
    },
    "post_purge_load_ms": {
-    "encoder": {
-     "main": 28572.227791666668
-    },
-    "encoder_total": 28572.40720833333,
-    "compile_ms": null,
-    "decode": 31.397125
+    "encoder": [
+     {
+      "main": 28572.227791666668
+     }
+    ],
+    "encoder_total": [
+     28572.40720833333
+    ],
+    "compile_ms": [
+     null
+    ],
+    "decode": [
+     31.397125
+    ]
    },
    "subsequent_fresh_process_load_ms": {
-    "encoder": {
-     "main": 107.90225
-    },
-    "encoder_total": 108.06870833333333,
-    "decode": 34.24220833333334
+    "encoder": [
+     {
+      "main": 107.90225
+     }
+    ],
+    "encoder_total": [
+     108.06870833333333
+    ],
+    "decode": [
+     34.24220833333334
+    ]
    },
    "phys_footprint_peak_mb_arm_only": 166.4538803100586,
    "phys_footprint_peak_mb_with_c0": 175.8604507446289,
    "cache_log": [
-    "cache before run 1: KB",
-    "cache after run 1: 17884KB"
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 17884KB"
+    ]
    ]
   },
   {
@@ -2551,14 +2866,24 @@
      ]
     }
    },
-   "run": "wp5-20261003",
+   "runs": [
+    "wp5-20261003"
+   ],
+   "positions": [
+    null
+   ],
    "backend": "ane",
-   "c0_post_purge_load_ms": {
-    "Decoder": 73.711,
-    "Encoder": 29764.769708333333,
-    "JointDecision": 38.721333333333334,
-    "Preprocessor": 55.54591666666666
+   "thermal": {
+    "recorded": false
    },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 73.711,
+     "Encoder": 29764.769708333333,
+     "JointDecision": 38.721333333333334,
+     "Preprocessor": 55.54591666666666
+    }
+   ],
    "wer_b0_same_clips": 0.017726798748696558,
    "rss_cap": "4G",
    "c0_total_ms_typical": {
@@ -2572,31 +2897,47 @@
     "joint_model": 2129
    },
    "post_purge_load_ms": {
-    "encoder": {
-     "b2": 17828.577791666667,
-     "b4": 17890.7265,
-     "b8": 21480.61670833333,
-     "b15": 20788.69341666667
-    },
-    "encoder_total": 77988.801125,
-    "compile_ms": null,
-    "decode": 197.999625
+    "encoder": [
+     {
+      "b2": 17828.577791666667,
+      "b4": 17890.7265,
+      "b8": 21480.61670833333,
+      "b15": 20788.69341666667
+     }
+    ],
+    "encoder_total": [
+     77988.801125
+    ],
+    "compile_ms": [
+     null
+    ],
+    "decode": [
+     197.999625
+    ]
    },
    "subsequent_fresh_process_load_ms": {
-    "encoder": {
-     "b2": 337.99875,
-     "b4": 369.91854166666667,
-     "b8": 328.82841666666667,
-     "b15": 327.7644166666667
-    },
-    "encoder_total": 1364.7023333333332,
-    "decode": 28.087791666666668
+    "encoder": [
+     {
+      "b2": 337.99875,
+      "b4": 369.91854166666667,
+      "b8": 328.82841666666667,
+      "b15": 327.7644166666667
+     }
+    ],
+    "encoder_total": [
+     1364.7023333333332
+    ],
+    "decode": [
+     28.087791666666668
+    ]
    },
    "phys_footprint_peak_mb_arm_only": 84.969482421875,
    "phys_footprint_peak_mb_with_c0": 229.71971130371094,
    "cache_log": [
-    "cache before run 1: KB",
-    "cache after run 1: 53600KB"
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 53600KB"
+    ]
    ]
   },
   {
@@ -2752,14 +3093,24 @@
      ]
     }
    },
-   "run": "wp5-20261003",
+   "runs": [
+    "wp5-20261003"
+   ],
+   "positions": [
+    null
+   ],
    "backend": "ane",
-   "c0_post_purge_load_ms": {
-    "Decoder": 96.91691666666667,
-    "Encoder": 29145.14875,
-    "JointDecision": 49.97079166666666,
-    "Preprocessor": 57.178958333333334
+   "thermal": {
+    "recorded": false
    },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 96.91691666666667,
+     "Encoder": 29145.14875,
+     "JointDecision": 49.97079166666666,
+     "Preprocessor": 57.178958333333334
+    }
+   ],
    "wer_b0_same_clips": 0.017726798748696558,
    "rss_cap": "4G",
    "c0_total_ms_typical": {
@@ -2772,31 +3123,47 @@
     "fused_model": 2129
    },
    "post_purge_load_ms": {
-    "encoder": {
-     "b2": 17330.788875,
-     "b4": 17164.057,
-     "b8": 21020.794583333332,
-     "b15": 20622.235125
-    },
-    "encoder_total": 76138.081125,
-    "compile_ms": null,
-    "decode": 119.6235
+    "encoder": [
+     {
+      "b2": 17330.788875,
+      "b4": 17164.057,
+      "b8": 21020.794583333332,
+      "b15": 20622.235125
+     }
+    ],
+    "encoder_total": [
+     76138.081125
+    ],
+    "compile_ms": [
+     null
+    ],
+    "decode": [
+     119.6235
+    ]
    },
    "subsequent_fresh_process_load_ms": {
-    "encoder": {
-     "b2": 343.4739166666667,
-     "b4": 333.0843333333333,
-     "b8": 327.257875,
-     "b15": 332.397
-    },
-    "encoder_total": 1336.4,
-    "decode": 19.218958333333333
+    "encoder": [
+     {
+      "b2": 343.4739166666667,
+      "b4": 333.0843333333333,
+      "b8": 327.257875,
+      "b15": 332.397
+     }
+    ],
+    "encoder_total": [
+     1336.4
+    ],
+    "decode": [
+     19.218958333333333
+    ]
    },
    "phys_footprint_peak_mb_arm_only": 83.4382553100586,
    "phys_footprint_peak_mb_with_c0": 202.42269897460938,
    "cache_log": [
-    "cache before run 1: KB",
-    "cache after run 1: 53576KB"
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 53576KB"
+    ]
    ]
   },
   {
@@ -2952,14 +3319,24 @@
      ]
     }
    },
-   "run": "wp5-20261003",
+   "runs": [
+    "wp5-20261003"
+   ],
+   "positions": [
+    null
+   ],
    "backend": "ane",
-   "c0_post_purge_load_ms": {
-    "Decoder": 183.272625,
-    "Encoder": 29029.64075,
-    "JointDecision": 140.84941666666666,
-    "Preprocessor": 56.713125
+   "thermal": {
+    "recorded": false
    },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 183.272625,
+     "Encoder": 29029.64075,
+     "JointDecision": 140.84941666666666,
+     "Preprocessor": 56.713125
+    }
+   ],
    "wer_b0_same_clips": 0.017726798748696558,
    "rss_cap": "4G",
    "c0_total_ms_typical": {
@@ -2973,31 +3350,47 @@
     "native_predict": 1954
    },
    "post_purge_load_ms": {
-    "encoder": {
-     "b2": 17732.30004166667,
-     "b4": 17059.156083333335,
-     "b8": 20955.53025,
-     "b15": 20539.932083333333
-    },
-    "encoder_total": 76287.15504166667,
-    "compile_ms": null,
-    "decode": 32.3375
+    "encoder": [
+     {
+      "b2": 17732.30004166667,
+      "b4": 17059.156083333335,
+      "b8": 20955.53025,
+      "b15": 20539.932083333333
+     }
+    ],
+    "encoder_total": [
+     76287.15504166667
+    ],
+    "compile_ms": [
+     null
+    ],
+    "decode": [
+     32.3375
+    ]
    },
    "subsequent_fresh_process_load_ms": {
-    "encoder": {
-     "b2": 352.6462916666667,
-     "b4": 330.8263333333333,
-     "b8": 336.4840416666667,
-     "b15": 330.90816666666666
-    },
-    "encoder_total": 1351.0404583333332,
-    "decode": 32.234541666666665
+    "encoder": [
+     {
+      "b2": 352.6462916666667,
+      "b4": 330.8263333333333,
+      "b8": 336.4840416666667,
+      "b15": 330.90816666666666
+     }
+    ],
+    "encoder_total": [
+     1351.0404583333332
+    ],
+    "decode": [
+     32.234541666666665
+    ]
    },
    "phys_footprint_peak_mb_arm_only": 155.4850845336914,
    "phys_footprint_peak_mb_with_c0": 293.8916320800781,
    "cache_log": [
-    "cache before run 1: KB",
-    "cache after run 1: 18448KB"
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 18448KB"
+    ]
    ]
   },
   {
@@ -3153,14 +3546,24 @@
      ]
     }
    },
-   "run": "wp5-20261003",
+   "runs": [
+    "wp5-20261003"
+   ],
+   "positions": [
+    null
+   ],
    "backend": "ane",
-   "c0_post_purge_load_ms": {
-    "Decoder": 78.28541666666668,
-    "Encoder": 29205.44008333333,
-    "JointDecision": 40.67925,
-    "Preprocessor": 63.27279166666666
+   "thermal": {
+    "recorded": false
    },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 78.28541666666668,
+     "Encoder": 29205.44008333333,
+     "JointDecision": 40.67925,
+     "Preprocessor": 63.27279166666666
+    }
+   ],
    "wer_b0_same_clips": 0.017726798748696558,
    "rss_cap": "4G",
    "c0_total_ms_typical": {
@@ -3174,31 +3577,47 @@
     "joint_model": 2135
    },
    "post_purge_load_ms": {
-    "encoder": {
-     "b2": 17835.069291666667,
-     "b4": 17301.606291666667,
-     "b8": 20659.03320833333,
-     "b15": 19862.292
-    },
-    "encoder_total": 75658.16041666667,
-    "compile_ms": null,
-    "decode": 175.46154166666665
+    "encoder": [
+     {
+      "b2": 17835.069291666667,
+      "b4": 17301.606291666667,
+      "b8": 20659.03320833333,
+      "b15": 19862.292
+     }
+    ],
+    "encoder_total": [
+     75658.16041666667
+    ],
+    "compile_ms": [
+     null
+    ],
+    "decode": [
+     175.46154166666665
+    ]
    },
    "subsequent_fresh_process_load_ms": {
-    "encoder": {
-     "b2": 360.4707916666667,
-     "b4": 333.543125,
-     "b8": 327.494125,
-     "b15": 330.284875
-    },
-    "encoder_total": 1351.9306666666666,
-    "decode": 27.389541666666666
+    "encoder": [
+     {
+      "b2": 360.4707916666667,
+      "b4": 333.543125,
+      "b8": 327.494125,
+      "b15": 330.284875
+     }
+    ],
+    "encoder_total": [
+     1351.9306666666666
+    ],
+    "decode": [
+     27.389541666666666
+    ]
    },
    "phys_footprint_peak_mb_arm_only": 72.969482421875,
    "phys_footprint_peak_mb_with_c0": 166.64144897460938,
    "cache_log": [
-    "cache before run 1: KB",
-    "cache after run 1: 53600KB"
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 53600KB"
+    ]
    ]
   },
   {
@@ -3354,14 +3773,24 @@
      ]
     }
    },
-   "run": "wp5-20261003",
+   "runs": [
+    "wp5-20261003"
+   ],
+   "positions": [
+    null
+   ],
    "backend": "ane",
-   "c0_post_purge_load_ms": {
-    "Decoder": 82.89641666666667,
-    "Encoder": 29203.159958333334,
-    "JointDecision": 38.054916666666664,
-    "Preprocessor": 64.00920833333333
+   "thermal": {
+    "recorded": false
    },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 82.89641666666667,
+     "Encoder": 29203.159958333334,
+     "JointDecision": 38.054916666666664,
+     "Preprocessor": 64.00920833333333
+    }
+   ],
    "wer_b0_same_clips": 0.017726798748696558,
    "rss_cap": "4G",
    "c0_total_ms_typical": {
@@ -3374,31 +3803,47 @@
     "fused_model": 2135
    },
    "post_purge_load_ms": {
-    "encoder": {
-     "b2": 17901.167791666667,
-     "b4": 17183.953791666667,
-     "b8": 20687.44558333333,
-     "b15": 20353.9395
-    },
-    "encoder_total": 76126.67729166667,
-    "compile_ms": null,
-    "decode": 158.36458333333334
+    "encoder": [
+     {
+      "b2": 17901.167791666667,
+      "b4": 17183.953791666667,
+      "b8": 20687.44558333333,
+      "b15": 20353.9395
+     }
+    ],
+    "encoder_total": [
+     76126.67729166667
+    ],
+    "compile_ms": [
+     null
+    ],
+    "decode": [
+     158.36458333333334
+    ]
    },
    "subsequent_fresh_process_load_ms": {
-    "encoder": {
-     "b2": 349.283625,
-     "b4": 333.313625,
-     "b8": 327.37920833333334,
-     "b15": 323.0949583333333
-    },
-    "encoder_total": 1333.21,
-    "decode": 18.78920833333333
+    "encoder": [
+     {
+      "b2": 349.283625,
+      "b4": 333.313625,
+      "b8": 327.37920833333334,
+      "b15": 323.0949583333333
+     }
+    ],
+    "encoder_total": [
+     1333.21
+    ],
+    "decode": [
+     18.78920833333333
+    ]
    },
    "phys_footprint_peak_mb_arm_only": 69.891357421875,
    "phys_footprint_peak_mb_with_c0": 258.86031341552734,
    "cache_log": [
-    "cache before run 1: KB",
-    "cache after run 1: 53576KB"
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 53576KB"
+    ]
    ]
   }
  ]
