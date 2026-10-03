@@ -794,5 +794,8 @@ fixed/multi/enum where WP3 passed them; ANE, CPU and GPU backends; the -ane layo
   the 6G cap (C3/C4/C6s8 on the GPU and C3 multi on the CPU exceeded 4 GB with the decoder models loaded); C3 multi
   on the ANE was once aborted by macguard on system free memory (24% < 25%) and passed on retry.
 
-<!-- WP7-SWEEP -->
+**Experiment review.** Under the standing rule (code and experiment plan reviewed before any run), the plan is in
+`plans/wp7.md`. The gates above ran before the rule arrived and await the review's decision; the sweep of the new
+arms is not reported yet (a first pass measured footprints inflated by the hashing leak fixed in b8eac6d; a second
+pass was stopped when the rule arrived).
 
