@@ -1,0 +1,121 @@
+{
+ "design_revision": 7,
+ "code_version": "wp3-eligibility-1",
+ "model": "mp2",
+ "arm": "C5",
+ "variant": "multi",
+ "backend": "ane",
+ "compute_units": "cpuAndNeuralEngine",
+ "eligible": false,
+ "timing_allowed": false,
+ "selection_eligible": false,
+ "reasons": [
+  "scope: {\"note\": \"exploratory W8A8 (DESIGN.md: scope reduction; numerics fail)\"}",
+  "gate4a: {\"topology\": \"dense+activation_quantization\", \"source\": null, \"own_fp32_build\": false, \"rel_max\": null, \"abs_max\": null}",
+  "gate4b: encoder rel <= 0.1 fails on 200 cases; jd token agreement (decisive 0.5135, all 0.5078, decisive fraction 0.966); jd duration agreement (decisive 0.4250, all 0.4017, decisive fraction 0.850); jd free-decoding sequence identity 0/64 = 0.000 < 0.95; dj token agreement (decisive 0.5135, all 0.5078, decisive fraction 0.966); dj duration agreement (decisive 0.4250, all 0.4017, decisive fraction 0.850); dj free-decoding sequence identity 0/64 = 0.000 < 0.95; gate 5",
+  "gate5: {\"applicable\": true, \"gated_rel_max\": 1.7358567304095223}",
+  "wer: {\"reference_wer_pct\": 2.711, \"jd_wer_pct\": 69.76, \"dj_wer_pct\": 69.76, \"clips\": 64, \"limit_points\": 0.2}"
+ ],
+ "checks": {
+  "scope": {
+   "pass": false,
+   "note": "exploratory W8A8 (DESIGN.md: scope reduction; numerics fail)"
+  },
+  "gate2": {
+   "pass": true,
+   "modules": 240
+  },
+  "gate4a": {
+   "pass": false,
+   "topology": "dense+activation_quantization",
+   "source": null,
+   "own_fp32_build": false,
+   "rel_max": null,
+   "abs_max": null
+  },
+  "gate4a_decoder": {
+   "pass": true
+  },
+  "gate4b": {
+   "pass": false,
+   "encoder_rel_max": 2.39717544915313,
+   "encoder_failing": 200,
+   "heads": {
+    "jd": {
+     "token": {
+      "decisive_fraction": 0.9662809917355372,
+      "agreement_on_decisive": 0.5135135135135135,
+      "agreement_all_steps": 0.5077685950413223,
+      "pass": false
+     },
+     "duration": {
+      "decisive_fraction": 0.8502479338842975,
+      "agreement_on_decisive": 0.4249611197511664,
+      "agreement_all_steps": 0.40165289256198344,
+      "pass": false
+     }
+    },
+    "dj": {
+     "token": {
+      "decisive_fraction": 0.9662809917355372,
+      "agreement_on_decisive": 0.5135135135135135,
+      "agreement_all_steps": 0.5077685950413223,
+      "pass": false
+     },
+     "duration": {
+      "decisive_fraction": 0.8502479338842975,
+      "agreement_on_decisive": 0.4249611197511664,
+      "agreement_all_steps": 0.40165289256198344,
+      "pass": false
+     }
+    }
+   },
+   "sequence_identity": {
+    "jd": 0.0,
+    "dj": 0.0
+   },
+   "rev5_diagnostic_encoder_pass": false,
+   "failed_conditions": [
+    "encoder rel <= 0.1 fails on 200 cases",
+    "jd token agreement (decisive 0.5135, all 0.5078, decisive fraction 0.966)",
+    "jd duration agreement (decisive 0.4250, all 0.4017, decisive fraction 0.850)",
+    "jd free-decoding sequence identity 0/64 = 0.000 < 0.95",
+    "dj token agreement (decisive 0.5135, all 0.5078, decisive fraction 0.966)",
+    "dj duration agreement (decisive 0.4250, all 0.4017, decisive fraction 0.850)",
+    "dj free-decoding sequence identity 0/64 = 0.000 < 0.95",
+    "gate 5"
+   ]
+  },
+  "gate5": {
+   "pass": false,
+   "applicable": true,
+   "gated_rel_max": 1.7358567304095223
+  },
+  "wer": {
+   "pass": false,
+   "reference_wer_pct": 2.711,
+   "jd_wer_pct": 69.76,
+   "dj_wer_pct": 69.76,
+   "clips": 64,
+   "limit_points": 0.2
+  },
+  "stress": {
+   "pass": true,
+   "detail": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 0
+   }
+  }
+ },
+ "inputs": {
+  "results/gate2/mp2-C5.json": "1bd3a0eba34df2755f8abbec21500c314830f9b6bbacab1ecb7634d490a19293",
+  "results/gates/v7/mp2-decoder-fp32-cpuOnly-4a.json": "1df69d43b6b988cbb95ee22806905790104135bcd3916c103e8a54414272913d",
+  "results/gates/v7/mp2-C5-multi-cpuAndNeuralEngine.json": "de1632a3e3ce5b1ad75b7d6b4eecace5f8abca03d9f8ad3fbb6cfce2ef4caf67",
+  "results/probes/stress.json": "d9035d169c9147e54d96544275c0ef189c31ebcc0fd1ef7361e17a157dfd0f53"
+ },
+ "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
+ "built": "2026-10-02 23:31"
+}

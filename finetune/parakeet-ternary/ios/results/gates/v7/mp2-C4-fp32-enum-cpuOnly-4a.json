@@ -1,0 +1,1845 @@
+{
+"design_revision": 7,
+"gate_code_version": "wp3-gates7-1",
+"gate": "4a",
+"gates7_py_sha256": "63f92b3224e8597720a136f800ddb50d23668e9d328eb6e8dbbbc261c7d3af44",
+"date": "2026-10-02 21:00",
+"model": "mp2",
+"arm": "C4",
+"label": "C4-fp32",
+"variant": "enum",
+"units": "cpuOnly",
+"topology": "dense",
+"thresholds": {
+"rel": 1e-05,
+"abs": 0.0001,
+"tau": 1e-06
+},
+"build_provenance": {
+"name": "mp2",
+"export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+"export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+},
+"build_chain": "constexpr_lut_to_dense(uint2, fp16 LUT {-1,0,+1,0}) -> constexpr_blockwise_shift_scale(fp16 per-row scale)",
+"pass": true,
+"summary": {
+"cases": 200,
+"failing_cases": 0,
+"failing_examples": [],
+"rel_max": 1.5270502566903729e-06,
+"abs_max": 2.6145477158292104e-05,
+"rel_median": 6.450970873628322e-07,
+"buckets": [
+2,
+4,
+8,
+15
+]
+},
+"cases": {
+"n02-1272-141231-0016@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.450970873628322e-07,
+"abs": 4.9557046681981695e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-174-50561-0014@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.572149856711305e-07,
+"abs": 5.169009799678386e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-1919-142785-0048@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 7.071522731948952e-07,
+"abs": 6.227092929716843e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-1988-24833-0006@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 7.704667422216143e-07,
+"abs": 5.828664277521263e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-2078-142845-0023@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.451402449026275e-07,
+"abs": 4.359527919127483e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-2277-149896-0004@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.634617170394547e-07,
+"abs": 8.984729346248714e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-2428-83699-0004@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 7.419162278316276e-07,
+"abs": 4.649870266138989e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-251-136532-0022@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.854909655491834e-07,
+"abs": 3.8087913796288813e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-3081-166546-0073@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.377557025540255e-07,
+"abs": 4.429707082088902e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-3752-4944-0046@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.691941040879441e-07,
+"abs": 7.2683218190575415e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-6313-66129-0032@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.501149030226394e-07,
+"abs": 6.40115775059029e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-6345-93302-0028@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 8.098882568004033e-07,
+"abs": 5.813345167160533e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-777-126732-0081@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.394792937642869e-07,
+"abs": 3.838313529275248e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-7976-105575-0017@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.820150393162577e-07,
+"abs": 3.5812509651498823e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-84-121123-0007@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.6075219821306e-07,
+"abs": 3.885961486569302e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-8842-304647-0007@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.550181688897986e-07,
+"abs": 3.1160300275389633e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-1462-170142-0035@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.220299923359103e-07,
+"abs": 4.256881986428997e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-174-50561-0017@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.432683370532526e-07,
+"abs": 3.5683038806450566e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-1919-142785-0024@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.398211383560333e-07,
+"abs": 3.8026048283369467e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-1988-24833-0000@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 7.319719164672621e-07,
+"abs": 7.187700530766565e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-2035-147961-0034@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.846138079084708e-07,
+"abs": 4.817358466601387e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-2277-149874-0009@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 7.051696112677353e-07,
+"abs": 5.751220821060275e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-2428-83699-0026@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.395501229285357e-07,
+"abs": 4.81711893579037e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-3081-166546-0060@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.91491902396447e-07,
+"abs": 4.7033317603673145e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-3576-138058-0031@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.856800261533858e-07,
+"abs": 5.172194761278449e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-3752-4943-0016@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.945636544379831e-07,
+"abs": 3.83008214617538e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-5536-43358-0012@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.526789369523749e-07,
+"abs": 1.0203665718078708e-05,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-5694-64029-0003@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.563713450153731e-07,
+"abs": 4.4748082560020644e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-6241-61943-0022@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.774689885294343e-07,
+"abs": 3.584699281643716e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-6313-66125-0014@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.381745594416684e-07,
+"abs": 6.6231401895387445e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-6319-57405-0007@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.815663163608144e-07,
+"abs": 3.855926402263052e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-8297-275154-0024@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.840013468489655e-07,
+"abs": 5.024713859423755e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-1272-141231-0019@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.113939717901728e-07,
+"abs": 6.684614415051994e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-1462-170142-0020@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.524933714086105e-07,
+"abs": 5.8443511894039095e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-174-84280-0003@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.833722894851617e-07,
+"abs": 4.497229047306909e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-1919-142785-0038@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.724584998444428e-07,
+"abs": 5.073751257398301e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-1993-147965-0003@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.683830217977594e-07,
+"abs": 4.247880960781643e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-2086-149220-0016@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.31073685227491e-07,
+"abs": 6.419493467632925e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-2277-149897-0033@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.830836837616983e-07,
+"abs": 5.192396177047641e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-2412-153948-0009@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.699809669122413e-07,
+"abs": 5.802697768830715e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-2803-154320-0010@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.713079560055847e-07,
+"abs": 5.127741676871257e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-3853-163249-0041@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.893244570238926e-07,
+"abs": 5.8233279607130124e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-5338-284437-0029@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.54256987027917e-07,
+"abs": 7.401809160741607e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-5694-64025-0020@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 7.237766042857806e-07,
+"abs": 8.676992513262138e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-6313-76958-0016@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.611911775585891e-07,
+"abs": 6.513847812457429e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-6345-93306-0019@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.85588869087746e-07,
+"abs": 4.591230236363555e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-652-130726-0027@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.705261583438104e-07,
+"abs": 6.930758862466517e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-8842-302201-0007@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 1.1859720356650522e-06,
+"abs": 2.6145477158292104e-05,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n15-1272-141231-0025@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 8.803670384459795e-07,
+"abs": 1.4540411430849559e-05,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n15-1462-170142-0001@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.987972282985771e-07,
+"abs": 6.503790644587764e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n15-1673-143396-0001@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 7.657766927960314e-07,
+"abs": 1.5855477705919204e-05,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n15-174-168635-0010@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.660814275399556e-07,
+"abs": 1.0749644548572718e-05,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n15-2277-149874-0014@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 9.317426719359464e-07,
+"abs": 1.7109063486668408e-05,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n15-2412-153947-0005@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.582192314400759e-07,
+"abs": 8.996041793757398e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n15-3000-15664-0011@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.295481217035696e-07,
+"abs": 5.674945079226244e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n15-3536-23268-0008@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.784228162535916e-07,
+"abs": 6.868465635195995e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n15-3752-4944-0027@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.379315391368773e-07,
+"abs": 6.472935212314482e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n15-3853-163249-0022@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.660843277479288e-07,
+"abs": 4.6736434417068566e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n15-422-122949-0008@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.453363825802371e-07,
+"abs": 6.898812796561951e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n15-6241-61943-0008@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.907448379172613e-07,
+"abs": 7.169196614125209e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n15-6313-76958-0013@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.988144985119242e-07,
+"abs": 9.100238490760222e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n15-652-129742-0001@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.171075764660085e-07,
+"abs": 5.4235538494010886e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n15-8297-275155-0005@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 5.582254667275595e-07,
+"abs": 4.742661287277058e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n15-84-121550-0029@15": {
+"bucket": 15,
+"kind": "natural",
+"rel": 6.24535746792578e-07,
+"abs": 5.3579304650161545e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b02-N31840@15": {
+"bucket": 15,
+"kind": "boundary",
+"rel": 6.52576079456987e-07,
+"abs": 6.530248645605055e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b02-N32000@15": {
+"bucket": 15,
+"kind": "boundary",
+"rel": 6.918972020415761e-07,
+"abs": 4.315391251104188e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b04-N32001@15": {
+"bucket": 15,
+"kind": "boundary",
+"rel": 7.474579434066865e-07,
+"abs": 6.2012402759299775e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b04-N32160@15": {
+"bucket": 15,
+"kind": "boundary",
+"rel": 7.693701536559223e-07,
+"abs": 9.884250576759419e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b04-N63840@15": {
+"bucket": 15,
+"kind": "boundary",
+"rel": 7.865905448101358e-07,
+"abs": 1.17902807524842e-05,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b04-N64000@15": {
+"bucket": 15,
+"kind": "boundary",
+"rel": 6.49788230199589e-07,
+"abs": 6.021591561624225e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b08-N64001@15": {
+"bucket": 15,
+"kind": "boundary",
+"rel": 7.03889842036117e-07,
+"abs": 6.5273474546154064e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b08-N64160@15": {
+"bucket": 15,
+"kind": "boundary",
+"rel": 6.244577306924693e-07,
+"abs": 4.808019440087913e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b08-N127840@15": {
+"bucket": 15,
+"kind": "boundary",
+"rel": 5.774602251747893e-07,
+"abs": 7.57152734809099e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b08-N128000@15": {
+"bucket": 15,
+"kind": "boundary",
+"rel": 7.959481192144831e-07,
+"abs": 1.310013553820218e-05,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b15-N128001@15": {
+"bucket": 15,
+"kind": "boundary",
+"rel": 6.663191415056995e-07,
+"abs": 7.6128905258217895e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b15-N128160@15": {
+"bucket": 15,
+"kind": "boundary",
+"rel": 7.538730909867171e-07,
+"abs": 1.550796591880103e-05,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b15-N239200@15": {
+"bucket": 15,
+"kind": "boundary",
+"rel": 6.330811720049224e-07,
+"abs": 8.536838338113987e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b15-N239360@15": {
+"bucket": 15,
+"kind": "boundary",
+"rel": 6.399427210297207e-07,
+"abs": 6.163153290731905e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b15-N239520@15": {
+"bucket": 15,
+"kind": "boundary",
+"rel": 6.096269353829954e-07,
+"abs": 1.0605372045878301e-05,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b15-N240000@15": {
+"bucket": 15,
+"kind": "boundary",
+"rel": 6.247850739936158e-07,
+"abs": 5.8086265494289775e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"silence-3s@15": {
+"bucket": 15,
+"kind": "silence",
+"rel": 1.5270502566903729e-06,
+"abs": 1.3828006545203419e-05,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"impulse-3s@15": {
+"bucket": 15,
+"kind": "impulse",
+"rel": 6.172378746700414e-07,
+"abs": 4.496727832129145e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-1272-141231-0016@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.450970873628322e-07,
+"abs": 4.9557046681981695e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-174-50561-0014@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.572149856711305e-07,
+"abs": 5.169009799678386e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-1919-142785-0048@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 7.071522731948952e-07,
+"abs": 6.227092929716843e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-1988-24833-0006@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 7.704667422216143e-07,
+"abs": 5.828664277521263e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-2078-142845-0023@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.451402449026275e-07,
+"abs": 4.359527919127483e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-2277-149896-0004@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.634617170394547e-07,
+"abs": 8.984729346248714e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-2428-83699-0004@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 7.419162278316276e-07,
+"abs": 4.649870266138989e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-251-136532-0022@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 5.854909655491834e-07,
+"abs": 3.8087913796288813e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-3081-166546-0073@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.377557025540255e-07,
+"abs": 4.429707082088902e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-3752-4944-0046@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.691941040879441e-07,
+"abs": 7.2683218190575415e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-6313-66129-0032@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.501149030226394e-07,
+"abs": 6.40115775059029e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-6345-93302-0028@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 8.098882568004033e-07,
+"abs": 5.813345167160533e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-777-126732-0081@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.394792937642869e-07,
+"abs": 3.838313529275248e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-7976-105575-0017@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 5.820150393162577e-07,
+"abs": 3.5812509651498823e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-84-121123-0007@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 5.6075219821306e-07,
+"abs": 3.885961486569302e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-8842-304647-0007@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 5.550181688897986e-07,
+"abs": 3.1160300275389633e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-1462-170142-0035@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.220299923359103e-07,
+"abs": 4.256881986428997e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-174-50561-0017@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 5.432683370532526e-07,
+"abs": 3.5683038806450566e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-1919-142785-0024@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.398211383560333e-07,
+"abs": 3.8026048283369467e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-1988-24833-0000@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 7.319719164672621e-07,
+"abs": 7.187700530766565e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-2035-147961-0034@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 5.846138079084708e-07,
+"abs": 4.817358466601387e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-2277-149874-0009@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 7.051696112677353e-07,
+"abs": 5.751220821060275e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-2428-83699-0026@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.395501229285357e-07,
+"abs": 4.81711893579037e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-3081-166546-0060@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 5.91491902396447e-07,
+"abs": 4.7033317603673145e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-3576-138058-0031@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 5.856800261533858e-07,
+"abs": 5.172194761278449e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-3752-4943-0016@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 5.945636544379831e-07,
+"abs": 3.83008214617538e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-5536-43358-0012@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.526789369523749e-07,
+"abs": 1.0203665718078708e-05,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-5694-64029-0003@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.563713450153731e-07,
+"abs": 4.4748082560020644e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-6241-61943-0022@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 5.774689885294343e-07,
+"abs": 3.584699281643716e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-6313-66125-0014@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.381745594416684e-07,
+"abs": 6.6231401895387445e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-6319-57405-0007@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 5.815663163608144e-07,
+"abs": 3.855926402263052e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-8297-275154-0024@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 5.840013468489655e-07,
+"abs": 5.024713859423755e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-1272-141231-0019@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.113939717901728e-07,
+"abs": 6.684614415051994e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-1462-170142-0020@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.524933714086105e-07,
+"abs": 5.8443511894039095e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-174-84280-0003@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 5.888319785621141e-07,
+"abs": 4.604305929385645e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-1919-142785-0038@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 5.869426364959121e-07,
+"abs": 5.496563862181493e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-1993-147965-0003@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 5.855427232990877e-07,
+"abs": 5.5222452490161355e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-2086-149220-0016@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.7965871493762e-07,
+"abs": 7.275425929983981e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-2277-149897-0033@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.830836837616983e-07,
+"abs": 5.192396177047641e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-2412-153948-0009@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.429333094680747e-07,
+"abs": 5.802697768830715e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-2803-154320-0010@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 5.713079560055847e-07,
+"abs": 5.127741676871257e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-3853-163249-0041@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 5.77885309221364e-07,
+"abs": 5.5056918901286665e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-5338-284437-0029@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.501312531412692e-07,
+"abs": 9.25226145092701e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-5694-64025-0020@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 7.246607332026752e-07,
+"abs": 8.465358549524038e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-6313-76958-0016@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.611911775585891e-07,
+"abs": 6.513847812457429e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-6345-93306-0019@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 6.037078426536851e-07,
+"abs": 6.05207622066105e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-652-130726-0027@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 5.756222767644192e-07,
+"abs": 4.83052890414333e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n08-8842-302201-0007@8": {
+"bucket": 8,
+"kind": "natural",
+"rel": 1.1859720356650522e-06,
+"abs": 2.6145477158292104e-05,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b02-N31840@8": {
+"bucket": 8,
+"kind": "boundary",
+"rel": 6.52576079456987e-07,
+"abs": 6.530248645605055e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b02-N32000@8": {
+"bucket": 8,
+"kind": "boundary",
+"rel": 6.918972020415761e-07,
+"abs": 4.315391251104188e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b04-N32001@8": {
+"bucket": 8,
+"kind": "boundary",
+"rel": 7.474579434066865e-07,
+"abs": 6.2012402759299775e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b04-N32160@8": {
+"bucket": 8,
+"kind": "boundary",
+"rel": 7.693701536559223e-07,
+"abs": 9.884250576759419e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b04-N63840@8": {
+"bucket": 8,
+"kind": "boundary",
+"rel": 7.865905448101358e-07,
+"abs": 1.17902807524842e-05,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b04-N64000@8": {
+"bucket": 8,
+"kind": "boundary",
+"rel": 6.49788230199589e-07,
+"abs": 6.021591561624225e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b08-N64001@8": {
+"bucket": 8,
+"kind": "boundary",
+"rel": 7.03889842036117e-07,
+"abs": 6.5273474546154064e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b08-N64160@8": {
+"bucket": 8,
+"kind": "boundary",
+"rel": 6.244577306924693e-07,
+"abs": 4.808019440087913e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b08-N127840@8": {
+"bucket": 8,
+"kind": "boundary",
+"rel": 5.722657517222645e-07,
+"abs": 5.888965715181881e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b08-N128000@8": {
+"bucket": 8,
+"kind": "boundary",
+"rel": 6.175992041340487e-07,
+"abs": 5.872474551607874e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"silence-3s@8": {
+"bucket": 8,
+"kind": "silence",
+"rel": 1.5270502566903729e-06,
+"abs": 1.3828006545203419e-05,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"impulse-3s@8": {
+"bucket": 8,
+"kind": "impulse",
+"rel": 6.172378746700414e-07,
+"abs": 4.496727832129145e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-1272-141231-0016@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 6.450970873628322e-07,
+"abs": 4.9557046681981695e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-174-50561-0014@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 6.572149856711305e-07,
+"abs": 5.169009799678386e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-1919-142785-0048@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 7.071522731948952e-07,
+"abs": 6.227092929716843e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-1988-24833-0006@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 7.704667422216143e-07,
+"abs": 5.828664277521263e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-2078-142845-0023@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 6.451402449026275e-07,
+"abs": 4.359527919127483e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-2277-149896-0004@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 6.634617170394547e-07,
+"abs": 8.984729346248714e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-2428-83699-0004@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 7.419162278316276e-07,
+"abs": 4.649870266138989e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-251-136532-0022@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 5.854909655491834e-07,
+"abs": 3.8087913796288813e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-3081-166546-0073@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 6.377557025540255e-07,
+"abs": 4.429707082088902e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-3752-4944-0046@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 6.691941040879441e-07,
+"abs": 7.2683218190575415e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-6313-66129-0032@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 6.501149030226394e-07,
+"abs": 6.40115775059029e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-6345-93302-0028@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 8.098882568004033e-07,
+"abs": 5.813345167160533e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-777-126732-0081@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 6.394792937642869e-07,
+"abs": 3.838313529275248e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-7976-105575-0017@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 5.820150393162577e-07,
+"abs": 3.5812509651498823e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-84-121123-0007@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 5.6075219821306e-07,
+"abs": 3.885961486569302e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-8842-304647-0007@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 5.550181688897986e-07,
+"abs": 3.1160300275389633e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-1462-170142-0035@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 6.220089850315752e-07,
+"abs": 4.682570185071897e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-174-50561-0017@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 5.369957972268013e-07,
+"abs": 4.237360858266005e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-1919-142785-0024@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 6.686390286570906e-07,
+"abs": 4.0742194589324435e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-1988-24833-0000@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 6.766930110029427e-07,
+"abs": 8.703856111475138e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-2035-147961-0034@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 6.041112421117386e-07,
+"abs": 4.379416787819443e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-2277-149874-0009@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 6.708572978395126e-07,
+"abs": 6.746624424705322e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-2428-83699-0026@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 5.999882162964607e-07,
+"abs": 5.218545513772901e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-3081-166546-0060@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 5.660128082433457e-07,
+"abs": 3.5834908650417637e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-3576-138058-0031@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 5.560408069429425e-07,
+"abs": 3.517092437669345e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-3752-4943-0016@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 5.945636544379831e-07,
+"abs": 3.83008214617538e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-5536-43358-0012@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 6.734227160439736e-07,
+"abs": 7.2275965503057506e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-5694-64029-0003@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 6.492706809414762e-07,
+"abs": 6.488471971202993e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-6241-61943-0022@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 5.803060866481502e-07,
+"abs": 3.869199224631312e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-6313-66125-0014@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 6.207524035996307e-07,
+"abs": 5.298512151630995e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-6319-57405-0007@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 5.75996539710846e-07,
+"abs": 5.141235203017402e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n04-8297-275154-0024@4": {
+"bucket": 4,
+"kind": "natural",
+"rel": 5.815539872056364e-07,
+"abs": 4.703987442864792e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b02-N31840@4": {
+"bucket": 4,
+"kind": "boundary",
+"rel": 6.52576079456987e-07,
+"abs": 6.530248645605055e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b02-N32000@4": {
+"bucket": 4,
+"kind": "boundary",
+"rel": 6.918972020415761e-07,
+"abs": 4.315391251104188e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b04-N32001@4": {
+"bucket": 4,
+"kind": "boundary",
+"rel": 7.474579434066865e-07,
+"abs": 6.2012402759299775e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b04-N32160@4": {
+"bucket": 4,
+"kind": "boundary",
+"rel": 7.693701536559223e-07,
+"abs": 9.884250576759419e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b04-N63840@4": {
+"bucket": 4,
+"kind": "boundary",
+"rel": 6.322761600200535e-07,
+"abs": 6.569708678001146e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b04-N64000@4": {
+"bucket": 4,
+"kind": "boundary",
+"rel": 7.009233786006574e-07,
+"abs": 7.348382922660071e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"silence-3s@4": {
+"bucket": 4,
+"kind": "silence",
+"rel": 1.488183766688761e-06,
+"abs": 1.094084034345765e-05,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"impulse-3s@4": {
+"bucket": 4,
+"kind": "impulse",
+"rel": 6.598363393916204e-07,
+"abs": 5.620909790161431e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-1272-141231-0016@2": {
+"bucket": 2,
+"kind": "natural",
+"rel": 1.1501650181655231e-06,
+"abs": 1.0406979803216156e-05,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-174-50561-0014@2": {
+"bucket": 2,
+"kind": "natural",
+"rel": 6.788541519093933e-07,
+"abs": 4.7382589830385205e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-1919-142785-0048@2": {
+"bucket": 2,
+"kind": "natural",
+"rel": 7.262892991994806e-07,
+"abs": 4.253326867172665e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-1988-24833-0006@2": {
+"bucket": 2,
+"kind": "natural",
+"rel": 9.404919720964534e-07,
+"abs": 8.154525503647537e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-2078-142845-0023@2": {
+"bucket": 2,
+"kind": "natural",
+"rel": 7.41521854019002e-07,
+"abs": 6.285830953160558e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-2277-149896-0004@2": {
+"bucket": 2,
+"kind": "natural",
+"rel": 5.350768324964206e-07,
+"abs": 3.5938917384994855e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-2428-83699-0004@2": {
+"bucket": 2,
+"kind": "natural",
+"rel": 7.423514927257736e-07,
+"abs": 5.62879032216825e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-251-136532-0022@2": {
+"bucket": 2,
+"kind": "natural",
+"rel": 6.939575278068408e-07,
+"abs": 6.665384914350543e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-3081-166546-0073@2": {
+"bucket": 2,
+"kind": "natural",
+"rel": 5.9553441523092e-07,
+"abs": 4.921896757876557e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-3752-4944-0046@2": {
+"bucket": 2,
+"kind": "natural",
+"rel": 6.014635536840652e-07,
+"abs": 3.7379940783724497e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-6313-66129-0032@2": {
+"bucket": 2,
+"kind": "natural",
+"rel": 5.972147061067655e-07,
+"abs": 3.8406946503541735e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-6345-93302-0028@2": {
+"bucket": 2,
+"kind": "natural",
+"rel": 1.1309458501628507e-06,
+"abs": 1.4836141312024277e-05,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-777-126732-0081@2": {
+"bucket": 2,
+"kind": "natural",
+"rel": 6.706450863798343e-07,
+"abs": 4.79789191159406e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-7976-105575-0017@2": {
+"bucket": 2,
+"kind": "natural",
+"rel": 5.781111431653907e-07,
+"abs": 4.4765637064373535e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-84-121123-0007@2": {
+"bucket": 2,
+"kind": "natural",
+"rel": 5.895672971354271e-07,
+"abs": 3.4541879880616017e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"n02-8842-304647-0007@2": {
+"bucket": 2,
+"kind": "natural",
+"rel": 5.55070037492675e-07,
+"abs": 4.006324321121524e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b02-N31840@2": {
+"bucket": 2,
+"kind": "boundary",
+"rel": 6.161004902404057e-07,
+"abs": 3.918149187363033e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+},
+"b02-N32000@2": {
+"bucket": 2,
+"kind": "boundary",
+"rel": 6.903691853725356e-07,
+"abs": 4.061544706921589e-06,
+"length_ok": true,
+"finite": true,
+"pass": true
+}
+},
+"load_s": {
+"b15": 46.84
+},
+"seconds": 107.4
+}

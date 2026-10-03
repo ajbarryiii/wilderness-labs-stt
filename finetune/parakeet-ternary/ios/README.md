@@ -468,3 +468,79 @@ WP3 deviations from the task or the design, and open problems:
    - resident memory with several functions loaded.
 9. **C5 with its per-tensor max/127 int8 activation calibration** is unusable for accuracy, for
    reasons not separated (see above). Speed-only, as designed; excluded by scope.
+
+### WP3 under DESIGN.md revision 7 (gates 4a/4b, eligibility; after Codex's WP3 review)
+
+Code: `mil/gates7.py` (4a, 4a-decoder, 4b, 4b-decoder diagnostic), `mil/eligibility.py`, `mil/job.sh`, and
+`build.py --precision fp32`. Every result records `design_revision: 7` and the gate-code version and SHA-256.
+Gate commands exit 10 on failure. Results: `results/gates/v7/`, `results/eligibility/` (one record per
+model × arm × variant × backend, plus `summary.json` and `table.txt`), `results/probes/stress.json`, and
+`results/wp3_rev7_table.txt`.
+
+Commands (Mac, through `mil/macrun.sh`; eligibility on NixOS):
+
+```sh
+P=pyenv/.venv/bin/python
+$P -m mil.build encoder --model mp2 --arm C7 --variant multi --precision fp32 --drop-package --no-plan
+$P -m mil.gates7 4a --model mp2 --arm C7 --variant multi            # CPU_ONLY, all clips x buckets
+$P -m mil.build decoder --model mp2 --precision fp32 --no-plan && $P -m mil.gates7 4a-decoder --model mp2
+$P -m mil.gates7 4b --model mp2 --arm C4 --variant multi --units cpuAndNeuralEngine   # or cpuOnly
+$P -m mil.probes stress                                             # all arms, relative rule
+./python ios/mil/eligibility.py build                               # NixOS: WER + records
+python3 mil/eligibility.py check --model mp2 --arm C8 --variant multi --backend ane   # timing runners: exit 0/10
+```
+
+Results (2026-10-02/03, Mac M1 Pro, shared):
+
+- **4a passes for every graph topology, at full depth on every clip and bucket** (FP32 compute, CPU_ONLY,
+  the arm's own constexpr chain with FP32 values).
+  - The dense graph (C4-fp32): fixed, multifunction and enumerated. Its own fixed FP32 builds were also
+    run for C3, C6s2/4/8 and C6d4/8.
+  - The post-matmul-scale graph (C7-fp32): fixed and multifunction.
+  - The stacked-plane graph (C8-fp32): fixed and multifunction.
+  - rel ≤ 5.5e-6 and abs ≤ 9.6e-5 against the ceilings 1e-5 / 1e-4; C8's P − N cancellation is the
+    closest to the abs ceiling.
+  - C1 has no FP32 build: its dense FP32 weight file would be 2.2 GB. At run time its graph is the dense
+    topology, and gate 2 shows its weights equal C4's bit for bit.
+  - **4a-decoder** (FP32 builds of all four decoder models) passes. Logits rel ≤ 2.8e-7, h/c ≤ 4.9e-7.
+    JointDecision and DecoderJoint decisions equal the reference on every step of all 82 traces, and free
+    decoding through both deployed paths is token-identical on all 82 clips. This also validates the
+    replay and decode loops used by 4b.
+- **4b (FP16 builds), per arm × variant × backend** (`results/wp3_rev7_table.txt`):
+  - **Passing:** every exact arm passes the encoder ceiling (rel ≤ 0.1; max 0.036) and the decision
+    agreement through both deployed paths:
+    - decisive steps (reference margin ≥ 1.0): 96.6% of token and 85.0% of duration steps, 100%
+      agreement;
+    - all steps: token ≥ 99.6%, duration ≥ 99.1%.
+  - Gate 5 passes for every multifunction and enumerated build except C5 multifunction on the ANE.
+  - **WER on the 64 natural clips equals the FP32 reference's (2.711%) for every arm, backend and both
+    paths,** except C5 on the ANE (29.5% / 69.8%).
+  - **Failing: free-decoding sequence identity.** It needs 61 of 64 clips identical; most arms give
+    57–60. The differences are case, punctuation and spelling variants that normalize away, e.g. "HOT
+    ROLLS" vs "Hot rolls", "MacGregor" vs "McGregor", a final ".".
+  - **Cause: the FP16 decoder/joint models, not the encoders.**
+    - The FP16 deployed decoder paths alone, fed the FP32 reference's encoder output, give 60/64
+      (`4b-decoder`), already below the bar.
+    - With the FP32 decoder builds, every tested arm (C1, C3, C4, C6s8, C7, C8; ANE and CPU) gives 62–64
+      of 64 and passes every 4b condition (diagnostic runs `*-decoder-fp32.json`).
+    - The decoder models are CPU-placed in every compute plan, so an FP32 decoder costs no ANE capacity.
+      Whether to deploy it (or WP4's FP32 F2 loop) is the design's call; the records gate the FP16
+      models as built.
+  - The stress rule (all arms now) fails **C7 and C8 on CPU_ONLY only**: inf at ×8 (layer-0 FF1
+    linear2) and at |x|×64 (layer 23), where C4 stays finite. Every other arm and backend passes,
+    including C3 and all C6 variants. C5 never overflows, because its int8 quantization clips.
+- **Eligibility** (`results/eligibility/table.txt`):
+  - **Timing allowed** for C8 fixed and multifunction on the ANE (61/64 identical, so at the bar),
+    C4 enumerated on ANE and CPU (61/64), and G0 on the ANE as the control against C0.
+  - **Not allowed** for every other arm/backend: sequence identity below 61/64, plus the stress rule for
+    C7/C8 on CPU and scope for C5.
+  - Given the decoder diagnosis, these passes and failures sit at the noise edge of a criterion that the
+    FP16 decoder alone fails; the table should be read with that in mind.
+- **Review fixes:**
+  - Temporary storage is owned and cleaned under the guard (`mil/job.sh`). The disk floor (30 GB) plus
+    each job's expected transient size is checked before builds, specializations and restores.
+  - Reference-cache provenance is validated before every gate (`refcache.validate`).
+  - Failure counts are no longer truncated, and the stress JSON is strict (no literal `Infinity`).
+  - Host and wrapper settings live in the untracked `mil/local.json` or in environment variables; the
+    tailnet address is gone from tracked code.
+  - `macpush.py` (WP4's file) still names the local SSH helper path; it is left to its owner.

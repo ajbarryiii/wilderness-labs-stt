@@ -1,0 +1,50 @@
+| model | arm | variant | backend | timing allowed | failed checks | WER jd / dj / ref (%) |
+|---|---|---|---|---|---|---|
+| mp2 | C1 | fixed | ane | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C1 | fixed | cpu | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C1 | multi | ane | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C1 | multi | cpu | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C3 | fixed | ane | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C3 | fixed | cpu | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C3 | multi | ane | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C3 | multi | cpu | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C4 | enum | ane | yes | - | 2.711 / 2.711 / 2.711 |
+| mp2 | C4 | enum | cpu | yes | - | 2.711 / 2.711 / 2.711 |
+| mp2 | C4 | fixed | ane | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C4 | fixed | cpu | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C4 | multi | ane | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C4 | multi | cpu | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C5 | fixed | ane | no | scope, gate4a, gate4b, wer | 29.51 / 29.51 / 2.711 |
+| mp2 | C5 | fixed | cpu | no | scope, gate4a, gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C5 | multi | ane | no | scope, gate4a, gate4b, gate5, wer | 69.76 / 69.76 / 2.711 |
+| mp2 | C5 | multi | cpu | no | scope, gate4a, gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6d4 | fixed | ane | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6d4 | fixed | cpu | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6d4 | multi | ane | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6d4 | multi | cpu | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6d8 | fixed | ane | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6d8 | fixed | cpu | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6d8 | multi | ane | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6d8 | multi | cpu | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6s2 | fixed | ane | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6s2 | fixed | cpu | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6s2 | multi | ane | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6s2 | multi | cpu | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6s4 | fixed | ane | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6s4 | fixed | cpu | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6s4 | multi | ane | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6s4 | multi | cpu | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6s8 | fixed | ane | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6s8 | fixed | cpu | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6s8 | multi | ane | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C6s8 | multi | cpu | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C7 | fixed | ane | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C7 | fixed | cpu | no | gate4b, stress | 2.711 / 2.711 / 2.711 |
+| mp2 | C7 | multi | ane | no | gate4b | 2.711 / 2.711 / 2.711 |
+| mp2 | C7 | multi | cpu | no | gate4b, stress | 2.711 / 2.711 / 2.711 |
+| mp2 | C8 | fixed | ane | yes | - | 2.711 / 2.711 / 2.711 |
+| mp2 | C8 | fixed | cpu | no | gate4b, stress | 2.711 / 2.711 / 2.711 |
+| mp2 | C8 | multi | ane | yes | - | 2.711 / 2.711 / 2.711 |
+| mp2 | C8 | multi | cpu | no | gate4b, stress | 2.711 / 2.711 / 2.711 |
+| c0 | G0 | fixed | ane | yes | - | - |
+| c0 | G0 | fixed | cpu | no | g0_vs_c0 | - |

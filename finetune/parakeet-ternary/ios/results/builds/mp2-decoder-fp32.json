@@ -1,0 +1,298 @@
+{
+ "schema": 1,
+ "model": "mp2",
+ "provenance": {
+  "name": "mp2",
+  "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+  "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+ },
+ "opset": "iOS26",
+ "precision": "fp32",
+ "compute_precision": "FLOAT32 (gate 4a build)",
+ "models": {
+  "Decoder": {
+   "program": {
+    "main": {
+     "ops": 76,
+     "op_histogram": {
+      "add": 5,
+      "const": 33,
+      "expand_dims": 1,
+      "gather": 1,
+      "greater_equal": 1,
+      "identity": 1,
+      "linear": 4,
+      "mul": 6,
+      "reshape": 1,
+      "select": 1,
+      "sigmoid": 6,
+      "slice_by_index": 4,
+      "split": 2,
+      "squeeze": 4,
+      "stack": 2,
+      "tanh": 4
+     },
+     "constexpr_inputs": {},
+     "matmul_followed_by_mul": 0,
+     "consts_with_shared_weight_id": 0,
+     "inputs": {
+      "targets": "int32 [1, 1]",
+      "target_length": "int32 [1]",
+      "h_in": "fp32 [2, 1, 640]",
+      "c_in": "fp32 [2, 1, 640]"
+     },
+     "outputs": {
+      "decoder": "fp32 [1, 640, 1]",
+      "h_out": "fp32 [2, 1, 640]",
+      "c_out": "fp32 [2, 1, 640]"
+     }
+    }
+   },
+   "convert_s": 0.2,
+   "mlpackage_bytes": 28880797,
+   "paths": {
+    "mlpackage": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder-fp32/Decoder.mlpackage",
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder-fp32/Decoder.mlmodelc"
+   },
+   "compile": {
+    "compile_s": 0.07,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder-fp32/Decoder.mlmodelc",
+    "mlmodelc_bytes": 28880943
+   }
+  },
+  "JointDecision": {
+   "program": {
+    "main": {
+     "ops": 40,
+     "op_histogram": {
+      "add": 1,
+      "const": 24,
+      "linear": 3,
+      "reduce_argmax": 2,
+      "reduce_max": 1,
+      "relu": 1,
+      "reshape": 5,
+      "slice_by_index": 2,
+      "softmax": 1
+     },
+     "constexpr_inputs": {},
+     "matmul_followed_by_mul": 0,
+     "consts_with_shared_weight_id": 0,
+     "inputs": {
+      "encoder_step": "fp32 [1, 1024, 1]",
+      "decoder_step": "fp32 [1, 640, 1]"
+     },
+     "outputs": {
+      "token_id": "int32 [1, 1, 1]",
+      "token_prob": "fp32 [1, 1, 1]",
+      "duration": "int32 [1, 1, 1]"
+     }
+    }
+   },
+   "convert_s": 0.1,
+   "mlpackage_bytes": 6913306,
+   "paths": {
+    "mlpackage": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder-fp32/JointDecision.mlpackage",
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder-fp32/JointDecision.mlmodelc"
+   },
+   "compile": {
+    "compile_s": 0.03,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder-fp32/JointDecision.mlmodelc",
+    "mlmodelc_bytes": 6913368
+   }
+  },
+  "JointLogits": {
+   "program": {
+    "main": {
+     "ops": 21,
+     "op_histogram": {
+      "add": 1,
+      "const": 12,
+      "linear": 3,
+      "relu": 1,
+      "reshape": 2,
+      "slice_by_index": 2
+     },
+     "constexpr_inputs": {},
+     "matmul_followed_by_mul": 0,
+     "consts_with_shared_weight_id": 0,
+     "inputs": {
+      "encoder_step": "fp32 [1, 1024, 1]",
+      "decoder_step": "fp32 [1, 640, 1]"
+     },
+     "outputs": {
+      "token_logits": "fp32 [1, 1025]",
+      "duration_logits": "fp32 [1, 5]"
+     }
+    }
+   },
+   "convert_s": 0.1,
+   "mlpackage_bytes": 6910696,
+   "paths": {
+    "mlpackage": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder-fp32/JointLogits.mlpackage",
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder-fp32/JointLogits.mlmodelc"
+   },
+   "compile": {
+    "compile_s": 0.03,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder-fp32/JointLogits.mlmodelc",
+    "mlmodelc_bytes": 6910813
+   }
+  },
+  "DecoderJoint": {
+   "program": {
+    "main": {
+     "ops": 111,
+     "op_histogram": {
+      "add": 6,
+      "const": 55,
+      "gather": 1,
+      "greater_equal": 1,
+      "linear": 7,
+      "mul": 6,
+      "reduce_argmax": 2,
+      "reduce_max": 1,
+      "relu": 1,
+      "reshape": 5,
+      "select": 1,
+      "sigmoid": 6,
+      "slice_by_index": 6,
+      "softmax": 1,
+      "split": 2,
+      "squeeze": 4,
+      "stack": 2,
+      "tanh": 4
+     },
+     "constexpr_inputs": {},
+     "matmul_followed_by_mul": 0,
+     "consts_with_shared_weight_id": 0,
+     "inputs": {
+      "targets": "int32 [1, 1]",
+      "h_in": "fp32 [2, 1, 640]",
+      "c_in": "fp32 [2, 1, 640]",
+      "encoder_step": "fp32 [1, 1024, 1]"
+     },
+     "outputs": {
+      "token_id": "int32 [1, 1, 1]",
+      "token_prob": "fp32 [1, 1, 1]",
+      "duration": "int32 [1, 1, 1]",
+      "h_out": "fp32 [2, 1, 640]",
+      "c_out": "fp32 [2, 1, 640]"
+     }
+    }
+   },
+   "convert_s": 0.2,
+   "mlpackage_bytes": 35792215,
+   "paths": {
+    "mlpackage": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder-fp32/DecoderJoint.mlpackage",
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder-fp32/DecoderJoint.mlmodelc"
+   },
+   "compile": {
+    "compile_s": 0.03,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder-fp32/DecoderJoint.mlmodelc",
+    "mlmodelc_bytes": 35792668
+   }
+  }
+ },
+ "environment": {
+  "coremltools": "9.0",
+  "numpy": "2.2.6",
+  "python": "3.12.14",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "machine": "arm64"
+ },
+ "pass_pipeline": [
+  "common::lower_complex_dialect_ops",
+  "common::update_output_dtypes",
+  "common::cast_optimization",
+  "common::noop_elimination",
+  "common::int_op_canonicalization",
+  "common::nullify_redundant_quantization_zero_point",
+  "common::dequantize_quantize_pair_elimination",
+  "common::distributive_quantized_binary_op_scale_normalization",
+  "common::dequantize_to_constexpr",
+  "common::canonicalize_quantized_lut_pattern",
+  "common::const_elimination",
+  "common::sanitize_input_output_names",
+  "common::divide_to_multiply",
+  "common::select_optimization",
+  "common::add_conv_transpose_output_shape",
+  "common::const_elimination",
+  "common::const_deduplication",
+  "common::loop_invariant_elimination",
+  "common::remove_symbolic_reshape",
+  "common::noop_elimination",
+  "common::fuse_matmul_weight_bias",
+  "common::fuse_linear_bias",
+  "common::fuse_gelu_tanh_approximation",
+  "common::fuse_gelu_exact",
+  "common::fuse_leaky_relu",
+  "common::rank0_expand_dims_swap",
+  "common::fuse_squeeze_expand_dims",
+  "common::compose_conv1d",
+  "common::use_reflection_padding",
+  "common::merge_consecutive_paddings",
+  "common::fuse_pad_conv",
+  "common::image_input_preprocess",
+  "common::replace_stack_reshape",
+  "common::reduce_transposes",
+  "common::fuse_dilated_conv",
+  "common::fuse_conv_scale",
+  "common::fuse_conv_bias",
+  "common::fuse_onehot_matmul_to_gather",
+  "common::fuse_layernorm_or_instancenorm",
+  "common::fuse_elementwise_to_batchnorm",
+  "common::fuse_reduce_mean",
+  "common::fuse_conv_batchnorm",
+  "common::fuse_conv_scale",
+  "common::fuse_conv_bias",
+  "common::fuse_conv_batchnorm",
+  "common::detect_concat_interleave",
+  "common::concat_to_pixel_shuffle",
+  "common::fuse_prelu",
+  "common::prelu_to_lrelu",
+  "common::merge_consecutive_relus",
+  "common::merge_consecutive_reshapes",
+  "common::merge_consecutive_transposes",
+  "common::fuse_transpose_matmul",
+  "common::expand_high_rank_reshape_and_transpose",
+  "common::fuse_stack_split",
+  "common::reduce_transposes",
+  "common::remove_redundant_ops",
+  "common::dedup_op_and_var_names",
+  "common::update_output_dtypes",
+  "common::guard_negative_gather_indices",
+  "common::const_elimination",
+  "common::dead_code_elimination",
+  "common::cast_optimization",
+  "common::dead_code_elimination",
+  "common::const_elimination",
+  "common::dead_code_elimination",
+  "common::cast_optimization",
+  "common::dead_code_elimination",
+  "common::const_elimination",
+  "common::canonicalize_inplace_pattern",
+  "common::prefer_state_in_downstream",
+  "common::const_elimination",
+  "common::dead_code_elimination",
+  "common::dead_code_elimination",
+  "common::const_elimination",
+  "common::cast_optimization",
+  "common::dead_code_elimination",
+  "common::const_elimination",
+  "common::const_deduplication",
+  "common::dead_code_elimination",
+  "common::merge_affine_dequantize_with_consecutive_ops",
+  "common::expand_dynamic_linear",
+  "common::fuse_transpose_matmul",
+  "common::dead_code_elimination",
+  "common::const_deduplication",
+  "common::loop_invariant_elimination",
+  "common::noop_elimination",
+  "common::dedup_op_and_var_names",
+  "common::reduce_transposes",
+  "common::remove_redundant_ops",
+  "common::topological_reorder",
+  "common::dead_code_elimination"
+ ],
+ "peak_rss_mb": 360.1
+}

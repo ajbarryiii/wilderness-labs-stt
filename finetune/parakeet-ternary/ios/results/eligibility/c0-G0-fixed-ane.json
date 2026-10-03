@@ -1,0 +1,26 @@
+{
+ "design_revision": 7,
+ "code_version": "wp3-eligibility-1",
+ "model": "c0",
+ "arm": "G0",
+ "variant": "fixed",
+ "backend": "ane",
+ "compute_units": "cpuAndNeuralEngine",
+ "role": "graph control (vs C0)",
+ "eligible": false,
+ "selection_eligible": false,
+ "timing_allowed": true,
+ "reasons": [],
+ "checks": {
+  "g0_vs_c0": {
+   "pass": true,
+   "moot_clips": 25,
+   "moot_exact": 25,
+   "other_rel_max": 0.26652520841322574
+  }
+ },
+ "inputs": {
+  "results/gates/c0-G0-fixed-cpuAndNeuralEngine.json": "3df31cc88501e0be10f06808762afe2ef1403c3b85ebb706d9f53bf40b4618e7"
+ },
+ "built": "2026-10-02 23:31"
+}
