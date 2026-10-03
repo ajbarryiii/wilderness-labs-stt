@@ -581,3 +581,51 @@ C6s2 and C6s4. 4a was added for the C7 and C8 enumerated graphs.
     - C5: scope, plus numerics.
     - Every FP16-decoder record.
 - The full 4b table with both decoder precisions is in `results/wp3_rev7_table.txt`.
+
+## WP5: eligibility-gated runner and informational Mac sweep
+
+- **Timing gate.** `parakeet-bench run --arm custom --encoder …` refuses to time an encoder arm without `--eligibility MODEL:ARM` and a passing **revision-8** record at `results/eligibility/<model>-<arm>-<variant>-<backend>.json`. The check (`BenchCore.Eligibility`, mirroring `mil/eligibility.py` `check()`) requires:
+  - the record's model, arm, variant and backend match the run's encoder path and compute units;
+  - every input file's SHA-256 is unchanged;
+  - `timing_allowed` is true.
+
+  C0 is exempt as the product baseline and is labelled so. External-encoder gate runs are labelled "not an arm timing". `wp5sweep.py` checks eligibility in Python as well.
+- **Pairing.** `--pair-c0 C0DIR --c0-out PATH` runs C0 and the arm in the same process, clip by clip: per clip a C0 block and an arm block, each with warm-ups and timed calls. C0 goes first on even-numbered clips and the arm first on odd ones.
+- **`sweep_job.sh`** runs inside macguard. It checks the 30 GB disk floor, purges this binary's Core ML cache (`~/Library/Caches/parakeet-bench`, where its e5 bundle cache lives), runs the paired sweep (first loads uncached), loads the arm in a fresh process (cached load, arm-only footprint), and purges the cache again.
+- **`wp5sweep.py plan | run | report`** checks eligibility and restores each arm with `mil/archive.py back`. It then times the arm, fetches the records, archives restored arms back out (the Mac ended with 133 GB free), and builds `armreport` summaries with paired comparisons.
+- **`macpush.py`** now takes the SSH helper from `WP3_MAC_RUN` (environment or untracked `mil/local.json`) instead of a personal path.
+
+**Sweep** (2026-10-03; M1 Pro, macOS 27, shared, so everything below is **informational, no claims**). 64 natural clips, 3 warm-up + 10 timed calls per clip and arm, each arm paired with C0 in the same guarded job.
+- Ratios are arm/C0 typical latency: the median over clips of per-clip median ratios, with a percentile bootstrap 95% CI over 2,000 clip resamples (pairs kept together).
+- C0's own typical total in these jobs was 62 / 67 / 82 / 99 ms (2 / 4 / 8 / 15 s), with its encoder at about 41.4 ms in every bucket.
+- All mp2 arms transcribe with WER 2.71%, equal to mp2's FP32 reference, and 62–63/64 token sequences equal the reference's greedy tokens. G0 (C0's weights) has 1.67%, as C0 does.
+- Per-arm files are in `results/wp5/` (`sweep_table.md`, `sweep.json`, `<arm>.summary.json`, `<arm>.c0block.summary.json`).
+
+| Arm (front end + decode) | Total vs C0, 2 / 4 / 8 / 15 s [95% CI] | Encoder ms, 2 / 4 / 8 / 15 s | Encoder load, first / cached (ms) | Arm-only footprint MB |
+|---|---|---|---|---|
+| C1 multi, A + F2 | 0.75 [0.72, 0.76] / 0.86 [0.85, 0.87] / 1.25 [1.24, 1.26] / 1.55 [1.51, 1.61] | 39.4 / 46.6 / 77.8 / 114.5 | 9,835 / 1,052 | 145 |
+| C3 multi, A + F2 | 0.37 [0.36, 0.39] / 0.42 [0.41, 0.44] / 0.54 [0.53, 0.55] / 0.85 [0.83, 0.86] | 16.1 / 17.6 / 21.3 / 45.1 | 78,664 / 1,255 | 148 |
+| C4 multi, A + F2 | 0.38 [0.36, 0.39] / 0.44 [0.42, 0.46] / 0.55 [0.53, 0.55] / 0.83 [0.81, 0.85] | 16.6 / 18.2 / 22.0 / 44.3 | 76,157 / 1,369 | 153 |
+| C6s2 multi, A + F2 | 0.37 [0.36, 0.38] / 0.43 [0.43, 0.45] / 0.72 [0.71, 0.73] / 0.96 [0.95, 0.97] | 16.4 / 18.5 / 35.0 / 56.1 | 492,850 / 1,611 | 157 |
+| C6s4 multi, A + F2 | 0.34 [0.33, 0.36] / 0.41 [0.39, 0.42] / 0.55 [0.55, 0.57] / 0.81 [0.81, 0.82] | 14.4 / 16.2 / 22.1 / 42.3 | 503,325 / 1,521 | 157 |
+| C6s8 multi, A + F2 | 0.33 [0.32, 0.35] / 0.40 [0.38, 0.41] / 0.52 [0.51, 0.55] / 0.79 [0.78, 0.80] | 14.0 / 15.4 / 19.6 / 40.2 | 387,655 / 1,542 | 157 |
+| C6d4 multi, A + F2 | 0.36 [0.35, 0.38] / 0.42 [0.42, 0.44] / 0.55 [0.54, 0.58] / 0.84 [0.83, 0.86] | 16.1 / 17.7 / 22.1 / 43.8 | 145,026 / 1,318 | 148 |
+| C6d8 multi, A + F2 | 0.37 [0.36, 0.38] / 0.43 [0.41, 0.44] / 0.55 [0.53, 0.57] / 0.84 [0.83, 0.85] | 16.1 / 17.6 / 21.5 / 44.1 | 143,466 / 1,291 | 148 |
+| C7 multi, A + F2 | 0.37 [0.37, 0.39] / 0.44 [0.43, 0.46] / 0.57 [0.55, 0.58] / 0.84 [0.83, 0.84] | 16.6 / 18.5 / 22.8 / 43.7 | 89,038 / 1,380 | 154 |
+| C8 multi, A + F2 | 0.39 [0.38, 0.41] / 0.45 [0.44, 0.47] / 0.61 [0.59, 0.62] / 0.92 [0.91, 0.93] | 17.4 / 19.4 / 26.2 / 53.0 | 410,627 / 1,651 | 167 |
+| C4 fixed 15 s, A + F2 | 0.82 / 0.82 / 0.83 / 0.83 (CI width ≤ 0.01) | 44.2 / 44.2 / 44.3 / 44.3 | 20,041 / 107 | 168 |
+| G0 fixed 15 s, A + F2 (B0 decoder) | 0.83 / 0.83 / 0.85 / 0.84 (CI width ≤ 0.01) | 44.6 / 44.6 / 44.6 / 44.6 | 28,572 / 108 | 166 |
+| C4 multi, c0pre + F0 | 0.65 [0.63, 0.68] / 0.73 [0.72, 0.76] / 0.91 [0.89, 0.94] / 1.22 [1.21, 1.24] | 16.5 / 18.1 / 22.5 / 44.9 | 77,989 / 1,365 | 85 |
+| C4 multi, c0pre + F1 | 0.68 [0.66, 0.70] / 0.74 [0.72, 0.77] / 0.91 [0.88, 0.95] / 1.22 [1.20, 1.26] | 16.5 / 18.2 / 22.5 / 44.9 | 76,138 / 1,336 | 83 |
+| C4 multi, c0pre + F2 | 0.59 [0.58, 0.60] / 0.64 [0.63, 0.65] / 0.72 [0.71, 0.74] / 1.00 [0.98, 1.00] | 16.5 / 18.2 / 22.0 / 44.3 | 76,287 / 1,351 | 155 |
+| C4 multi, A + F0 | 0.44 [0.41, 0.46] / 0.53 [0.50, 0.56] / 0.72 [0.71, 0.76] / 1.08 [1.05, 1.11] | 16.5 / 18.1 / 21.9 / 44.6 | 75,658 / 1,352 | 73 |
+| C4 multi, A + F1 | 0.46 [0.44, 0.48] / 0.53 [0.51, 0.57] / 0.72 [0.70, 0.77] / 1.07 [1.04, 1.11] | 16.4 / 18.0 / 21.8 / 44.5 | 76,127 / 1,333 | 70 |
+
+Notes:
+- **Load times.** "First" is `MLModel` loading of all four functions after the cache purge (uncached device specialization). C0's own encoder first load in the same jobs was 29–35 s. "Cached" is a fresh process loading from the populated cache. Neither is backed by an Instruments cache-event trace yet (DESIGN.md "Load").
+- **Footprint.** `phys_footprint` peak of a process with the arm loaded alone. Core ML's mapped model memory is not attributed to it.
+- **Decode, 15 s bucket:**
+  - F2 takes 35 ms against 58–60 ms for F0/F1 with the FP32 Core ML decoder models.
+  - Front end A takes 1.8 ms against 16 ms for C0's preprocessor.
+  - Physical calls over 64 clips × 1: F2 1,955 prediction runs and 2,135 joint steps; F0 1,955 Decoder + 2,135 JointDecision calls; F1 2,135 fused calls.
+- **C1 and the 4 GB cap.** C1's first job was aborted by macguard at a group RSS of 4.49 GB under the 4 GB cap (process footprint about 220 MB). After the uncached run, its Core ML cache held 4.6 GB: device-specialized copies of the dense FP16 multifunction model, against 18 MB for the compressed arms. It was rerun with `--cap 6G` (peak RSS 3.5 GB), the cap WP3's runner uses for the same models. The system-memory and swap aborts were unchanged. All other arms ran at 4 GB.

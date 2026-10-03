@@ -95,11 +95,11 @@ def bench_args(a: dict) -> list[str]:
     return args
 
 
-def run_arm(a: dict) -> dict:
+def run_arm(a: dict, cap: str = "4G") -> dict:
     out = f"{MAC_A}/results/wp5/{a['name']}"
     args = bench_args(a) + ["--pair-c0", f"{MAC_A}/c0", "--c0-out", f"{out}/c0.jsonl"]
     quoted = " ".join("'" + x.replace("'", "'\\''") + "'" for x in args)
-    line = (f"rm -rf {out}; mkdir -p {out}; i=0; while :; do ./macguard --rss-cap 4G --timeout 3600 -- sh sweep_job.sh 2 {out} "
+    line = (f"rm -rf {out}; mkdir -p {out}; i=0; while :; do ./macguard --rss-cap {cap} --timeout 3600 -- sh sweep_job.sh 2 {out} "
             f"{CACHED_CLIP} -- {quoted} > {out}/job.log 2>&1; s=$?; [ $s -ne 3 ] && break; i=$((i+1)); "
             f"[ $i -gt 120 ] && break; sleep 60; done; echo $s > {out}/STATUS")
     mac(f"nohup sh -c {shlex.quote(line)} > /dev/null 2>&1 < /dev/null & echo started")
@@ -115,7 +115,7 @@ def run_arm(a: dict) -> dict:
             (local / f).write_text(mac(f"cat {out}/{f}"))
         except RuntimeError:
             pass
-    return {"name": a["name"], "status": int(status)}
+    return {"name": a["name"], "status": int(status), "rss_cap": cap}
 
 
 def ensure_model(a: dict, restored: set) -> None:
@@ -146,7 +146,7 @@ def cmd_run(args) -> None:
             continue
         ensure_model(a, restored)
         t0 = time.time()
-        r = run_arm(a)
+        r = run_arm(a, args.cap)
         r["minutes"] = round((time.time() - t0) / 60, 1)
         log.append(r)
         print(json.dumps(r), flush=True)
@@ -167,11 +167,12 @@ def cmd_report(args) -> None:
     rows = []
     for a in arms():
         d = LOCAL / a["name"]
-        if not (d / "arm.jsonl").exists():
-            continue
+        if not (d / "arm.jsonl").exists() or not (d / "cached.jsonl").exists():
+            continue  # aborted or not run
         out = SUMMARY / f"{a['name']}.summary.json"
+        ref = [] if a["model"] == "c0" else ["--ref", "/mnt/hd/wilderness-labs-stt/parakeet-ios/native/mp2"]
         subprocess.run([str(IOS.parent / "python"), str(IOS / "armreport.py"), str(d / "arm.jsonl"), "--baseline",
-                        str(d / "c0.jsonl"), "--out", str(out)], check=True, stdout=subprocess.DEVNULL)
+                        str(d / "c0.jsonl"), "--out", str(out), *ref], check=True, stdout=subprocess.DEVNULL)
         c0out = SUMMARY / f"{a['name']}.c0block.summary.json"
         subprocess.run([str(IOS.parent / "python"), str(IOS / "armreport.py"), str(d / "c0.jsonl"), "--out", str(c0out)],
                        check=True, stdout=subprocess.DEVNULL)
@@ -190,6 +191,14 @@ def cmd_report(args) -> None:
             "encoder_ms_typical": {b: v.get("encoder_ms_typical") for b, v in s["per_bucket"].items()},
             "encoder_ms_p95_hd": {b: v.get("encoder_ms_p95_hd") for b, v in s["per_bucket"].items()},
             "total_ms_typical": {b: v.get("total_ms_typical") for b, v in s["per_bucket"].items()},
+            "total_ms_p95_hd": {b: v.get("total_ms_p95_hd") for b, v in s["per_bucket"].items()},
+            "preprocess_ms_typical": {b: v.get("preprocess_ms_typical") for b, v in s["per_bucket"].items()},
+            "decode_ms_typical": {b: v.get("decode_ms_typical") for b, v in s["per_bucket"].items()},
+            "paired_p95_ratio": {b: {"ratio": v["total"]["p95_ratio"], "ci95": v["total"]["p95_ratio_ci95"]}
+                                 for b, v in s["paired_vs_baseline"]["per_bucket"].items()},
+            "c0_first_load_ms": next((r for r in load_records(d / "c0.jsonl") if r.get("record") == "load"), {}).get("load_ms"),
+            "wer_b0_same_clips": s.get("b0_wer_vs_reference_same_clips", {}).get("wer"),
+            "rss_cap": "6G" if a["name"] == "C1-multi-vdsp-f2" else "4G",
             "c0_total_ms_typical": {b: v.get("total_ms_typical") for b, v in c0s["per_bucket"].items()},
             "physical_calls": s["calls"]["physical_totals"],
             "first_load_ms": {"encoder": enc_load.get("load_ms"), "encoder_total": enc_load.get("total_ms"),
@@ -213,7 +222,15 @@ def cmd_report(args) -> None:
         cl = r["cached_load_ms"]["encoder_total"]
         lines.append(f"| {r['arm']} | {ratio} | {enc} | {fl and round(fl)} / {cl and round(cl)} | "
                      f"{r['phys_footprint_peak_mb_arm_only'] and round(r['phys_footprint_peak_mb_arm_only'])} |")
-    (SUMMARY / "sweep_table.md").write_text("Informational (shared Mac). " + "\n".join(lines) + "\n")
+    lines += ["", "| arm | WER % | tokens = mp2 FP32 reference | preprocess / decode ms (15 s) | physical calls (64 clips, 1 call each) | C0 encoder first load ms |",
+              "|---|---|---|---|---|---|"]
+    for r in rows:
+        eq = r["tokens_equal_mp2_reference"]
+        lines.append(f"| {r['arm']} | {100 * r['wer']:.2f} | {eq['clips'] if eq else '-'}/{eq['of'] if eq else '-'} | "
+                     f"{r['preprocess_ms_typical'].get('15', 0):.1f} / {r['decode_ms_typical'].get('15', 0):.1f} | "
+                     f"{', '.join(f'{k} {v}' for k, v in r['physical_calls'].items())} | "
+                     f"{round((r['c0_first_load_ms'] or {}).get('Encoder', 0))} |")
+    (SUMMARY / "sweep_table.md").write_text("Informational (shared Mac M1 Pro, macOS 27; no claims).\n\n" + "\n".join(lines) + "\n")
     print("\n".join(lines))
 
 
@@ -221,7 +238,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("plan").set_defaults(func=cmd_plan)
-    p = sub.add_parser("run"); p.add_argument("--only"); p.set_defaults(func=cmd_run)
+    p = sub.add_parser("run"); p.add_argument("--only")
+    p.add_argument("--cap", default="4G", help="macguard RSS cap; 6G for dense FP16 multifunction arms whose mapped "
+                   "per-function programs exceed 4 GB of group RSS (justified in README)")
+    p.set_defaults(func=cmd_run)
     sub.add_parser("report").set_defaults(func=cmd_report)
     args = parser.parse_args()
     args.func(args)
