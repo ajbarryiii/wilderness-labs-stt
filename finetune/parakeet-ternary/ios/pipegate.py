@@ -2,9 +2,12 @@
 
 A deployed pipeline = front end A (vDSP) -> encoder arm (model, arm, variant, backend) -> decode loop (F2 native
 FP32; F0 / F1 with the FP32 decoder models). Gated on all 82 clips, run in Swift (`parakeet-bench gate`):
-- encoder: the arm's output from front end A's features (own bucket) vs the FP32 reference encoder output on the
-  reference features (WP3's refcache, FP16-rounded scales): rel <= 0.1 (tau 1e-3) on every clip, finite,
-  encoder_length = ceil(M / 8);
+- encoder: the arm's output from front end A's features (own bucket) vs the FP32 reference encoder (FP16-rounded
+  scales, the weights every exact arm encodes) on the reference front end's features: rel <= 0.1 (tau 1e-3) on
+  every clip, finite, encoder_length = ceil(M / 8). The reference features are the reference front end evaluated in
+  FP64 (DESIGN.md rev. 5, gate 5: the FP32 evaluation is rounding noise on the silence clip, where the exact
+  features are 0 and front end A returns 0); `ref64` computes that reference encoder output once (Mac). The
+  comparison against WP3's refcache (reference encoder on FP32-evaluated features) is kept as a diagnostic;
 - decisions: forced replay of every trace through the pipeline's decode loop; per head (token incl. blank,
   duration), steps where the reference's raw-logit top-1 margin is >= 1.0 are decisive; pooled agreement with the
   reference argmax >= 99.5% on decisive steps, >= 99% on all, >= 50% decisive;
@@ -15,6 +18,7 @@ Records: ios/results/eligibility/pipelines/<model>-<arm>-<variant>-<backend>-vds
 plus "kind": "pipeline", "front_end", "decode", "decoder_precision", "encoder_record" and "components": the SHA-256
 and configuration of every loaded component, which parakeet-bench run recomputes and compares before timing).
 
+  python -m pipegate ref64                             # Mac, once, inside macguard (6G): FP64-feature reference
   python -m pipegate evaluate --gate-dir DIR           # Mac, inside pipegate_job.sh (exit 10 on a failed condition)
   ./python ios/pipegate.py run [--only NAME,...]        # NixOS: every eligible encoder record x {f2, f0, f1}
   ./python ios/pipegate.py record --evaluation FILE     # NixOS: WER, records (run calls it per combination)
@@ -36,7 +40,7 @@ sys.path.insert(0, str(IOS))
 sys.path.insert(0, str(IOS.parent))
 
 DESIGN_REVISION = 8
-CODE_VERSION = "wp7-pipegate-1"
+CODE_VERSION = "wp7-pipegate-2"
 T = {"encoder_rel": 0.1, "tau": 1e-3, "decisive_margin": 1.0, "agree_decisive": 0.995, "agree_all": 0.99,
      "decisive_min": 0.5, "identical_min": 61, "wer_points": 0.2}
 DURATIONS = (0, 1, 2, 3, 4)
@@ -55,6 +59,65 @@ def sha(path: Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+# --- ref64 (Mac) -------------------------------------------------------------------------------------------------
+
+def ref64_dir(model: str) -> Path:
+    import artifacts
+
+    return artifacts.root() / "refcache" / f"{model}-ref64"
+
+
+def cmd_ref64(args) -> int:
+    """The FP32 reference encoder (FP16-rounded scales, as WP3's refcache fp16s variant) on the FP64 evaluation of
+    the reference front end (native.fp64_features, the stored constants), every clip: <dir>/<id>.npy [1024, E]."""
+    import numpy as np
+    import torch
+
+    import clips as clipmod
+    from mil import refcache
+    from mil.weights import Source
+    from native import fp64_features, load_blob
+
+    torch.set_grad_enabled(False)
+    t0 = time.time()
+    index = refcache.validate(args.model)
+    consts_dir = Path(args.frontend)
+    consts = load_blob(consts_dir, "frontend")
+    out = ref64_dir(args.model)
+    out.mkdir(parents=True, exist_ok=True)
+    source = Source(args.model)
+    model = refcache.load_model(args.model)
+    refcache.set_scales(model, source, "fp16s")
+    rows = {}
+    for clip in clipmod.load_manifest()["clips"]:
+        pcm = clipmod.read_pcm(refcache.default_pcm(), clip)
+        if clipmod.pcm_sha256(pcm) != clip["sha256"]:
+            raise ValueError(f"{clip['id']}: PCM SHA-256 differs from clips.json")
+        f64 = fp64_features(pcm, consts["window"], consts["fb"])
+        feats = torch.from_numpy(f64.astype(np.float32))[None]
+        m = len(pcm) // 160
+        enc, enc_len = model.encoder(feats, torch.tensor([m]))
+        e = int(enc_len[0])
+        if e != clip["encoder_frames"]:
+            raise ValueError(f"{clip['id']}: {e} encoder frames != clips.json")
+        a = enc[0, :, :e].numpy().astype(np.float32)
+        np.save(out / f"{clip['id']}.npy", a)
+        old = refcache.load_clip(args.model, clip["id"])
+        rows[clip["id"]] = {"kind": clip["kind"], "sha256": hashlib.sha256(a.tobytes()).hexdigest(),
+                            "fp32_vs_fp64_features_rel_abs": [float(x) for x in refcache.errors(old["features"], f64, 1e-6)],
+                            "enc_refcache_vs_ref64_rel_abs": [float(x) for x in refcache.errors(old["fp16s_enc"], a, T["tau"])]}
+    doc = {"model": args.model, "scales": "fp16s", "features": "native.fp64_features (FP64 reference front end), cast to FP32",
+           "frontend_manifest_sha256": sha(consts_dir / "frontend.json"), "refcache_provenance": index["provenance"],
+           "model_provenance": source.provenance, "clips_json_sha256": sha(IOS / "clips.json"),
+           "pipegate_py_sha256": sha(Path(__file__)), "torch": torch.__version__, "seconds": round(time.time() - t0, 1),
+           "clips": rows}
+    (out / "index.json").write_text(json.dumps(doc, indent=1) + "\n")
+    worst = sorted(rows.items(), key=lambda kv: -kv[1]["enc_refcache_vs_ref64_rel_abs"][0])[:3]
+    print(json.dumps({"clips": len(rows), "seconds": doc["seconds"],
+                      "largest refcache-vs-ref64 encoder differences": {k: v["enc_refcache_vs_ref64_rel_abs"] for k, v in worst}}))
+    return 0
+
+
 # --- evaluate (Mac) ----------------------------------------------------------------------------------------------
 
 def cmd_evaluate(args) -> int:
@@ -69,7 +132,11 @@ def cmd_evaluate(args) -> int:
     clips = {c["id"]: c for c in json.loads((IOS / "clips.json").read_text())["clips"]}
     traces = {t["id"]: t for t in json.loads((IOS / "traces.json").read_text())["clips"]}
     index = refcache.validate(header["model"])
+    r64dir = ref64_dir(header["model"])
+    r64 = json.loads((r64dir / "index.json").read_text())
     problems = []
+    if r64["clips_json_sha256"] != sha(IOS / "clips.json") or r64["refcache_provenance"] != index["provenance"]:
+        problems.append("FP64-feature reference is stale (clips.json or model provenance changed)")
     if sorted(rows) != sorted(clips) or sorted(header["clip_ids"]) != sorted(clips):
         problems.append(f"coverage: {len(rows)} of {len(clips)} clips")
     if header["clips_json_sha256"] != sha(IOS / "clips.json"):
@@ -82,12 +149,21 @@ def cmd_evaluate(args) -> int:
             problems.append(f"{cid}: encoder output file differs from the gate record")
         e = clips[cid]["encoder_frames"]
         ok_len = r["encoder_length"] == e == a.shape[1]
-        rel, ab = refcache.errors(a, ref["fp16s_enc"], T["tau"]) if ok_len else (math.inf, math.inf)
+        ref64 = np.load(r64dir / f"{cid}.npy")
+        if hashlib.sha256(ref64.astype("<f4").tobytes()).hexdigest() != r64["clips"][cid]["sha256"]:
+            problems.append(f"{cid}: FP64-feature reference file differs from its index")
+        rel, ab = refcache.errors(a, ref64, T["tau"]) if ok_len else (math.inf, math.inf)
+        rel32, ab32 = refcache.errors(a, ref["fp16s_enc"], T["tau"]) if ok_len else (math.inf, math.inf)
         enc_rows.append({"clip": cid, "bucket": r["bucket"], "rel": rel, "abs": ab, "length_ok": ok_len, "finite": r["finite"],
-                         "pass": ok_len and r["finite"] and rel <= T["encoder_rel"]})
+                         "pass": ok_len and r["finite"] and rel <= T["encoder_rel"],
+                         "diag_vs_reference_on_fp32_features": {"rel": rel32, "abs": ab32}})
     encoder = {"pass": all(x["pass"] for x in enc_rows) and len(enc_rows) == len(clips), "clips": len(enc_rows),
                "passed": sum(x["pass"] for x in enc_rows), "max_rel": max(x["rel"] for x in enc_rows),
-               "max_abs": max(x["abs"] for x in enc_rows)}
+               "max_abs": max(x["abs"] for x in enc_rows),
+               "reference": "FP32 reference encoder (fp16s scales) on FP64-evaluated reference features (ref64)",
+               "diag_vs_reference_on_fp32_features": {
+                   "max_rel": max(x["diag_vs_reference_on_fp32_features"]["rel"] for x in enc_rows),
+                   "over_ceiling": [x["clip"] for x in enc_rows if x["diag_vs_reference_on_fp32_features"]["rel"] > T["encoder_rel"]]}}
     per_decode = {}
     for dec in header["decodes"]:
         tok = {"all": 0, "ok": 0, "dec": 0, "dec_ok": 0}
@@ -128,7 +204,7 @@ def cmd_evaluate(args) -> int:
         per_decode[dec]["pass_before_wer"] = (encoder["pass"] and not problems and per_decode[dec]["coverage"]["pass"]
                                              and per_decode[dec]["decisions"]["pass"] and per_decode[dec]["free_decoding"]["pass"])
     doc = {"design_revision": DESIGN_REVISION, "code_version": CODE_VERSION, "thresholds": T, "header": header,
-           "refcache_provenance": index["provenance"], "problems": problems, "encoder": encoder, "encoder_rows": enc_rows,
+           "refcache_provenance": index["provenance"], "ref64_index_sha256": sha(r64dir / "index.json"), "problems": problems, "encoder": encoder, "encoder_rows": enc_rows,
            "decodes": per_decode, "pipegate_py_sha256": sha(Path(__file__)), "evaluated": time.strftime("%Y-%m-%d %H:%M")}
     (d / "evaluation.json").write_text(json.dumps(doc, indent=1) + "\n")
     ok = all(v["pass_before_wer"] for v in per_decode.values())
@@ -162,7 +238,8 @@ def cmd_record(args) -> int:
         arm_w = _wer(v["free_tokens"], clips, sp)
         wers[dec] = {"pass": arm_w["wer"] <= ref_w["wer"] + T["wer_points"] / 100, "reference_wer_pct": round(100 * ref_w["wer"], 3),
                      "pipeline_wer_pct": round(100 * arm_w["wer"], 3), "clips": len(v["free_tokens"]), "limit_points": T["wer_points"]}
-    summary = {k: ev[k] for k in ("design_revision", "code_version", "thresholds", "header", "refcache_provenance", "problems",
+    summary = {k: ev[k] for k in ("design_revision", "code_version", "thresholds", "header", "refcache_provenance",
+                                  "ref64_index_sha256", "problems",
                                   "encoder", "evaluated", "pipegate_py_sha256")}
     summary["decodes"] = {dec: {k: v[k] for k in ("coverage", "decisions", "free_decoding")} | {"wer": wers[dec]}
                           for dec, v in ev["decodes"].items()}
@@ -324,6 +401,9 @@ def cmd_table(args) -> int:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
+    p = sub.add_parser("ref64"); p.add_argument("--model", default="mp2")
+    p.add_argument("--frontend", default="/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/native/mp2")
+    p.set_defaults(func=cmd_ref64)
     p = sub.add_parser("evaluate"); p.add_argument("--gate-dir", required=True); p.set_defaults(func=cmd_evaluate)
     p = sub.add_parser("record"); p.add_argument("--evaluation", required=True); p.set_defaults(func=cmd_record)
     p = sub.add_parser("run"); p.add_argument("--only"); p.set_defaults(func=cmd_run)
