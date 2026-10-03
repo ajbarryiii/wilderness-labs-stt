@@ -51,6 +51,57 @@ public enum ComponentHash {
     }
 }
 
+/// The executing implementation (review WP7 r1 finding 2): the SHA-256 of this process's executable, so a record made
+/// by one build of parakeet-bench does not admit another build's loop code or loaders.
+public enum BuildIdentity {
+    public static let executableSHA256: String = {
+        guard let url = Bundle.main.executableURL, let digest = try? ComponentHash.file(url) else { return "unknown" }
+        return digest
+    }()
+    /// Settings every pipeline model is loaded with (C0Models.configuration) and the decode-loop constants.
+    public static func configuration(computeUnits: String) -> [String: Any] {
+        let loop = LabelLoop()
+        return ["compute_units": computeUnits, "allow_low_precision_accumulation_on_gpu": true,
+                "label_loop": ["blank": loop.blank, "durations": loop.durations, "max_symbols": loop.maxSymbols]]
+    }
+}
+
+/// C0's identity (review WP7 r1 finding 3): every file of the pinned published export (ios/c0.json: repo, revision,
+/// per-file size and SHA-256) must be present and equal, and each model directory may hold no other file.
+public enum C0Identity {
+    public static func verify(directory: URL, pinned: URL) throws -> [String: Any] {
+        let raw = try Data(contentsOf: pinned)
+        guard let doc = try JSONSerialization.jsonObject(with: raw) as? [String: Any],
+              let files = doc["files"] as? [[String: Any]], !files.isEmpty else {
+            throw BenchError.invalid("\(pinned.path): no pinned files")
+        }
+        var problems: [String] = [], expected = Set<String>()
+        for f in files {
+            guard let path = f["path"] as? String, let sha = f["sha256"] as? String, let bytes = f["bytes"] as? Int else {
+                throw BenchError.invalid("\(pinned.path): malformed file entry")
+            }
+            expected.insert(path)
+            let url = directory.appendingPathComponent(path)
+            let size = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int) ?? -1
+            if size != bytes { problems.append("\(path): \(size) bytes, pinned \(bytes)"); continue }
+            if (try? ComponentHash.file(url)) != sha { problems.append("\(path): SHA-256 differs from c0.json") }
+        }
+        for dir in Set(expected.compactMap { $0.contains("/") ? String($0.split(separator: "/")[0]) : nil }) {
+            let root = directory.appendingPathComponent(dir).standardizedFileURL.resolvingSymlinksInPath()
+            guard let e = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.isRegularFileKey]) else { continue }
+            for case let u as URL in e where (try? u.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true {
+                let rel = dir + "/" + String(u.standardizedFileURL.resolvingSymlinksInPath().path.dropFirst(root.path.count + 1))
+                if !expected.contains(rel) { problems.append("\(rel): not in c0.json") }
+            }
+        }
+        guard problems.isEmpty else {
+            throw BenchError.invalid("refusing: \(directory.path) is not the pinned C0 export: \(problems.prefix(5))")
+        }
+        return ["verified": true, "repo": doc["repo"] ?? "", "revision": doc["revision"] ?? "", "files": files.count,
+                "c0_json_sha256": sha256Hex(raw)]
+    }
+}
+
 /// One deployed pipeline: front end + encoder arm (model, arm, variant, backend) + decode loop (+ its components).
 public struct PipelineSpec {
     public let model: String
@@ -81,6 +132,8 @@ public struct PipelineSpec {
     public func components() throws -> [String: Any] {
         var c: [String: Any] = [
             "compute_units": computeUnits,
+            "configuration": BuildIdentity.configuration(computeUnits: computeUnits),
+            "executable_sha256": BuildIdentity.executableSHA256,
             "encoder": ["model": model, "arm": arm, "variant": variantName,
                         "package": "\(model)/\(arm)/\(variantName).mlmodelc", "sha256": try ComponentHash.directory(encoderPath)],
         ]
@@ -88,7 +141,9 @@ public struct PipelineSpec {
         case "vdsp":
             guard let dir = frontendConstants else { throw BenchError.invalid("vdsp needs front-end constants") }
             let m = try ComponentHash.blobManifest(dir, stem: "frontend")  // verifies the blob against its manifest
-            c["front_end"] = ["kind": "vdsp", "constants_sha256": m["sha256"] ?? "", "provenance": m["provenance"] ?? [:]]
+            // the manifest is bound too: it maps names to offsets and shapes (review WP7 r1 finding 2)
+            c["front_end"] = ["kind": "vdsp", "constants_sha256": m["sha256"] ?? "", "provenance": m["provenance"] ?? [:],
+                              "manifest_sha256": try ComponentHash.file(dir.appendingPathComponent("frontend.json"))]
         case "c0pre":
             guard let dir = c0Dir else { throw BenchError.invalid("c0pre needs the C0 directory") }
             c["front_end"] = ["kind": "c0pre", "preprocessor_sha256": try ComponentHash.directory(dir.appendingPathComponent("Preprocessor.mlmodelc"))]
@@ -99,18 +154,21 @@ public struct PipelineSpec {
             guard let dir = nativeWeights else { throw BenchError.invalid("f2 needs native weights") }
             let m = try ComponentHash.blobManifest(dir, stem: "decoder_joint")
             c["decode"] = ["kind": "f2", "precision": "fp32", "native_weights_sha256": m["sha256"] ?? "",
-                           "provenance": m["provenance"] ?? [:]]
+                           "provenance": m["provenance"] ?? [:],
+                           "manifest_sha256": try ComponentHash.file(dir.appendingPathComponent("decoder_joint.json"))]
         case "f0", "f1":
             guard let dir = decoderModels else { throw BenchError.invalid("\(decode) needs decoder models") }
             let names = decode == "f0" ? ["Decoder", "JointDecision"] : ["DecoderJoint"]
             var models: [String: String] = [:]
             for n in names { models[n] = try ComponentHash.directory(dir.appendingPathComponent("\(n).mlmodelc")) }
             var precision = "unknown"
-            if let data = try? Data(contentsOf: dir.appendingPathComponent("manifest.json")),
+            let manifestURL = dir.appendingPathComponent("manifest.json")
+            if let data = try? Data(contentsOf: manifestURL),
                let m = try JSONSerialization.jsonObject(with: data) as? [String: Any], let p = m["precision"] as? String {
                 precision = p
             }
-            c["decode"] = ["kind": decode, "precision": precision, "models_sha256": models]
+            c["decode"] = ["kind": decode, "precision": precision, "models_sha256": models,
+                           "manifest_sha256": (try? ComponentHash.file(manifestURL)) ?? "missing"]
         default: throw BenchError.invalid("unknown decode \(decode)")
         }
         return c
@@ -122,14 +180,18 @@ public struct PipelineSpec {
 /// revision whose components (SHA-256 + configuration) equal what this process is about to load, whose input files are
 /// unchanged, and whose encoder arm still has its passing WP3 record.
 public enum PipelineEligibility {
+    /// Pipeline records follow DESIGN.md revision 9 (gate 4, "Deployed-pipeline references"); the encoder arms'
+    /// WP3 records stay at Eligibility.requiredRevision (8).
+    public static let requiredRevision = 9
+
     public static func check(iosDir: URL, spec: PipelineSpec) throws -> [String: Any] {
         let url = iosDir.appendingPathComponent("results/eligibility/pipelines/\(spec.recordName)")
         guard let data = try? Data(contentsOf: url),
               let rec = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw BenchError.invalid("refusing to time: no pipeline record \(spec.recordName)")
         }
-        guard (rec["design_revision"] as? Int) == Eligibility.requiredRevision else {
-            throw BenchError.invalid("refusing to time: \(spec.recordName) is not a revision-\(Eligibility.requiredRevision) record")
+        guard (rec["design_revision"] as? Int) == requiredRevision else {
+            throw BenchError.invalid("refusing to time: \(spec.recordName) is not a revision-\(requiredRevision) record")
         }
         guard rec["timing_allowed"] as? Bool == true else {
             let reasons = (rec["reasons"] as? [String])?.joined(separator: "; ") ?? "?"

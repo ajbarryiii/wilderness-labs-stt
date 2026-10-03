@@ -23,7 +23,10 @@ import Foundation
 ///                 models + precision) and compute units equal the loaded ones, plus the arm's WP3 record;
 ///                 ios = --ios or the directory of clips.json; C0 is exempt)
 ///                 [--pair-c0 C0DIR --c0-out PATH]  (C0 and the arm interleaved clip by clip in this process;
-///                 C0 runs as shipped on --c0-compute-units, default cpuAndNeuralEngine, whatever the arm's units)
+///                 C0 runs as shipped on --c0-compute-units, default cpuAndNeuralEngine, whatever the arm's units;
+///                 every C0 load verifies the directory against the pinned export, <ios>/c0.json)
+///                 [--settle-ms N]  (before every block: wait N ms, then while ProcessInfo.thermalState is serious or
+///                 critical, up to 120 s; a "block" record holds the thermal states and waits)
 ///   parakeet-bench features --frontend-constants DIR --clips clips.json --pcm DIR --out DIR [--kinds/--ids]
 ///                       front end A on every clip: <id>.mel.f32 [128, N // 160 + 1] and features.jsonl
 ///   parakeet-bench encode --encoder PATH --encoder-variant fixed15 --clips clips.json --features DIR --tags vdsp,ref64
@@ -79,7 +82,7 @@ struct ParakeetBenchCLI {
                                           "--out", "--diag-dir", "--arm", "--arm-name", "--decode", "--frontend",
                                           "--frontend-constants", "--encoder", "--encoder-variant", "--encoder-input",
                                           "--decoder-models", "--native-weights", "--vocab", "--eligibility", "--ios",
-                                          "--pair-c0", "--c0-out", "--c0-compute-units"]
+                                          "--pair-c0", "--c0-out", "--c0-compute-units", "--settle-ms"]
 
     struct Options {
         var values: [String: String] = [:]
@@ -216,11 +219,16 @@ struct ParakeetBenchCLI {
         var load: [String: Any] = [:]
         var vocabulary: [Int: String] = [:]
         var armName = "C0"
+        let settleMs = try o.int("--settle-ms", 0)
+        let pinnedC0 = iosDir.appendingPathComponent("c0.json")
+        var c0Identity: [String: Any] = [:]
         if armKind == "c0" {
+            c0Identity = try autoreleasepool { try C0Identity.verify(directory: try o.url("--models"), pinned: pinnedC0) }
             let models = try C0Models(directory: try o.url("--models"), computeUnits: units, preprocessorUnits: preUnits)
             runner = .c0(C0Pipeline(models: models), models)
             vocabulary = models.vocabulary
-            load = ["load_ms": models.loadMs, "decode": "c0 (FluidAudio 0.7.8 loop, per-step Decoder + JointDecision)"]
+            load = ["load_ms": models.loadMs, "decode": "c0 (FluidAudio 0.7.8 loop, per-step Decoder + JointDecision)",
+                    "c0_identity": c0Identity]
         } else {
             let arm = try await buildArm(o, decodeName: decodeName, units: units, preUnits: preUnits, load: &load)
             armName = arm.name
@@ -231,6 +239,7 @@ struct ParakeetBenchCLI {
         }
         var paired: (C0Pipeline, C0Models, JSONLWriter)? = nil
         if let c0Dir = o.values["--pair-c0"], let c0OutURL {
+            c0Identity = try autoreleasepool { try C0Identity.verify(directory: URL(fileURLWithPath: c0Dir), pinned: pinnedC0) }
             let models = try C0Models(directory: URL(fileURLWithPath: c0Dir), computeUnits: c0Units, preprocessorUnits: preUnits)
             let w = try JSONLWriter(path: c0OutURL.path)
             paired = (C0Pipeline(models: models), models, w)
@@ -249,7 +258,8 @@ struct ParakeetBenchCLI {
                 "record": "load", "arm": "C0", "compute_units": ComputeUnitsName.name(c0Units),
                 "preprocessor_units": ComputeUnitsName.name(preUnits), "load_ms": models.loadMs,
                 "decode": "c0 (FluidAudio 0.7.8 loop, per-step Decoder + JointDecision)",
-                "eligibility": "exempt: C0 is the product baseline", "pairing": pairing,
+                "eligibility": "exempt: C0 is the product baseline", "pairing": pairing, "c0_identity": c0Identity,
+                "settle_ms": settleMs, "executable_sha256": BuildIdentity.executableSHA256,
                 "os": ProcessInfo.processInfo.operatingSystemVersionString,
                 "clip_ids": clips.map(\.id), "warmups": proto.warmups, "timed": proto.timed, "mode": modeName,
                 "diagnostics": false, "clips_json_sha256": manifest.fileSHA256,
@@ -266,11 +276,23 @@ struct ParakeetBenchCLI {
             "clip_ids": clips.map(\.id), "warmups": proto.warmups, "timed": proto.timed, "mode": modeName,
             "diagnostics": diagDir != nil,
             "clips_json_sha256": manifest.fileSHA256,
+            "settle_ms": settleMs, "executable_sha256": BuildIdentity.executableSHA256,
         ]) { _, new in new })
         let t0 = Clock.now()
         for (index, (clip, pcm)) in zip(clips, pcms).enumerated() {
             let mode: DecodeMode = modeName == "replay" ? .replay(traces[clip.id]!) : .free
-            func block(_ r: Runner, _ w: JSONLWriter, _ name: String, _ vocab: [Int: String], _ cu: MLComputeUnits) async throws {
+            func block(_ r: Runner, _ w: JSONLWriter, _ name: String, _ vocab: [Int: String], _ cu: MLComputeUnits,
+                       _ position: Int) async throws {
+                // settling and thermal state per block (review WP7 r1 finding 9)
+                let thermalBefore = ThermalName.current()
+                if settleMs > 0 { try await Task.sleep(nanoseconds: UInt64(settleMs) * 1_000_000) }
+                let tw = Clock.now()
+                while ProcessInfo.processInfo.thermalState.rawValue >= ProcessInfo.ThermalState.serious.rawValue
+                        && Clock.ms(tw, Clock.now()) < 120_000 {
+                    try await Task.sleep(nanoseconds: 1_000_000_000)
+                }
+                let thermalWait = Clock.ms(tw, Clock.now())
+                let thermalStart = ThermalName.current()
                 for rep in 0..<(proto.warmups + proto.timed) {
                     let warm = rep < proto.warmups
                     let result: CallResult
@@ -284,17 +306,21 @@ struct ParakeetBenchCLI {
                                                result: result))
                     }
                 }
+                try w.writeObject(["record": "block", "arm": name, "clip": clip.id, "clip_index": index, "position": position,
+                                   "thermal_before_settle": thermalBefore, "thermal_start": thermalStart,
+                                   "thermal_end": ThermalName.current(), "settle_ms": settleMs,
+                                   "thermal_wait_ms": thermalWait > 5 ? thermalWait : 0])
             }
             if let (pipeline, models, w) = paired {
                 if index % 2 == 0 {
-                    try await block(.c0(pipeline, models), w, "C0", models.vocabulary, c0Units)
-                    try await block(runner, writer, armName, vocabulary, units)
+                    try await block(.c0(pipeline, models), w, "C0", models.vocabulary, c0Units, 0)
+                    try await block(runner, writer, armName, vocabulary, units, 1)
                 } else {
-                    try await block(runner, writer, armName, vocabulary, units)
-                    try await block(.c0(pipeline, models), w, "C0", models.vocabulary, c0Units)
+                    try await block(runner, writer, armName, vocabulary, units, 0)
+                    try await block(.c0(pipeline, models), w, "C0", models.vocabulary, c0Units, 1)
                 }
             } else {
-                try await block(runner, writer, armName, vocabulary, units)
+                try await block(runner, writer, armName, vocabulary, units, 0)
             }
             if let diagDir {
                 switch runner {
@@ -426,6 +452,9 @@ struct ParakeetBenchCLI {
         let out = try ArtifactPath.check(try o.url("--out"))
         try FileManager.default.createDirectory(at: out.appendingPathComponent("enc"), withIntermediateDirectories: true)
         let decodes = try o.string("--decodes", "f2,f0,f1").split(separator: ",").map(String.init)
+        for d in decodes {
+            try FileManager.default.createDirectory(at: out.appendingPathComponent("diag/\(d)"), withIntermediateDirectories: true)
+        }
         let encURL = try o.url("--encoder")
         var components: [String: Any] = [:]
         var engines: [(String, DecodeEngine)] = []
@@ -441,8 +470,13 @@ struct ParakeetBenchCLI {
             case "f2": engines.append((d, NativeEngine(weights: try NativeWeights(directory: try o.url("--native-weights")))))
             case "f0":
                 let dir = try o.url("--decoder-models")
-                engines.append((d, try CoreMLStepEngine(decoder: try MLModel(contentsOf: dir.appendingPathComponent("Decoder.mlmodelc"), configuration: config),
-                                                        joint: try MLModel(contentsOf: dir.appendingPathComponent("JointDecision.mlmodelc"), configuration: config))))
+                let f0 = try CoreMLStepEngine(decoder: try MLModel(contentsOf: dir.appendingPathComponent("Decoder.mlmodelc"), configuration: config),
+                                              joint: try MLModel(contentsOf: dir.appendingPathComponent("JointDecision.mlmodelc"), configuration: config))
+                // diagnostic only (untimed gate): raw logits of the same joint inputs, as WP3's gates did
+                let jl = dir.appendingPathComponent("JointLogits.mlmodelc")
+                f0.logitsModel = try MLModel(contentsOf: jl, configuration: config)
+                components["f0_diagnostic_joint_logits_sha256"] = try ComponentHash.directory(jl)
+                engines.append((d, f0))
             case "f1":
                 let dir = try o.url("--decoder-models")
                 engines.append((d, try CoreMLFusedEngine(model: try MLModel(contentsOf: dir.appendingPathComponent("DecoderJoint.mlmodelc"), configuration: config))))
@@ -457,7 +491,11 @@ struct ParakeetBenchCLI {
         try writer.writeObject(["record": "header", "model": id[0], "arm": id[1], "variant": Eligibility.variants[variant] ?? "",
                                 "compute_units": ComputeUnitsName.name(units), "front_end": "vdsp", "decodes": decodes,
                                 "pipelines": components, "encoder_load_ms": loadMs, "clip_ids": clips.map(\.id),
-                                "clips_json_sha256": manifest.fileSHA256, "os": ProcessInfo.processInfo.operatingSystemVersionString])
+                                "clips_json_sha256": manifest.fileSHA256, "os": ProcessInfo.processInfo.operatingSystemVersionString,
+                                "executable_sha256": BuildIdentity.executableSHA256,
+                                "diag_sections": ["f2": "logits [1030], h, c [2, 640] per step",
+                                                  "f0": "logits [1030] (diagnostic JointLogits on the same inputs), h_step, c_step [2, 640] per step; decoder_out, h, c per Decoder call",
+                                                  "f1": "h_out, c_out [2, 640] per step (DecoderJoint exposes no logits)"]])
         let loop = LabelLoop()
         let options = MLPredictionOptions()
         for clip in clips {
@@ -475,18 +513,28 @@ struct ParakeetBenchCLI {
             let trace = traces[clip.id]!
             for (d, engine) in engines {
                 var r: [String: Any] = [:]
-                try engine.begin(frames: frames, length: frames.count, diag: nil)
-                let free = try loop.free(engine, length: frames.count, diag: nil)
+                // free decoding with every decoder output captured, so finiteness is checked in both modes
+                let fsink = DiagSink()
+                try engine.begin(frames: frames, length: frames.count, diag: fsink)
+                let free = try loop.free(engine, length: frames.count, diag: fsink)
                 r["tokens"] = free.tokens
                 r["free_steps"] = free.steps
+                r["free_values"] = fsink.valueCount
+                r["free_nonfinite"] = fsink.nonfiniteCount
                 if frames.count == trace.numFrames {
                     let sink = DiagSink()
-                    try engine.begin(frames: frames, length: frames.count, diag: nil)
+                    try engine.begin(frames: frames, length: frames.count, diag: sink)
                     let rep = try loop.replay(engine, trace: trace, diag: sink)
                     r["argmax_token"] = sink.ints["argmax_token"] ?? []
                     r["argmax_duration"] = sink.ints["argmax_duration"] ?? []
                     r["replay_steps"] = rep.steps
                     r["replay_predictions"] = rep.predictions
+                    r["replay_values"] = sink.valueCount
+                    r["replay_nonfinite"] = sink.nonfiniteCount
+                    if let p = sink.floats["token_prob"] { r["token_prob"] = p }
+                    let (bin, index) = sink.binary()
+                    try bin.write(to: out.appendingPathComponent("diag/\(d)/\(clip.id).f32"))
+                    r["diag"] = ["file": "diag/\(d)/\(clip.id).f32", "sha256": sha256Hex(bin), "sections": index]
                 } else {
                     r["replay_error"] = "encoder frames \(frames.count) != trace \(trace.numFrames)"
                 }
@@ -631,6 +679,19 @@ struct ParakeetBenchCLI {
             print(name, "load_ms", models.loadMs[name] ?? 0)
             for (k, v) in d.inputDescriptionsByName.sorted(by: { $0.key < $1.key }) { print("  in ", k, v) }
             for (k, v) in d.outputDescriptionsByName.sorted(by: { $0.key < $1.key }) { print("  out", k, v) }
+        }
+    }
+}
+
+/// ProcessInfo.thermalState as text.
+enum ThermalName {
+    static func current() -> String {
+        switch ProcessInfo.processInfo.thermalState {
+        case .nominal: return "nominal"
+        case .fair: return "fair"
+        case .serious: return "serious"
+        case .critical: return "critical"
+        @unknown default: return "unknown"
         }
     }
 }

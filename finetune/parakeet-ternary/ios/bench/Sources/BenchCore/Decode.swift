@@ -24,6 +24,13 @@ public final class DiagSink {
     public func int(_ name: String, _ v: Int) { ints[name, default: []].append(v) }
     public func float(_ name: String, _ v: Double) { floats[name, default: []].append(v) }
 
+    /// Float values captured (sections and float fields) and how many of them are not finite.
+    public var valueCount: Int { sections.reduce(0) { $0 + $1.data.count } + floats.values.reduce(0) { $0 + $1.count } }
+    public var nonfiniteCount: Int {
+        sections.reduce(0) { n, s in n + s.data.reduce(0) { $0 + ($1.isFinite ? 0 : 1) } }
+            + floats.values.reduce(0) { n, v in n + v.reduce(0) { $0 + ($1.isFinite ? 0 : 1) } }
+    }
+
     /// Concatenated little-endian float32 sections and their [{name, shape, offset, bytes}] index.
     public func binary() -> (Data, [[String: Any]]) {
         var data = Data(), index: [[String: Any]] = []
@@ -370,6 +377,10 @@ public final class CoreMLStepEngine: DecodeEngine {
     var state: DecoderState
     var frames: EncoderFrames?
     var decAcc = Accumulator(), jointAcc = Accumulator()
+    /// Diagnostic only (untimed gate runs): JointLogits on the same joint inputs, so the raw logits behind
+    /// JointDecision's argmax can be compared with the reference. Never set when timing.
+    public var logitsModel: MLModel?
+    let logitsOptions = MLPredictionOptions()
 
     public init(decoder: MLModel, joint: MLModel) throws {
         self.decoder = decoder; jointModel = joint
@@ -409,6 +420,16 @@ public final class CoreMLStepEngine: DecodeEngine {
         if let diag {
             diag.int("frame", t); diag.int("token_id", d.token); diag.int("duration_bin", d.bin)
             diag.float("token_prob", Double(d.prob)); diag.int("decoder_call", decAcc.count - 1)
+            diag.append("h_step", rowShape: [2, 640], copyFloats(state.hidden))  // the state behind this step's prediction
+            diag.append("c_step", rowShape: [2, 640], copyFloats(state.cell))
+            if let logitsModel {
+                let lo = try logitsModel.prediction(from: b.jointInput, options: logitsOptions)
+                guard let tl = lo.featureValue(for: "token_logits")?.multiArrayValue,
+                      let dl = lo.featureValue(for: "duration_logits")?.multiArrayValue, tl.count == 1025, dl.count == 5 else {
+                    throw BenchError.invalid("JointLogits outputs")
+                }
+                diag.append("logits", rowShape: [1030], copyFloats(tl) + copyFloats(dl))
+            }
         }
         return (d.token, d.bin)
     }

@@ -168,4 +168,86 @@ final class BenchCoreTests: XCTestCase {
         XCTAssertThrowsError(try TraceFile.validate(makeTrace(bad, length: 20, id: "m"), clip: clip, blank: 1024,
                                                     durations: [0, 1, 2, 3, 4], maxSymbols: 10))
     }
+
+    // MARK: identity binding (review WP7 r1 findings 2 and 3)
+
+    func tempDir() throws -> URL {
+        let d = FileManager.default.temporaryDirectory.appendingPathComponent("benchcore-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
+        return d
+    }
+
+    func writeBlob(_ dir: URL, stem: String, tensors: [(String, Int)], swapFirstTwo: Bool = false) throws {
+        var floats: [Float] = []
+        var entries: [[String: Any]] = []
+        for (name, n) in tensors {
+            entries.append(["name": name, "shape": [n], "offset": floats.count * 4, "bytes": n * 4])
+            floats += (0..<n).map { Float($0) + Float(floats.count) }
+        }
+        if swapFirstTwo {  // same bytes, two equal-sized tensors' offsets exchanged
+            let o0 = entries[0]["offset"]!, o1 = entries[1]["offset"]!
+            entries[0]["offset"] = o1; entries[1]["offset"] = o0
+        }
+        let data = floats.withUnsafeBufferPointer { Data(buffer: $0) }
+        try data.write(to: dir.appendingPathComponent("\(stem).f32bin"))
+        let m: [String: Any] = ["file": "\(stem).f32bin", "sha256": sha256Hex(data), "tensors": entries]
+        try JSONSerialization.data(withJSONObject: m, options: [.sortedKeys]).write(to: dir.appendingPathComponent("\(stem).json"))
+    }
+
+    func testComponentsBindNativeManifests() throws {
+        let root = try tempDir()
+        let enc = root.appendingPathComponent("mp2/C4/multi.mlmodelc")
+        try FileManager.default.createDirectory(at: enc, withIntermediateDirectories: true)
+        try Data([1, 2, 3]).write(to: enc.appendingPathComponent("model.mil"))
+        let native = root.appendingPathComponent("native")
+        try FileManager.default.createDirectory(at: native, withIntermediateDirectories: true)
+        try writeBlob(native, stem: "frontend", tensors: [("window", 4), ("fb", 8)])
+        try writeBlob(native, stem: "decoder_joint", tensors: [("a", 6), ("b", 6)])
+        func comps() throws -> String {
+            PipelineEligibility.canonical(try PipelineSpec(
+                model: "mp2", arm: "C4", variant: .multifunction, computeUnits: "cpuAndNeuralEngine", frontEnd: "vdsp",
+                decode: "f2", encoderPath: enc, frontendConstants: native, c0Dir: nil, nativeWeights: native,
+                decoderModels: nil).components())
+        }
+        let before = try comps()
+        XCTAssertEqual(before, try comps())
+        try writeBlob(native, stem: "decoder_joint", tensors: [("a", 6), ("b", 6)], swapFirstTwo: true)
+        XCTAssertNotEqual(before, try comps(), "swapping equal-sized tensor offsets must change the identity")
+        try writeBlob(native, stem: "decoder_joint", tensors: [("a", 6), ("b", 6)])
+        XCTAssertEqual(before, try comps())
+        try Data([1, 2, 4]).write(to: enc.appendingPathComponent("model.mil"))
+        XCTAssertNotEqual(before, try comps(), "a changed encoder file must change the identity")
+    }
+
+    func testC0IdentityRejectsTamperingAndExtraFiles() throws {
+        let root = try tempDir()
+        let dir = root.appendingPathComponent("c0")
+        try FileManager.default.createDirectory(at: dir.appendingPathComponent("Encoder.mlmodelc"), withIntermediateDirectories: true)
+        let payload = Data("weights".utf8), vocab = Data("{}".utf8)
+        try payload.write(to: dir.appendingPathComponent("Encoder.mlmodelc/weight.bin"))
+        try vocab.write(to: dir.appendingPathComponent("parakeet_vocab.json"))
+        let pinned: [String: Any] = ["repo": "r", "revision": "v", "files": [
+            ["path": "Encoder.mlmodelc/weight.bin", "bytes": payload.count, "sha256": sha256Hex(payload)],
+            ["path": "parakeet_vocab.json", "bytes": vocab.count, "sha256": sha256Hex(vocab)]]]
+        let pin = root.appendingPathComponent("c0.json")
+        try JSONSerialization.data(withJSONObject: pinned).write(to: pin)
+        XCTAssertEqual(try C0Identity.verify(directory: dir, pinned: pin)["files"] as? Int, 2)
+        try Data("weightz".utf8).write(to: dir.appendingPathComponent("Encoder.mlmodelc/weight.bin"))
+        XCTAssertThrowsError(try C0Identity.verify(directory: dir, pinned: pin))
+        try payload.write(to: dir.appendingPathComponent("Encoder.mlmodelc/weight.bin"))
+        try Data("x".utf8).write(to: dir.appendingPathComponent("Encoder.mlmodelc/extra.bin"))
+        XCTAssertThrowsError(try C0Identity.verify(directory: dir, pinned: pin))
+        try FileManager.default.removeItem(at: dir.appendingPathComponent("Encoder.mlmodelc/extra.bin"))
+        try Data("[]".utf8).write(to: dir.appendingPathComponent("parakeet_vocab.json"))
+        XCTAssertThrowsError(try C0Identity.verify(directory: dir, pinned: pin), "a different vocabulary must be refused")
+    }
+
+    func testDiagSinkCountsNonfinite() {
+        let sink = DiagSink()
+        sink.append("x", rowShape: [3], [1, .nan, 2])
+        sink.float("p", .infinity)
+        sink.float("p", 0.5)
+        XCTAssertEqual(sink.valueCount, 5)
+        XCTAssertEqual(sink.nonfiniteCount, 2)
+    }
 }
