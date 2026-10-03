@@ -1,0 +1,117 @@
+{
+ "design_revision": 8,
+ "code_version": "wp7-pipegate-2",
+ "kind": "pipeline",
+ "model": "mp2",
+ "arm": "C6s4",
+ "variant": "enum",
+ "backend": "cpu",
+ "compute_units": "cpuOnly",
+ "front_end": "vdsp",
+ "decode": "f2",
+ "decoder_precision": "fp32",
+ "encoder_record": {
+  "file": "mp2-C6s4-enum-cpu.json",
+  "sha256": "b30f0fe82467dedf373f0339fd8b250f0c765233dd6e3a1d803fc6c37e39453e"
+ },
+ "components": {
+  "compute_units": "cpuOnly",
+  "decode": {
+   "kind": "f2",
+   "native_weights_sha256": "e7db077a4f2b2db2bdd3ab887e9ecc0baade7b914379d4a2ba7e8653136eee71",
+   "precision": "fp32",
+   "provenance": {
+    "export_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/pilot-P2-lr5e-4/export",
+    "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6",
+    "model": "mp2"
+   }
+  },
+  "encoder": {
+   "arm": "C6s4",
+   "model": "mp2",
+   "package": "mp2/C6s4/enum.mlmodelc",
+   "sha256": "17dcb05fc8bca436fd2935a8f7334c9c258f8425e264cf736977157df1a08457",
+   "variant": "enum"
+  },
+  "front_end": {
+   "constants_sha256": "efe8a64a770fa51eeafaca31c1f7f744c900e11f5f19ed1aa39716da8d4f20d3",
+   "kind": "vdsp",
+   "provenance": {
+    "export_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/pilot-P2-lr5e-4/export",
+    "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6",
+    "model": "mp2"
+   }
+  }
+ },
+ "eligible": true,
+ "timing_allowed": true,
+ "selection_eligible": true,
+ "reasons": [],
+ "checks": {
+  "encoder_record": {
+   "pass": true,
+   "record": "mp2-C6s4-enum-cpu.json"
+  },
+  "decoder_precision": {
+   "pass": true,
+   "precision": "fp32"
+  },
+  "problems": {
+   "pass": true,
+   "list": []
+  },
+  "encoder": {
+   "pass": true,
+   "clips": 82,
+   "passed": 82,
+   "max_rel": 0.01126499939361841,
+   "max_abs": 0.15157041386834752,
+   "reference": "FP32 reference encoder (fp16s scales) on FP64-evaluated reference features (ref64)",
+   "diag_vs_reference_on_fp32_features": {
+    "max_rel": 0.3248470258994443,
+    "over_ceiling": [
+     "silence-3s"
+    ]
+   }
+  },
+  "coverage": {
+   "pass": true,
+   "missing_or_incomplete": []
+  },
+  "decisions": {
+   "pass": true,
+   "token": {
+    "steps": 3025,
+    "agree_all": 0.9996694214876033,
+    "decisive_fraction": 0.9662809917355372,
+    "agree_decisive": 1.0,
+    "pass": true
+   },
+   "duration": {
+    "steps": 3025,
+    "agree_all": 0.9970247933884298,
+    "decisive_fraction": 0.8502479338842975,
+    "agree_decisive": 0.999611197511664,
+    "pass": true
+   }
+  },
+  "free_decoding": {
+   "pass": true,
+   "clips": 64,
+   "identical": 64
+  },
+  "wer": {
+   "pass": true,
+   "reference_wer_pct": 2.711,
+   "pipeline_wer_pct": 2.711,
+   "clips": 64,
+   "limit_points": 0.2
+  }
+ },
+ "inputs": {
+  "results/pipegates/mp2-C6s4-enum-cpu-vdsp.json": "d7a862480556ae0d4bf06e044728d44baea6e5c51c8b5c51fff5903001735218",
+  "results/eligibility/mp2-C6s4-enum-cpu.json": "b30f0fe82467dedf373f0339fd8b250f0c765233dd6e3a1d803fc6c37e39453e"
+ },
+ "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
+ "built": "2026-10-03 12:05"
+}

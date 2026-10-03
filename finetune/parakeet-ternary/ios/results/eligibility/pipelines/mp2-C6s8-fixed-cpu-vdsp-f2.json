@@ -1,0 +1,117 @@
+{
+ "design_revision": 8,
+ "code_version": "wp7-pipegate-2",
+ "kind": "pipeline",
+ "model": "mp2",
+ "arm": "C6s8",
+ "variant": "fixed",
+ "backend": "cpu",
+ "compute_units": "cpuOnly",
+ "front_end": "vdsp",
+ "decode": "f2",
+ "decoder_precision": "fp32",
+ "encoder_record": {
+  "file": "mp2-C6s8-fixed-cpu.json",
+  "sha256": "bdfa79a58a02d2c53206f2851e6709d171b5ed12d21f8631a4781b65588c426e"
+ },
+ "components": {
+  "compute_units": "cpuOnly",
+  "decode": {
+   "kind": "f2",
+   "native_weights_sha256": "e7db077a4f2b2db2bdd3ab887e9ecc0baade7b914379d4a2ba7e8653136eee71",
+   "precision": "fp32",
+   "provenance": {
+    "export_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/pilot-P2-lr5e-4/export",
+    "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6",
+    "model": "mp2"
+   }
+  },
+  "encoder": {
+   "arm": "C6s8",
+   "model": "mp2",
+   "package": "mp2/C6s8/fixed.mlmodelc",
+   "sha256": "5f98f118265fd8a535b86326bdc8d93816c887de72ca619886e52bfd6457004c",
+   "variant": "fixed"
+  },
+  "front_end": {
+   "constants_sha256": "efe8a64a770fa51eeafaca31c1f7f744c900e11f5f19ed1aa39716da8d4f20d3",
+   "kind": "vdsp",
+   "provenance": {
+    "export_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/pilot-P2-lr5e-4/export",
+    "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6",
+    "model": "mp2"
+   }
+  }
+ },
+ "eligible": true,
+ "timing_allowed": true,
+ "selection_eligible": true,
+ "reasons": [],
+ "checks": {
+  "encoder_record": {
+   "pass": true,
+   "record": "mp2-C6s8-fixed-cpu.json"
+  },
+  "decoder_precision": {
+   "pass": true,
+   "precision": "fp32"
+  },
+  "problems": {
+   "pass": true,
+   "list": []
+  },
+  "encoder": {
+   "pass": true,
+   "clips": 82,
+   "passed": 82,
+   "max_rel": 0.018177956821451943,
+   "max_abs": 0.2563103935411343,
+   "reference": "FP32 reference encoder (fp16s scales) on FP64-evaluated reference features (ref64)",
+   "diag_vs_reference_on_fp32_features": {
+    "max_rel": 0.3241403012595831,
+    "over_ceiling": [
+     "silence-3s"
+    ]
+   }
+  },
+  "coverage": {
+   "pass": true,
+   "missing_or_incomplete": []
+  },
+  "decisions": {
+   "pass": true,
+   "token": {
+    "steps": 3025,
+    "agree_all": 0.9993388429752066,
+    "decisive_fraction": 0.9662809917355372,
+    "agree_decisive": 1.0,
+    "pass": true
+   },
+   "duration": {
+    "steps": 3025,
+    "agree_all": 0.9976859504132232,
+    "decisive_fraction": 0.8502479338842975,
+    "agree_decisive": 0.999611197511664,
+    "pass": true
+   }
+  },
+  "free_decoding": {
+   "pass": true,
+   "clips": 64,
+   "identical": 64
+  },
+  "wer": {
+   "pass": true,
+   "reference_wer_pct": 2.711,
+   "pipeline_wer_pct": 2.711,
+   "clips": 64,
+   "limit_points": 0.2
+  }
+ },
+ "inputs": {
+  "results/pipegates/mp2-C6s8-fixed-cpu-vdsp.json": "a1814dfc34b5c5349f68a915ae9a8292de7561db78c74dd971dffa42a6fdbaed",
+  "results/eligibility/mp2-C6s8-fixed-cpu.json": "bdfa79a58a02d2c53206f2851e6709d171b5ed12d21f8631a4781b65588c426e"
+ },
+ "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
+ "built": "2026-10-03 12:34"
+}

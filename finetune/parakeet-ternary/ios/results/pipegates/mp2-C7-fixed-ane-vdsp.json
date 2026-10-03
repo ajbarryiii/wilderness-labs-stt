@@ -1,0 +1,1405 @@
+{
+ "design_revision": 8,
+ "code_version": "wp7-pipegate-2",
+ "thresholds": {
+  "encoder_rel": 0.1,
+  "tau": 0.001,
+  "decisive_margin": 1.0,
+  "agree_decisive": 0.995,
+  "agree_all": 0.99,
+  "decisive_min": 0.5,
+  "identical_min": 61,
+  "wer_points": 0.2
+ },
+ "header": {
+  "arm": "C7",
+  "clip_ids": [
+   "n02-1272-141231-0016",
+   "n02-174-50561-0014",
+   "n02-1919-142785-0048",
+   "n02-1988-24833-0006",
+   "n02-2078-142845-0023",
+   "n02-2277-149896-0004",
+   "n02-2428-83699-0004",
+   "n02-251-136532-0022",
+   "n02-3081-166546-0073",
+   "n02-3752-4944-0046",
+   "n02-6313-66129-0032",
+   "n02-6345-93302-0028",
+   "n02-777-126732-0081",
+   "n02-7976-105575-0017",
+   "n02-84-121123-0007",
+   "n02-8842-304647-0007",
+   "n04-1462-170142-0035",
+   "n04-174-50561-0017",
+   "n04-1919-142785-0024",
+   "n04-1988-24833-0000",
+   "n04-2035-147961-0034",
+   "n04-2277-149874-0009",
+   "n04-2428-83699-0026",
+   "n04-3081-166546-0060",
+   "n04-3576-138058-0031",
+   "n04-3752-4943-0016",
+   "n04-5536-43358-0012",
+   "n04-5694-64029-0003",
+   "n04-6241-61943-0022",
+   "n04-6313-66125-0014",
+   "n04-6319-57405-0007",
+   "n04-8297-275154-0024",
+   "n08-1272-141231-0019",
+   "n08-1462-170142-0020",
+   "n08-174-84280-0003",
+   "n08-1919-142785-0038",
+   "n08-1993-147965-0003",
+   "n08-2086-149220-0016",
+   "n08-2277-149897-0033",
+   "n08-2412-153948-0009",
+   "n08-2803-154320-0010",
+   "n08-3853-163249-0041",
+   "n08-5338-284437-0029",
+   "n08-5694-64025-0020",
+   "n08-6313-76958-0016",
+   "n08-6345-93306-0019",
+   "n08-652-130726-0027",
+   "n08-8842-302201-0007",
+   "n15-1272-141231-0025",
+   "n15-1462-170142-0001",
+   "n15-1673-143396-0001",
+   "n15-174-168635-0010",
+   "n15-2277-149874-0014",
+   "n15-2412-153947-0005",
+   "n15-3000-15664-0011",
+   "n15-3536-23268-0008",
+   "n15-3752-4944-0027",
+   "n15-3853-163249-0022",
+   "n15-422-122949-0008",
+   "n15-6241-61943-0008",
+   "n15-6313-76958-0013",
+   "n15-652-129742-0001",
+   "n15-8297-275155-0005",
+   "n15-84-121550-0029",
+   "b02-N31840",
+   "b02-N32000",
+   "b04-N32001",
+   "b04-N32160",
+   "b04-N63840",
+   "b04-N64000",
+   "b08-N64001",
+   "b08-N64160",
+   "b08-N127840",
+   "b08-N128000",
+   "b15-N128001",
+   "b15-N128160",
+   "b15-N239200",
+   "b15-N239360",
+   "b15-N239520",
+   "b15-N240000",
+   "silence-3s",
+   "impulse-3s"
+  ],
+  "clips_json_sha256": "72962a14962be946a1ba52299028834d5af47ca07ea68b3e414cbaf8292b248a",
+  "compute_units": "cpuAndNeuralEngine",
+  "decodes": [
+   "f2",
+   "f0",
+   "f1"
+  ],
+  "encoder_load_ms": 23227.178708333333,
+  "front_end": "vdsp",
+  "model": "mp2",
+  "os": "Version 27.0 (Build 26A428)",
+  "pipelines": {
+   "f0": {
+    "components": {
+     "compute_units": "cpuAndNeuralEngine",
+     "decode": {
+      "kind": "f0",
+      "models_sha256": {
+       "Decoder": "24d02ae1fa45d90124b3f5133577ca0dfbf4d84fcb8f9c07555c2d5d80b03783",
+       "JointDecision": "af852997542b56aa034a0a87d83d57462598ff50fd09d104a1f3c49dbf17bbb8"
+      },
+      "precision": "fp32"
+     },
+     "encoder": {
+      "arm": "C7",
+      "model": "mp2",
+      "package": "mp2/C7/fixed.mlmodelc",
+      "sha256": "67ab622e10195a2924f6fbc4fc15385ca67d0052b90d0e5ebce7e028c8c3a874",
+      "variant": "fixed"
+     },
+     "front_end": {
+      "constants_sha256": "efe8a64a770fa51eeafaca31c1f7f744c900e11f5f19ed1aa39716da8d4f20d3",
+      "kind": "vdsp",
+      "provenance": {
+       "export_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/pilot-P2-lr5e-4/export",
+       "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6",
+       "model": "mp2"
+      }
+     }
+    },
+    "record": "mp2-C7-fixed-ane-vdsp-f0.json"
+   },
+   "f1": {
+    "components": {
+     "compute_units": "cpuAndNeuralEngine",
+     "decode": {
+      "kind": "f1",
+      "models_sha256": {
+       "DecoderJoint": "c7044821d2d43851a2a201244bd3ae2255fcf8198b0b1602625cf4b7fa656a3a"
+      },
+      "precision": "fp32"
+     },
+     "encoder": {
+      "arm": "C7",
+      "model": "mp2",
+      "package": "mp2/C7/fixed.mlmodelc",
+      "sha256": "67ab622e10195a2924f6fbc4fc15385ca67d0052b90d0e5ebce7e028c8c3a874",
+      "variant": "fixed"
+     },
+     "front_end": {
+      "constants_sha256": "efe8a64a770fa51eeafaca31c1f7f744c900e11f5f19ed1aa39716da8d4f20d3",
+      "kind": "vdsp",
+      "provenance": {
+       "export_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/pilot-P2-lr5e-4/export",
+       "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6",
+       "model": "mp2"
+      }
+     }
+    },
+    "record": "mp2-C7-fixed-ane-vdsp-f1.json"
+   },
+   "f2": {
+    "components": {
+     "compute_units": "cpuAndNeuralEngine",
+     "decode": {
+      "kind": "f2",
+      "native_weights_sha256": "e7db077a4f2b2db2bdd3ab887e9ecc0baade7b914379d4a2ba7e8653136eee71",
+      "precision": "fp32",
+      "provenance": {
+       "export_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/pilot-P2-lr5e-4/export",
+       "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6",
+       "model": "mp2"
+      }
+     },
+     "encoder": {
+      "arm": "C7",
+      "model": "mp2",
+      "package": "mp2/C7/fixed.mlmodelc",
+      "sha256": "67ab622e10195a2924f6fbc4fc15385ca67d0052b90d0e5ebce7e028c8c3a874",
+      "variant": "fixed"
+     },
+     "front_end": {
+      "constants_sha256": "efe8a64a770fa51eeafaca31c1f7f744c900e11f5f19ed1aa39716da8d4f20d3",
+      "kind": "vdsp",
+      "provenance": {
+       "export_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/pilot-P2-lr5e-4/export",
+       "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6",
+       "model": "mp2"
+      }
+     }
+    },
+    "record": "mp2-C7-fixed-ane-vdsp-f2.json"
+   }
+  },
+  "record": "header",
+  "variant": "fixed"
+ },
+ "refcache_provenance": {
+  "name": "mp2",
+  "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+  "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+ },
+ "ref64_index_sha256": "cd9883c15a7dd084dc7ba54017de516e7d41a722e9848f7859b1404ff819c76a",
+ "problems": [],
+ "encoder": {
+  "pass": true,
+  "clips": 82,
+  "passed": 82,
+  "max_rel": 0.031863332650742836,
+  "max_abs": 0.440265685433183,
+  "reference": "FP32 reference encoder (fp16s scales) on FP64-evaluated reference features (ref64)",
+  "diag_vs_reference_on_fp32_features": {
+   "max_rel": 0.3281059415346566,
+   "over_ceiling": [
+    "silence-3s"
+   ]
+  }
+ },
+ "evaluated": "2026-10-03 12:43",
+ "pipegate_py_sha256": "7211163476de37f752ce1864f70390825374985588faf9e10c0314b28553df11",
+ "decodes": {
+  "f2": {
+   "coverage": {
+    "pass": true,
+    "missing_or_incomplete": []
+   },
+   "decisions": {
+    "pass": true,
+    "token": {
+     "steps": 3025,
+     "agree_all": 0.9986776859504132,
+     "decisive_fraction": 0.9662809917355372,
+     "agree_decisive": 1.0,
+     "pass": true
+    },
+    "duration": {
+     "steps": 3025,
+     "agree_all": 0.9907438016528926,
+     "decisive_fraction": 0.8502479338842975,
+     "agree_decisive": 0.999611197511664,
+     "pass": true
+    }
+   },
+   "free_decoding": {
+    "pass": true,
+    "clips": 64,
+    "identical": 63
+   },
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "pipeline_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  "f0": {
+   "coverage": {
+    "pass": true,
+    "missing_or_incomplete": []
+   },
+   "decisions": {
+    "pass": true,
+    "token": {
+     "steps": 3025,
+     "agree_all": 0.9986776859504132,
+     "decisive_fraction": 0.9662809917355372,
+     "agree_decisive": 1.0,
+     "pass": true
+    },
+    "duration": {
+     "steps": 3025,
+     "agree_all": 0.9907438016528926,
+     "decisive_fraction": 0.8502479338842975,
+     "agree_decisive": 0.999611197511664,
+     "pass": true
+    }
+   },
+   "free_decoding": {
+    "pass": true,
+    "clips": 64,
+    "identical": 63
+   },
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "pipeline_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  "f1": {
+   "coverage": {
+    "pass": true,
+    "missing_or_incomplete": []
+   },
+   "decisions": {
+    "pass": true,
+    "token": {
+     "steps": 3025,
+     "agree_all": 0.9986776859504132,
+     "decisive_fraction": 0.9662809917355372,
+     "agree_decisive": 1.0,
+     "pass": true
+    },
+    "duration": {
+     "steps": 3025,
+     "agree_all": 0.9907438016528926,
+     "decisive_fraction": 0.8502479338842975,
+     "agree_decisive": 0.999611197511664,
+     "pass": true
+    }
+   },
+   "free_decoding": {
+    "pass": true,
+    "clips": 64,
+    "identical": 63
+   },
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "pipeline_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  }
+ },
+ "encoder_rows": [
+  {
+   "clip": "n02-1272-141231-0016",
+   "bucket": 15,
+   "rel": 0.012060067865799393,
+   "abs": 0.08059004536243637,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012060495366577653,
+    "abs": 0.08059611173030728
+   }
+  },
+  {
+   "clip": "n02-174-50561-0014",
+   "bucket": 15,
+   "rel": 0.017203363225199997,
+   "abs": 0.10088798187276099,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.017203325082169436,
+    "abs": 0.10088701026685618
+   }
+  },
+  {
+   "clip": "n02-1919-142785-0048",
+   "bucket": 15,
+   "rel": 0.011554426916734268,
+   "abs": 0.1394469611238041,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011554453897293681,
+    "abs": 0.13944625262424307
+   }
+  },
+  {
+   "clip": "n02-1988-24833-0006",
+   "bucket": 15,
+   "rel": 0.01245177803541124,
+   "abs": 0.09376078519098656,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012451759515547008,
+    "abs": 0.09376168700336936
+   }
+  },
+  {
+   "clip": "n02-2078-142845-0023",
+   "bucket": 15,
+   "rel": 0.009240557204035963,
+   "abs": 0.057597688966345574,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.009240662639262072,
+    "abs": 0.057597271792550614
+   }
+  },
+  {
+   "clip": "n02-2277-149896-0004",
+   "bucket": 15,
+   "rel": 0.015052204971183895,
+   "abs": 0.19534104286336562,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.015052103083167664,
+    "abs": 0.19533722533502693
+   }
+  },
+  {
+   "clip": "n02-2428-83699-0004",
+   "bucket": 15,
+   "rel": 0.031863332650742836,
+   "abs": 0.440265685433183,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.031864202348308265,
+    "abs": 0.4402782890271748
+   }
+  },
+  {
+   "clip": "n02-251-136532-0022",
+   "bucket": 15,
+   "rel": 0.014005042482176872,
+   "abs": 0.10340891722901889,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.014004823143760257,
+    "abs": 0.10340797180854046
+   }
+  },
+  {
+   "clip": "n02-3081-166546-0073",
+   "bucket": 15,
+   "rel": 0.012102853439019139,
+   "abs": 0.07506285748232006,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.01210289678939672,
+    "abs": 0.07506163260083434
+   }
+  },
+  {
+   "clip": "n02-3752-4944-0046",
+   "bucket": 15,
+   "rel": 0.016343133570920657,
+   "abs": 0.21103095319765963,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.01634304068848052,
+    "abs": 0.2110278326955036
+   }
+  },
+  {
+   "clip": "n02-6313-66129-0032",
+   "bucket": 15,
+   "rel": 0.012974249954005564,
+   "abs": 0.13886117560727407,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012974624638491894,
+    "abs": 0.1388705569359561
+   }
+  },
+  {
+   "clip": "n02-6345-93302-0028",
+   "bucket": 15,
+   "rel": 0.01769070805354666,
+   "abs": 0.14208641099749358,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.017691196859485454,
+    "abs": 0.14209414258461311
+   }
+  },
+  {
+   "clip": "n02-777-126732-0081",
+   "bucket": 15,
+   "rel": 0.011873430229781788,
+   "abs": 0.07930434870556856,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011873385927257675,
+    "abs": 0.07930675435269402
+   }
+  },
+  {
+   "clip": "n02-7976-105575-0017",
+   "bucket": 15,
+   "rel": 0.010091710154179482,
+   "abs": 0.05467675106377716,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.01009168328998147,
+    "abs": 0.0546774205949818
+   }
+  },
+  {
+   "clip": "n02-84-121123-0007",
+   "bucket": 15,
+   "rel": 0.010834075921952185,
+   "abs": 0.06801468753187609,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.010834089902603582,
+    "abs": 0.06801382503192994
+   }
+  },
+  {
+   "clip": "n02-8842-304647-0007",
+   "bucket": 15,
+   "rel": 0.012209890956758002,
+   "abs": 0.10997804916551264,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012209985344507334,
+    "abs": 0.10997805408625376
+   }
+  },
+  {
+   "clip": "n04-1462-170142-0035",
+   "bucket": 15,
+   "rel": 0.01779454102250813,
+   "abs": 0.23828248525977483,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.017795207098801478,
+    "abs": 0.23829322974501765
+   }
+  },
+  {
+   "clip": "n04-174-50561-0017",
+   "bucket": 15,
+   "rel": 0.010649641251435612,
+   "abs": 0.08836324494492494,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.010649587325222185,
+    "abs": 0.08836146295842846
+   }
+  },
+  {
+   "clip": "n04-1919-142785-0024",
+   "bucket": 15,
+   "rel": 0.00926851705656444,
+   "abs": 0.0696868977403911,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.009268508189535592,
+    "abs": 0.06968834684830685
+   }
+  },
+  {
+   "clip": "n04-1988-24833-0000",
+   "bucket": 15,
+   "rel": 0.011247704192653758,
+   "abs": 0.07337204736643219,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011247740390876398,
+    "abs": 0.07337766240910476
+   }
+  },
+  {
+   "clip": "n04-2035-147961-0034",
+   "bucket": 15,
+   "rel": 0.011285655086715833,
+   "abs": 0.07011139605560303,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011285681657688496,
+    "abs": 0.0701140248313105
+   }
+  },
+  {
+   "clip": "n04-2277-149874-0009",
+   "bucket": 15,
+   "rel": 0.011539666709089937,
+   "abs": 0.09295057059732884,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011539803114384522,
+    "abs": 0.09295676092999641
+   }
+  },
+  {
+   "clip": "n04-2428-83699-0026",
+   "bucket": 15,
+   "rel": 0.013261810112814892,
+   "abs": 0.130166587741979,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.013261988273242738,
+    "abs": 0.13017059644239526
+   }
+  },
+  {
+   "clip": "n04-3081-166546-0060",
+   "bucket": 15,
+   "rel": 0.010272583228290602,
+   "abs": 0.081772351648761,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.010272615998144172,
+    "abs": 0.08177078217667175
+   }
+  },
+  {
+   "clip": "n04-3576-138058-0031",
+   "bucket": 15,
+   "rel": 0.01150017723894462,
+   "abs": 0.06421796882295715,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011500181794561972,
+    "abs": 0.06421548750254781
+   }
+  },
+  {
+   "clip": "n04-3752-4943-0016",
+   "bucket": 15,
+   "rel": 0.010320584883805196,
+   "abs": 0.08419722259270432,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.010320654907094091,
+    "abs": 0.08420371763664138
+   }
+  },
+  {
+   "clip": "n04-5536-43358-0012",
+   "bucket": 15,
+   "rel": 0.016244668399080592,
+   "abs": 0.3308428045920458,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.01624458897643738,
+    "abs": 0.3308462081594135
+   }
+  },
+  {
+   "clip": "n04-5694-64029-0003",
+   "bucket": 15,
+   "rel": 0.01529705569125042,
+   "abs": 0.18071289549334607,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.015297200194900813,
+    "abs": 0.18071513141864337
+   }
+  },
+  {
+   "clip": "n04-6241-61943-0022",
+   "bucket": 15,
+   "rel": 0.009373806408759696,
+   "abs": 0.08703058291520697,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.009373830610420606,
+    "abs": 0.0870278497600426
+   }
+  },
+  {
+   "clip": "n04-6313-66125-0014",
+   "bucket": 15,
+   "rel": 0.012439813423108912,
+   "abs": 0.100807063293612,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012440003987213318,
+    "abs": 0.10080871949724254
+   }
+  },
+  {
+   "clip": "n04-6319-57405-0007",
+   "bucket": 15,
+   "rel": 0.011091221509003059,
+   "abs": 0.08659242747729165,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011091192903750857,
+    "abs": 0.0865912539068206
+   }
+  },
+  {
+   "clip": "n04-8297-275154-0024",
+   "bucket": 15,
+   "rel": 0.016348828053297806,
+   "abs": 0.23868116427749825,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.016348896299866543,
+    "abs": 0.23868117812140371
+   }
+  },
+  {
+   "clip": "n08-1272-141231-0019",
+   "bucket": 15,
+   "rel": 0.012538339813321578,
+   "abs": 0.10674811249183568,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012538360974429529,
+    "abs": 0.10675156714659581
+   }
+  },
+  {
+   "clip": "n08-1462-170142-0020",
+   "bucket": 15,
+   "rel": 0.011781554634079698,
+   "abs": 0.11607825918730982,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011781507203322512,
+    "abs": 0.11607218636263245
+   }
+  },
+  {
+   "clip": "n08-174-84280-0003",
+   "bucket": 15,
+   "rel": 0.01202384913589986,
+   "abs": 0.14733650931471595,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012023847457520545,
+    "abs": 0.14733821804786895
+   }
+  },
+  {
+   "clip": "n08-1919-142785-0038",
+   "bucket": 15,
+   "rel": 0.011112286623065622,
+   "abs": 0.10896789886681396,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011112289949840037,
+    "abs": 0.10896684169211941
+   }
+  },
+  {
+   "clip": "n08-1993-147965-0003",
+   "bucket": 15,
+   "rel": 0.013665971298242385,
+   "abs": 0.19816494436148674,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.013665983311329672,
+    "abs": 0.19816425745335173
+   }
+  },
+  {
+   "clip": "n08-2086-149220-0016",
+   "bucket": 15,
+   "rel": 0.012333901716199377,
+   "abs": 0.12834001442946844,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012333927999927162,
+    "abs": 0.12833862039647523
+   }
+  },
+  {
+   "clip": "n08-2277-149897-0033",
+   "bucket": 15,
+   "rel": 0.011830505532430615,
+   "abs": 0.11964444704134099,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011830514851760777,
+    "abs": 0.11964526967000257
+   }
+  },
+  {
+   "clip": "n08-2412-153948-0009",
+   "bucket": 15,
+   "rel": 0.011612845796787308,
+   "abs": 0.09324030271143834,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011612881591746798,
+    "abs": 0.09323867618121494
+   }
+  },
+  {
+   "clip": "n08-2803-154320-0010",
+   "bucket": 15,
+   "rel": 0.011929829012434109,
+   "abs": 0.18980549354495724,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011929965984981082,
+    "abs": 0.189817459459001
+   }
+  },
+  {
+   "clip": "n08-3853-163249-0041",
+   "bucket": 15,
+   "rel": 0.012520932732361772,
+   "abs": 0.1431924585687261,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.01252099955256953,
+    "abs": 0.14319330522274867
+   }
+  },
+  {
+   "clip": "n08-5338-284437-0029",
+   "bucket": 15,
+   "rel": 0.01162921438961788,
+   "abs": 0.10644243569258205,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011629049690714061,
+    "abs": 0.10642711862353323
+   }
+  },
+  {
+   "clip": "n08-5694-64025-0020",
+   "bucket": 15,
+   "rel": 0.013323581723303944,
+   "abs": 0.14120006739820018,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.013323583202725557,
+    "abs": 0.14119879446264114
+   }
+  },
+  {
+   "clip": "n08-6313-76958-0016",
+   "bucket": 15,
+   "rel": 0.01394386128334443,
+   "abs": 0.12191320451819221,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.013943740034382002,
+    "abs": 0.12190401555946698
+   }
+  },
+  {
+   "clip": "n08-6345-93306-0019",
+   "bucket": 15,
+   "rel": 0.01218793884910515,
+   "abs": 0.15956444766678418,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012187929617367348,
+    "abs": 0.15956799817253187
+   }
+  },
+  {
+   "clip": "n08-652-130726-0027",
+   "bucket": 15,
+   "rel": 0.0114166098518122,
+   "abs": 0.08381261697296254,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011416605849808074,
+    "abs": 0.08381345690081175
+   }
+  },
+  {
+   "clip": "n08-8842-302201-0007",
+   "bucket": 15,
+   "rel": 0.012343538099878471,
+   "abs": 0.10047167015349048,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012343711447648049,
+    "abs": 0.10050196917375302
+   }
+  },
+  {
+   "clip": "n15-1272-141231-0025",
+   "bucket": 15,
+   "rel": 0.011507032386275711,
+   "abs": 0.08930398078554096,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011507043039143091,
+    "abs": 0.08930525066201275
+   }
+  },
+  {
+   "clip": "n15-1462-170142-0001",
+   "bucket": 15,
+   "rel": 0.01232839983048053,
+   "abs": 0.37961912544148246,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.01232843881548961,
+    "abs": 0.3796241619276056
+   }
+  },
+  {
+   "clip": "n15-1673-143396-0001",
+   "bucket": 15,
+   "rel": 0.011818846515284417,
+   "abs": 0.13522256154881077,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011818820851833629,
+    "abs": 0.13521634292066492
+   }
+  },
+  {
+   "clip": "n15-174-168635-0010",
+   "bucket": 15,
+   "rel": 0.013667853786541138,
+   "abs": 0.20727717222863185,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.013667884481755904,
+    "abs": 0.20728265572465454
+   }
+  },
+  {
+   "clip": "n15-2277-149874-0014",
+   "bucket": 15,
+   "rel": 0.013829111961926975,
+   "abs": 0.17209152205482564,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.01382905142596272,
+    "abs": 0.1720926406769362
+   }
+  },
+  {
+   "clip": "n15-2412-153947-0005",
+   "bucket": 15,
+   "rel": 0.013286154811902888,
+   "abs": 0.18835398720041607,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.013286211365088584,
+    "abs": 0.18835569601415192
+   }
+  },
+  {
+   "clip": "n15-3000-15664-0011",
+   "bucket": 15,
+   "rel": 0.01182845218885788,
+   "abs": 0.13530553065518588,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011828486638757869,
+    "abs": 0.1353068424555176
+   }
+  },
+  {
+   "clip": "n15-3536-23268-0008",
+   "bucket": 15,
+   "rel": 0.011691335452004186,
+   "abs": 0.15609919197401217,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011691377954512376,
+    "abs": 0.15609790137469057
+   }
+  },
+  {
+   "clip": "n15-3752-4944-0027",
+   "bucket": 15,
+   "rel": 0.013538543698545137,
+   "abs": 0.1602694422512716,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.013538522422077922,
+    "abs": 0.16026081374760934
+   }
+  },
+  {
+   "clip": "n15-3853-163249-0022",
+   "bucket": 15,
+   "rel": 0.010716418988141444,
+   "abs": 0.1007229639390461,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.010716372190337532,
+    "abs": 0.10072084005887143
+   }
+  },
+  {
+   "clip": "n15-422-122949-0008",
+   "bucket": 15,
+   "rel": 0.011922789266102176,
+   "abs": 0.1463819356070403,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011922617083363932,
+    "abs": 0.14637441070892043
+   }
+  },
+  {
+   "clip": "n15-6241-61943-0008",
+   "bucket": 15,
+   "rel": 0.014290792696766154,
+   "abs": 0.20165853765989053,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.01429073848455973,
+    "abs": 0.20165980125404065
+   }
+  },
+  {
+   "clip": "n15-6313-76958-0013",
+   "bucket": 15,
+   "rel": 0.01675972467420301,
+   "abs": 0.29311415914676087,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.016759228180657365,
+    "abs": 0.29309229109576357
+   }
+  },
+  {
+   "clip": "n15-652-129742-0001",
+   "bucket": 15,
+   "rel": 0.01257405664458983,
+   "abs": 0.18254015627586884,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012574119980474807,
+    "abs": 0.1825467502565489
+   }
+  },
+  {
+   "clip": "n15-8297-275155-0005",
+   "bucket": 15,
+   "rel": 0.010514023770931517,
+   "abs": 0.0877808888452885,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.010514043763751042,
+    "abs": 0.08778047434755842
+   }
+  },
+  {
+   "clip": "n15-84-121550-0029",
+   "bucket": 15,
+   "rel": 0.012318773726147843,
+   "abs": 0.09055203736651607,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012318736395380763,
+    "abs": 0.09055231775353798
+   }
+  },
+  {
+   "clip": "b02-N31840",
+   "bucket": 15,
+   "rel": 0.016652580931267993,
+   "abs": 0.18403578503684415,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.016652324955664412,
+    "abs": 0.1840299166190929
+   }
+  },
+  {
+   "clip": "b02-N32000",
+   "bucket": 15,
+   "rel": 0.014206269814537573,
+   "abs": 0.1260641369915811,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.014206245393869839,
+    "abs": 0.1260633669228811
+   }
+  },
+  {
+   "clip": "b04-N32001",
+   "bucket": 15,
+   "rel": 0.01434443978195446,
+   "abs": 0.09977848903905658,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.014344704354325014,
+    "abs": 0.0997818318148858
+   }
+  },
+  {
+   "clip": "b04-N32160",
+   "bucket": 15,
+   "rel": 0.021282419110059948,
+   "abs": 0.36220185394532145,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.021281964904093613,
+    "abs": 0.3621895582013248
+   }
+  },
+  {
+   "clip": "b04-N63840",
+   "bucket": 15,
+   "rel": 0.01355753673584209,
+   "abs": 0.13711075800418196,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.013557253891489096,
+    "abs": 0.1371018426064892
+   }
+  },
+  {
+   "clip": "b04-N64000",
+   "bucket": 15,
+   "rel": 0.013213983534699663,
+   "abs": 0.14050635567371067,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.013214046078921965,
+    "abs": 0.14050883810767892
+   }
+  },
+  {
+   "clip": "b08-N64001",
+   "bucket": 15,
+   "rel": 0.011890636092804361,
+   "abs": 0.1273233069063003,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011890647780018861,
+    "abs": 0.12732287460622507
+   }
+  },
+  {
+   "clip": "b08-N64160",
+   "bucket": 15,
+   "rel": 0.011286855639268427,
+   "abs": 0.10710873218037059,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011286891205149054,
+    "abs": 0.10710776826489443
+   }
+  },
+  {
+   "clip": "b08-N127840",
+   "bucket": 15,
+   "rel": 0.012018635409102765,
+   "abs": 0.14033226499872822,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012018660938628646,
+    "abs": 0.14033489427360069
+   }
+  },
+  {
+   "clip": "b08-N128000",
+   "bucket": 15,
+   "rel": 0.018468608980022897,
+   "abs": 0.19793762839072068,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.0184685894110163,
+    "abs": 0.19794259625342328
+   }
+  },
+  {
+   "clip": "b15-N128001",
+   "bucket": 15,
+   "rel": 0.014776469074539422,
+   "abs": 0.21399982311571783,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.014776400977346948,
+    "abs": 0.2139967619276063
+   }
+  },
+  {
+   "clip": "b15-N128160",
+   "bucket": 15,
+   "rel": 0.015319236523228532,
+   "abs": 0.42897942453818233,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.015319110514103203,
+    "abs": 0.4289731684860837
+   }
+  },
+  {
+   "clip": "b15-N239200",
+   "bucket": 15,
+   "rel": 0.012445453066035844,
+   "abs": 0.15018168567341894,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012445454209668996,
+    "abs": 0.15018097470535177
+   }
+  },
+  {
+   "clip": "b15-N239360",
+   "bucket": 15,
+   "rel": 0.013303108145339311,
+   "abs": 0.2310598114077164,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.013303059992882761,
+    "abs": 0.23105895461733908
+   }
+  },
+  {
+   "clip": "b15-N239520",
+   "bucket": 15,
+   "rel": 0.01390993710917403,
+   "abs": 0.17694945145408655,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.01390980235140109,
+    "abs": 0.17694294509357317
+   }
+  },
+  {
+   "clip": "b15-N240000",
+   "bucket": 15,
+   "rel": 0.012186623127877052,
+   "abs": 0.1490945775692739,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012186577312129212,
+    "abs": 0.14909416666315745
+   }
+  },
+  {
+   "clip": "silence-3s",
+   "bucket": 15,
+   "rel": 0.01095692043304532,
+   "abs": 0.07063646732313632,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.3281059415346566,
+    "abs": 2.7005726009859528
+   }
+  },
+  {
+   "clip": "impulse-3s",
+   "bucket": 15,
+   "rel": 0.006697767771276319,
+   "abs": 0.04014566718504123,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.006698002761940991,
+    "abs": 0.040146786085249006
+   }
+  }
+ ]
+}
