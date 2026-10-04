@@ -50,23 +50,27 @@ sources with their licences. No endorsement by NVIDIA is implied.
    clip with only NeMo's dependencies importable.
 3. Codex (gpt-6-astra, xhigh) reviews this plan, `hf/` and the staged folder,
    iterated until clean (no open blocker or major).
-4. Upload with the Hugging Face CLI (token already saved for account rajb3):
+4. Create the Hub repository as PRIVATE and upload there:
+   `hf repo create rajb3/parakeet-tdt-0.6b-v2-ternary --type model --private`, then
    `hf upload rajb3/parakeet-tdt-0.6b-v2-ternary <staging> . --repo-type model`.
-5. Verify on the Hub: file list, `export.safetensors` LFS SHA-256 equals the
-   precheck hash, card metadata parses, model-index present.
-6. Round trip: download from the Hub into an empty directory and run the
-   standalone CLI on a test clip in the clean environment; transcript must match
-   the step-1 transcript for that clip.
+5. Verify the private repository: file list equals the staged report; the LFS
+   SHA-256 of `export.safetensors` equals the precheck hash; every other file's
+   hash equals the staging report; card metadata parses; model-index present.
+6. Round trip from the private repository (authenticated): download into an
+   empty directory and run the standalone CLI on a test clip in the clean
+   environment; the transcript must match the staged check for that clip.
+   Only after 5 and 6 pass, make the repository public
+   (`HfApi().update_repo_settings(repo_id, private=False)`) and re-check that
+   it is reachable anonymously.
 7. Link the Hub model from `finetune/parakeet-ternary/README.md` and the
    top-level README (local edits; committing and pushing to GitHub only with the
    user's go-ahead).
 
-## Open question for the user
+## Code link
 
-The model card links to the experiment's code at
-`github.com/ajbarryiii/wilderness-labs-stt/tree/main/finetune/parakeet-ternary`,
-which is not yet committed or pushed. Pushing it (code, design, plans and
-results; no weights) is needed for that link to resolve.
+The user approved pushing the experiment code; it is on GitHub `main` (commit
+4aa2845, 2026-10-04), so the card's link to `finetune/parakeet-ternary` resolves.
+The `hf/` folder is pushed after the upload.
 
 ## Resource caps
 

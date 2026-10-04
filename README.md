@@ -1,9 +1,31 @@
 # wilderness-labs-stt
 
 Low-bit, low-power speech-to-text, taken from packed binary/ternary kernels
-through failed from-scratch training to a working ternary Whisper.
+through failed from-scratch training to a working ternary Whisper, and then to a
+ternary Parakeet within 0.4 WER points of the original.
 
-**Headline (September 2026):** Whisper tiny.en with every attention and
+**Headline (October 2026):** NVIDIA's Parakeet-TDT-0.6B-v2 with 264 encoder
+modules (98% of its parameters) constrained to {-1, 0, +1}, recovered by
+quantization-aware training with online teacher transcripts and encoder-output
+matching, averages **6.84% WER on seven Open ASR Leaderboard test sets from a
+180.8 MB file**, against 6.45% for the FP32 original at 2,472 MB. Each arm was
+scored once on the leaderboard's own test bundle; TED-LIUM is not in the public
+bundle and is excluded from the mean.
+
+| Parakeet-TDT-0.6B-v2 | LS clean | LS other | AMI | Earnings-22 | GigaSpeech | SPGISpeech | VoxPopuli | Mean of 7 | File |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| FP32 original (our scoring) | 1.70 | 3.19 | 11.15 | 11.24 | 9.78 | 2.14 | 5.94 | 6.45 | 2,472 MB |
+| Ternary, no training | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 180.8 MB |
+| **Ternary, QAT** | **2.05** | **4.20** | **10.42** | **11.72** | **10.35** | **2.94** | **6.19** | **6.84** | **180.8 MB** |
+
+Model: [rajb3/parakeet-tdt-0.6b-v2-ternary](https://huggingface.co/rajb3/parakeet-tdt-0.6b-v2-ternary)
+(CC-BY-4.0, needs `nemo_toolkit[asr]`). Design, pilot, main run and every
+number: [`finetune/parakeet-ternary/`](finetune/parakeet-ternary/), results in
+[`finetune/parakeet-ternary/results/TEST.md`](finetune/parakeet-ternary/results/TEST.md).
+Common Voice, outside the leaderboard mean and the training mixture, shows the
+largest gap (12.56% against 8.50%).
+
+**Earlier result (September 2026):** Whisper tiny.en with every attention and
 feed-forward projection *and* the token embedding constrained to three values
 {-1, 0, +1}, recovered by quantization-aware fine-tuning, transcribes
 LibriSpeech test-clean at **12.1% WER from a 12.2 MB file**. The identically
