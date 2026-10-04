@@ -1,0 +1,303 @@
+{
+ "label": "baseline-eligible",
+ "label_note": null,
+ "results_file": [
+  "/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/C4-multi-gpu-vdsp-f2/20261003-190417/c0.jsonl",
+  "/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/C4-multi-gpu-vdsp-f2/20261003-202631/c0.jsonl"
+ ],
+ "arm": "C0",
+ "arm_spec": null,
+ "executable_sha256": "726372ae7d7539be0d8d6da19af463084fb186a4400a8b8e46b6a45b8575d530",
+ "thermal": {
+  "recorded": true,
+  "blocks": 64,
+  "at_start": {
+   "nominal": 64
+  },
+  "at_end": {
+   "nominal": 64
+  },
+  "blocks_waited": 0,
+  "wait_ms_total": 0,
+  "settle_ms": [
+   500
+  ],
+  "nominal_at_every_start": true
+ },
+ "mode": "free",
+ "compute_units": "cpuAndNeuralEngine",
+ "preprocessor_units": "cpuOnly",
+ "os": "Version 27.0 (Build 26A428)",
+ "load_ms": {
+  "Decoder": 86.09033333333333,
+  "Encoder": 37828.86083333333,
+  "JointDecision": 50.09845833333333,
+  "Preprocessor": 66.30004166666666
+ },
+ "load_cache_evidence": "none: MLModel load wall time only; no Instruments Core ML trace",
+ "completeness": {
+  "clips": 64,
+  "warmups": 3,
+  "timed_per_clip": 10,
+  "clip_ids_recorded": true
+ },
+ "timed_records": 640,
+ "phys_footprint_mb": {
+  "after_load": null,
+  "end": 235.23888397216797,
+  "peak": 379.64515686035156
+ },
+ "wer_vs_reference": {
+  "wer": 0.016684045881126174,
+  "substitutions": 13,
+  "deletions": 1,
+  "insertions": 2,
+  "ref_words": 959,
+  "hyp_words": 960,
+  "utterances": 64,
+  "excluded_empty_reference": 0
+ },
+ "wer_vs_b0": {
+  "wer": 0.0020833333333333333,
+  "substitutions": 2,
+  "deletions": 0,
+  "insertions": 0,
+  "ref_words": 960,
+  "hyp_words": 960,
+  "utterances": 64,
+  "excluded_empty_reference": 0
+ },
+ "b0_wer_vs_reference_same_clips": {
+  "wer": 0.017726798748696558,
+  "substitutions": 14,
+  "deletions": 1,
+  "insertions": 2,
+  "ref_words": 959,
+  "hyp_words": 960,
+  "utterances": 64,
+  "excluded_empty_reference": 0
+ },
+ "per_bucket_wer_vs_reference": {
+  "2": {
+   "wer": 0.03225806451612903,
+   "substitutions": 1,
+   "deletions": 0,
+   "insertions": 1,
+   "ref_words": 62,
+   "hyp_words": 63,
+   "utterances": 16,
+   "excluded_empty_reference": 0
+  },
+  "4": {
+   "wer": 0.007633587786259542,
+   "substitutions": 1,
+   "deletions": 0,
+   "insertions": 0,
+   "ref_words": 131,
+   "hyp_words": 131,
+   "utterances": 16,
+   "excluded_empty_reference": 0
+  },
+  "8": {
+   "wer": 0.020338983050847456,
+   "substitutions": 5,
+   "deletions": 1,
+   "insertions": 0,
+   "ref_words": 295,
+   "hyp_words": 294,
+   "utterances": 16,
+   "excluded_empty_reference": 0
+  },
+  "15": {
+   "wer": 0.014861995753715499,
+   "substitutions": 6,
+   "deletions": 0,
+   "insertions": 1,
+   "ref_words": 471,
+   "hyp_words": 472,
+   "utterances": 16,
+   "excluded_empty_reference": 0
+  }
+ },
+ "token_sequence_equal_to_b0": {
+  "clips": 53,
+  "of": 64
+ },
+ "texts_differing_from_b0": [
+  {
+   "clip": "n02-1919-142785-0048",
+   "b0": "French force meat,",
+   "arm": "French force meat"
+  },
+  {
+   "clip": "n02-2078-142845-0023",
+   "b0": "HOT ROLLS",
+   "arm": "Hot rolls."
+  },
+  {
+   "clip": "n04-2035-147961-0034",
+   "b0": "Wherever they went the story followed them,",
+   "arm": "Wherever they went the story followed them."
+  },
+  {
+   "clip": "n08-652-130726-0027",
+   "b0": "Put into the oven again and cook for half an hour, basting frequently with the original brine.",
+   "arm": "put into the oven again and cook for half an hour, basting frequently with the original brine."
+  },
+  {
+   "clip": "n15-3752-4944-0027",
+   "b0": "Before the two clergymen had got half way down the steep path that led from the commandant's house to the flat on which the cottages of the doctor and chaplain were built, McIlwain rejoined them,",
+   "arm": "Before the two clergymen had got half way down the steep path that led from the commandant's house to the flat on which the cottages of the doctor and chaplain were built, McIlwain rejoined them."
+  },
+  {
+   "clip": "n02-174-50561-0014",
+   "b0": "The Ladies",
+   "arm": "The ladies."
+  },
+  {
+   "clip": "n02-251-136532-0022",
+   "b0": "Lectures",
+   "arm": "Lectures,"
+  },
+  {
+   "clip": "n08-2086-149220-0016",
+   "b0": "Miss Hepzibah, I suppose, will interweave the fact with her other traditions, and set it down that the fowls know you to be a pynchon.",
+   "arm": "Miss Hepzibah, I suppose, will interweave the fact with her other traditions, and set it down that the fowls know you to be a pynchon"
+  },
+  {
+   "clip": "n08-3853-163249-0041",
+   "b0": "We will. What can I do for you, Davy? asked Christy, wonderfully supported by the thought that she was going to.",
+   "arm": "We will. What can I do for you, Davy? asked Christie, wonderfully supported by the thought that she was going to."
+  },
+  {
+   "clip": "n08-8842-302201-0007",
+   "b0": "To her I wend along, In whose much strength my weakness is made strong,",
+   "arm": "To her I wend along, In whose much strength my weakness is made strong"
+  },
+  {
+   "clip": "n15-6241-61943-0008",
+   "b0": "On the eleventh day we sighted Cape Portland, over which towered Mount Midrell's Yokel, which, the weather being clear, we made out very readily.",
+   "arm": "On the eleventh day we sighted Cape Portland, over which towered Mount Midrill's Yokel, which, the weather being clear, we made out very readily."
+  }
+ ],
+ "tokens_identical_across_reps": true,
+ "per_bucket": {
+  "2": {
+   "clips": 16,
+   "pooled_calls": 160,
+   "preprocess_ms_typical": 13.806,
+   "preprocess_ms_p95_hd": 14.351,
+   "encoder_ms_typical": 41.383,
+   "encoder_ms_p95_hd": 41.85,
+   "preprojection_ms_typical": 0.0,
+   "preprojection_ms_p95_hd": 0.0,
+   "decode_ms_typical": 6.938,
+   "decode_ms_p95_hd": 11.065,
+   "total_ms_typical": 61.939,
+   "total_ms_p95_hd": 67.075,
+   "decoder_model_ms_typical": 5.012,
+   "decoder_model_ms_p95_hd": 8.154,
+   "joint_model_ms_typical": 1.619,
+   "joint_model_ms_p95_hd": 2.392,
+   "first_call_total_ms_median": 132.804,
+   "decoder_model_calls_mean": 9.5,
+   "decoder_model_ms_per_call": 0.5481,
+   "joint_model_calls_mean": 12.12,
+   "joint_model_ms_per_call": 0.1358
+  },
+  "4": {
+   "clips": 16,
+   "pooled_calls": 160,
+   "preprocess_ms_typical": 14.324,
+   "preprocess_ms_p95_hd": 14.833,
+   "encoder_ms_typical": 41.385,
+   "encoder_ms_p95_hd": 41.701,
+   "preprojection_ms_typical": 0.0,
+   "preprojection_ms_p95_hd": 0.0,
+   "decode_ms_typical": 11.937,
+   "decode_ms_p95_hd": 18.008,
+   "total_ms_typical": 67.695,
+   "total_ms_p95_hd": 73.731,
+   "decoder_model_ms_typical": 8.851,
+   "decoder_model_ms_p95_hd": 13.455,
+   "joint_model_ms_typical": 2.526,
+   "joint_model_ms_p95_hd": 3.83,
+   "first_call_total_ms_median": 137.494,
+   "decoder_model_calls_mean": 16.81,
+   "decoder_model_ms_per_call": 0.5423,
+   "joint_model_calls_mean": 19.25,
+   "joint_model_ms_per_call": 0.139
+  },
+  "8": {
+   "clips": 16,
+   "pooled_calls": 160,
+   "preprocess_ms_typical": 15.093,
+   "preprocess_ms_p95_hd": 15.993,
+   "encoder_ms_typical": 41.374,
+   "encoder_ms_p95_hd": 42.394,
+   "preprojection_ms_typical": 0.0,
+   "preprojection_ms_p95_hd": 0.0,
+   "decode_ms_typical": 22.692,
+   "decode_ms_p95_hd": 34.571,
+   "total_ms_typical": 79.408,
+   "total_ms_p95_hd": 91.664,
+   "decoder_model_ms_typical": 16.694,
+   "decoder_model_ms_p95_hd": 25.561,
+   "joint_model_ms_typical": 4.844,
+   "joint_model_ms_p95_hd": 7.392,
+   "first_call_total_ms_median": 154.181,
+   "decoder_model_calls_mean": 33.94,
+   "decoder_model_ms_per_call": 0.5159,
+   "joint_model_calls_mean": 37.06,
+   "joint_model_ms_per_call": 0.1354
+  },
+  "15": {
+   "clips": 16,
+   "pooled_calls": 160,
+   "preprocess_ms_typical": 16.299,
+   "preprocess_ms_p95_hd": 17.949,
+   "encoder_ms_typical": 42.353,
+   "encoder_ms_p95_hd": 44.013,
+   "preprojection_ms_typical": 0.0,
+   "preprojection_ms_p95_hd": 0.0,
+   "decode_ms_typical": 39.672,
+   "decode_ms_p95_hd": 61.213,
+   "total_ms_typical": 97.956,
+   "total_ms_p95_hd": 121.187,
+   "decoder_model_ms_typical": 29.399,
+   "decoder_model_ms_p95_hd": 45.389,
+   "joint_model_ms_typical": 8.512,
+   "joint_model_ms_p95_hd": 12.964,
+   "first_call_total_ms_median": 176.6,
+   "decoder_model_calls_mean": 61.69,
+   "decoder_model_ms_per_call": 0.5011,
+   "joint_model_calls_mean": 65.75,
+   "joint_model_ms_per_call": 0.1336
+  }
+ },
+ "estimands": "typical = median over clips of each clip's median; p95_hd = Harrell-Davis p95 over the bucket's pooled timed calls",
+ "calls": {
+  "preprocessor_per_call": [
+   1
+  ],
+  "encoder_per_call": [
+   1
+  ],
+  "physical_totals": {
+   "decoder_model": 1951,
+   "joint_model": 2147
+  },
+  "joint_calls_total": 2147,
+  "b0_steps_total": 2159,
+  "decoder_calls_total": 1951,
+  "b0_prediction_runs_total": 1955,
+  "encoder_length_minus_b0_frames": [
+   0,
+   1
+  ],
+  "effective_minus_b0_frames": [
+   0,
+   1
+  ]
+ }
+}

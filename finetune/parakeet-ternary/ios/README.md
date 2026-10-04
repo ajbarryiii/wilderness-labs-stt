@@ -833,8 +833,56 @@ configuration and the label-loop constants.
   compile) and installs `$A/reviewed/parakeet-bench`; build test 8/8 (Linux and Mac).
 - 5: self-tests clean up in `finally`; the plan lists the cleanup after a guard abort.
 
-**Results: pending rerun after a clean review.** Gate and sweep runs made before the review rule arrived are
-unreviewed and withdrawn: their records and summaries are quarantined under
-`results/eligibility/pipelines/quarantine/pre-review-20261003/` (read by nothing), and their raw-run pointers on
-NixOS were renamed `LATEST.quarantined-pre-review`. The reviewed procedure is `plans/wp7.md`.
+**Results** (2026-10-03; executed from the reviewed commit ee63bdc after review round 4 came back clean; plan
+`plans/wp7.md` revision 4). The pre-review outputs stay quarantined.
+
+*Preparation.* `build_reviewed.sh` built and tested the committed sources (unit tests 8/8; executable SHA-256
+726372ae…). Tests: macguard suite on the Mac 27 PASS / 0 failed; pipegate self-test 10/10; build test 8/8; wp5sweep
+self-test 10/10. `ref64` regenerated (82 clips; vs the FP32-feature reference: silence rel 0.34, every other clip
+≤ 2.6e-6; `results/pipegates/ref64_index.json`).
+
+*Deployed-pipeline gates* (`results/eligibility/pipelines/table.txt`, summaries `results/pipegates/`): 49 encoder
+arm × backend combinations × {F2, F0, F1} = **147 revision-10 records, all timing-allowed.**
+- Encoder (front end A → arm) vs the FP64-feature reference: max rel 0.008–0.036 per combination (ceiling 0.1).
+  Against the FP32-feature reference (diagnostic) only the silence clip exceeds 0.1, in all 49.
+- Every captured decoder output finite, in free decoding and replay.
+- Free decoding: 62–64/64 identical to the reference; WER 2.711% = reference in every pipeline.
+- Decisions: decisive agreement token 1.0000, duration 0.9996 everywhere; all-step agreement token 0.9983–0.9997,
+  duration 0.9901–0.9977 (ceiling 0.99: the closest margin).
+- Head errors (FP32-feature reference): F2 and F0 token logits rel 0.034–0.036, duration logits 0.091–0.094, h and c
+  ≤ 1.1e-6. F1: token and duration logit errors **unavailable** (DESIGN.md rev. 10); h, c ≤ 4.9e-7; its informational
+  proxy (Decoder + JointLogits on F1's inputs) matches F1's states exactly and agrees with all of F1's token and
+  duration decisions. Chosen-token probability vs the reference softmax: up to 0.29 apart (low-margin steps).
+- One job was aborted by macguard (C6s4 multi on cpuOnly: swap grew by more than 1 GB on the shared Mac); it was
+  rerun alone with `pipegate.py run --only mp2-C6s4-multi-cpu` and passed.
+
+*Sweep* (sweep `wp7-20261003-184043`, manifest `results/wp7/manifest.json`; 14 runs, half A in arm order, half B
+reversed; 32 + 32 natural clips; 3 warm-up + 10 timed per clip; paired in-process with the pinned C0 on
+cpuAndNeuralEngine; 500 ms settle per block). **Informational: shared Mac, no claims.** Every block of every run
+started and ended at thermal state "nominal" (no thermal waits). C0's own typical total: 62 / 67–70 / 78–82 /
+97–101 ms (2 / 4 / 8 / 15 s).
+
+| Arm (A + F2, multifunction) | Total vs C0, 2 / 4 / 8 / 15 s [95% CI] | Encoder ms, 2 / 4 / 8 / 15 s | Encoder load ms, post-purge (A, B) / subsequent fresh process (A, B) | Arm-only footprint MB |
+|---|---|---|---|---|
+| C4-ane, ANE | 0.40 [0.39, 0.42] / 0.45 [0.43, 0.46] / 0.57 [0.55, 0.59] / 0.85 [0.84, 0.86] | 18.5 / 19.6 / 24.4 / 47.4 | 179,623, 172,661 / 3,985, 3,621 | 304 |
+| C3-ane, ANE | 0.39 [0.38, 0.41] / 0.44 [0.43, 0.45] / 0.57 [0.55, 0.59] / 0.87 [0.85, 0.88] | 17.8 / 18.8 / 23.5 / 49.2 | 184,220, 176,080 / 4,310, 3,739 | 253 |
+| C6s8-ane, ANE | 0.37 [0.36, 0.38] / 0.41 [0.40, 0.42] / 0.55 [0.52, 0.55] / 0.83 [0.82, 0.85] | 15.9 / 16.9 / 21.7 / 44.9 | 486,055, 455,092 / 4,006, 3,771 | 265 |
+| C4, GPU | 0.75 [0.74, 0.77] / 0.89 [0.88, 0.90] / 1.32 [1.29, 1.34] / 1.63 [1.58, 1.70] | 40.1 / 48.8 / 82.5 / 122.9 | 18,439, 17,882 / 125, 111 | 204 |
+| C3, GPU | 0.76 [0.75, 0.77] / 0.89 [0.89, 0.90] / 1.29 [1.28, 1.32] / 1.62 [1.55, 1.71] | 40.3 / 49.2 / 81.2 / 122.9 | 13,951, 14,515 / 126, 158 | 205 |
+| C6s8, GPU | 5.24 [5.12, 5.48] / 3.65 [3.56, 3.77] / 4.80 [4.57, 4.96] / 5.99 [5.41, 6.19] | 323.6 / 233.3 / 362.5 / 544.0 | 1,282,749, 1,288,002 / 828, 822 | 1,388 |
+| C6s8 plain, ANE (anchor) | 0.34 [0.32, 0.35] / 0.39 [0.39, 0.41] / 0.52 [0.50, 0.54] / 0.77 [0.77, 0.79] | 14.3 / 15.6 / 19.7 / 40.1 | 388,073, 367,637 / 1,526, 1,521 | 160 |
+
+- All arms: WER 2.71%; GPU arms 64/64 token sequences equal to mp2's FP32 reference, ANE arms 62–63/64.
+- **The ANE layout does not pay off here:** each -ane build is slower than the plain build of the same encoding
+  (C6s8-ane 44.9 vs plain 40.1 ms encoder at 15 s; 0.83 vs 0.77 of C0). Post-purge loads take 1.2× (C6s8) to
+  2.3× (C3, C4) as long as the plain builds' (anchor and WP5), fresh-process loads 2.5–3× as long (3.6–4.3 s vs
+  1.3–1.5 s), and the arm-only footprint is 253–304 MB vs 148–160 MB.
+- **The GPU backend is slower than C0** from 8 s up (C3/C4 1.3–1.6×) and C6s8 on the GPU is 3.7–6× slower, with a
+  21-minute post-purge load and 1.4 GB footprint; per WP6a's compute plans "GPU" mostly means CPU for these
+  compressed encoders.
+- **Anchor:** C6s8 plain within this session (0.34 / 0.39 / 0.52 / 0.77) agrees with WP5's C6s8 row (0.33 / 0.40 /
+  0.52 / 0.79); the CIs overlap in every bucket.
+- Limitations (plan section 5): shared Mac; order counterbalanced, not randomized; one session; thermal state is
+  coarse; loads are post-purge / subsequent fresh-process loads with no cache evidence; placement not traced.
+- Summaries: `results/wp7/` (`<arm>.summary.json`, `<arm>.c0block.summary.json`, `sweep.json`, `manifest.json`).
 

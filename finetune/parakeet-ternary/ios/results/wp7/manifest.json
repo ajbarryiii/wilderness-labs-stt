@@ -1,0 +1,321 @@
+{
+ "sweep_id": "wp7-20261003-184043",
+ "build": {
+  "commit": "23ebeed5b9c275208bdfe37768baa8cc58c59fc9",
+  "executable_sha256": "726372ae7d7539be0d8d6da19af463084fb186a4400a8b8e46b6a45b8575d530",
+  "built_from_commit": "ee63bdc62cb49b3ff79f0e52846a077b7d5177a7",
+  "source_tree": "43fd915d3e525ca8aea2eae94e753f72560535f3"
+ },
+ "settle_ms": 500,
+ "warmups": 3,
+ "timed": 10,
+ "arms": [
+  "C4-ane-multi-vdsp-f2",
+  "C3-ane-multi-vdsp-f2",
+  "C6s8-ane-multi-vdsp-f2",
+  "C4-multi-gpu-vdsp-f2",
+  "C3-multi-gpu-vdsp-f2",
+  "C6s8-multi-gpu-vdsp-f2",
+  "C6s8-multi-vdsp-f2-anchor-wp7"
+ ],
+ "halves": {
+  "A": [
+   "n02-1272-141231-0016",
+   "n02-1919-142785-0048",
+   "n02-2078-142845-0023",
+   "n02-2428-83699-0004",
+   "n02-3081-166546-0073",
+   "n02-6313-66129-0032",
+   "n02-777-126732-0081",
+   "n02-84-121123-0007",
+   "n04-1462-170142-0035",
+   "n04-1919-142785-0024",
+   "n04-2035-147961-0034",
+   "n04-2428-83699-0026",
+   "n04-3576-138058-0031",
+   "n04-5536-43358-0012",
+   "n04-6241-61943-0022",
+   "n04-6319-57405-0007",
+   "n08-1272-141231-0019",
+   "n08-174-84280-0003",
+   "n08-1993-147965-0003",
+   "n08-2277-149897-0033",
+   "n08-2803-154320-0010",
+   "n08-5338-284437-0029",
+   "n08-6313-76958-0016",
+   "n08-652-130726-0027",
+   "n15-1272-141231-0025",
+   "n15-1673-143396-0001",
+   "n15-2277-149874-0014",
+   "n15-3000-15664-0011",
+   "n15-3752-4944-0027",
+   "n15-422-122949-0008",
+   "n15-6313-76958-0013",
+   "n15-8297-275155-0005"
+  ],
+  "B": [
+   "n02-174-50561-0014",
+   "n02-1988-24833-0006",
+   "n02-2277-149896-0004",
+   "n02-251-136532-0022",
+   "n02-3752-4944-0046",
+   "n02-6345-93302-0028",
+   "n02-7976-105575-0017",
+   "n02-8842-304647-0007",
+   "n04-174-50561-0017",
+   "n04-1988-24833-0000",
+   "n04-2277-149874-0009",
+   "n04-3081-166546-0060",
+   "n04-3752-4943-0016",
+   "n04-5694-64029-0003",
+   "n04-6313-66125-0014",
+   "n04-8297-275154-0024",
+   "n08-1462-170142-0020",
+   "n08-1919-142785-0038",
+   "n08-2086-149220-0016",
+   "n08-2412-153948-0009",
+   "n08-3853-163249-0041",
+   "n08-5694-64025-0020",
+   "n08-6345-93306-0019",
+   "n08-8842-302201-0007",
+   "n15-1462-170142-0001",
+   "n15-174-168635-0010",
+   "n15-2412-153947-0005",
+   "n15-3536-23268-0008",
+   "n15-3853-163249-0022",
+   "n15-6241-61943-0008",
+   "n15-652-129742-0001",
+   "n15-84-121550-0029"
+  ]
+ },
+ "order": [
+  [
+   "C4-ane-multi-vdsp-f2",
+   "A"
+  ],
+  [
+   "C3-ane-multi-vdsp-f2",
+   "A"
+  ],
+  [
+   "C6s8-ane-multi-vdsp-f2",
+   "A"
+  ],
+  [
+   "C4-multi-gpu-vdsp-f2",
+   "A"
+  ],
+  [
+   "C3-multi-gpu-vdsp-f2",
+   "A"
+  ],
+  [
+   "C6s8-multi-gpu-vdsp-f2",
+   "A"
+  ],
+  [
+   "C6s8-multi-vdsp-f2-anchor-wp7",
+   "A"
+  ],
+  [
+   "C6s8-multi-vdsp-f2-anchor-wp7",
+   "B"
+  ],
+  [
+   "C6s8-multi-gpu-vdsp-f2",
+   "B"
+  ],
+  [
+   "C3-multi-gpu-vdsp-f2",
+   "B"
+  ],
+  [
+   "C4-multi-gpu-vdsp-f2",
+   "B"
+  ],
+  [
+   "C6s8-ane-multi-vdsp-f2",
+   "B"
+  ],
+  [
+   "C3-ane-multi-vdsp-f2",
+   "B"
+  ],
+  [
+   "C4-ane-multi-vdsp-f2",
+   "B"
+  ]
+ ],
+ "runs": {
+  "C4-ane-multi-vdsp-f2": {
+   "A": {
+    "run": "20261003-184048",
+    "rss_cap": "4G",
+    "timeout_s": 3600,
+    "need_gb": 3,
+    "clips": 32,
+    "status": 0,
+    "minutes": 6.0,
+    "dir": "/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/C4-ane-multi-vdsp-f2/20261003-184048",
+    "position": 0
+   },
+   "B": {
+    "run": "20261003-204528",
+    "rss_cap": "4G",
+    "timeout_s": 3600,
+    "need_gb": 3,
+    "clips": 32,
+    "status": 0,
+    "minutes": 5.0,
+    "dir": "/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/C4-ane-multi-vdsp-f2/20261003-204528",
+    "position": 13
+   }
+  },
+  "C3-ane-multi-vdsp-f2": {
+   "A": {
+    "run": "20261003-184703",
+    "rss_cap": "4G",
+    "timeout_s": 3600,
+    "need_gb": 3,
+    "clips": 32,
+    "status": 0,
+    "minutes": 6.0,
+    "dir": "/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/C3-ane-multi-vdsp-f2/20261003-184703",
+    "position": 1
+   },
+   "B": {
+    "run": "20261003-203952",
+    "rss_cap": "4G",
+    "timeout_s": 3600,
+    "need_gb": 3,
+    "clips": 32,
+    "status": 0,
+    "minutes": 5.0,
+    "dir": "/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/C3-ane-multi-vdsp-f2/20261003-203952",
+    "position": 12
+   }
+  },
+  "C6s8-ane-multi-vdsp-f2": {
+   "A": {
+    "run": "20261003-185313",
+    "rss_cap": "4G",
+    "timeout_s": 3600,
+    "need_gb": 3,
+    "clips": 32,
+    "status": 0,
+    "minutes": 11.0,
+    "dir": "/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/C6s8-ane-multi-vdsp-f2/20261003-185313",
+    "position": 2
+   },
+   "B": {
+    "run": "20261003-202934",
+    "rss_cap": "4G",
+    "timeout_s": 3600,
+    "need_gb": 3,
+    "clips": 32,
+    "status": 0,
+    "minutes": 10.0,
+    "dir": "/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/C6s8-ane-multi-vdsp-f2/20261003-202934",
+    "position": 11
+   }
+  },
+  "C4-multi-gpu-vdsp-f2": {
+   "A": {
+    "run": "20261003-190417",
+    "rss_cap": "6G",
+    "timeout_s": 7200,
+    "need_gb": 3,
+    "clips": 32,
+    "status": 0,
+    "minutes": 4.0,
+    "dir": "/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/C4-multi-gpu-vdsp-f2/20261003-190417",
+    "position": 3
+   },
+   "B": {
+    "run": "20261003-202631",
+    "rss_cap": "6G",
+    "timeout_s": 7200,
+    "need_gb": 3,
+    "clips": 32,
+    "status": 0,
+    "minutes": 3.0,
+    "dir": "/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/C4-multi-gpu-vdsp-f2/20261003-202631",
+    "position": 10
+   }
+  },
+  "C3-multi-gpu-vdsp-f2": {
+   "A": {
+    "run": "20261003-190831",
+    "rss_cap": "6G",
+    "timeout_s": 7200,
+    "need_gb": 3,
+    "clips": 32,
+    "status": 0,
+    "minutes": 3.0,
+    "dir": "/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/C3-multi-gpu-vdsp-f2/20261003-190831",
+    "position": 4
+   },
+   "B": {
+    "run": "20261003-202256",
+    "rss_cap": "6G",
+    "timeout_s": 7200,
+    "need_gb": 3,
+    "clips": 32,
+    "status": 0,
+    "minutes": 3.0,
+    "dir": "/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/C3-multi-gpu-vdsp-f2/20261003-202256",
+    "position": 9
+   }
+  },
+  "C6s8-multi-gpu-vdsp-f2": {
+   "A": {
+    "run": "20261003-191141",
+    "rss_cap": "6G",
+    "timeout_s": 7200,
+    "need_gb": 3,
+    "clips": 32,
+    "status": 0,
+    "minutes": 26.3,
+    "dir": "/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/C6s8-multi-gpu-vdsp-f2/20261003-191141",
+    "position": 5
+   },
+   "B": {
+    "run": "20261003-195608",
+    "rss_cap": "6G",
+    "timeout_s": 7200,
+    "need_gb": 3,
+    "clips": 32,
+    "status": 0,
+    "minutes": 26.3,
+    "dir": "/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/C6s8-multi-gpu-vdsp-f2/20261003-195608",
+    "position": 8
+   }
+  },
+  "C6s8-multi-vdsp-f2-anchor-wp7": {
+   "A": {
+    "run": "20261003-193800",
+    "rss_cap": "4G",
+    "timeout_s": 3600,
+    "need_gb": 3,
+    "clips": 32,
+    "status": 0,
+    "minutes": 9.0,
+    "dir": "/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/C6s8-multi-vdsp-f2-anchor-wp7/20261003-193800",
+    "position": 6
+   },
+   "B": {
+    "run": "20261003-194704",
+    "rss_cap": "4G",
+    "timeout_s": 3600,
+    "need_gb": 3,
+    "clips": 32,
+    "status": 0,
+    "minutes": 9.0,
+    "dir": "/mnt/hd/wilderness-labs-stt/parakeet-ios/results/wp5/C6s8-multi-vdsp-f2-anchor-wp7/20261003-194704",
+    "position": 7
+   }
+  }
+ },
+ "complete": true,
+ "design": "half A in the listed arm order, half B in reverse (position counterbalanced)"
+}

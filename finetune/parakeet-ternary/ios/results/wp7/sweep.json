@@ -1,0 +1,1897 @@
+{
+ "informational": "Mac (M1 Pro) is shared; no claims",
+ "sweep_id": "wp7-20261003-184043",
+ "build": {
+  "commit": "23ebeed5b9c275208bdfe37768baa8cc58c59fc9",
+  "executable_sha256": "726372ae7d7539be0d8d6da19af463084fb186a4400a8b8e46b6a45b8575d530",
+  "built_from_commit": "ee63bdc62cb49b3ff79f0e52846a077b7d5177a7",
+  "source_tree": "43fd915d3e525ca8aea2eae94e753f72560535f3"
+ },
+ "design": "half A in the listed arm order, half B in reverse (position counterbalanced)",
+ "load_labels": "Loads: 'post-purge load' = the first load after this binary's Core ML cache directory was purged; 'subsequent fresh-process load' = a new process loading the arm afterwards. Whether Core ML specialized or reused a cache in either is not established (no Instruments cache events).",
+ "rows": [
+  {
+   "arm": "C4-ane-multi-vdsp-f2",
+   "group": "c",
+   "label": "baseline-eligible",
+   "wer": 0.027111574556830033,
+   "tokens_equal_mp2_reference": {
+    "reference": "/mnt/hd/wilderness-labs-stt/parakeet-ios/native/mp2",
+    "clips": 62,
+    "of": 64
+   },
+   "paired_total": {
+    "2": {
+     "clips": 16,
+     "typical_ratio": 0.403,
+     "typical_ratio_ci95": [
+      0.3933,
+      0.4186
+     ],
+     "p95_ratio": 0.4544,
+     "p95_ratio_ci95": [
+      0.4312,
+      0.4911
+     ],
+     "arm_typical_ms": 24.838,
+     "baseline_typical_ms": 61.827
+    },
+    "4": {
+     "clips": 16,
+     "typical_ratio": 0.4475,
+     "typical_ratio_ci95": [
+      0.4305,
+      0.4643
+     ],
+     "p95_ratio": 0.5141,
+     "p95_ratio_ci95": [
+      0.4315,
+      0.5561
+     ],
+     "arm_typical_ms": 31.644,
+     "baseline_typical_ms": 70.294
+    },
+    "8": {
+     "clips": 16,
+     "typical_ratio": 0.5719,
+     "typical_ratio_ci95": [
+      0.5545,
+      0.585
+     ],
+     "p95_ratio": 0.5984,
+     "p95_ratio_ci95": [
+      0.4642,
+      0.6377
+     ],
+     "arm_typical_ms": 45.792,
+     "baseline_typical_ms": 81.088
+    },
+    "15": {
+     "clips": 16,
+     "typical_ratio": 0.8537,
+     "typical_ratio_ci95": [
+      0.8392,
+      0.86
+     ],
+     "p95_ratio": 0.8247,
+     "p95_ratio_ci95": [
+      0.7109,
+      0.9619
+     ],
+     "arm_typical_ms": 82.745,
+     "baseline_typical_ms": 98.615
+    }
+   },
+   "paired_total_all": {
+    "clips": 64,
+    "typical_ratio": 0.5376,
+    "typical_ratio_ci95": [
+     0.4475,
+     0.5728
+    ],
+    "p95_ratio": 0.8212,
+    "p95_ratio_ci95": [
+     0.7507,
+     0.8862
+    ],
+    "arm_typical_ms": 39.123,
+    "baseline_typical_ms": 76.356
+   },
+   "encoder_ms_typical": {
+    "2": 18.479,
+    "4": 19.61,
+    "8": 24.4,
+    "15": 47.421
+   },
+   "encoder_ms_p95_hd": {
+    "2": 23.48,
+    "4": 25.379,
+    "8": 28.57,
+    "15": 48.663
+   },
+   "total_ms_typical": {
+    "2": 24.838,
+    "4": 31.644,
+    "8": 45.792,
+    "15": 82.745
+   },
+   "total_ms_p95_hd": {
+    "2": 31.481,
+    "4": 43.501,
+    "8": 55.013,
+    "15": 107.41
+   },
+   "preprocess_ms_typical": {
+    "2": 0.388,
+    "4": 0.628,
+    "8": 1.164,
+    "15": 1.771
+   },
+   "decode_ms_typical": {
+    "2": 5.458,
+    "4": 10.606,
+    "8": 20.041,
+    "15": 33.366
+   },
+   "paired_p95_ratio": {
+    "2": {
+     "ratio": 0.4544,
+     "ci95": [
+      0.4312,
+      0.4911
+     ]
+    },
+    "4": {
+     "ratio": 0.5141,
+     "ci95": [
+      0.4315,
+      0.5561
+     ]
+    },
+    "8": {
+     "ratio": 0.5984,
+     "ci95": [
+      0.4642,
+      0.6377
+     ]
+    },
+    "15": {
+     "ratio": 0.8247,
+     "ci95": [
+      0.7109,
+      0.9619
+     ]
+    }
+   },
+   "runs": [
+    "20261003-184048",
+    "20261003-204528"
+   ],
+   "positions": [
+    0,
+    13
+   ],
+   "backend": "ane",
+   "thermal": {
+    "recorded": true,
+    "blocks": 64,
+    "at_start": {
+     "nominal": 64
+    },
+    "at_end": {
+     "nominal": 64
+    },
+    "blocks_waited": 0,
+    "wait_ms_total": 0,
+    "settle_ms": [
+     500
+    ],
+    "nominal_at_every_start": true
+   },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 71.45408333333333,
+     "Encoder": 27649.622541666668,
+     "JointDecision": 47.82958333333334,
+     "Preprocessor": 67.10191666666667
+    },
+    {
+     "Decoder": 67.21583333333332,
+     "Encoder": 26644.566708333332,
+     "JointDecision": 38.64041666666667,
+     "Preprocessor": 59.475291666666664
+    }
+   ],
+   "wer_b0_same_clips": 0.017726798748696558,
+   "rss_cap": "4G",
+   "c0_total_ms_typical": {
+    "2": 61.827,
+    "4": 70.294,
+    "8": 81.088,
+    "15": 98.615
+   },
+   "physical_calls": {
+    "native_joint": 2135,
+    "native_predict": 1955
+   },
+   "post_purge_load_ms": {
+    "encoder": [
+     {
+      "b2": 38328.526958333336,
+      "b4": 43390.6035,
+      "b8": 49267.71116666666,
+      "b15": 48635.671
+     },
+     {
+      "b2": 37554.3685,
+      "b4": 41612.736541666665,
+      "b8": 46185.057875,
+      "b15": 47308.74379166667
+     }
+    ],
+    "encoder_total": [
+     179623.362125,
+     172661.11429166666
+    ],
+    "compile_ms": [
+     null,
+     null
+    ],
+    "decode": [
+     29.387583333333332,
+     27.14916666666667
+    ]
+   },
+   "subsequent_fresh_process_load_ms": {
+    "encoder": [
+     {
+      "b2": 971.754,
+      "b4": 918.787625,
+      "b8": 1043.8102083333333,
+      "b15": 1049.9727916666666
+     },
+     {
+      "b2": 936.5328333333334,
+      "b4": 905.7967083333334,
+      "b8": 896.5764583333333,
+      "b15": 882.2818333333333
+     }
+    ],
+    "encoder_total": [
+     3984.5737083333333,
+     3621.3554583333334
+    ],
+    "decode": [
+     42.40945833333333,
+     27.717875
+    ]
+   },
+   "phys_footprint_peak_mb_arm_only": 304.28214263916016,
+   "phys_footprint_peak_mb_with_c0": 487.5323486328125,
+   "cache_log": [
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 18448KB"
+    ],
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 18448KB"
+    ]
+   ]
+  },
+  {
+   "arm": "C3-ane-multi-vdsp-f2",
+   "group": "c",
+   "label": "baseline-eligible",
+   "wer": 0.027111574556830033,
+   "tokens_equal_mp2_reference": {
+    "reference": "/mnt/hd/wilderness-labs-stt/parakeet-ios/native/mp2",
+    "clips": 63,
+    "of": 64
+   },
+   "paired_total": {
+    "2": {
+     "clips": 16,
+     "typical_ratio": 0.3918,
+     "typical_ratio_ci95": [
+      0.3779,
+      0.4148
+     ],
+     "p95_ratio": 0.4745,
+     "p95_ratio_ci95": [
+      0.4278,
+      0.4972
+     ],
+     "arm_typical_ms": 24.01,
+     "baseline_typical_ms": 62.92
+    },
+    "4": {
+     "clips": 16,
+     "typical_ratio": 0.4438,
+     "typical_ratio_ci95": [
+      0.4282,
+      0.4528
+     ],
+     "p95_ratio": 0.5001,
+     "p95_ratio_ci95": [
+      0.4664,
+      0.5574
+     ],
+     "arm_typical_ms": 29.973,
+     "baseline_typical_ms": 67.607
+    },
+    "8": {
+     "clips": 16,
+     "typical_ratio": 0.5742,
+     "typical_ratio_ci95": [
+      0.5487,
+      0.5877
+     ],
+     "p95_ratio": 0.6319,
+     "p95_ratio_ci95": [
+      0.5733,
+      0.6821
+     ],
+     "arm_typical_ms": 47.017,
+     "baseline_typical_ms": 82.093
+    },
+    "15": {
+     "clips": 16,
+     "typical_ratio": 0.87,
+     "typical_ratio_ci95": [
+      0.8536,
+      0.8762
+     ],
+     "p95_ratio": 0.7855,
+     "p95_ratio_ci95": [
+      0.7157,
+      0.8623
+     ],
+     "arm_typical_ms": 87.452,
+     "baseline_typical_ms": 100.088
+    }
+   },
+   "paired_total_all": {
+    "clips": 64,
+    "typical_ratio": 0.5077,
+    "typical_ratio_ci95": [
+     0.4452,
+     0.5713
+    ],
+    "p95_ratio": 0.8392,
+    "p95_ratio_ci95": [
+     0.7674,
+     0.9121
+    ],
+    "arm_typical_ms": 36.301,
+    "baseline_typical_ms": 71.789
+   },
+   "encoder_ms_typical": {
+    "2": 17.841,
+    "4": 18.84,
+    "8": 23.492,
+    "15": 49.233
+   },
+   "encoder_ms_p95_hd": {
+    "2": 21.672,
+    "4": 23.888,
+    "8": 27.436,
+    "15": 52.147
+   },
+   "total_ms_typical": {
+    "2": 24.01,
+    "4": 29.973,
+    "8": 47.017,
+    "15": 87.452
+   },
+   "total_ms_p95_hd": {
+    "2": 31.57,
+    "4": 39.73,
+    "8": 56.896,
+    "15": 114.305
+   },
+   "preprocess_ms_typical": {
+    "2": 0.397,
+    "4": 0.632,
+    "8": 1.144,
+    "15": 1.769
+   },
+   "decode_ms_typical": {
+    "2": 5.631,
+    "4": 10.248,
+    "8": 21.873,
+    "15": 36.11
+   },
+   "paired_p95_ratio": {
+    "2": {
+     "ratio": 0.4745,
+     "ci95": [
+      0.4278,
+      0.4972
+     ]
+    },
+    "4": {
+     "ratio": 0.5001,
+     "ci95": [
+      0.4664,
+      0.5574
+     ]
+    },
+    "8": {
+     "ratio": 0.6319,
+     "ci95": [
+      0.5733,
+      0.6821
+     ]
+    },
+    "15": {
+     "ratio": 0.7855,
+     "ci95": [
+      0.7157,
+      0.8623
+     ]
+    }
+   },
+   "runs": [
+    "20261003-184703",
+    "20261003-203952"
+   ],
+   "positions": [
+    1,
+    12
+   ],
+   "backend": "ane",
+   "thermal": {
+    "recorded": true,
+    "blocks": 64,
+    "at_start": {
+     "nominal": 64
+    },
+    "at_end": {
+     "nominal": 64
+    },
+    "blocks_waited": 0,
+    "wait_ms_total": 0,
+    "settle_ms": [
+     500
+    ],
+    "nominal_at_every_start": true
+   },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 91.95745833333334,
+     "Encoder": 27487.82891666667,
+     "JointDecision": 61.05725,
+     "Preprocessor": 94.05870833333333
+    },
+    {
+     "Decoder": 66.46329166666666,
+     "Encoder": 26303.974541666666,
+     "JointDecision": 40.36116666666666,
+     "Preprocessor": 58.014875
+    }
+   ],
+   "wer_b0_same_clips": 0.017726798748696558,
+   "rss_cap": "4G",
+   "c0_total_ms_typical": {
+    "2": 62.92,
+    "4": 67.607,
+    "8": 82.093,
+    "15": 100.088
+   },
+   "physical_calls": {
+    "native_joint": 2135,
+    "native_predict": 1954
+   },
+   "post_purge_load_ms": {
+    "encoder": [
+     {
+      "b2": 38967.827875,
+      "b4": 43297.467958333335,
+      "b8": 49613.27858333333,
+      "b15": 52341.18570833334
+     },
+     {
+      "b2": 38048.953625,
+      "b4": 41924.78770833334,
+      "b8": 46586.91979166667,
+      "b15": 49518.94075
+     }
+    ],
+    "encoder_total": [
+     184219.98979166665,
+     176079.795625
+    ],
+    "compile_ms": [
+     null,
+     null
+    ],
+    "decode": [
+     28.3415,
+     27.702125
+    ]
+   },
+   "subsequent_fresh_process_load_ms": {
+    "encoder": [
+     {
+      "b2": 1219.2314583333332,
+      "b4": 1062.7788333333333,
+      "b8": 1110.8270416666667,
+      "b15": 915.8
+     },
+     {
+      "b2": 1010.353875,
+      "b4": 973.081625,
+      "b8": 880.4109166666666,
+      "b15": 874.9995833333334
+     }
+    ],
+    "encoder_total": [
+     4309.543,
+     3739.0344166666664
+    ],
+    "decode": [
+     30.095791666666667,
+     34.07866666666666
+    ]
+   },
+   "phys_footprint_peak_mb_arm_only": 253.3289031982422,
+   "phys_footprint_peak_mb_with_c0": 521.5479507446289,
+   "cache_log": [
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 18448KB"
+    ],
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 18448KB"
+    ]
+   ]
+  },
+  {
+   "arm": "C6s8-ane-multi-vdsp-f2",
+   "group": "c",
+   "label": "baseline-eligible",
+   "wer": 0.027111574556830033,
+   "tokens_equal_mp2_reference": {
+    "reference": "/mnt/hd/wilderness-labs-stt/parakeet-ios/native/mp2",
+    "clips": 62,
+    "of": 64
+   },
+   "paired_total": {
+    "2": {
+     "clips": 16,
+     "typical_ratio": 0.3704,
+     "typical_ratio_ci95": [
+      0.3604,
+      0.3807
+     ],
+     "p95_ratio": 0.4361,
+     "p95_ratio_ci95": [
+      0.403,
+      0.479
+     ],
+     "arm_typical_ms": 22.518,
+     "baseline_typical_ms": 61.596
+    },
+    "4": {
+     "clips": 16,
+     "typical_ratio": 0.4121,
+     "typical_ratio_ci95": [
+      0.3992,
+      0.4243
+     ],
+     "p95_ratio": 0.4664,
+     "p95_ratio_ci95": [
+      0.4421,
+      0.4979
+     ],
+     "arm_typical_ms": 27.251,
+     "baseline_typical_ms": 66.388
+    },
+    "8": {
+     "clips": 16,
+     "typical_ratio": 0.5469,
+     "typical_ratio_ci95": [
+      0.5229,
+      0.5546
+     ],
+     "p95_ratio": 0.5665,
+     "p95_ratio_ci95": [
+      0.5519,
+      0.5878
+     ],
+     "arm_typical_ms": 42.087,
+     "baseline_typical_ms": 77.939
+    },
+    "15": {
+     "clips": 16,
+     "typical_ratio": 0.8272,
+     "typical_ratio_ci95": [
+      0.8227,
+      0.8484
+     ],
+     "p95_ratio": 0.8264,
+     "p95_ratio_ci95": [
+      0.8157,
+      0.8664
+     ],
+     "arm_typical_ms": 81.117,
+     "baseline_typical_ms": 96.73
+    }
+   },
+   "paired_total_all": {
+    "clips": 64,
+    "typical_ratio": 0.488,
+    "typical_ratio_ci95": [
+     0.4121,
+     0.5453
+    ],
+    "p95_ratio": 0.8399,
+    "p95_ratio_ci95": [
+     0.8203,
+     0.8517
+    ],
+    "arm_typical_ms": 33.256,
+    "baseline_typical_ms": 71.125
+   },
+   "encoder_ms_typical": {
+    "2": 15.901,
+    "4": 16.865,
+    "8": 21.733,
+    "15": 44.871
+   },
+   "encoder_ms_p95_hd": {
+    "2": 20.678,
+    "4": 22.024,
+    "8": 27.692,
+    "15": 46.704
+   },
+   "total_ms_typical": {
+    "2": 22.518,
+    "4": 27.251,
+    "8": 42.087,
+    "15": 81.117
+   },
+   "total_ms_p95_hd": {
+    "2": 28.575,
+    "4": 33.856,
+    "8": 50.226,
+    "15": 101.82
+   },
+   "preprocess_ms_typical": {
+    "2": 0.402,
+    "4": 0.637,
+    "8": 1.15,
+    "15": 1.777
+   },
+   "decode_ms_typical": {
+    "2": 5.685,
+    "4": 9.513,
+    "8": 19.036,
+    "15": 34.25
+   },
+   "paired_p95_ratio": {
+    "2": {
+     "ratio": 0.4361,
+     "ci95": [
+      0.403,
+      0.479
+     ]
+    },
+    "4": {
+     "ratio": 0.4664,
+     "ci95": [
+      0.4421,
+      0.4979
+     ]
+    },
+    "8": {
+     "ratio": 0.5665,
+     "ci95": [
+      0.5519,
+      0.5878
+     ]
+    },
+    "15": {
+     "ratio": 0.8264,
+     "ci95": [
+      0.8157,
+      0.8664
+     ]
+    }
+   },
+   "runs": [
+    "20261003-185313",
+    "20261003-202934"
+   ],
+   "positions": [
+    2,
+    11
+   ],
+   "backend": "ane",
+   "thermal": {
+    "recorded": true,
+    "blocks": 64,
+    "at_start": {
+     "nominal": 64
+    },
+    "at_end": {
+     "nominal": 64
+    },
+    "blocks_waited": 0,
+    "wait_ms_total": 0,
+    "settle_ms": [
+     500
+    ],
+    "nominal_at_every_start": true
+   },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 73.34566666666667,
+     "Encoder": 28694.360291666668,
+     "JointDecision": 46.75054166666666,
+     "Preprocessor": 91.76441666666668
+    },
+    {
+     "Decoder": 68.84329166666667,
+     "Encoder": 26566.233916666668,
+     "JointDecision": 39.822541666666666,
+     "Preprocessor": 83.02883333333332
+    }
+   ],
+   "wer_b0_same_clips": 0.017726798748696558,
+   "rss_cap": "4G",
+   "c0_total_ms_typical": {
+    "2": 61.596,
+    "4": 66.388,
+    "8": 77.939,
+    "15": 96.73
+   },
+   "physical_calls": {
+    "native_joint": 2135,
+    "native_predict": 1955
+   },
+   "post_purge_load_ms": {
+    "encoder": [
+     {
+      "b2": 117150.4095,
+      "b4": 119329.93370833332,
+      "b8": 125206.89491666667,
+      "b15": 124364.70716666667
+     },
+     {
+      "b2": 110796.00529166668,
+      "b4": 111242.81308333333,
+      "b8": 115911.64583333333,
+      "b15": 117141.32
+     }
+    ],
+    "encoder_total": [
+     486054.7264583333,
+     455092.0264583333
+    ],
+    "compile_ms": [
+     null,
+     null
+    ],
+    "decode": [
+     43.65054166666666,
+     28.64120833333333
+    ]
+   },
+   "subsequent_fresh_process_load_ms": {
+    "encoder": [
+     {
+      "b2": 1024.50375,
+      "b4": 965.701375,
+      "b8": 997.4053333333334,
+      "b15": 1018.2430416666666
+     },
+     {
+      "b2": 963.2645,
+      "b4": 938.1418333333334,
+      "b8": 942.7239166666666,
+      "b15": 927.005
+     }
+    ],
+    "encoder_total": [
+     4006.037,
+     3771.3213333333333
+    ],
+    "decode": [
+     30.237,
+     28.26154166666667
+    ]
+   },
+   "phys_footprint_peak_mb_arm_only": 264.7820510864258,
+   "phys_footprint_peak_mb_with_c0": 473.5011215209961,
+   "cache_log": [
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 18448KB"
+    ],
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 18448KB"
+    ]
+   ]
+  },
+  {
+   "arm": "C4-multi-gpu-vdsp-f2",
+   "group": "c",
+   "label": "baseline-eligible",
+   "wer": 0.027111574556830033,
+   "tokens_equal_mp2_reference": {
+    "reference": "/mnt/hd/wilderness-labs-stt/parakeet-ios/native/mp2",
+    "clips": 64,
+    "of": 64
+   },
+   "paired_total": {
+    "2": {
+     "clips": 16,
+     "typical_ratio": 0.754,
+     "typical_ratio_ci95": [
+      0.7436,
+      0.7693
+     ],
+     "p95_ratio": 0.8036,
+     "p95_ratio_ci95": [
+      0.7677,
+      0.8315
+     ],
+     "arm_typical_ms": 46.794,
+     "baseline_typical_ms": 61.939
+    },
+    "4": {
+     "clips": 16,
+     "typical_ratio": 0.8915,
+     "typical_ratio_ci95": [
+      0.8847,
+      0.8966
+     ],
+     "p95_ratio": 0.9034,
+     "p95_ratio_ci95": [
+      0.8625,
+      0.929
+     ],
+     "arm_typical_ms": 60.508,
+     "baseline_typical_ms": 67.695
+    },
+    "8": {
+     "clips": 16,
+     "typical_ratio": 1.3153,
+     "typical_ratio_ci95": [
+      1.2885,
+      1.3371
+     ],
+     "p95_ratio": 1.2642,
+     "p95_ratio_ci95": [
+      1.187,
+      1.3794
+     ],
+     "arm_typical_ms": 106.26,
+     "baseline_typical_ms": 79.408
+    },
+    "15": {
+     "clips": 16,
+     "typical_ratio": 1.6287,
+     "typical_ratio_ci95": [
+      1.5837,
+      1.6993
+     ],
+     "p95_ratio": 1.5301,
+     "p95_ratio_ci95": [
+      1.4789,
+      1.6115
+     ],
+     "arm_typical_ms": 161.923,
+     "baseline_typical_ms": 97.956
+    }
+   },
+   "paired_total_all": {
+    "clips": 64,
+    "typical_ratio": 1.0481,
+    "typical_ratio_ci95": [
+     0.892,
+     1.3137
+    ],
+    "p95_ratio": 1.5852,
+    "p95_ratio_ci95": [
+     1.5226,
+     1.6563
+    ],
+    "arm_typical_ms": 80.36,
+    "baseline_typical_ms": 72.368
+   },
+   "encoder_ms_typical": {
+    "2": 40.084,
+    "4": 48.753,
+    "8": 82.466,
+    "15": 122.921
+   },
+   "encoder_ms_p95_hd": {
+    "2": 44.776,
+    "4": 52.84,
+    "8": 91.796,
+    "15": 133.974
+   },
+   "total_ms_typical": {
+    "2": 46.794,
+    "4": 60.508,
+    "8": 106.26,
+    "15": 161.923
+   },
+   "total_ms_p95_hd": {
+    "2": 53.899,
+    "4": 66.61,
+    "8": 115.885,
+    "15": 185.434
+   },
+   "preprocess_ms_typical": {
+    "2": 0.408,
+    "4": 0.655,
+    "8": 1.23,
+    "15": 1.824
+   },
+   "decode_ms_typical": {
+    "2": 6.02,
+    "4": 10.147,
+    "8": 20.457,
+    "15": 36.204
+   },
+   "paired_p95_ratio": {
+    "2": {
+     "ratio": 0.8036,
+     "ci95": [
+      0.7677,
+      0.8315
+     ]
+    },
+    "4": {
+     "ratio": 0.9034,
+     "ci95": [
+      0.8625,
+      0.929
+     ]
+    },
+    "8": {
+     "ratio": 1.2642,
+     "ci95": [
+      1.187,
+      1.3794
+     ]
+    },
+    "15": {
+     "ratio": 1.5301,
+     "ci95": [
+      1.4789,
+      1.6115
+     ]
+    }
+   },
+   "runs": [
+    "20261003-190417",
+    "20261003-202631"
+   ],
+   "positions": [
+    3,
+    10
+   ],
+   "backend": "gpu",
+   "thermal": {
+    "recorded": true,
+    "blocks": 64,
+    "at_start": {
+     "nominal": 64
+    },
+    "at_end": {
+     "nominal": 64
+    },
+    "blocks_waited": 0,
+    "wait_ms_total": 0,
+    "settle_ms": [
+     500
+    ],
+    "nominal_at_every_start": true
+   },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 86.09033333333333,
+     "Encoder": 37828.86083333333,
+     "JointDecision": 50.09845833333333,
+     "Preprocessor": 66.30004166666666
+    },
+    {
+     "Decoder": 71.00629166666667,
+     "Encoder": 28847.577208333332,
+     "JointDecision": 42.684666666666665,
+     "Preprocessor": 76.01554166666668
+    }
+   ],
+   "wer_b0_same_clips": 0.017726798748696558,
+   "rss_cap": "6G",
+   "c0_total_ms_typical": {
+    "2": 61.939,
+    "4": 67.695,
+    "8": 79.408,
+    "15": 97.956
+   },
+   "physical_calls": {
+    "native_joint": 2141,
+    "native_predict": 1957
+   },
+   "post_purge_load_ms": {
+    "encoder": [
+     {
+      "b2": 4606.10875,
+      "b4": 4304.985666666667,
+      "b8": 4502.549541666667,
+      "b15": 5025.277
+     },
+     {
+      "b2": 4216.076041666666,
+      "b4": 4363.510375,
+      "b8": 4407.916041666667,
+      "b15": 4894.432625
+     }
+    ],
+    "encoder_total": [
+     18439.1335,
+     17882.376458333332
+    ],
+    "compile_ms": [
+     null,
+     null
+    ],
+    "decode": [
+     32.161375,
+     27.9165
+    ]
+   },
+   "subsequent_fresh_process_load_ms": {
+    "encoder": [
+     {
+      "b2": 65.6475,
+      "b4": 19.831,
+      "b8": 19.183208333333333,
+      "b15": 20.47608333333333
+     },
+     {
+      "b2": 51.99325,
+      "b4": 19.000708333333332,
+      "b8": 18.3855,
+      "b15": 21.931875
+     }
+    ],
+    "encoder_total": [
+     125.32566666666668,
+     111.49808333333333
+    ],
+    "decode": [
+     30.606166666666667,
+     28.403
+    ]
+   },
+   "phys_footprint_peak_mb_arm_only": 204.17311096191406,
+   "phys_footprint_peak_mb_with_c0": 379.64515686035156,
+   "cache_log": [
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 4616216KB"
+    ],
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 4616216KB"
+    ]
+   ]
+  },
+  {
+   "arm": "C3-multi-gpu-vdsp-f2",
+   "group": "c",
+   "label": "baseline-eligible",
+   "wer": 0.027111574556830033,
+   "tokens_equal_mp2_reference": {
+    "reference": "/mnt/hd/wilderness-labs-stt/parakeet-ios/native/mp2",
+    "clips": 64,
+    "of": 64
+   },
+   "paired_total": {
+    "2": {
+     "clips": 16,
+     "typical_ratio": 0.7582,
+     "typical_ratio_ci95": [
+      0.7529,
+      0.766
+     ],
+     "p95_ratio": 0.7718,
+     "p95_ratio_ci95": [
+      0.7559,
+      0.7903
+     ],
+     "arm_typical_ms": 47.272,
+     "baseline_typical_ms": 61.774
+    },
+    "4": {
+     "clips": 16,
+     "typical_ratio": 0.8909,
+     "typical_ratio_ci95": [
+      0.8868,
+      0.902
+     ],
+     "p95_ratio": 0.9033,
+     "p95_ratio_ci95": [
+      0.8881,
+      0.9172
+     ],
+     "arm_typical_ms": 60.967,
+     "baseline_typical_ms": 67.591
+    },
+    "8": {
+     "clips": 16,
+     "typical_ratio": 1.2867,
+     "typical_ratio_ci95": [
+      1.2789,
+      1.3212
+     ],
+     "p95_ratio": 1.249,
+     "p95_ratio_ci95": [
+      1.2029,
+      1.2888
+     ],
+     "arm_typical_ms": 102.512,
+     "baseline_typical_ms": 79.295
+    },
+    "15": {
+     "clips": 16,
+     "typical_ratio": 1.6204,
+     "typical_ratio_ci95": [
+      1.548,
+      1.7113
+     ],
+     "p95_ratio": 1.5261,
+     "p95_ratio_ci95": [
+      1.4543,
+      1.8448
+     ],
+     "arm_typical_ms": 157.615,
+     "baseline_typical_ms": 100.081
+    }
+   },
+   "paired_total_all": {
+    "clips": 64,
+    "typical_ratio": 1.0521,
+    "typical_ratio_ci95": [
+     0.8912,
+     1.2841
+    ],
+    "p95_ratio": 1.56,
+    "p95_ratio_ci95": [
+     1.4798,
+     1.6303
+    ],
+    "arm_typical_ms": 78.717,
+    "baseline_typical_ms": 72.484
+   },
+   "encoder_ms_typical": {
+    "2": 40.287,
+    "4": 49.221,
+    "8": 81.233,
+    "15": 122.89
+   },
+   "encoder_ms_p95_hd": {
+    "2": 42.575,
+    "4": 51.982,
+    "8": 84.281,
+    "15": 134.864
+   },
+   "total_ms_typical": {
+    "2": 47.272,
+    "4": 60.967,
+    "8": 102.512,
+    "15": 157.615
+   },
+   "total_ms_p95_hd": {
+    "2": 51.143,
+    "4": 66.33,
+    "8": 112.319,
+    "15": 190.802
+   },
+   "preprocess_ms_typical": {
+    "2": 0.411,
+    "4": 0.691,
+    "8": 1.213,
+    "15": 1.799
+   },
+   "decode_ms_typical": {
+    "2": 6.21,
+    "4": 10.124,
+    "8": 19.99,
+    "15": 33.431
+   },
+   "paired_p95_ratio": {
+    "2": {
+     "ratio": 0.7718,
+     "ci95": [
+      0.7559,
+      0.7903
+     ]
+    },
+    "4": {
+     "ratio": 0.9033,
+     "ci95": [
+      0.8881,
+      0.9172
+     ]
+    },
+    "8": {
+     "ratio": 1.249,
+     "ci95": [
+      1.2029,
+      1.2888
+     ]
+    },
+    "15": {
+     "ratio": 1.5261,
+     "ci95": [
+      1.4543,
+      1.8448
+     ]
+    }
+   },
+   "runs": [
+    "20261003-190831",
+    "20261003-202256"
+   ],
+   "positions": [
+    4,
+    9
+   ],
+   "backend": "gpu",
+   "thermal": {
+    "recorded": true,
+    "blocks": 64,
+    "at_start": {
+     "nominal": 64
+    },
+    "at_end": {
+     "nominal": 64
+    },
+    "blocks_waited": 0,
+    "wait_ms_total": 0,
+    "settle_ms": [
+     500
+    ],
+    "nominal_at_every_start": true
+   },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 70.87775,
+     "Encoder": 29264.565375,
+     "JointDecision": 39.132083333333334,
+     "Preprocessor": 62.142625
+    },
+    {
+     "Decoder": 77.95841666666666,
+     "Encoder": 29338.3705,
+     "JointDecision": 53.809416666666664,
+     "Preprocessor": 75.466125
+    }
+   ],
+   "wer_b0_same_clips": 0.017726798748696558,
+   "rss_cap": "6G",
+   "c0_total_ms_typical": {
+    "2": 61.774,
+    "4": 67.591,
+    "8": 79.295,
+    "15": 100.081
+   },
+   "physical_calls": {
+    "native_joint": 2141,
+    "native_predict": 1957
+   },
+   "post_purge_load_ms": {
+    "encoder": [
+     {
+      "b2": 3543.52575,
+      "b4": 3356.8525833333333,
+      "b8": 3267.1677916666663,
+      "b15": 3783.6425
+     },
+     {
+      "b2": 3327.1044166666666,
+      "b4": 4037.3072083333336,
+      "b8": 3455.402625,
+      "b15": 3695.0551666666665
+     }
+    ],
+    "encoder_total": [
+     13951.388666666666,
+     14515.145958333334
+    ],
+    "compile_ms": [
+     null,
+     null
+    ],
+    "decode": [
+     36.08108333333334,
+     36.025375
+    ]
+   },
+   "subsequent_fresh_process_load_ms": {
+    "encoder": [
+     {
+      "b2": 51.13825,
+      "b4": 24.07483333333333,
+      "b8": 26.094166666666666,
+      "b15": 24.065083333333334
+     },
+     {
+      "b2": 81.38045833333332,
+      "b4": 20.63704166666667,
+      "b8": 24.89679166666667,
+      "b15": 30.561041666666668
+     }
+    ],
+    "encoder_total": [
+     125.537625,
+     157.67625
+    ],
+    "decode": [
+     33.12045833333333,
+     39.51479166666667
+    ]
+   },
+   "phys_footprint_peak_mb_arm_only": 205.18875885009766,
+   "phys_footprint_peak_mb_with_c0": 357.7857360839844,
+   "cache_log": [
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 4616216KB"
+    ],
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 4616216KB"
+    ]
+   ]
+  },
+  {
+   "arm": "C6s8-multi-gpu-vdsp-f2",
+   "group": "c",
+   "label": "baseline-eligible",
+   "wer": 0.027111574556830033,
+   "tokens_equal_mp2_reference": {
+    "reference": "/mnt/hd/wilderness-labs-stt/parakeet-ios/native/mp2",
+    "clips": 64,
+    "of": 64
+   },
+   "paired_total": {
+    "2": {
+     "clips": 16,
+     "typical_ratio": 5.2375,
+     "typical_ratio_ci95": [
+      5.1223,
+      5.4763
+     ],
+     "p95_ratio": 5.5059,
+     "p95_ratio_ci95": [
+      5.2239,
+      6.1405
+     ],
+     "arm_typical_ms": 330.511,
+     "baseline_typical_ms": 62.258
+    },
+    "4": {
+     "clips": 16,
+     "typical_ratio": 3.6528,
+     "typical_ratio_ci95": [
+      3.5561,
+      3.7739
+     ],
+     "p95_ratio": 3.7497,
+     "p95_ratio_ci95": [
+      3.5768,
+      3.9363
+     ],
+     "arm_typical_ms": 245.334,
+     "baseline_typical_ms": 67.399
+    },
+    "8": {
+     "clips": 16,
+     "typical_ratio": 4.8004,
+     "typical_ratio_ci95": [
+      4.5662,
+      4.9559
+     ],
+     "p95_ratio": 4.6547,
+     "p95_ratio_ci95": [
+      4.5188,
+      4.9556
+     ],
+     "arm_typical_ms": 382.831,
+     "baseline_typical_ms": 80.23
+    },
+    "15": {
+     "clips": 16,
+     "typical_ratio": 5.9863,
+     "typical_ratio_ci95": [
+      5.4127,
+      6.1895
+     ],
+     "p95_ratio": 6.0832,
+     "p95_ratio_ci95": [
+      5.1877,
+      7.4263
+     ],
+     "arm_typical_ms": 585.436,
+     "baseline_typical_ms": 101.005
+    }
+   },
+   "paired_total_all": {
+    "clips": 64,
+    "typical_ratio": 5.0323,
+    "typical_ratio_ci95": [
+     4.7999,
+     5.2236
+    ],
+    "p95_ratio": 5.3654,
+    "p95_ratio_ci95": [
+     5.0001,
+     5.9712
+    ],
+    "arm_typical_ms": 367.916,
+    "baseline_typical_ms": 72.121
+   },
+   "encoder_ms_typical": {
+    "2": 323.648,
+    "4": 233.26,
+    "8": 362.489,
+    "15": 543.957
+   },
+   "encoder_ms_p95_hd": {
+    "2": 382.294,
+    "4": 262.97,
+    "8": 387.57,
+    "15": 699.251
+   },
+   "total_ms_typical": {
+    "2": 330.511,
+    "4": 245.334,
+    "8": 382.831,
+    "15": 585.436
+   },
+   "total_ms_p95_hd": {
+    "2": 390.274,
+    "4": 275.284,
+    "8": 411.098,
+    "15": 752.88
+   },
+   "preprocess_ms_typical": {
+    "2": 0.405,
+    "4": 0.658,
+    "8": 1.23,
+    "15": 1.914
+   },
+   "decode_ms_typical": {
+    "2": 6.155,
+    "4": 9.999,
+    "8": 19.896,
+    "15": 36.466
+   },
+   "paired_p95_ratio": {
+    "2": {
+     "ratio": 5.5059,
+     "ci95": [
+      5.2239,
+      6.1405
+     ]
+    },
+    "4": {
+     "ratio": 3.7497,
+     "ci95": [
+      3.5768,
+      3.9363
+     ]
+    },
+    "8": {
+     "ratio": 4.6547,
+     "ci95": [
+      4.5188,
+      4.9556
+     ]
+    },
+    "15": {
+     "ratio": 6.0832,
+     "ci95": [
+      5.1877,
+      7.4263
+     ]
+    }
+   },
+   "runs": [
+    "20261003-191141",
+    "20261003-195608"
+   ],
+   "positions": [
+    5,
+    8
+   ],
+   "backend": "gpu",
+   "thermal": {
+    "recorded": true,
+    "blocks": 64,
+    "at_start": {
+     "nominal": 64
+    },
+    "at_end": {
+     "nominal": 64
+    },
+    "blocks_waited": 0,
+    "wait_ms_total": 0,
+    "settle_ms": [
+     500
+    ],
+    "nominal_at_every_start": true
+   },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 96.654875,
+     "Encoder": 29171.338,
+     "JointDecision": 47.35733333333334,
+     "Preprocessor": 92.22308333333334
+    },
+    {
+     "Decoder": 86.16070833333333,
+     "Encoder": 29487.137,
+     "JointDecision": 46.53095833333334,
+     "Preprocessor": 69.01304166666667
+    }
+   ],
+   "wer_b0_same_clips": 0.017726798748696558,
+   "rss_cap": "6G",
+   "c0_total_ms_typical": {
+    "2": 62.258,
+    "4": 67.399,
+    "8": 80.23,
+    "15": 101.005
+   },
+   "physical_calls": {
+    "native_joint": 2141,
+    "native_predict": 1957
+   },
+   "post_purge_load_ms": {
+    "encoder": [
+     {
+      "b2": 317579.1912916667,
+      "b4": 319778.0872916667,
+      "b8": 317060.486,
+      "b15": 328331.113625
+     },
+     {
+      "b2": 317360.8830416667,
+      "b4": 319509.00991666666,
+      "b8": 319221.493125,
+      "b15": 331910.1103333333
+     }
+    ],
+    "encoder_total": [
+     1282749.3017916668,
+     1288002.2837083333
+    ],
+    "compile_ms": [
+     null,
+     null
+    ],
+    "decode": [
+     28.578166666666668,
+     33.02020833333333
+    ]
+   },
+   "subsequent_fresh_process_load_ms": {
+    "encoder": [
+     {
+      "b2": 298.0132916666667,
+      "b4": 230.09566666666666,
+      "b8": 255.06616666666665,
+      "b15": 44.33804166666666
+     },
+     {
+      "b2": 284.258875,
+      "b4": 238.92066666666665,
+      "b8": 253.2905,
+      "b15": 45.46816666666666
+     }
+    ],
+    "encoder_total": [
+     828.46225,
+     822.1259166666666
+    ],
+    "decode": [
+     29.058208333333333,
+     29.242375
+    ]
+   },
+   "phys_footprint_peak_mb_arm_only": 1387.9889526367188,
+   "phys_footprint_peak_mb_with_c0": 3638.723762512207,
+   "cache_log": [
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 4677064KB"
+    ],
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 4673920KB"
+    ]
+   ]
+  },
+  {
+   "arm": "C6s8-multi-vdsp-f2-anchor-wp7",
+   "group": "c",
+   "label": "baseline-eligible",
+   "wer": 0.027111574556830033,
+   "tokens_equal_mp2_reference": {
+    "reference": "/mnt/hd/wilderness-labs-stt/parakeet-ios/native/mp2",
+    "clips": 62,
+    "of": 64
+   },
+   "paired_total": {
+    "2": {
+     "clips": 16,
+     "typical_ratio": 0.343,
+     "typical_ratio_ci95": [
+      0.3219,
+      0.3545
+     ],
+     "p95_ratio": 0.387,
+     "p95_ratio_ci95": [
+      0.345,
+      0.4296
+     ],
+     "arm_typical_ms": 21.275,
+     "baseline_typical_ms": 62.45
+    },
+    "4": {
+     "clips": 16,
+     "typical_ratio": 0.3942,
+     "typical_ratio_ci95": [
+      0.3878,
+      0.4115
+     ],
+     "p95_ratio": 0.4685,
+     "p95_ratio_ci95": [
+      0.4499,
+      0.4859
+     ],
+     "arm_typical_ms": 26.752,
+     "baseline_typical_ms": 68.447
+    },
+    "8": {
+     "clips": 16,
+     "typical_ratio": 0.5181,
+     "typical_ratio_ci95": [
+      0.5041,
+      0.5393
+     ],
+     "p95_ratio": 0.4262,
+     "p95_ratio_ci95": [
+      0.3183,
+      0.6429
+     ],
+     "arm_typical_ms": 42.921,
+     "baseline_typical_ms": 82.07
+    },
+    "15": {
+     "clips": 16,
+     "typical_ratio": 0.7746,
+     "typical_ratio_ci95": [
+      0.7699,
+      0.7879
+     ],
+     "p95_ratio": 0.7242,
+     "p95_ratio_ci95": [
+      0.6206,
+      0.7903
+     ],
+     "arm_typical_ms": 76.174,
+     "baseline_typical_ms": 97.767
+    }
+   },
+   "paired_total_all": {
+    "clips": 64,
+    "typical_ratio": 0.4363,
+    "typical_ratio_ci95": [
+     0.3934,
+     0.5137
+    ],
+    "p95_ratio": 0.7543,
+    "p95_ratio_ci95": [
+     0.6161,
+     0.7997
+    ],
+    "arm_typical_ms": 32.924,
+    "baseline_typical_ms": 72.861
+   },
+   "encoder_ms_typical": {
+    "2": 14.253,
+    "4": 15.574,
+    "8": 19.713,
+    "15": 40.106
+   },
+   "encoder_ms_p95_hd": {
+    "2": 19.028,
+    "4": 21.657,
+    "8": 24.145,
+    "15": 43.091
+   },
+   "total_ms_typical": {
+    "2": 21.275,
+    "4": 26.752,
+    "8": 42.921,
+    "15": 76.174
+   },
+   "total_ms_p95_hd": {
+    "2": 27.334,
+    "4": 34.826,
+    "8": 54.571,
+    "15": 99.516
+   },
+   "preprocess_ms_typical": {
+    "2": 0.403,
+    "4": 0.642,
+    "8": 1.141,
+    "15": 1.778
+   },
+   "decode_ms_typical": {
+    "2": 5.953,
+    "4": 10.09,
+    "8": 21.45,
+    "15": 33.978
+   },
+   "paired_p95_ratio": {
+    "2": {
+     "ratio": 0.387,
+     "ci95": [
+      0.345,
+      0.4296
+     ]
+    },
+    "4": {
+     "ratio": 0.4685,
+     "ci95": [
+      0.4499,
+      0.4859
+     ]
+    },
+    "8": {
+     "ratio": 0.4262,
+     "ci95": [
+      0.3183,
+      0.6429
+     ]
+    },
+    "15": {
+     "ratio": 0.7242,
+     "ci95": [
+      0.6206,
+      0.7903
+     ]
+    }
+   },
+   "runs": [
+    "20261003-193800",
+    "20261003-194704"
+   ],
+   "positions": [
+    6,
+    7
+   ],
+   "backend": "ane",
+   "thermal": {
+    "recorded": true,
+    "blocks": 64,
+    "at_start": {
+     "nominal": 64
+    },
+    "at_end": {
+     "nominal": 64
+    },
+    "blocks_waited": 0,
+    "wait_ms_total": 0,
+    "settle_ms": [
+     500
+    ],
+    "nominal_at_every_start": true
+   },
+   "c0_post_purge_load_ms": [
+    {
+     "Decoder": 79.6425,
+     "Encoder": 28009.84654166667,
+     "JointDecision": 45.096833333333336,
+     "Preprocessor": 99.60979166666667
+    },
+    {
+     "Decoder": 70.95375,
+     "Encoder": 26888.428708333333,
+     "JointDecision": 47.075125,
+     "Preprocessor": 96.81820833333333
+    }
+   ],
+   "wer_b0_same_clips": 0.017726798748696558,
+   "rss_cap": "4G",
+   "c0_total_ms_typical": {
+    "2": 62.45,
+    "4": 68.447,
+    "8": 82.07,
+    "15": 97.767
+   },
+   "physical_calls": {
+    "native_joint": 2136,
+    "native_predict": 1955
+   },
+   "post_purge_load_ms": {
+    "encoder": [
+     {
+      "b2": 94964.649125,
+      "b4": 93822.512,
+      "b8": 99528.166,
+      "b15": 99757.09933333333
+     },
+     {
+      "b2": 89630.79516666668,
+      "b4": 89195.975875,
+      "b8": 92768.91941666667,
+      "b15": 96041.25929166668
+     }
+    ],
+    "encoder_total": [
+     388072.9732916667,
+     367637.1670416667
+    ],
+    "compile_ms": [
+     null,
+     null
+    ],
+    "decode": [
+     28.965125,
+     34.94441666666666
+    ]
+   },
+   "subsequent_fresh_process_load_ms": {
+    "encoder": [
+     {
+      "b2": 442.24916666666667,
+      "b4": 377.9794583333333,
+      "b8": 352.82841666666667,
+      "b15": 352.9970833333333
+     },
+     {
+      "b2": 407.2660833333333,
+      "b4": 398.5879583333333,
+      "b8": 360.56425,
+      "b15": 354.3040833333333
+     }
+    ],
+    "encoder_total": [
+     1526.240125,
+     1520.9360416666668
+    ],
+    "decode": [
+     28.801583333333333,
+     37.86658333333334
+    ]
+   },
+   "phys_footprint_peak_mb_arm_only": 160.3288345336914,
+   "phys_footprint_peak_mb_with_c0": 350.31343841552734,
+   "cache_log": [
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 18448KB"
+    ],
+    [
+     "cache before run 1: KB",
+     "cache after run 1: 18448KB"
+    ]
+   ]
+  }
+ ]
+}
