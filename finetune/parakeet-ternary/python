@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Pinned interpreter for the ternary Parakeet experiment. See DESIGN.md.
+# Reuses the NeMo 3.0 / torch 2.11 cu128 environment installed for stt-distillation,
+# plus the transformers install from finetune/stt/deps (Whisper text normalizer).
+# All caches and artifacts live on the mounted data disk.
+set -euo pipefail
+mountpoint -q /mnt/hd || { echo '/mnt/hd is not mounted; refusing artifact writes.' >&2; exit 1; }
+here="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+repo="$(cd -- "$here/../.." && pwd)"
+art=/mnt/hd/wilderness-labs-stt/parakeet-ternary
+mkdir -p "$art/tmp" "$art/caches"
+export PYTHONPATH="$here:/mnt/hd/wilderness-labs-stt/stt-distillation/deps:$repo/finetune/whisper-ternary${PYTHONPATH:+:$PYTHONPATH}"
+export HF_HOME="$art/caches/hf" HF_HUB_CACHE="$art/caches/hf/hub" HF_DATASETS_CACHE="$art/caches/datasets"
+export XDG_CACHE_HOME="$art/caches" TORCH_HOME="$art/caches/torch" NUMBA_CACHE_DIR="$art/caches/numba"
+export TORCHINDUCTOR_CACHE_DIR="$art/caches/inductor" TRITON_CACHE_DIR="$art/caches/triton"
+export TORCH_EXTENSIONS_DIR="$art/caches/extensions" CUDA_CACHE_PATH="$art/caches/cuda"
+export TMPDIR="$art/tmp"
+# Keep using the token saved by `hf auth login` (authenticated downloads, higher rate limits).
+export HF_TOKEN_PATH="${HF_TOKEN_PATH:-$HOME/.cache/huggingface/token}"
+export HF_HUB_DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 WANDB_MODE=disabled TOKENIZERS_PARALLELISM=false
+export PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS="${OMP_NUM_THREADS:-4}" OPENBLAS_NUM_THREADS=1
+export TRITON_LIBCUDA_PATH=/run/opengl-driver/lib
+export LD_LIBRARY_PATH="/run/opengl-driver/lib:/nix/store/hngmi01i8wgi25a0byrxcn4ysz5j79mw-gcc-15.2.0-lib/lib:/nix/store/dbz6pb9g67kpgpl95k8d85kzpxm1c32p-zlib-1.3.2/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+exec "$repo/custom/autoresearch/.training-runtime/bin/python3" "$@"

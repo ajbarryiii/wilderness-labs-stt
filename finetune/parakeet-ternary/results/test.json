@@ -1,0 +1,86 @@
+{
+ "rows": {
+  "B0": {
+   "spgispeech": 2.138801313899939,
+   "common_voice": 8.50039584237812,
+   "ami": 11.145102943146801,
+   "earnings22": 11.23540358698542,
+   "gigaspeech": 9.780109796460353,
+   "librispeech_clean": 1.6953627397363606,
+   "librispeech_other": 3.192012404977119,
+   "voxpopuli": 5.939336191837382,
+   "mean": 6.446589853863339
+  },
+  "B1": {
+   "librispeech_clean": 100.0,
+   "librispeech_other": 100.0,
+   "ami": 100.0,
+   "earnings22": 100.0,
+   "gigaspeech": 100.0,
+   "spgispeech": 100.0,
+   "voxpopuli": 100.0,
+   "common_voice": 100.0,
+   "mean": 100.0
+  },
+  "M1": {
+   "librispeech_clean": 2.0536707714937674,
+   "librispeech_other": 4.198025793275595,
+   "ami": 10.421597963467464,
+   "earnings22": 11.715986011983885,
+   "gigaspeech": 10.345938125532632,
+   "spgispeech": 2.9443078091213706,
+   "voxpopuli": 6.193425440686041,
+   "common_voice": 12.560334039890698,
+   "mean": 6.838993130794393
+  }
+ },
+ "published": {
+  "librispeech_clean": 1.69,
+  "librispeech_other": 3.19,
+  "ami": 11.16,
+  "earnings22": 11.15,
+  "gigaspeech": 9.74,
+  "spgispeech": 2.17,
+  "voxpopuli": 5.95,
+  "tedlium": 3.38,
+  "mean": 6.435714285714285
+ },
+ "m1_export_mb": 180.797564,
+ "original_nemo_mb": 2472.22272,
+ "empty_hypothesis_fraction": {
+  "B0": {
+   "spgispeech": 0.0,
+   "common_voice": 0.0014693277825394882,
+   "ami": 0.03115077662404531,
+   "earnings22": 0.007307270734380708,
+   "gigaspeech": 0.0034676851944919086,
+   "librispeech_clean": 0.0,
+   "librispeech_other": 0.0,
+   "voxpopuli": 0.0
+  },
+  "B1": {
+   "librispeech_clean": 1.0,
+   "librispeech_other": 1.0,
+   "ami": 1.0,
+   "earnings22": 1.0,
+   "gigaspeech": 1.0,
+   "spgispeech": 1.0,
+   "voxpopuli": 1.0,
+   "common_voice": 1.0
+  },
+  "M1": {
+   "librispeech_clean": 0.0,
+   "librispeech_other": 0.0,
+   "ami": 0.014331073543293573,
+   "earnings22": 0.0007307270734380709,
+   "gigaspeech": 0.001256407679163735,
+   "spgispeech": 0.0,
+   "voxpopuli": 0.0,
+   "common_voice": 0.0014081057916003428
+  }
+ },
+ "sanity_flags": [
+  "ami: 1.43% empty M1 hypotheses"
+ ],
+ "m1_export_sha256": "a287e97719c451b785be2cd01ecc861fcaa010ebaa4ff2841783ec78fcd61503"
+}

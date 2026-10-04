@@ -265,3 +265,6 @@ pytorch_model*.bin
 
 # The ternary Whisper experiment publishes its result tables.
 !finetune/whisper-ternary/results/*.md
+
+# The ternary Parakeet experiment publishes its result tables.
+!finetune/parakeet-ternary/results/*.md
