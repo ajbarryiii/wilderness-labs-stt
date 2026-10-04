@@ -2135,5 +2135,10 @@
     "g0_vs_c0"
    ]
   }
- ]
+ ],
+ "_evidence": {
+  "sha256": "7fe5d7953fd6e14f597ce2ec4edfca1e0e5dbfd5c209043e2d7287e4464e0254",
+  "bytes": 41671,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/eligibility/summary.json"
+ }
 }

@@ -48,6 +48,9 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from mil import evidence
+
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     __package__ = "mil"
@@ -75,7 +78,7 @@ TOPOLOGY = {"C1": "dense", "C3": "dense", "C4": "dense", "C6s2": "dense", "C6s4"
 
 
 def sha(path: Path) -> str:
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    return hashlib.sha256(evidence.read_bytes(Path(path))).hexdigest()
 
 
 def header(kind: str, **kw) -> dict:
@@ -102,7 +105,7 @@ def jsonable(x):
 def write(doc: dict, name: str) -> Path:
     OUT.mkdir(parents=True, exist_ok=True)
     path = OUT / name
-    path.write_text(json.dumps(jsonable(doc), indent=0, allow_nan=False) + "\n")
+    evidence.write_text(path, json.dumps(jsonable(doc), indent=0, allow_nan=False) + "\n")
     return path
 
 
@@ -113,7 +116,7 @@ def finish(doc: dict, name: str) -> int:
 
 
 def build_manifest(model: str, label: str, variant: str) -> dict:
-    return json.loads((arms_root() / model / label / f"manifest-{variant}.json").read_text())
+    return json.loads(evidence.read_text((arms_root() / model / label / f"manifest-{variant}.json")))
 
 
 def bucket_runs(model: str, label: str, variant: str, units: str, clips: list[dict]):
@@ -198,7 +201,7 @@ class Paths:
 
         base = arms_root() / model / ("decoder" if precision == "fp16" else f"decoder-{precision}")
         cu = units_of(units)
-        self.manifest = json.loads((base / "manifest.json").read_text())
+        self.manifest = json.loads(evidence.read_text((base / "manifest.json")))
         load = lambda n: ct.models.CompiledMLModel(str(base / f"{n}.mlmodelc"), compute_units=cu)
         self.dec, self.jd, self.jl, self.dj = (load(n) for n in ("Decoder", "JointDecision", "JointLogits", "DecoderJoint"))
 
@@ -456,7 +459,7 @@ def gate4b(args) -> int:
 
 def paths_manifest(model: str, precision: str = "fp16") -> dict:
     base = arms_root() / model / ("decoder" if precision == "fp16" else f"decoder-{precision}")
-    m = json.loads((base / "manifest.json").read_text())
+    m = json.loads(evidence.read_text((base / "manifest.json")))
     return {"dir": str(base), "provenance": m["provenance"], "precision": m.get("precision", "fp16")}
 
 

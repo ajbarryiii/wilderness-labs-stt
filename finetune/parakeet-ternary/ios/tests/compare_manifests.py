@@ -12,6 +12,9 @@ import argparse
 import json
 import sys
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from mil import evidence
 
 SEEDS = (0, 1, 2)
 
@@ -36,7 +39,7 @@ def main() -> int:
             "machines": [{"platform": m["machine"]["platform"], "numpy": m["machine"]["numpy"],
                           "python": m["machine"]["python"], "digest": m["digest"]} for m in (a, b)]}
     result["all_identical"] = ok
-    args.out.write_text(json.dumps(result, indent=1) + "\n")
+    evidence.write_text(args.out, json.dumps(result, indent=1) + "\n")
     print(json.dumps({s: (r["tensors_equal"], r["tensors"], r["identical"]) for s, r in result["seeds"].items()}))
     return 0 if ok else 1
 

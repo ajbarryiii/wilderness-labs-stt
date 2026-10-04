@@ -100,5 +100,10 @@
    "duration_agree": 0.875968992248062,
    "all_steps_executed": true
   }
+ },
+ "_evidence": {
+  "sha256": "b837d83a7ab167457d6bea2ad3557ec506962000b8a3e72651cf5acf886c0fc1",
+  "bytes": 2983,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/smoke/c0_replay_diag_smoke.summary.json"
  }
 }

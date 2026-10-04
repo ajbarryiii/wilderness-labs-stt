@@ -154,3 +154,5 @@ Diagnostics: decoder-only 4b (FP16 decoder paths on the FP32 reference encoder o
 | mp2-C7-multi-cpuOnly-decoder-fp32 | 63 / 63 | 1.0000 / 0.9987 | True |
 | mp2-C8-multi-cpuAndNeuralEngine-decoder-fp32 | 62 / 62 | 0.9990 / 0.9917 | True |
 | mp2-C8-multi-cpuOnly-decoder-fp32 | 63 / 63 | 0.9990 / 0.9940 | True |
+
+Full record: SHA-256 ccd495b8ebeb4e2efdba2b3b598068378b70983c3efa92b51be7c79607334b2c; 14402 bytes; 504c07c0cdecde864a45e1d0612f59d24896f914/wp3_rev7_table.txt

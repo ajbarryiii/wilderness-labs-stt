@@ -39,6 +39,9 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from mil import evidence
+
 IOS = Path(__file__).resolve().parents[1]
 RES = IOS / "results"
 ELIG = RES / "eligibility"
@@ -64,7 +67,7 @@ class Ineligible(Exception):
 
 
 def sha(path: Path) -> str:
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    return hashlib.sha256(evidence.read_bytes(Path(path))).hexdigest()
 
 
 def rel(path: Path) -> str:
@@ -72,7 +75,7 @@ def rel(path: Path) -> str:
 
 
 def load(path: Path):
-    return json.loads(path.read_text()) if path.exists() else None
+    return json.loads(evidence.read_text(path)) if evidence.exists(path) else None
 
 
 def record_path(model: str, arm: str, variant: str, backend: str, decoder: str = DEPLOYED_DECODER) -> Path:
@@ -89,13 +92,19 @@ def check(model: str, arm: str, variant: str, backend: str, root: Path | None = 
         return {"model": model, "arm": "C0", "variant": variant, "backend": backend, "timing_allowed": True,
                 "eligible": False, "role": "product baseline (no gate record; always timed)"}
     path = (Path(root) if root else ELIG) / record_path(model, arm, variant, backend, decoder).name
-    if not path.exists():
+    if not evidence.exists(path):
         raise Ineligible(f"no eligibility record {path.name}: run the revision-{DESIGN_REVISION} gates and "
                          "eligibility.py build first")
-    rec = json.loads(path.read_text())
+    try:
+        rec = json.loads(evidence.read_text(path))
+    except (evidence.EvidenceError, OSError, ValueError) as exc:
+        raise Ineligible(str(exc)) from exc
     if rec.get("design_revision") != DESIGN_REVISION:
         raise Ineligible(f"{path.name} is for design revision {rec.get('design_revision')}, not {DESIGN_REVISION}")
-    stale = [f for f, digest in rec.get("inputs", {}).items() if not (IOS / f).exists() or sha(IOS / f) != digest]
+    try:
+        stale = [f for f, digest in rec.get("inputs", {}).items() if not evidence.exists((IOS / f)) or sha(IOS / f) != digest]
+    except (evidence.EvidenceError, OSError) as exc:
+        raise Ineligible(str(exc)) from exc
     if stale:
         raise Ineligible(f"{path.name}: inputs changed since the record was built: {stale[:5]}")
     if not rec.get("timing_allowed"):
@@ -125,7 +134,7 @@ def _tokenizer():
 
 def build(args) -> int:
     ELIG.mkdir(parents=True, exist_ok=True)
-    clips = {c["id"]: c for c in json.loads((IOS / "clips.json").read_text())["clips"]}
+    clips = {c["id"]: c for c in json.loads(evidence.read_text((IOS / "clips.json")))["clips"]}
     sp, sp_path = _tokenizer()
     stress_path = RES / "probes" / "stress.json"
     stress = load(stress_path)
@@ -133,7 +142,7 @@ def build(args) -> int:
     dec4a_cache = {}
     rows = []
     built = set()
-    for p in sorted(v7.glob("*.json")):
+    for p in sorted(evidence.glob(v7, "*.json")):
         d = load(p)
         if d.get("gate") != "4b":
             continue
@@ -149,7 +158,7 @@ def build(args) -> int:
         inputs, checks, reasons = {}, {}, []
 
         def use(path: Path):
-            if path.exists():
+            if evidence.exists(path):
                 inputs[rel(path)] = sha(path)
             return load(path)
 
@@ -163,11 +172,11 @@ def build(args) -> int:
         own = v7 / f"{model}-{arm}-fp32-{variant}-cpuOnly-4a.json"
         rep = TOPOLOGY_REP.get(topo)
         repf = v7 / f"{model}-{rep}-fp32-{variant}-cpuOnly-4a.json" if rep else None
-        src = own if own.exists() else repf
+        src = own if evidence.exists(own) else repf
         g4a = use(src) if src is not None else None
         checks["gate4a"] = {"pass": bool(g4a and g4a["pass"] and g4a.get("design_revision") in ACCEPTED_REVISIONS["4a"]),
-                            "topology": topo, "source": rel(src) if src is not None and src.exists() else None,
-                            "own_fp32_build": own.exists(),
+                            "topology": topo, "source": rel(src) if src is not None and evidence.exists(src) else None,
+                            "own_fp32_build": evidence.exists(own),
                             "rel_max": g4a and g4a["summary"]["rel_max"], "abs_max": g4a and g4a["summary"]["abs_max"]}
         d4a = use(v7 / f"{model}-decoder-fp32-cpuOnly-4a.json")
         checks["gate4a_decoder"] = {"pass": bool(d4a and d4a["pass"])}
@@ -236,14 +245,14 @@ def build(args) -> int:
                "eligible": eligible,
                "timing_allowed": eligible, "selection_eligible": eligible, "reasons": reasons, "checks": checks,
                "inputs": inputs, "tokenizer_sha256": sha(sp_path), "built": time.strftime("%Y-%m-%d %H:%M")}
-        record_path(model, arm, variant, backend, decoder).write_text(json.dumps(rec, indent=1, allow_nan=False) + "\n")
+        evidence.write_text(record_path(model, arm, variant, backend, decoder), json.dumps(rec, indent=1, allow_nan=False) + "\n")
         rows.append(rec)
     rows += build_g0(stress)
     summary = [{k: r.get(k) for k in ("model", "arm", "variant", "backend", "decoder_precision", "timing_allowed",
                                       "selection_eligible")}
                | {"failed_checks": [n for n, c in r["checks"].items() if not c["pass"]],
                   **({"wer": r["checks"]["wer"]} if "wer" in r["checks"] else {})} for r in rows]
-    (ELIG / "summary.json").write_text(json.dumps({"design_revision": DESIGN_REVISION, "code_version": CODE_VERSION,
+    evidence.write_text((ELIG / "summary.json"), json.dumps({"design_revision": DESIGN_REVISION, "code_version": CODE_VERSION,
                                                    "records": summary}, indent=1, allow_nan=False) + "\n")
     print(table(rows))
     return 0
@@ -253,7 +262,7 @@ def build_g0(stress) -> list[dict]:
     """Control record for G0 (graph control vs C0): timing allowed on a backend whose G0-vs-C0 result exists,
     is finite and matches C0 exactly on every clip where masking is moot (M mod 8 in {0, 7})."""
     out = []
-    clips = {c["id"]: c for c in json.loads((IOS / "clips.json").read_text())["clips"]}
+    clips = {c["id"]: c for c in json.loads(evidence.read_text((IOS / "clips.json")))["clips"]}
     for backend in MATRIX_BACKENDS:
         units = BACKENDS[backend]
         path = RES / "gates" / f"c0-G0-fixed-{units}.json"
@@ -273,7 +282,7 @@ def build_g0(stress) -> list[dict]:
                "variant": "fixed", "backend": backend, "compute_units": units, "role": "graph control (vs C0)",
                "eligible": False, "selection_eligible": False, "timing_allowed": not reasons, "reasons": reasons,
                "checks": checks, "inputs": inputs, "built": time.strftime("%Y-%m-%d %H:%M")}
-        record_path("c0", "G0", "fixed", backend).write_text(json.dumps(rec, indent=1, allow_nan=False) + "\n")
+        evidence.write_text(record_path("c0", "G0", "fixed", backend), json.dumps(rec, indent=1, allow_nan=False) + "\n")
         out.append(rec)
     return out
 
@@ -293,7 +302,7 @@ def table(rows: list[dict]) -> str:
                      f"{'yes' if r['timing_allowed'] else 'no'} | "
                      f"{', '.join(n for n, c in r['checks'].items() if not c['pass']) or '-'} | {ident} | {wer} |")
     text = "\n".join(lines) + "\n"
-    (ELIG / "table.txt").write_text(text)
+    evidence.write_text((ELIG / "table.txt"), text)
     return text
 
 

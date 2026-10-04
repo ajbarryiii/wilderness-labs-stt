@@ -1893,5 +1893,10 @@
     ]
    ]
   }
- ]
+ ],
+ "_evidence": {
+  "sha256": "bbf37c303dcee93e02891afb787a8db47d0796c8c6ccb3b87f7378490b647ab2",
+  "bytes": 35306,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/wp7/sweep.json"
+ }
 }

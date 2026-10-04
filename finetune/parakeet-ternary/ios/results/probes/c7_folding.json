@@ -280,5 +280,10 @@
   "platform": "macOS-27.0-arm64-arm-64bit",
   "machine": "arm64"
  },
- "note": "folding inside the device compiler (Core ML / ANE compiler) cannot be observed here; unresolved by design (DESIGN.md)"
+ "note": "folding inside the device compiler (Core ML / ANE compiler) cannot be observed here; unresolved by design (DESIGN.md)",
+ "_evidence": {
+  "sha256": "e5be5c37c92d2a1aca129c8d210cd782e1a9c0aa33ac4eacc03b62f5914bbf80",
+  "bytes": 6522,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/probes/c7_folding.json"
+ }
 }

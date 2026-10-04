@@ -111,3 +111,5 @@ Eligibility (design revision 8); deployed decoder/joint: FP32. FP16-decoder reco
 | mp2 | C8 | fixed | cpu | fp16 | no | decoder_precision, gate4b, stress | 57 / 57 | 2.711 / 2.711 / 2.711 |
 | mp2 | C8 | multi | ane | fp16 | no | decoder_precision | 61 / 61 | 2.711 / 2.711 / 2.711 |
 | mp2 | C8 | multi | cpu | fp16 | no | decoder_precision, gate4b, stress | 57 / 57 | 2.711 / 2.711 / 2.711 |
+
+Full record: SHA-256 213804031b4b16b821a23d3d5bdcd5767036efb2e9cdefec680fedaed74f1bc2; 10078 bytes; 504c07c0cdecde864a45e1d0612f59d24896f914/eligibility/table.txt

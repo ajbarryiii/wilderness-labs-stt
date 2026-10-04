@@ -612,5 +612,10 @@
     "baseline_typical_ms": 16.487
    }
   }
+ },
+ "_evidence": {
+  "sha256": "169f48c0cfe962392f0a0b4f2597852214dd7fa2da6826a30c273a506b04002e",
+  "bytes": 16019,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/wp7/C4-multi-gpu-vdsp-f2.summary.json"
  }
 }

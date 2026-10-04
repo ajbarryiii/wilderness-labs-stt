@@ -2,5 +2,10 @@
  "what": "Swift parakeet-bench F2 (native FP32 CPU decode loop) free decoding of the MLX arm's own-bucket encoder outputs (external-encoder mode), vs the gate's F2-equivalent (reference.py FP32 decoder/joint) tokens",
  "clips": 64,
  "identical": 64,
- "identical_to_reference": 64
+ "identical_to_reference": 64,
+ "_evidence": {
+  "sha256": "bca0eb1aa5682a66c70e056ff0780b95d13b6986eb5f892c16bf89aa6034630a",
+  "bytes": 284,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/mlxarm/f2_swift.json"
+ }
 }

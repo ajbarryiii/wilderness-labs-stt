@@ -340,5 +340,10 @@
    },
    "seconds": 33.0
   }
+ },
+ "_evidence": {
+  "sha256": "65cfc43cbc2a19bbdfadde1ebbbcd650910a6b98035f2363bf7bf8db20242ee7",
+  "bytes": 8393,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/diag/fp16_depth.json"
  }
 }

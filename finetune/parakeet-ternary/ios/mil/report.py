@@ -6,14 +6,18 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from mil import evidence
 
 RES = Path(__file__).resolve().parents[1] / "results"
 IOS_DIR = RES.parent
 
 
 def load(p: Path):
-    return json.loads(p.read_text()) if p.exists() else None
+    return json.loads(evidence.read_text(p)) if evidence.exists(p) else None
 
 
 def plan_share(plan: dict | None) -> dict:
@@ -34,7 +38,7 @@ def plan_share(plan: dict | None) -> dict:
 
 def main() -> None:
     rows = []
-    for p in sorted((RES / "builds").glob("*.json")):
+    for p in sorted(evidence.glob((RES / "builds"), "*.json")):
         m = load(p)
         if "models" in m:  # decoder
             for name, e in m["models"].items():
@@ -74,11 +78,11 @@ def main() -> None:
                 "load_s": g.get("load_s")}
         rows.append(row)
     doc = {"rows": rows, "gate3": {m: load(RES / "gates" / f"{m}-gate3.json")["summary"]
-                                   for m in ("mp2", "seed0") if (RES / "gates" / f"{m}-gate3.json").exists()},
-           "decoder_gates": {p.stem: load(p)["summary"]["gate4_heads"] for p in (RES / "gates").glob("*-decoder-*.json")},
-           "g0": {p.stem: load(p)["summary"] for p in (RES / "gates").glob("c0-G0-*.json")},
+                                   for m in ("mp2", "seed0") if evidence.exists((RES / "gates" / f"{m}-gate3.json"))},
+           "decoder_gates": {p.stem: load(p)["summary"]["gate4_heads"] for p in evidence.glob((RES / "gates"), "*-decoder-*.json")},
+           "g0": {p.stem: load(p)["summary"] for p in evidence.glob((RES / "gates"), "c0-G0-*.json")},
            "probes": load(RES / "probes" / "summary.json"), "diag": load(RES / "diag" / "fp16_depth.json")}
-    (RES / "wp3_summary.json").write_text(json.dumps(doc, indent=1) + "\n")
+    evidence.write_text((RES / "wp3_summary.json"), json.dumps(doc, indent=1) + "\n")
     lines = ["| model | arm | variant | mlmodelc MB | compile s | convert s | peak RSS MB | gate 2 (fixed build) | ANE cost share (plan, per function) | "
              "g4 enc ANE (rel max / abs max / failing) | g5 ANE | heads ANE | g4 enc CPU (rel max / failing) | heads CPU |",
              "|" + "---|" * 14]
@@ -104,7 +108,7 @@ def main() -> None:
             ("pass" if a["heads"] else "FAIL") if a else "-",
             f"{'pass' if c['g4_encoder'] else 'FAIL'} {c['g4_rel_max']} / {c['g4_failing_cases']}" if c else "-",
             ("pass" if c["heads"] else "FAIL") if c else "-")) + " |")
-    (RES / "wp3_summary_table.txt").write_text("\n".join(lines) + "\n")  # *.md under results/ is git-ignored
+    evidence.write_text((RES / "wp3_summary_table.txt"), "\n".join(lines) + "\n")  # *.md under results/ is git-ignored
     print("\n".join(lines))
 
 
@@ -115,7 +119,7 @@ def rev7() -> str:
             for r in (load(RES / "eligibility" / "summary.json") or {"records": []})["records"]}
     out = ["Gate 4a (FP32 builds, CPU_ONLY, full depth; ceilings rel <= 1e-5, abs <= 1e-4)", "",
            "| build | variant | cases | rel max | abs max | pass |", "|---|---|---|---|---|---|"]
-    for p in sorted(v7.glob("*-4a.json")):
+    for p in sorted(evidence.glob(v7, "*-4a.json")):
         d = load(p)
         s = d["summary"]
         if d["gate"] == "4a":
@@ -128,7 +132,7 @@ def rev7() -> str:
             "| arm | variant | backend | decoder | enc rel max (<= 0.1) | rev2-5 enc failing (diag) | agree all tok / dur (jd) | "
             "identical seqs jd / dj (of 64; >= 61) | WER jd / ref (%) | gate 5 | stress | eligible |",
             "|---|---|---|---|---|---|---|---|---|---|---|---|"]
-    runs = [load(p) for p in sorted(v7.glob("mp2-*-dec-*.json"))]
+    runs = [load(p) for p in sorted(evidence.glob(v7, "mp2-*-dec-*.json"))]
     runs.sort(key=lambda d: (d.get("decoder_precision", "fp16") != "fp32", d["arm"], d["variant"], d["backend"]))
     for d in runs:
         if d["gate"] != "4b":
@@ -149,7 +153,7 @@ def rev7() -> str:
     out += ["", "Diagnostics: decoder-only 4b (FP16 decoder paths on the FP32 reference encoder output) and the "
             "revision-7 FP32-decoder diagnostic runs (superseded by the revision-8 4b runs above)", "",
             "| run | identical seqs jd / dj (of 64) | agree all tok / dur (jd) | heads pass |", "|---|---|---|---|"]
-    for p in sorted(list(v7.glob("*-4b.json")) + list((v7 / "superseded").glob("*-decoder-fp32.json"))):
+    for p in sorted(list(evidence.glob(v7, "*-4b.json")) + list(evidence.glob((v7 / "superseded"), "*-decoder-fp32.json"))):
         d = load(p)
         s = d["summary"]
         h = s["heads_4b"]["paths"]["jd"]
@@ -157,7 +161,7 @@ def rev7() -> str:
                    f"{h['token']['agreement_all_steps']:.4f} / {h['duration']['agreement_all_steps']:.4f} | "
                    f"{s['heads_4b']['pass']} |")
     text = "\n".join(out) + "\n"
-    (RES / "wp3_rev7_table.txt").write_text(text)
+    evidence.write_text((RES / "wp3_rev7_table.txt"), text)
     return text
 
 
@@ -224,7 +228,7 @@ def wp6a() -> str:
         cells, m, _ = plan_row(a, "cpuAndGPU", "gpu")
         out.append(f"| {a} | " + " | ".join(cells) + " |")
     text = "\n".join(out) + "\n"
-    (RES / "wp6a_table.txt").write_text(text)
+    evidence.write_text((RES / "wp6a_table.txt"), text)
     return text
 
 

@@ -1276,5 +1276,10 @@
    "peak_rss_mb_after_compile": 579.3,
    "wall_s": 6.1
   }
+ },
+ "_evidence": {
+  "sha256": "fb02c0ef9f67e2239fded68638b144980c55fa39180ebb596f612a9685f874de",
+  "bytes": 34701,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/probes/memory.json"
  }
 }

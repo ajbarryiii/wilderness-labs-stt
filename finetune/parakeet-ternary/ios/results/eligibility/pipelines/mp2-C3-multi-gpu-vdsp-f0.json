@@ -1,196 +1,139 @@
 {
  "design_revision": 10,
- "code_version": "wp7-pipegate-5",
- "kind": "pipeline",
  "model": "mp2",
  "arm": "C3",
  "variant": "multi",
  "backend": "gpu",
- "compute_units": "cpuAndGPU",
  "front_end": "vdsp",
  "decode": "f0",
- "decoder_precision": "fp32",
- "encoder_record": {
-  "file": "mp2-C3-multi-gpu.json",
-  "sha256": "9349657b728bf2b36bb56195aeabdc419a7a270e54fe7ae0ceb4b03f8f07962d"
- },
- "components": {
-  "compute_units": "cpuAndGPU",
-  "configuration": {
-   "allow_low_precision_accumulation_on_gpu": true,
-   "compute_units": "cpuAndGPU",
-   "label_loop": {
-    "blank": 1024,
-    "durations": [
-     0,
-     1,
-     2,
-     3,
-     4
-    ],
-    "max_symbols": 10
-   }
-  },
-  "decode": {
-   "kind": "f0",
-   "manifest_sha256": "46ee70abf046c9686d8dce8ed12ec3f6dce2369ba1aa13e467fde092db93f638",
-   "models_sha256": {
-    "Decoder": "24d02ae1fa45d90124b3f5133577ca0dfbf4d84fcb8f9c07555c2d5d80b03783",
-    "JointDecision": "af852997542b56aa034a0a87d83d57462598ff50fd09d104a1f3c49dbf17bbb8"
-   },
-   "precision": "fp32"
-  },
-  "encoder": {
-   "arm": "C3",
-   "model": "mp2",
-   "package": "mp2/C3/multi.mlmodelc",
-   "sha256": "4128cea7045d1a09a2d47a6265ab917c5394674926fa90de9ab18fbcd0acfd34",
-   "variant": "multi"
-  },
-  "executable_sha256": "726372ae7d7539be0d8d6da19af463084fb186a4400a8b8e46b6a45b8575d530",
-  "front_end": {
-   "constants_sha256": "efe8a64a770fa51eeafaca31c1f7f744c900e11f5f19ed1aa39716da8d4f20d3",
-   "kind": "vdsp",
-   "manifest_sha256": "8b754605cf5f6743535695457b6ac72754c7489ca132a08f0c759211b714485e",
-   "provenance": {
-    "export_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/pilot-P2-lr5e-4/export",
-    "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6",
-    "model": "mp2"
-   }
-  }
- },
- "build": {
-  "commit": "ee63bdc62cb49b3ff79f0e52846a077b7d5177a7",
-  "clean": true,
-  "modified_tracked_files": 0,
-  "executable_sha256": "726372ae7d7539be0d8d6da19af463084fb186a4400a8b8e46b6a45b8575d530",
-  "built_from_commit": "ee63bdc62cb49b3ff79f0e52846a077b7d5177a7"
- },
- "eligible": true,
  "timing_allowed": true,
  "selection_eligible": true,
  "reasons": [],
+ "built": "2026-10-03 15:33",
  "checks": {
   "encoder_record": {
-   "pass": true,
-   "record": "mp2-C3-multi-gpu.json"
+   "pass": true
   },
   "decoder_precision": {
-   "pass": true,
-   "precision": "fp32"
+   "pass": true
   },
   "problems": {
-   "pass": true,
-   "list": []
+   "pass": true
   },
   "encoder": {
-   "pass": true,
-   "clips": 82,
-   "passed": 82,
-   "max_rel": 0.01850794952638844,
-   "max_abs": 0.26083355484253873,
-   "reference": "FP32 reference encoder (fp16s scales) on FP64-evaluated reference features (ref64)",
-   "diag_vs_reference_on_fp32_features": {
-    "max_rel": 0.32071808727358914,
-    "over_ceiling": [
-     "silence-3s"
-    ]
-   }
+   "pass": true
   },
   "coverage": {
-   "pass": true,
-   "missing_or_incomplete": []
+   "pass": true
   },
   "finite": {
-   "pass": true,
-   "free": 0,
-   "replay": 0,
-   "replay_recount": 0,
-   "values": 38713897
+   "pass": true
   },
   "decisions": {
-   "pass": true,
-   "token": {
-    "steps": 3025,
-    "agree_all": 0.9990082644628099,
-    "decisive_fraction": 0.9662809917355372,
-    "agree_decisive": 1.0,
-    "reference_margin": {
-     "n": 3025,
-     "min": 0.0101,
-     "p1": 0.2829,
-     "p5": 1.474,
-     "p25": 6.3857,
-     "median": 8.9682
-    },
-    "pipeline_margin": {
-     "n": 3025,
-     "min": 0.0005,
-     "p1": 0.2668,
-     "p5": 1.4636,
-     "p25": 6.3392,
-     "median": 8.9694
-    },
-    "reference_margin_of_disagreements": [
-     0.0101,
-     0.3956,
-     0.8894
-    ],
-    "pass": true
-   },
-   "duration": {
-    "steps": 3025,
-    "agree_all": 0.996694214876033,
-    "decisive_fraction": 0.8502479338842975,
-    "agree_decisive": 0.999611197511664,
-    "reference_margin": {
-     "n": 3025,
-     "min": 0.0017,
-     "p1": 0.0588,
-     "p5": 0.3049,
-     "p25": 1.8061,
-     "median": 4.4218
-    },
-    "pipeline_margin": {
-     "n": 3025,
-     "min": 0.0029,
-     "p1": 0.0614,
-     "p5": 0.3028,
-     "p25": 1.7924,
-     "median": 4.4268
-    },
-    "reference_margin_of_disagreements": [
-     0.0047,
-     0.0087,
-     0.024,
-     0.0329,
-     0.0702,
-     0.0869,
-     0.4792,
-     0.6579,
-     0.7535,
-     1.1267
-    ],
-    "pass": true
-   }
+   "pass": true
   },
   "free_decoding": {
-   "pass": true,
-   "clips": 64,
-   "identical": 64
+   "pass": true
   },
   "wer": {
-   "pass": true,
-   "reference_wer_pct": 2.711,
-   "pipeline_wer_pct": 2.711,
-   "clips": 64,
-   "limit_points": 0.2
+   "pass": true
   }
  },
- "inputs": {
-  "results/pipegates/mp2-C3-multi-gpu-vdsp.json": "228dc9635482eb56d64e7cd04664b30e93d5c82378a5be9f38fa9ebd13a3185e",
-  "results/eligibility/mp2-C3-multi-gpu.json": "9349657b728bf2b36bb56195aeabdc419a7a270e54fe7ae0ceb4b03f8f07962d"
+ "wer": {
+  "pass": true,
+  "reference_wer_pct": 2.711,
+  "pipeline_wer_pct": 2.711,
+  "clips": 64,
+  "limit_points": 0.2
  },
- "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
- "built": "2026-10-03 15:33"
+ "encoder": {
+  "pass": true,
+  "clips": 82,
+  "passed": 82,
+  "max_rel": 0.01850794952638844,
+  "max_abs": 0.26083355484253873,
+  "reference": "FP32 reference encoder (fp16s scales) on FP64-evaluated reference features (ref64)",
+  "diag_vs_reference_on_fp32_features": {
+   "max_rel": 0.32071808727358914,
+   "over_ceiling": [
+    "silence-3s"
+   ]
+  }
+ },
+ "free_decoding": {
+  "pass": true,
+  "clips": 64,
+  "identical": 64
+ },
+ "decisions": {
+  "pass": true,
+  "token": {
+   "steps": 3025,
+   "agree_all": 0.9990082644628099,
+   "decisive_fraction": 0.9662809917355372,
+   "agree_decisive": 1.0,
+   "reference_margin": {
+    "n": 3025,
+    "min": 0.0101,
+    "p1": 0.2829,
+    "p5": 1.474,
+    "p25": 6.3857,
+    "median": 8.9682
+   },
+   "pipeline_margin": {
+    "n": 3025,
+    "min": 0.0005,
+    "p1": 0.2668,
+    "p5": 1.4636,
+    "p25": 6.3392,
+    "median": 8.9694
+   },
+   "reference_margin_of_disagreements": [
+    0.0101,
+    0.3956,
+    0.8894
+   ],
+   "pass": true
+  },
+  "duration": {
+   "steps": 3025,
+   "agree_all": 0.996694214876033,
+   "decisive_fraction": 0.8502479338842975,
+   "agree_decisive": 0.999611197511664,
+   "reference_margin": {
+    "n": 3025,
+    "min": 0.0017,
+    "p1": 0.0588,
+    "p5": 0.3049,
+    "p25": 1.8061,
+    "median": 4.4218
+   },
+   "pipeline_margin": {
+    "n": 3025,
+    "min": 0.0029,
+    "p1": 0.0614,
+    "p5": 0.3028,
+    "p25": 1.7924,
+    "median": 4.4268
+   },
+   "reference_margin_of_disagreements": [
+    0.0047,
+    0.0087,
+    0.024,
+    0.0329,
+    0.0702,
+    0.0869,
+    0.4792,
+    0.6579,
+    0.7535,
+    1.1267
+   ],
+   "pass": true
+  }
+ },
+ "_evidence": {
+  "sha256": "07b4d72c732cbd246c4fa01c5cd7254102cc2a804e74b658e1b4462127b789e3",
+  "bytes": 4730,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/eligibility/pipelines/mp2-C3-multi-gpu-vdsp-f0.json"
+ }
 }

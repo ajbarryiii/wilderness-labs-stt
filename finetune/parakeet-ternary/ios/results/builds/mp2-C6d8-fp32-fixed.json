@@ -443,5 +443,10 @@
   "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/C6d8-fp32/fixed.mlmodelc",
   "mlmodelc_bytes": 504567178
  },
- "peak_rss_mb_after_compile": 1256.2
+ "peak_rss_mb_after_compile": 1256.2,
+ "_evidence": {
+  "sha256": "1328d83070375fd36ec0471b27a0dff9c5c0d511b95e0c985af95887b2ebcf11",
+  "bytes": 9598,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/builds/mp2-C6d8-fp32-fixed.json"
+ }
 }

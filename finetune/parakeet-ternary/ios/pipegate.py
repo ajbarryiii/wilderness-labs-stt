@@ -53,6 +53,8 @@ import sys
 import time
 from pathlib import Path
 
+from mil import evidence
+
 IOS = Path(__file__).resolve().parent
 sys.path.insert(0, str(IOS))
 sys.path.insert(0, str(IOS.parent))
@@ -150,7 +152,7 @@ EXCLUDED = {"G0": "graph control with C0's weights (not deployable; WP3 control 
 
 
 def sha(path: Path) -> str:
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    return hashlib.sha256(evidence.read_bytes(Path(path))).hexdigest()
 
 
 def sha_text(text: str) -> str:
@@ -236,7 +238,7 @@ def cmd_ref64(args) -> int:
            "model_provenance": source.provenance, "clips_json_sha256": sha(IOS / "clips.json"),
            "reference_code_sha256": reference_code_sha256(), "torch": torch.__version__,
            "seconds": round(time.time() - t0, 1), "clips": rows}
-    (out / "index.json").write_text(json.dumps(doc, indent=1) + "\n")
+    evidence.write_text((out / "index.json"), json.dumps(doc, indent=1) + "\n")
     worst = sorted(rows.items(), key=lambda kv: -kv[1]["enc_refcache_vs_ref64_rel_abs"][0])[:3]
     print(json.dumps({"clips": len(rows), "seconds": doc["seconds"],
                       "largest refcache-vs-ref64 encoder differences": {k: v["enc_refcache_vs_ref64_rel_abs"] for k, v in worst}}))
@@ -248,7 +250,7 @@ def validate_ref64(model: str, frontend_manifest_sha256: str, refcache_index: di
     from mil.weights import Source
 
     d = ref64_dir(model)
-    r64 = json.loads((d / "index.json").read_text())
+    r64 = json.loads(evidence.read_text((d / "index.json")))
     problems = []
     checks = (("clips_json_sha256", sha(IOS / "clips.json"), "clips.json"),
               ("frontend_manifest_sha256", frontend_manifest_sha256, "front-end constants manifest (as loaded by the gate)"),
@@ -258,7 +260,7 @@ def validate_ref64(model: str, frontend_manifest_sha256: str, refcache_index: di
     for key, current, label in checks:
         if r64.get(key) != current:
             problems.append(f"FP64-feature reference is stale: {label} changed ({key})")
-    if sorted(r64.get("clips", {})) != sorted(c["id"] for c in json.loads((IOS / "clips.json").read_text())["clips"]):
+    if sorted(r64.get("clips", {})) != sorted(c["id"] for c in json.loads(evidence.read_text((IOS / "clips.json")))["clips"]):
         problems.append("FP64-feature reference does not cover every clip")
     return d, r64, problems
 
@@ -280,7 +282,7 @@ def load_diag(gate_dir: Path, entry: dict) -> dict:
     """Sections of one replay diagnostic file (after checking its SHA-256): name -> array [rows, *shape]."""
     import numpy as np
 
-    raw = (gate_dir / entry["file"]).read_bytes()
+    raw = evidence.read_bytes((gate_dir / entry["file"]))
     if hashlib.sha256(raw).hexdigest() != entry["sha256"]:
         raise ValueError(f"{entry['file']}: SHA-256 differs from the gate record")
     out = {}
@@ -295,12 +297,12 @@ def cmd_evaluate(args) -> int:
     from mil import refcache
 
     d = Path(args.gate_dir)
-    lines = [json.loads(l) for l in (d / "gate.jsonl").read_text().splitlines() if l.strip()]
+    lines = [json.loads(l) for l in evidence.read_text((d / "gate.jsonl")).splitlines() if l.strip()]
     header = next(l for l in lines if l.get("record") == "header")
     rows = {l["clip"]: l for l in lines if l.get("record") == "clip"}
-    clips = {c["id"]: c for c in json.loads((IOS / "clips.json").read_text())["clips"]}
-    traces = {t["id"]: t for t in json.loads((IOS / "traces.json").read_text())["clips"]}
-    build = json.loads((d / "build.json").read_text())
+    clips = {c["id"]: c for c in json.loads(evidence.read_text((IOS / "clips.json")))["clips"]}
+    traces = {t["id"]: t for t in json.loads(evidence.read_text((IOS / "traces.json")))["clips"]}
+    build = json.loads(evidence.read_text((d / "build.json")))
     index = refcache.validate(header["model"])
     problems = []
     fe_manifests = {p["components"]["front_end"].get("manifest_sha256") for p in header["pipelines"].values()
@@ -465,7 +467,7 @@ def cmd_evaluate(args) -> int:
            "refcache_provenance": index["provenance"], "ref64_index_sha256": sha(r64dir / "index.json"), "problems": problems,
            "encoder": encoder, "encoder_rows": enc_rows, "decodes": per_decode, "pipegate_py_sha256": sha(Path(__file__)),
            "evaluated": time.strftime("%Y-%m-%d %H:%M")}
-    (d / "evaluation.json").write_text(json.dumps(doc, indent=1) + "\n")
+    evidence.write_text((d / "evaluation.json"), json.dumps(doc, indent=1) + "\n")
     ok = all(v["pass_before_wer"] for v in per_decode.values())
     print(json.dumps({"encoder": {k: encoder[k] for k in ("pass", "passed", "max_rel")}, "problems": problems[:10],
                       **{k: {"pass": v["pass_before_wer"], "finite": v["finite"]["pass"], "identical": v["free_decoding"]["identical"],
@@ -484,7 +486,7 @@ def local_commit() -> str:
 def cmd_record(args) -> int:
     from mil.eligibility import _tokenizer, _wer
 
-    ev = json.loads(Path(args.evaluation).read_text())
+    ev = json.loads(evidence.read_text(Path(args.evaluation)))
     # an evaluation is accepted only from this exact evaluator, design revision and reviewed build (finding 4)
     stale = []
     if ev.get("design_revision") != DESIGN_REVISION or ev.get("code_version") != CODE_VERSION:
@@ -498,11 +500,11 @@ def cmd_record(args) -> int:
         print(json.dumps({"refused": stale}))
         return 1
     h = ev["header"]
-    clips = {c["id"]: c for c in json.loads((IOS / "clips.json").read_text())["clips"]}
+    clips = {c["id"]: c for c in json.loads(evidence.read_text((IOS / "clips.json")))["clips"]}
     backend = {"cpuAndNeuralEngine": "ane", "cpuOnly": "cpu", "cpuAndGPU": "gpu"}[h["compute_units"]]
     base = f"{h['model']}-{h['arm']}-{h['variant']}-{backend}"
     enc_rec_path = IOS / "results" / "eligibility" / f"{base}.json"
-    enc_rec = json.loads(enc_rec_path.read_text())
+    enc_rec = json.loads(evidence.read_text(enc_rec_path))
     sp, sp_path = _tokenizer()
     SUMMARIES.mkdir(parents=True, exist_ok=True)
     RECORDS.mkdir(parents=True, exist_ok=True)
@@ -520,7 +522,7 @@ def cmd_record(args) -> int:
                                                    "informational_proxy") if k in v}
                           | {"wer": wers[dec]} for dec, v in ev["decodes"].items()}
     summary["encoder_rows"] = ev["encoder_rows"]
-    summary_path.write_text(json.dumps(summary, indent=1) + "\n")
+    evidence.write_text(summary_path, json.dumps(summary, indent=1) + "\n")
     out = {}
     for dec, v in summary["decodes"].items():
         pipe = h["pipelines"][dec]
@@ -543,7 +545,7 @@ def cmd_record(args) -> int:
                "inputs": {str(summary_path.relative_to(IOS)): sha(summary_path), str(enc_rec_path.relative_to(IOS)): sha(enc_rec_path)},
                "tokenizer_sha256": sha(sp_path), "built": time.strftime("%Y-%m-%d %H:%M")}
         path = RECORDS / pipe["record"]
-        path.write_text(json.dumps(rec, indent=1) + "\n")
+        evidence.write_text(path, json.dumps(rec, indent=1) + "\n")
         out[dec] = {"record": path.name, "timing_allowed": rec["timing_allowed"], "reasons": reasons}
     print(json.dumps(out))
     return 0 if all(v["timing_allowed"] for v in out.values()) else 10
@@ -553,8 +555,8 @@ def cmd_record(args) -> int:
 
 def encoder_records() -> list[dict]:
     out = []
-    for p in sorted((IOS / "results" / "eligibility").glob("*.json")):
-        r = json.loads(p.read_text())
+    for p in sorted(evidence.glob((IOS / "results" / "eligibility"), "*.json")):
+        r = json.loads(evidence.read_text(p))
         if r.get("design_revision") != ENCODER_RECORD_REVISION or not r.get("timing_allowed") or r.get("kind") == "pipeline":
             continue
         if r.get("decoder_precision") == "fp16" or r["arm"] in EXCLUDED:
@@ -603,9 +605,9 @@ def withdraw(name: str) -> list[str]:
     """Remove a combination's records and summary before it is re-gated, so a failed attempt leaves nothing that
     could pass for fresh evidence (git history keeps the old files)."""
     gone = []
-    for p in [*RECORDS.glob(f"{name}-vdsp-*.json"), SUMMARIES / f"{name}-vdsp.json"]:
-        if p.exists():
-            p.unlink()
+    for p in [*evidence.glob(RECORDS, f"{name}-vdsp-*.json"), SUMMARIES / f"{name}-vdsp.json"]:
+        if evidence.exists(p):
+            evidence.unlink(p)
             gone.append(p.name)
     return gone
 
@@ -664,8 +666,8 @@ def cmd_run(args) -> int:
             tmp = LOCAL / name / f".{run_id}.part"
             tmp.mkdir(parents=True, exist_ok=False)
             for f in ("evaluation.json", "gate.jsonl", "job.log", "cache.log", "build.json"):
-                (tmp / f).write_text(mac(f"cat {out}/{f}"))
-            json.loads((tmp / "evaluation.json").read_text())  # must parse
+                evidence.write_text((tmp / f), mac(f"cat {out}/{f}"))
+            json.loads(evidence.read_text((tmp / "evaluation.json")))  # must parse
             os.replace(tmp, final)
             res = subprocess.run([str(IOS.parent / "python"), str(Path(__file__)), "record", "--evaluation", str(final / "evaluation.json")],
                                  capture_output=True, text=True)
@@ -676,7 +678,7 @@ def cmd_run(args) -> int:
             elif res.returncode != 0:
                 withdraw(name)
                 raise RuntimeError(f"record failed ({res.returncode})")
-            published = sorted(p.name for p in RECORDS.glob(f"{name}-vdsp-*.json"))
+            published = sorted(p.name for p in evidence.glob(RECORDS, f"{name}-vdsp-*.json"))
             if len(published) != len(DECODES):
                 withdraw(name)
                 raise RuntimeError(f"{len(published)} records published, expected {len(DECODES)}")
@@ -691,15 +693,15 @@ def cmd_run(args) -> int:
             restored.discard(key)
     LOCAL.mkdir(parents=True, exist_ok=True)
     summary = {"commit": commit, "requested": only, "failures": failures, "gate_failures": gate_failures, "log": log}
-    (LOCAL / f"run-{time.strftime('%Y%m%d-%H%M%S')}.json").write_text(json.dumps(summary, indent=1) + "\n")
+    evidence.write_text((LOCAL / f"run-{time.strftime('%Y%m%d-%H%M%S')}.json"), json.dumps(summary, indent=1) + "\n")
     print(json.dumps({"requested": len(only), "orchestration_failures": failures, "gate_failures": gate_failures}))
     return 1 if failures else 10 if gate_failures else 0
 
 
 def cmd_table(args) -> int:
     rows = []
-    for p in sorted(RECORDS.glob("*.json")):
-        r = json.loads(p.read_text())
+    for p in sorted(evidence.glob(RECORDS, "*.json")):
+        r = json.loads(evidence.read_text(p))
         c = r["checks"]
         rows.append(f"| {r['model']} | {r['arm']} | {r['variant']} | {r['backend']} | {r['decode']} | "
                     f"{'yes' if r['timing_allowed'] else 'no'} | {', '.join(r['reasons']) or '-'} | "
@@ -711,7 +713,7 @@ def cmd_table(args) -> int:
             "| model | arm | variant | backend | decode | timing allowed | failed | encoder rel max | identical | "
             "decisive agreement token / duration | all-step agreement token / duration | WER pipeline / ref (%) |\n"
             "|---|---|---|---|---|---|---|---|---|---|---|---|\n" + "\n".join(rows) + "\n")
-    (RECORDS / "table.txt").write_text(text)
+    evidence.write_text((RECORDS / "table.txt"), text)
     print(text)
     return 0
 

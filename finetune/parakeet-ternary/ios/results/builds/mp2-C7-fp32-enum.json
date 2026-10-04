@@ -537,5 +537,10 @@
   "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/C7-fp32/enum.mlmodelc",
   "mlmodelc_bytes": 203625477
  },
- "peak_rss_mb_after_compile": 1182.4
+ "peak_rss_mb_after_compile": 1182.4,
+ "_evidence": {
+  "sha256": "194d761ee56f53e6d6144a3d676144f91b7be69dc76ea038074ad26919c3e147",
+  "bytes": 10852,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/builds/mp2-C7-fp32-enum.json"
+ }
 }

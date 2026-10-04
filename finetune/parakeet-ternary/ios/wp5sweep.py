@@ -42,6 +42,8 @@ import sys
 import time
 from pathlib import Path
 
+from mil import evidence
+
 IOS = Path(__file__).resolve().parent
 sys.path.insert(0, str(IOS))
 sys.path.insert(0, str(IOS.parent))
@@ -99,9 +101,9 @@ def eligibility(a: dict) -> tuple[bool, str]:
     except Ineligible as exc:
         return False, str(exc)
     p = pipeline_record(a)
-    if not p.exists():
+    if not evidence.exists(p):
         return False, f"no pipeline record {p.name}"
-    prec = json.loads(p.read_text())
+    prec = json.loads(evidence.read_text(p))
     if prec.get("design_revision") != 10 or not prec.get("timing_allowed"):
         return False, f"pipeline record {p.name}: not timing-allowed ({prec.get('reasons')})"
     return True, f"revision {rec.get('design_revision')} encoder and pipeline records, timing allowed"
@@ -142,13 +144,13 @@ SWEEPS = LOCAL / "sweeps"
 def write_atomic(path: Path, doc: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(f".{path.name}.part")
-    tmp.write_text(json.dumps(doc, indent=1) + "\n")
+    evidence.write_text(tmp, json.dumps(doc, indent=1) + "\n")
     os.replace(tmp, path)
 
 
 def halves() -> dict[str, list[str]]:
     """Natural clips split alternately within each bucket (clips.json order): A = 0th, 2nd, ...; B = 1st, 3rd, ..."""
-    clips = [c for c in json.loads((IOS / "clips.json").read_text())["clips"] if c["kind"] == "natural"]
+    clips = [c for c in json.loads(evidence.read_text((IOS / "clips.json")))["clips"] if c["kind"] == "natural"]
     out = {"A": [], "B": []}
     for b in sorted({c["bucket"] for c in clips}):
         mine = [c["id"] for c in clips if c["bucket"] == b]
@@ -194,14 +196,14 @@ def run_arm(a: dict, ids: list[str], settle_ms: int) -> dict:
     tmp.mkdir(parents=True, exist_ok=False)
     try:
         for f in RAW:
-            (tmp / f).write_text(mac(f"cat {out}/{f}"))  # any missing file raises: no partial publish
+            evidence.write_text((tmp / f), mac(f"cat {out}/{f}"))  # any missing file raises: no partial publish
         for f in ("arm.jsonl", "c0.jsonl", "cached.jsonl"):
             if not load_records(tmp / f):
                 raise RuntimeError(f"empty {f}")
     except Exception as exc:
         entry.update({"status": None, "error": f"retrieval failed: {exc}"})
         return entry
-    (tmp / "STATUS").write_text(status + "\n")
+    evidence.write_text((tmp / "STATUS"), status + "\n")
     os.replace(tmp, final)
     entry["dir"] = str(final)
     return entry
@@ -231,7 +233,7 @@ def cmd_sweep(args) -> int:
         return 1
     build = mac_build()
     stale = [a["name"] for a in todo
-             if json.loads(pipeline_record(a).read_text())["components"].get("executable_sha256") != build["executable_sha256"]]
+             if json.loads(evidence.read_text(pipeline_record(a)))["components"].get("executable_sha256") != build["executable_sha256"]]
     if stale:
         print(f"refusing: the Mac binary is not the one the pipeline gates ran ({stale})", file=sys.stderr)
         return 1
@@ -280,7 +282,7 @@ def cmd_verify(args) -> int:
         except Exception as exc:
             failures.append(f"{a['name']}: restore failed: {exc}")
             continue
-        rec = json.loads(pipeline_record(a).read_text()) if pipeline_record(a).exists() else {}
+        rec = json.loads(evidence.read_text(pipeline_record(a))) if evidence.exists(pipeline_record(a)) else {}
         if rec.get("components", {}).get("executable_sha256") != build["executable_sha256"]:
             failures.append(f"{a['name']}: record executable differs from the Mac binary")
         argv = bench_args(a, halves()["A"]) + ["--pair-c0", f"{MAC_A}/c0", "--c0-out", f"{MAC_A}/wp7/verify-c0.jsonl",
@@ -317,9 +319,9 @@ def cmd_wp5_manifest(args) -> int:
     runs = {}
     for n in names:
         d = LOCAL / n / "wp5-20261003"
-        status = (d / "STATUS").read_text().strip() if (d / "STATUS").exists() else None
+        status = evidence.read_text((d / "STATUS")).strip() if evidence.exists((d / "STATUS")) else None
         runs[n] = {"all": {"run": "wp5-20261003", "status": int(status) if status else None, "dir": str(d)}}
-    natural = [c["id"] for c in json.loads((IOS / "clips.json").read_text())["clips"] if c["kind"] == "natural"]
+    natural = [c["id"] for c in json.loads(evidence.read_text((IOS / "clips.json")))["clips"] if c["kind"] == "natural"]
     manifest = {"sweep_id": "wp5-20261003", "legacy": "WP5 runs, before manifests, session ids, C0 identity and build "
                 "identity were recorded", "build": None, "arms": names, "halves": {"all": natural},
                 "order": [(n, "all") for n in names], "runs": runs,
@@ -353,7 +355,7 @@ LOAD_NOTE = ("Loads: 'post-purge load' = the first load after this binary's Core
 
 
 def load_records(path: Path) -> list[dict]:
-    return [json.loads(l) for l in path.read_text().splitlines() if l.strip()] if path.exists() else []
+    return [json.loads(l) for l in evidence.read_text(path).splitlines() if l.strip()] if evidence.exists(path) else []
 
 
 def identity_problems(manifest: dict, a: dict, d: Path) -> list[str]:
@@ -436,8 +438,8 @@ def verified_runs(manifest: dict, name: str) -> list[Path]:
             problems.append(f"{name} half {half}: {e and (e.get('status'), e.get('error'))}")
             continue
         d = Path(e["dir"])
-        if d.parent != LOCAL / name or d.name != e["run"] or not all((d / f).exists() for f in RAW) \
-                or (d / "STATUS").read_text().strip() != "0":
+        if d.parent != LOCAL / name or d.name != e["run"] or not all(evidence.exists((d / f)) for f in RAW) \
+                or evidence.read_text((d / "STATUS")).strip() != "0":
             problems.append(f"{name} half {half}: run directory {d} incomplete or not the manifest's")
             continue
         problems += [f"{name} half {half}: {x}" for x in identity_problems(manifest, spec_of(name), d)]
@@ -461,10 +463,10 @@ def spec_of(name: str) -> dict:
 
 
 def cmd_report(args) -> None:
-    manifest = json.loads((SWEEPS / f"{args.sweep}.json").read_text())
+    manifest = json.loads(evidence.read_text((SWEEPS / f"{args.sweep}.json")))
     if not manifest.get("complete"):
         raise SystemExit(f"sweep {args.sweep} is not complete: refusing to report")
-    natural = sorted(c["id"] for c in json.loads((IOS / "clips.json").read_text())["clips"] if c["kind"] == "natural")
+    natural = sorted(c["id"] for c in json.loads(evidence.read_text((IOS / "clips.json")))["clips"] if c["kind"] == "natural")
     if sorted(c for v in manifest["halves"].values() for c in v) != natural:
         raise SystemExit("the sweep's halves do not cover the 64 natural clips exactly once")
     summary_dir = IOS / "results" / args.tag
@@ -482,7 +484,7 @@ def cmd_report(args) -> None:
         c0out = summary_dir / f"{a['name']}.c0block.summary.json"
         subprocess.run([str(IOS.parent / "python"), str(IOS / "armreport.py"), *[str(d / "c0.jsonl") for d in dirs],
                         "--out", str(c0out)], check=True, stdout=subprocess.DEVNULL)
-        s, c0s = json.loads(out.read_text()), json.loads(c0out.read_text())
+        s, c0s = json.loads(evidence.read_text(out)), json.loads(evidence.read_text(c0out))
         arm_loads = [next((r for r in load_records(d / "arm.jsonl") if r.get("record") == "load"), {}) for d in dirs]
         cached = [load_records(d / "cached.jsonl") for d in dirs]
         cloads = [next((r for r in c if r.get("record") == "load"), {}) for c in cached]
@@ -520,9 +522,9 @@ def cmd_report(args) -> None:
                                                  "decode": [c.get("decode_load_ms") for c in cloads]},
             "phys_footprint_peak_mb_arm_only": max(peaks) if peaks else None,
             "phys_footprint_peak_mb_with_c0": s["phys_footprint_mb"]["peak"],
-            "cache_log": [(d / "cache.log").read_text().strip().splitlines() for d in dirs],
+            "cache_log": [evidence.read_text((d / "cache.log")).strip().splitlines() for d in dirs],
         })
-    (summary_dir / "sweep.json").write_text(json.dumps({"informational": "Mac (M1 Pro) is shared; no claims",
+    evidence.write_text((summary_dir / "sweep.json"), json.dumps({"informational": "Mac (M1 Pro) is shared; no claims",
                                                        "sweep_id": manifest["sweep_id"], "build": manifest.get("build"),
                                                        "design": manifest.get("design") or manifest.get("legacy"),
                                                        "load_labels": LOAD_NOTE, "rows": rows}, indent=1) + "\n")
@@ -545,7 +547,7 @@ def cmd_report(args) -> None:
                      f"{r['preprocess_ms_typical'].get('15', 0):.1f} / {r['decode_ms_typical'].get('15', 0):.1f} | "
                      f"{', '.join(f'{k} {v}' for k, v in r['physical_calls'].items())} | "
                      f"{', '.join(str(round((x or {}).get('Encoder', 0))) for x in r['c0_post_purge_load_ms'])} |")
-    (summary_dir / "sweep_table.md").write_text(f"Sweep {manifest['sweep_id']}. Informational (shared Mac M1 Pro, macOS 27; no claims). " + LOAD_NOTE
+    evidence.write_text((summary_dir / "sweep_table.md"), f"Sweep {manifest['sweep_id']}. Informational (shared Mac M1 Pro, macOS 27; no claims). " + LOAD_NOTE
                                                  + "\n\n" + "\n".join(lines) + "\n")
     print("\n".join(lines))
 

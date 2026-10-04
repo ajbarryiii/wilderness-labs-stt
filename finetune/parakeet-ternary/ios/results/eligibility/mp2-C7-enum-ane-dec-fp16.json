@@ -71,5 +71,10 @@
   "results/probes/stress.json": "d9035d169c9147e54d96544275c0ef189c31ebcc0fd1ef7361e17a157dfd0f53"
  },
  "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
- "built": "2026-10-03 02:51"
+ "built": "2026-10-03 02:51",
+ "_evidence": {
+  "sha256": "2994909bb73f10f89e657ea8d64f563ba15b85c5e1071d1d0262df153d2d4058",
+  "bytes": 2114,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/eligibility/mp2-C7-enum-ane-dec-fp16.json"
+ }
 }

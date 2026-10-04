@@ -22,5 +22,10 @@
  "inputs": {
   "results/gates/c0-G0-fixed-cpuAndNeuralEngine.json": "3df31cc88501e0be10f06808762afe2ef1403c3b85ebb706d9f53bf40b4618e7"
  },
- "built": "2026-10-03 07:00"
+ "built": "2026-10-03 07:00",
+ "_evidence": {
+  "sha256": "ed4fb5b7a19f2bffb4f194cc8aa35258a8093f813bb95b7550a686a3c80ac9bf",
+  "bytes": 604,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/eligibility/c0-G0-fixed-ane.json"
+ }
 }

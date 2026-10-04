@@ -1,5 +1,11 @@
 # Handoff: shrink committed results on `parakeet-ios`
 
+## Completion status
+
+Steps 1–4 completed on 2026-10-04; independent Astra xhigh review clean.
+See [evidence-cleanup-report.md](evidence-cleanup-report.md) for the inventory,
+archive verification, tests and byte totals. Step 5 was not authorized and was not performed.
+
 ## Context
 
 The `parakeet-ios` branch of this **public** repository has about 2.13M lines

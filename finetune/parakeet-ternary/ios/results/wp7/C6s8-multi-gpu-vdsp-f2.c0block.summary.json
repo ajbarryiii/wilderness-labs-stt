@@ -299,5 +299,10 @@
    0,
    1
   ]
+ },
+ "_evidence": {
+  "sha256": "d94c552fb5113b2cfbcb46ed33f51b0c251463d0006bc43ee32cfd24c5c70118",
+  "bytes": 8744,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/wp7/C6s8-multi-gpu-vdsp-f2.c0block.summary.json"
  }
 }

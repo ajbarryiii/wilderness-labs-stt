@@ -16,3 +16,4 @@ program(1.3)
             tensor<fp32, [1, 256, 8]> out = cast(dtype = out_dtype_3, x = row_scale)[name = string("cast_2")];
         } -> (out);
 }
+Full record: SHA-256 ea41304d6d27dabd1b3aa8cb0c989c95c20f86382383edc258c0db958ac480fe; 1918 bytes; 504c07c0cdecde864a45e1d0612f59d24896f914/probes/c7_folding/conv-dense.compiled.model.mil

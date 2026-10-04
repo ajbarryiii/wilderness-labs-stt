@@ -429,5 +429,10 @@
     }
    }
   }
+ },
+ "_evidence": {
+  "sha256": "58bc1f81a0b88c87e6442e93502f6d9be6bb15bb67d4721adc249150233a73ab",
+  "bytes": 11678,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/smoke/c0_free_natural_smoke.summary.json"
  }
 }

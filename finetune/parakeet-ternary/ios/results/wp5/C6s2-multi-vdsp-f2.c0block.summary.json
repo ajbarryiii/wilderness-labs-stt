@@ -285,5 +285,10 @@
    0,
    1
   ]
+ },
+ "_evidence": {
+  "sha256": "8a6d9998226fd3c0b1e36b736e9612a8714de38b5abfd4ec9e8d632017530cc1",
+  "bytes": 8373,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/wp5/C6s2-multi-vdsp-f2.c0block.summary.json"
  }
 }

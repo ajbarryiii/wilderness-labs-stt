@@ -61,5 +61,10 @@
    ]
   }
  },
- "all_identical": true
+ "all_identical": true,
+ "_evidence": {
+  "sha256": "57bdd2d2da70603808fe1a5c0150e562e77bbf3e0de8f96d21ca01c3268b94e4",
+  "bytes": 1800,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/wp1_manifest_crosscheck.json"
+ }
 }

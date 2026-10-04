@@ -26,6 +26,9 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from mil import evidence
+
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     __package__ = "mil"
@@ -113,7 +116,7 @@ def run(args) -> None:
     out = artifacts.check(out)
     out.mkdir(parents=True, exist_ok=True)
     manifest = clipmod.load_manifest()
-    trace_doc = json.loads((IOS / "traces.json").read_text())
+    trace_doc = json.loads(evidence.read_text((IOS / "traces.json")))
     traces = {r["id"]: r for r in trace_doc["clips"]}
     source = Source(args.model)
     model = load_model(args.model)
@@ -173,11 +176,11 @@ def run(args) -> None:
                         "<v>_logits": "[S, 1030] raw joint logits (forced replay of traces.json)",
                         "<v>_h / <v>_c": "[S, 2, 640] LSTM state producing each step's prediction"},
              "free_tokens": {k: {kk: vv for kk, vv in v.items() if "free" in kk} for k, v in results.items()},
-             "traces_json_sha256": hashlib.sha256((IOS / "traces.json").read_bytes()).hexdigest(),
-             "reference_py_sha256": hashlib.sha256((IOS / "reference.py").read_bytes()).hexdigest(),
-             "clips_json_sha256": hashlib.sha256((IOS / "clips.json").read_bytes()).hexdigest(),
+             "traces_json_sha256": hashlib.sha256(evidence.read_bytes((IOS / "traces.json"))).hexdigest(),
+             "reference_py_sha256": hashlib.sha256(evidence.read_bytes((IOS / "reference.py"))).hexdigest(),
+             "clips_json_sha256": hashlib.sha256(evidence.read_bytes((IOS / "clips.json"))).hexdigest(),
              "torch": torch.__version__, "seconds": round(time.time() - t0, 1)}
-    (out / "index.json").write_text(json.dumps(index) + "\n")
+    evidence.write_text((out / "index.json"), json.dumps(index) + "\n")
     summary = {}
     for key in ("encoder", "token_logits", "duration_logits", "h", "c"):
         rels = [v[key]["rel"] for v in gate3.values()]
@@ -191,7 +194,7 @@ def run(args) -> None:
            "summary": summary,
            "free_decode_tokens_equal_clips": sum(v["free_tokens_equal"] for v in gate3.values()),
            "clips": len(gate3), "per_clip": gate3}
-    (GATES / f"{args.model}-gate3.json").write_text(json.dumps(doc, indent=1) + "\n")
+    evidence.write_text((GATES / f"{args.model}-gate3.json"), json.dumps(doc, indent=1) + "\n")
     print(json.dumps({"summary": summary, "free_equal": doc["free_decode_tokens_equal_clips"]}), flush=True)
     if args.model == "mp2" and not args.ids:
         set_scales(model, source, "fp32")
@@ -247,9 +250,9 @@ def calibrate(model, manifest, pcm_dir: Path, out: Path) -> None:
            "the input of the site's ternary matmul(s) (att_in feeds q, k and v)",
            "clips": [c["id"] for c in chosen],
            "sites": {k: {"max_abs": v, "scale": v / 127.0} for k, v in sorted(maxima.items())}}
-    (CALIB / "mp2-c5-activations.json").write_text(json.dumps(doc, indent=1) + "\n")
+    evidence.write_text((CALIB / "mp2-c5-activations.json"), json.dumps(doc, indent=1) + "\n")
     np.savez(out / "probe_inputs.npz", **{k.replace(".", "_"): v for k, v in captured.items()})
-    (out / "probe_inputs.json").write_text(json.dumps({"clip": probe_clip["id"], "keys": sorted(captured)}) + "\n")
+    evidence.write_text((out / "probe_inputs.json"), json.dumps({"clip": probe_clip["id"], "keys": sorted(captured)}) + "\n")
     print(f"calibrated {len(maxima)} sites on {len(chosen)} clips; probe inputs from {probe_clip['id']}", flush=True)
 
 
@@ -264,11 +267,11 @@ def validate(model: str, build_provenance: dict | None = None, root: Path | None
     from .weights import Source
 
     root = Path(root or default_out(model))
-    index = json.loads((root / "index.json").read_text())
+    index = json.loads(evidence.read_text((root / "index.json")))
     problems = []
     for key, name in (("clips_json_sha256", "clips.json"), ("traces_json_sha256", "traces.json"),
                       ("reference_py_sha256", "reference.py")):
-        if key in index and index[key] != hashlib.sha256((IOS / name).read_bytes()).hexdigest():
+        if key in index and index[key] != hashlib.sha256(evidence.read_bytes((IOS / name))).hexdigest():
             problems.append(f"{name} changed since the cache was written")
     current = Source(model).provenance
     for prov, label in ((current, "current model source"), (build_provenance, "tested build")):

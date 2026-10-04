@@ -24,3 +24,5 @@ tests/macguard_tests.sh: line 83: 863492 Killed                     env MACGUARD
 PASS 16 supervisor dead before ACK: killed, CMD never ran, no wrapper left, lock free: 137 no 0 0
 PASS 17 end-log failure: 125: 125
 failed checks: 0
+
+Full record: SHA-256 80972ba486b311325ba5899fc7c8b20fffdc869fd1095727ab0ab95661e54a28; 1864 bytes; 504c07c0cdecde864a45e1d0612f59d24896f914/wp4/macguard_tests_linux.txt

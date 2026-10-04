@@ -229,5 +229,10 @@
    0,
    1
   ]
+ },
+ "_evidence": {
+  "sha256": "99d58cf005d3f6a79815aa047e1f677afeb904b9639b20ae5f5204e2e69e77bf",
+  "bytes": 5859,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/wp4/smoke_c0.summary.json"
  }
 }

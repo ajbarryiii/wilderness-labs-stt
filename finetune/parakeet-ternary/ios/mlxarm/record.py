@@ -21,6 +21,9 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from mil import evidence
+
 IOS = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(IOS))
 sys.path.insert(0, str(IOS.parent))
@@ -31,7 +34,7 @@ BEST_ANE = {"2": 14.0, "4": 15.4, "8": 19.6, "15": 40.2}  # WP5 C6s8 multi (ANE)
 
 
 def sha(p: Path) -> str:
-    return hashlib.sha256(p.read_bytes()).hexdigest()
+    return hashlib.sha256(evidence.read_bytes(p)).hexdigest()
 
 
 def main() -> None:
@@ -45,18 +48,18 @@ def main() -> None:
     src = Path(args.results)
     OUT.mkdir(parents=True, exist_ok=True)
     for name in ("gate2", "4a", "4b", "stress", "timing"):
-        shutil.copy(src / f"{name}.json", OUT / f"{name}.json")
-    g = {n: json.loads((OUT / f"{n}.json").read_text()) for n in ("gate2", "4a", "4b", "stress", "timing")}
-    clips = {c["id"]: c for c in json.loads((IOS / "clips.json").read_text())["clips"]}
-    ref_tokens = {c: v["fp16s_free_tokens"] for c, v in json.loads(Path(args.refcache_index).read_text())["free_tokens"].items()}
+        evidence.write_text(OUT / f"{name}.json", evidence.read_text(src / f"{name}.json"))
+    g = {n: json.loads(evidence.read_text((OUT / f"{n}.json"))) for n in ("gate2", "4a", "4b", "stress", "timing")}
+    clips = {c["id"]: c for c in json.loads(evidence.read_text((IOS / "clips.json")))["clips"]}
+    ref_tokens = {c: v["fp16s_free_tokens"] for c, v in json.loads(evidence.read_text(Path(args.refcache_index)))["free_tokens"].items()}
     arm_tokens = g["4b"]["free_tokens"]
-    swift = {json.loads(l)["clip"]: json.loads(l)["result"]["tokens"] for l in (src / "f2_swift.jsonl").read_text().splitlines()
+    swift = {json.loads(l)["clip"]: json.loads(l)["result"]["tokens"] for l in evidence.read_text((src / "f2_swift.jsonl")).splitlines()
              if l.strip() and '"result"' in l}
     f2 = {"what": "Swift parakeet-bench F2 (native FP32 CPU decode loop) free decoding of the MLX arm's own-bucket encoder "
                   "outputs (external-encoder mode), vs the gate's F2-equivalent (reference.py FP32 decoder/joint) tokens",
           "clips": len(arm_tokens), "identical": sum(swift.get(c) == t for c, t in arm_tokens.items()),
           "identical_to_reference": sum(swift.get(c) == ref_tokens[c] for c in arm_tokens)}
-    (OUT / "f2_swift.json").write_text(json.dumps(f2, indent=1) + "\n")
+    evidence.write_text((OUT / "f2_swift.json"), json.dumps(f2, indent=1) + "\n")
     sp, sp_path = _tokenizer()
     ref_w = _wer({c: ref_tokens[c] for c in arm_tokens}, clips, sp)
     arm_w = _wer(arm_tokens, clips, sp)
@@ -91,7 +94,7 @@ def main() -> None:
         "f2_swift": {"pass": f2["identical"] == f2["clips"], "identical": f2["identical"], "clips": f2["clips"]},
     }
     reasons = [k for k, v in checks.items() if not v["pass"]]
-    inputs = {str(p.relative_to(IOS)): sha(p) for p in sorted(OUT.glob("*.json")) if p.name != "summary.json"}
+    inputs = {str(p.relative_to(IOS)): sha(p) for p in sorted(evidence.glob(OUT, "*.json")) if p.name != "summary.json"}
     record = {"design_revision": 8, "code_version": "wp6b-mlxarm-record-1", "model": "mp2", "arm": "MLX", "variant": "multi",
               "backend": "gpu-mlx", "compute_units": "mlx-gpu", "decoder_precision": "fp32", "deployed_decoder": "F2",
               "runtime": {"mlx": b4["environment"]["mlx"], "device": b4["environment"]["device"]},
@@ -101,7 +104,7 @@ def main() -> None:
               "selection_note": "exploration arm (S3): no Swift/device implementation; not a deployment candidate yet",
               "reasons": reasons, "checks": checks, "inputs": inputs, "tokenizer_sha256": sha(sp_path),
               "built": time.strftime("%Y-%m-%d %H:%M")}
-    REC.write_text(json.dumps(record, indent=1) + "\n")
+    evidence.write_text(REC, json.dumps(record, indent=1) + "\n")
     summary = {"informational_timing": "Python MLX on the shared Mac (M1 Pro GPU); encoder only, mx.eval + synchronize "
                                        "in the timed region; 3 warm-up + 10 timed per natural clip",
                "timing_per_bucket": per, "peak_memory_mb": timing["peak_memory_mb"],
@@ -110,7 +113,7 @@ def main() -> None:
                "step3_triggered": (not reasons) and all(v["ratio_to_best_ane"] <= 1.5 for v in per.values()),
                "eligibility": {k: record[k] for k in ("eligible", "timing_allowed", "selection_eligible", "reasons")},
                "gates": {k: v["pass"] for k, v in checks.items()}, "wer": checks["wer"], "f2_swift": f2}
-    (OUT / "summary.json").write_text(json.dumps(summary, indent=1) + "\n")
+    evidence.write_text((OUT / "summary.json"), json.dumps(summary, indent=1) + "\n")
     rec = check("mp2", "MLX", "multi", "gpu-mlx")
     print(json.dumps({"eligibility_check": {k: rec.get(k) for k in ("timing_allowed", "eligible")}, **summary}, indent=1))
 

@@ -7,3 +7,5 @@ main[CoreML9](%x: (1, 8, 256, fp32)(Tensor)) {
     %out: (1, 8, 256, fp32)(Tensor) = cast(x=%row_scale, dtype="fp32", name="cast_2")
   } -> (%out)
 }
+
+Full record: SHA-256 879fb6c81d59e0088c98075984988030453430e0a31bf18e84784b17e0d199a9; 429 bytes; 504c07c0cdecde864a45e1d0612f59d24896f914/probes/c7_folding/linear-dense.mil.txt

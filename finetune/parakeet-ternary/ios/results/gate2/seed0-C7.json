@@ -11,5 +11,10 @@
   "constexpr_lut_to_dense -> conv -> mul": 48
  },
  "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
- "peak_rss_mb": 1368
+ "peak_rss_mb": 1368,
+ "_evidence": {
+  "sha256": "287cbd2ee2a9073d1554d411b22bc0f7adac86683bc2a0f8b28310106f5acf31",
+  "bytes": 554,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/gate2/seed0-C7.json"
+ }
 }

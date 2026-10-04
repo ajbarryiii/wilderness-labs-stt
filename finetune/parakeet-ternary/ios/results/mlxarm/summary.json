@@ -68,5 +68,10 @@
   "clips": 64,
   "identical": 64,
   "identical_to_reference": 64
+ },
+ "_evidence": {
+  "sha256": "2951a6b0f815d69b5e52e1f05c48e388e297a90c7dff17d5a997d16b4a9f84da",
+  "bytes": 2026,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/mlxarm/summary.json"
  }
 }

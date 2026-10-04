@@ -55,3 +55,5 @@
 | seed0 | C4 | multi | 184.6 | 1.02 | 34.9 | 1674.7 | bit-exact (240) | b15: 0.994, b2: 0.998, b4: 0.995, b8: 0.991 | FAIL 0.0207 / 0.327 / 36 | pass | FAIL | - | - |
 | seed0 | C7 | fixed | 166.2 | 0.35 | 6.7 | 1526.3 | bit-exact (240) | main: 0.995 | FAIL 0.0207 / 0.327 / 17 | - | FAIL | - | - |
 | seed0 | C7 | multi | 184.8 | 0.98 | 33.7 | 1716.8 | bit-exact (240) | b15: 0.995, b2: 0.998, b4: 0.995, b8: 0.991 | FAIL 0.0207 / 0.327 / 36 | pass | FAIL | - | - |
+
+Full record: SHA-256 4c0e1279c403582721296b6cffeaf930627454f0132c4c7eb394c47d1de1800f; 7212 bytes; 504c07c0cdecde864a45e1d0612f59d24896f914/wp3_summary_table.txt

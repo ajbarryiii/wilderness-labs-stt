@@ -622,5 +622,10 @@
     "baseline_typical_ms": 19.794
    }
   }
+ },
+ "_evidence": {
+  "sha256": "a3cdc5be7817f9ca0eec7a6abc5b29e14a66760ca3f1205739eba270a567a1cb",
+  "bytes": 16199,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/wp7/C4-ane-multi-vdsp-f2.summary.json"
  }
 }

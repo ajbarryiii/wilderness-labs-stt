@@ -185,8 +185,7 @@ public enum PipelineEligibility {
     public static let requiredRevision = 10
 
     public static func check(iosDir: URL, spec: PipelineSpec) throws -> [String: Any] {
-        let url = iosDir.appendingPathComponent("results/eligibility/pipelines/\(spec.recordName)")
-        guard let data = try? Data(contentsOf: url),
+        guard let data = try? ResultEvidence.read(iosDir: iosDir, relative: "results/eligibility/pipelines/" + spec.recordName),
               let rec = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw BenchError.invalid("refusing to time: no pipeline record \(spec.recordName)")
         }
@@ -207,7 +206,7 @@ public enum PipelineEligibility {
         }
         var stale: [String] = []
         for (file, digest) in (rec["inputs"] as? [String: String]) ?? [:] {
-            let d = try? Data(contentsOf: iosDir.appendingPathComponent(file))
+            let d = try? ResultEvidence.read(iosDir: iosDir, relative: file)
             if d == nil || sha256Hex(d!) != digest { stale.append(file) }
         }
         guard stale.isEmpty else { throw BenchError.invalid("refusing to time: \(spec.recordName) inputs changed: \(stale.prefix(5))") }

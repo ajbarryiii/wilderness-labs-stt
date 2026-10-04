@@ -25,3 +25,5 @@ ios/tests/macguard_tests.sh: line 83: 75381 Killed: 9               env MACGUARD
 PASS 16 supervisor dead before ACK: killed, CMD never ran, no wrapper left, lock free: 137 no 0 0
 PASS 17 end-log failure: 125: 125
 failed checks: 0
+
+Full record: SHA-256 663a75cb0df5199b20231c505efddcb8fc8d363350dbbd4779170aff1be0e0d6; 1924 bytes; 504c07c0cdecde864a45e1d0612f59d24896f914/wp4/macguard_tests_mac.txt

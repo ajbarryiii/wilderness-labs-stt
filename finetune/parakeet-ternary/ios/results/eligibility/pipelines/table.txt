@@ -149,3 +149,5 @@ Deployed-pipeline records (front end A + encoder arm + decode loop; DESIGN.md re
 | mp2 | C8 | multi | ane | f0 | yes | - | 0.0268 | 62/64 | 1.0000 / 0.9996 | 0.9987 / 0.9901 | 2.711 / 2.711 |
 | mp2 | C8 | multi | ane | f1 | yes | - | 0.0268 | 62/64 | 1.0000 / 0.9996 | 0.9987 / 0.9901 | 2.711 / 2.711 |
 | mp2 | C8 | multi | ane | f2 | yes | - | 0.0268 | 62/64 | 1.0000 / 0.9996 | 0.9987 / 0.9901 | 2.711 / 2.711 |
+
+Full record: SHA-256 d598273c1a216656e35d8391c0e272c12c56f505476b2a7118d3fb2191475d08; 16852 bytes; 504c07c0cdecde864a45e1d0612f59d24896f914/eligibility/pipelines/table.txt

@@ -316,5 +316,10 @@
   "effective_minus_b0_frames": [
    0
   ]
+ },
+ "_evidence": {
+  "sha256": "f30e17a7245ba8a8bd4d25f2115e54d9a29b6615a70c26692cc07823b2945960",
+  "bytes": 10061,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/wp4/smoke_f2_external_mp2.summary.json"
  }
 }

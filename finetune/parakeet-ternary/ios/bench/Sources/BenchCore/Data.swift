@@ -227,8 +227,7 @@ public enum Eligibility {
             throw BenchError.invalid("no eligibility backend for compute units \(computeUnits)")
         }
         let name = "\(model)-\(arm)-\(v)-\(b).json"
-        let url = iosDir.appendingPathComponent("results/eligibility/\(name)")
-        guard let data = try? Data(contentsOf: url),
+        guard let data = try? ResultEvidence.read(iosDir: iosDir, relative: "results/eligibility/" + name),
               let rec = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw BenchError.invalid("refusing to time \(model)/\(arm)/\(v)/\(b): no eligibility record \(name)")
         }
@@ -245,7 +244,7 @@ public enum Eligibility {
         }
         var stale: [String] = []
         for (file, digest) in (rec["inputs"] as? [String: String]) ?? [:] {
-            let d = try? Data(contentsOf: iosDir.appendingPathComponent(file))
+            let d = try? ResultEvidence.read(iosDir: iosDir, relative: file)
             if d == nil || sha256Hex(d!) != digest { stale.append(file) }
         }
         guard stale.isEmpty else { throw BenchError.invalid("refusing to time: \(name) inputs changed: \(stale.prefix(5))") }

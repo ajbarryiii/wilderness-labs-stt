@@ -612,5 +612,10 @@
     "baseline_typical_ms": 16.769
    }
   }
+ },
+ "_evidence": {
+  "sha256": "a2450c7f12e87a5fff646fb84c710458cce36c91b12f78fc7eac5222b78fb8f4",
+  "bytes": 16018,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/wp7/C3-multi-gpu-vdsp-f2.summary.json"
  }
 }

@@ -13,3 +13,4 @@ program(1.3)
             tensor<fp32, [1, 8, 256]> out = cast(dtype = out_dtype_0, x = row_scale)[name = string("cast_6")];
         } -> (out);
 }
+Full record: SHA-256 8fd37c0fe5200505340f2da13ae75658400e5ee511140f947cc9d958693e36a4; 1585 bytes; 504c07c0cdecde864a45e1d0612f59d24896f914/probes/c7_folding/linear-lut.compiled.model.mil

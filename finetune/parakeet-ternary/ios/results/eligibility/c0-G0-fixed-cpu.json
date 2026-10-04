@@ -20,5 +20,10 @@
   }
  },
  "inputs": {},
- "built": "2026-10-03 07:00"
+ "built": "2026-10-03 07:00",
+ "_evidence": {
+  "sha256": "daeaf8c6318c25922d4487e7c5349e61b7ca85dc99dc59b9beb93197d13b888a",
+  "bytes": 461,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/eligibility/c0-G0-fixed-cpu.json"
+ }
 }

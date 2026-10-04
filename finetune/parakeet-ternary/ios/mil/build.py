@@ -29,6 +29,9 @@ import time
 from collections import Counter
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from mil import evidence
+
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     __package__ = "mil"
@@ -65,8 +68,8 @@ def pipeline_for(arm: str):
 
     pipe = ct.PassPipeline.DEFAULT
     excluded = []
-    if arm == "C7" and C7_EXCLUDED_PASSES_FILE.exists():
-        excluded = json.loads(C7_EXCLUDED_PASSES_FILE.read_text())["excluded_passes"]
+    if arm == "C7" and evidence.exists(C7_EXCLUDED_PASSES_FILE):
+        excluded = json.loads(evidence.read_text(C7_EXCLUDED_PASSES_FILE))["excluded_passes"]
         pipe.remove_passes(set(excluded))
     return pipe, excluded
 
@@ -165,7 +168,7 @@ def compile_model(package: Path, dest: Path) -> dict:
     """mlpackage -> mlmodelc (macOS): wall time and size."""
     import coremltools as ct
 
-    if dest.exists():
+    if evidence.exists(dest):
         shutil.rmtree(dest)
     t0 = time.time()
     compiled = ct.utils.compile_model(str(package), str(dest))
@@ -178,7 +181,7 @@ def computeplan_tool() -> Path:
 
     src = Path(__file__).resolve().parent / "computeplan.swift"
     exe = artifacts.root() / "bin" / "computeplan"
-    if not exe.exists() or exe.stat().st_mtime < src.stat().st_mtime:
+    if not evidence.exists(exe) or exe.stat().st_mtime < src.stat().st_mtime:
         exe.parent.mkdir(parents=True, exist_ok=True)
         import subprocess
 
@@ -207,7 +210,7 @@ def compute_plan(path: Path, units: str = "cpuAndNeuralEngine", functions: list[
         # tool writes there, so the cache is emptied after every plan (keeps the shared Mac's disk > 60 GB)
         cache = Path.home() / "Library" / "Caches" / "computeplan" / "com.apple.e5rt.e5bundlecache"
         if cache.is_dir():
-            for entry in cache.glob("*/*"):
+            for entry in evidence.glob(cache, "*/*"):
                 shutil.rmtree(entry, ignore_errors=True)
     return out
 
@@ -248,17 +251,17 @@ def drop_temp_package(mlmodel) -> None:
     import tempfile
 
     path = getattr(mlmodel, "package_path", None)
-    if path and Path(path).exists() and Path(path).resolve().is_relative_to(Path(tempfile.gettempdir()).resolve()):
+    if path and evidence.exists(Path(path)) and Path(path).resolve().is_relative_to(Path(tempfile.gettempdir()).resolve()):
         shutil.rmtree(path, ignore_errors=True)
 
 
 def save_manifest(manifest: dict, out_dir: Path, model: str, arm: str, variant: str) -> None:
     text = json.dumps(manifest, indent=1, default=str) + "\n"
-    (out_dir / f"manifest-{variant}.json").write_text(text)
+    evidence.write_text((out_dir / f"manifest-{variant}.json"), text)
     RESULTS.mkdir(parents=True, exist_ok=True)
     if len(text) > 400_000:
         raise ValueError("manifest unexpectedly large")
-    (RESULTS / f"{model}-{arm}-{variant}.json").write_text(text)
+    evidence.write_text((RESULTS / f"{model}-{arm}-{variant}.json"), text)
 
 
 def arm_label(arm: str, precision: str = "fp16", layout: str = "plain") -> str:
@@ -288,7 +291,7 @@ def build_encoder(model: str, arm: str, variant: str, out_root: Path, layers: in
         source = Source(model)
         provenance = source.provenance
         if arm == "C5":
-            calib = json.loads(calibration_file(model).read_text())
+            calib = json.loads(evidence.read_text(calibration_file(model)))
             act_scales = {k: v["scale"] for k, v in calib["sites"].items()}
         P = enc_mod.ArmProvider(source, arm, n_layers, act_scales, precision=precision, layout=layout)
     pipe, excluded = pipeline_for(arm)
@@ -298,7 +301,7 @@ def build_encoder(model: str, arm: str, variant: str, out_root: Path, layers: in
     t_conv = time.time()
     name = f"{variant}{tag}"
     package = out_dir / f"{name}.mlpackage"
-    if package.exists():
+    if evidence.exists(package):
         shutil.rmtree(package)
     mlmodel.save(str(package))
     drop_temp_package(mlmodel)
@@ -325,7 +328,7 @@ def build_encoder(model: str, arm: str, variant: str, out_root: Path, layers: in
                                             "const_deduplication._deduplicate_const_across_functions, export with "
                                             "skip_all_passes") if variant == "multi" else None},
         "program": describe_program(final),
-        "sizes": {"mlpackage_bytes": dir_bytes(package), "weight_bin_bytes": weight_bin.stat().st_size if weight_bin.exists() else None},
+        "sizes": {"mlpackage_bytes": dir_bytes(package), "weight_bin_bytes": weight_bin.stat().st_size if evidence.exists(weight_bin) else None},
         "timing_s": {"build_graph": round(t_built - t0, 1), "convert": round(t_conv - t_built, 1),
                      "save": round(t_saved - t_conv, 1)},
         "peak_rss_mb_after_save": peak_rss_mb(),
@@ -346,7 +349,7 @@ def build_encoder(model: str, arm: str, variant: str, out_root: Path, layers: in
     if not tag and n_layers == N_LAYERS:
         save_manifest(manifest, out_dir, model, label, variant)
     else:
-        (out_dir / f"manifest-{name}-{n_layers}L.json").write_text(json.dumps(manifest, indent=1, default=str) + "\n")
+        evidence.write_text((out_dir / f"manifest-{name}-{n_layers}L.json"), json.dumps(manifest, indent=1, default=str) + "\n")
     return manifest
 
 
@@ -375,7 +378,7 @@ def build_decoder(model: str, out_root: Path, plan: bool = True, precision: str 
         prog = builder(W)
         mlmodel, final = convert(prog, DECODER_OPSET, pipe, precision=precision)
         package = out_dir / f"{name}.mlpackage"
-        if package.exists():
+        if evidence.exists(package):
             shutil.rmtree(package)
         mlmodel.save(str(package))
         drop_temp_package(mlmodel)
@@ -391,9 +394,9 @@ def build_decoder(model: str, out_root: Path, plan: bool = True, precision: str 
     manifest["pass_pipeline"] = list(pipe.passes)
     manifest["peak_rss_mb"] = peak_rss_mb()
     text = json.dumps(manifest, indent=1, default=str) + "\n"
-    (out_dir / "manifest.json").write_text(text)
+    evidence.write_text((out_dir / "manifest.json"), text)
     RESULTS.mkdir(parents=True, exist_ok=True)
-    (RESULTS / f"{model}-{label}.json").write_text(text)
+    evidence.write_text((RESULTS / f"{model}-{label}.json"), text)
     return manifest
 
 
@@ -405,15 +408,15 @@ def replan(model: str, arm: str, variant: str, only_units: str | None = None, on
     units = (only_units,) if only_units else ("cpuAndNeuralEngine", "cpuOnly")
     if arm == "decoder":
         path = base / "manifest.json"
-        m = json.loads(path.read_text())
+        m = json.loads(evidence.read_text(path))
         for name, entry in m["models"].items():
             entry["compute_plan"] = {u: compute_plan(base / f"{name}.mlmodelc", u) for u in units}
         text = json.dumps(m, indent=1, default=str) + "\n"
-        path.write_text(text)
-        (RESULTS / f"{model}-decoder.json").write_text(text)
+        evidence.write_text(path, text)
+        evidence.write_text((RESULTS / f"{model}-decoder.json"), text)
         return
     path = base / f"manifest-{variant}.json"
-    m = json.loads(path.read_text())
+    m = json.loads(evidence.read_text(path))
     fns = [only_function] if only_function else function_names(variant)
     plans = m.setdefault("compute_plan", {})
     for u in units:

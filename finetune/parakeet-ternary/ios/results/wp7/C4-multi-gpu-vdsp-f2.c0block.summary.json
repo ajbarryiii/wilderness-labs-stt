@@ -299,5 +299,10 @@
    0,
    1
   ]
+ },
+ "_evidence": {
+  "sha256": "8802f9521119de283ed6c6a77d21505df0c7ff4d82c703092c047ac29b7a5953",
+  "bytes": 8758,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/wp7/C4-multi-gpu-vdsp-f2.c0block.summary.json"
  }
 }

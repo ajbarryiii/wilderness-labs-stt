@@ -294,5 +294,10 @@
   "common::topological_reorder",
   "common::dead_code_elimination"
  ],
- "peak_rss_mb": 360.1
+ "peak_rss_mb": 360.1,
+ "_evidence": {
+  "sha256": "46ee70abf046c9686d8dce8ed12ec3f6dce2369ba1aa13e467fde092db93f638",
+  "bytes": 8842,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/builds/mp2-decoder-fp32.json"
+ }
 }

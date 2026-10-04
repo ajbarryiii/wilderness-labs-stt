@@ -22,6 +22,9 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from mil import evidence
+
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     __package__ = "mil"
@@ -102,7 +105,7 @@ def depth(args) -> None:
             shutil.rmtree(Path(m["paths"]["mlmodelc"]), ignore_errors=True)
         entry["seconds"] = round(time.time() - t0, 1)
         doc["depths"][str(n)] = entry
-        path.write_text(json.dumps(doc, indent=1) + "\n")
+        evidence.write_text(path, json.dumps(doc, indent=1) + "\n")
 
 
 def main() -> None:

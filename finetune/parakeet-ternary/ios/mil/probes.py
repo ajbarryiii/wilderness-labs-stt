@@ -42,6 +42,9 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from mil import evidence
+
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     __package__ = "mil"
@@ -168,7 +171,7 @@ def memory(args) -> None:
     out_dir = art_root() / "probes" / "arms"
     PROBES.mkdir(parents=True, exist_ok=True)
     path = PROBES / "memory.json"
-    doc = json.loads(path.read_text()) if path.exists() else {"runs": {}}
+    doc = json.loads(evidence.read_text(path)) if evidence.exists(path) else {"runs": {}}
     arms = args.arms.split(",") if args.arms else PROBE_ARMS
     for arm in arms:
         for variant in args.variants.split(","):
@@ -181,7 +184,7 @@ def memory(args) -> None:
                     pkg = out_dir / "mp2" / arm / "fixed.mlpackage"
                     res["gate2"] = {k: v for k, v in gate2_subprocess(pkg, arm).items() if k != "package"}
                 doc["runs"][key] = res
-                path.write_text(json.dumps(doc, indent=1) + "\n")
+                evidence.write_text(path, json.dumps(doc, indent=1) + "\n")
                 print(key, json.dumps(res)[:400], flush=True)
             shutil.rmtree(out_dir / "mp2" / arm, ignore_errors=True)
 
@@ -309,19 +312,19 @@ def folding(args) -> None:
                            compute_precision=ct.precision.FLOAT16, pass_pipeline=pipeline,
                            compute_units=ct.ComputeUnit.CPU_ONLY, skip_model_load=True)
         final = model._mil_program
-        (text_dir / f"{name}.mil.txt").write_text(str(final))
+        evidence.write_text((text_dir / f"{name}.mil.txt"), str(final))
         entry = {"post_mul_survives_conversion": _has_post_mul(final), "removed_by_pass": removed_by,
                  "final_ops": [op.op_type for op in final.functions["main"].operations if op.op_type != "const"]}
         pkg = out_dir / f"{name}.mlpackage"
-        if pkg.exists():
+        if evidence.exists(pkg):
             shutil.rmtree(pkg)
         model.save(str(pkg))
         from .build import drop_temp_package
         drop_temp_package(model)
         if sys.platform == "darwin":
             comp = compile_model(pkg, out_dir / f"{name}.mlmodelc")
-            mil_text = (Path(comp["mlmodelc"]) / "model.mil").read_text()
-            (text_dir / f"{name}.compiled.model.mil").write_text(mil_text)
+            mil_text = evidence.read_text((Path(comp["mlmodelc"]) / "model.mil"))
+            evidence.write_text((text_dir / f"{name}.compiled.model.mil"), mil_text)
             body = mil_text[mil_text.index("func main"):]
             entry["compiled_model_mil_ops"] = re.findall(r"= (\w+)\(", body)
             entry["compiled_has_mul_after_matmul"] = bool(re.search(r"(linear|conv)\(", body)) and " = mul(" in body
@@ -333,8 +336,8 @@ def folding(args) -> None:
            "absorbing_passes_for_lut_weights": sorted(absorbing), "environment": environment(),
            "note": "folding inside the device compiler (Core ML / ANE compiler) cannot be observed here; "
                    "unresolved by design (DESIGN.md)"}
-    (PROBES / "c7_folding.json").write_text(json.dumps(doc, indent=1) + "\n")
-    (IOS / "results" / "c7_excluded_passes.json").write_text(json.dumps(
+    evidence.write_text((PROBES / "c7_folding.json"), json.dumps(doc, indent=1) + "\n")
+    evidence.write_text((IOS / "results" / "c7_excluded_passes.json"), json.dumps(
         {"excluded_passes": sorted(absorbing), "source": "probes.py folding", "date": time.strftime("%Y-%m-%d")}, indent=1) + "\n")
     print(json.dumps({k: {kk: vv for kk, vv in v.items() if kk != "final_ops"} for k, v in results.items()}, indent=1))
 
@@ -420,13 +423,13 @@ def stress(args) -> None:
             if arm.split("-")[0] == "C5":
                 from .build import calibration_file
 
-                act = json.loads(calibration_file("mp2").read_text())["sites"][f"layers.{layer}.{site}"]["scale"]
+                act = json.loads(evidence.read_text(calibration_file("mp2")))["sites"][f"layers.{layer}.{site}"]["scale"]
             prog = _stress_program(arm, codes, scale, x0.shape[0], act)
             model = ct.convert(prog, convert_to="mlprogram", minimum_deployment_target=ct.target.iOS26,
                                compute_precision=ct.precision.FLOAT16, compute_units=ct.ComputeUnit.CPU_ONLY,
                                skip_model_load=True)
             pkg = out_dir / f"{module}-{arm}.mlpackage"
-            if pkg.exists():
+            if evidence.exists(pkg):
                 shutil.rmtree(pkg)
             model.save(str(pkg))
             from .build import drop_temp_package
@@ -468,7 +471,7 @@ def stress(args) -> None:
                                 "3": "first half +1, second half -1"},
            "inputs": {"x1": "layer activation of the probe clip (1x clip RMS)", "x8": "x 8", "x64": "x 64",
                       "abs_x64": "|activation| x 64 (all-positive: maximizes the all +1 row)"},
-           "probe_clip": json.loads((refcache.default_out("mp2") / "probe_inputs.json").read_text())["clip"],
+           "probe_clip": json.loads(evidence.read_text((refcache.default_out("mp2") / "probe_inputs.json")))["clip"],
            "outputs": "C7: raw (matmul before the row scale), out; C8: P, N, raw = P - N, out; others: out. "
                       "Exposing intermediates as outputs may change the compiled graph. Non-finite maxima are "
                       "written as the strings inf/nan (strict JSON).",
@@ -477,7 +480,7 @@ def stress(args) -> None:
     PROBES.mkdir(parents=True, exist_ok=True)
     from .gates7 import jsonable
 
-    (PROBES / "stress.json").write_text(json.dumps(jsonable(doc), indent=1, allow_nan=False) + "\n")
+    evidence.write_text((PROBES / "stress.json"), json.dumps(jsonable(doc), indent=1, allow_nan=False) + "\n")
     shutil.rmtree(out_dir, ignore_errors=True)
     print(json.dumps(jsonable(verdict), indent=1))
     if not all(v[u]["pass"] for v in verdict.values() for u in v if u in BACKENDS.values()):
@@ -518,15 +521,15 @@ def stress_verdict(results: dict, arms, units) -> dict:
 
 
 def summary(args) -> None:
-    mem = json.loads((PROBES / "memory.json").read_text())
+    mem = json.loads(evidence.read_text((PROBES / "memory.json")))
     doc = {"memory_time_size": extrapolate(mem, args.cap_gb)}
     for name in ("c7_folding", "stress"):
         p = PROBES / f"{name}.json"
-        if p.exists():
-            d = json.loads(p.read_text())
+        if evidence.exists(p):
+            d = json.loads(evidence.read_text(p))
             doc[name] = ({k: d[k] for k in ("absorbing_passes_for_lut_weights", "cases")} if name == "c7_folding"
                          else d["verdict"])
-    (PROBES / "summary.json").write_text(json.dumps(doc, indent=1) + "\n")
+    evidence.write_text((PROBES / "summary.json"), json.dumps(doc, indent=1) + "\n")
     print(json.dumps(doc["memory_time_size"], indent=1)[:6000])
 
 
@@ -559,7 +562,7 @@ def main() -> None:
         res["peak_rss_mb"] = round(r / 2 ** 20 if sys.platform == "darwin" else r / 1024)
         if args.out:
             Path(args.out).parent.mkdir(parents=True, exist_ok=True)
-            Path(args.out).write_text(json.dumps(res, indent=1) + "\n")
+            evidence.write_text(Path(args.out), json.dumps(res, indent=1) + "\n")
         print(json.dumps(res))
     elif args.cmd == "folding":
         folding(args)

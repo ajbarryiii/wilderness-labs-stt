@@ -99,5 +99,10 @@
   "results/mlxarm/timing.json": "b6b0b052ec4056831cde69a8977ef8755a063f4629a343e7a3a37b28dd6dd6c6"
  },
  "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
- "built": "2026-10-03 05:31"
+ "built": "2026-10-03 05:31",
+ "_evidence": {
+  "sha256": "3ca1aaaba99ddbbdd7dfb626b105c77a143b979e9374d02c24f04254d775b674",
+  "bytes": 2943,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/eligibility/mp2-MLX-multi-gpu-mlx.json"
+ }
 }

@@ -149,5 +149,10 @@
     "arm_abs_err": 0.015734664575805028
    }
   }
+ },
+ "_evidence": {
+  "sha256": "e59e8f1de055243a6a33a0381752be97b2695ee8d15a7332a8518164f88e973b",
+  "bytes": 4335,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/mlxarm/stress.json"
  }
 }

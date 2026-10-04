@@ -479,5 +479,10 @@
     "baseline_typical_ms": 14.822
    }
   }
+ },
+ "_evidence": {
+  "sha256": "4a0e821913d9bbe4343157be612ff9c9358634dbcc3584a31c56c6f02705d452",
+  "bytes": 10932,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/wp4/smoke_vdsp-c0enc-f2.summary.json"
  }
 }

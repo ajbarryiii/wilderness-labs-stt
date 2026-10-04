@@ -299,5 +299,10 @@
    0,
    1
   ]
+ },
+ "_evidence": {
+  "sha256": "a623afb1ba55a36893621d158c58c8f26c1961d5a30d24fb300b5ec6a6e6c239",
+  "bytes": 8746,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/wp7/C3-ane-multi-vdsp-f2.c0block.summary.json"
  }
 }

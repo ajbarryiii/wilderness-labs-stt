@@ -67,380 +67,17 @@
      "functions": {
       "main": {
        "compute_units": "cpuAndNeuralEngine",
-       "cpu_ops": [
-        {
-         "cost": 2.1287079728021903e-06,
-         "op": "ios19.reshape",
-         "outputs": [
-          "reshape_0"
-         ]
-        },
-        {
-         "cost": 1.0643539864010952e-06,
-         "op": "ios18.cast",
-         "outputs": [
-          "reshape_0_to_int16"
-         ]
-        },
-        {
-         "cost": 1.0643539864010952e-06,
-         "op": "ios18.cast",
-         "outputs": [
-          "cast_0"
-         ]
-        },
-        {
-         "cost": 1.5965309796016425e-06,
-         "op": "ios19.greater_equal",
-         "outputs": [
-          "greater_equal_0"
-         ]
-        },
-        {
-         "cost": 1.983247660163005e-06,
-         "op": "ios19.add",
-         "outputs": [
-          "add_0"
-         ]
-        },
-        {
-         "cost": 2.3061003038690395e-06,
-         "op": "ios19.select",
-         "outputs": [
-          "select_0"
-         ]
-        },
-        {
-         "cost": 1.0643539864010952e-06,
-         "op": "ios18.cast",
-         "outputs": [
-          "select_0_to_int16"
-         ]
-        },
-        {
-         "cost": 0.5203418278204097,
-         "op": "ios18.gather",
-         "outputs": [
-          "embed_cast_uint16_cast_uint16"
-         ]
-        },
-        {
-         "cost": 0.001362373102593402,
-         "op": "ios18.cast",
-         "outputs": [
-          "h_in_fp16"
-         ]
-        },
-        {
-         "cost": 0.0006854439672423052,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_0"
-         ]
-        },
-        {
-         "cost": 0.0004548339368554013,
-         "op": "ios19.squeeze",
-         "outputs": [
-          "h0"
-         ]
-        },
-        {
-         "cost": 0.001362373102593402,
-         "op": "ios18.cast",
-         "outputs": [
-          "c_in_fp16"
-         ]
-        },
-        {
-         "cost": 0.0006854439672423052,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_1"
-         ]
-        },
-        {
-         "cost": 0.0004548339368554013,
-         "op": "ios19.squeeze",
-         "outputs": [
-          "c0"
-         ]
-        },
-        {
-         "cost": 0.10886137992991711,
-         "op": "ios18.linear",
-         "outputs": [
-          "linear_0"
-         ]
-        },
-        {
-         "cost": 0.10886137992991711,
-         "op": "ios18.linear",
-         "outputs": [
-          "linear_1"
-         ]
-        },
-        {
-         "cost": 0.005077114010017292,
-         "op": "ios19.add",
-         "outputs": [
-          "gates0"
-         ]
-        },
-        {
-         "cost": 0.0011367300574763697,
-         "op": "ios19.split",
-         "outputs": [
-          "gate_split0_0",
-          "gate_split0_1"
-         ]
-        },
-        {
-         "cost": 0.0004541243675311339,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_0"
-         ]
-        },
-        {
-         "cost": 0.0020305898732633472,
-         "op": "ios19.mul",
-         "outputs": [
-          "mul_0"
-         ]
-        },
-        {
-         "cost": 0.0004541243675311339,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_1"
-         ]
-        },
-        {
-         "cost": 0.0004541243675311339,
-         "op": "ios18.tanh",
-         "outputs": [
-          "tanh_0"
-         ]
-        },
-        {
-         "cost": 0.0020305898732633472,
-         "op": "ios19.mul",
-         "outputs": [
-          "mul_1"
-         ]
-        },
-        {
-         "cost": 0.001269278502504323,
-         "op": "ios19.add",
-         "outputs": [
-          "c_new0"
-         ]
-        },
-        {
-         "cost": 0.0004541243675311339,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_2"
-         ]
-        },
-        {
-         "cost": 0.0004541243675311339,
-         "op": "ios18.tanh",
-         "outputs": [
-          "tanh_1"
-         ]
-        },
-        {
-         "cost": 0.0020305898732633472,
-         "op": "ios19.mul",
-         "outputs": [
-          "h_new0"
-         ]
-        },
-        {
-         "cost": 0.0006854439672423052,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_2"
-         ]
-        },
-        {
-         "cost": 0.0004548339368554013,
-         "op": "ios19.squeeze",
-         "outputs": [
-          "h1"
-         ]
-        },
-        {
-         "cost": 0.0006854439672423052,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_3"
-         ]
-        },
-        {
-         "cost": 0.0004548339368554013,
-         "op": "ios19.squeeze",
-         "outputs": [
-          "c1"
-         ]
-        },
-        {
-         "cost": 0.10886137992991711,
-         "op": "ios18.linear",
-         "outputs": [
-          "linear_2"
-         ]
-        },
-        {
-         "cost": 0.10886137992991711,
-         "op": "ios18.linear",
-         "outputs": [
-          "linear_3"
-         ]
-        },
-        {
-         "cost": 0.005077114010017292,
-         "op": "ios19.add",
-         "outputs": [
-          "gates1"
-         ]
-        },
-        {
-         "cost": 0.0011367300574763697,
-         "op": "ios19.split",
-         "outputs": [
-          "gate_split1_0",
-          "gate_split1_1"
-         ]
-        },
-        {
-         "cost": 0.0004541243675311339,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_3"
-         ]
-        },
-        {
-         "cost": 0.0020305898732633472,
-         "op": "ios19.mul",
-         "outputs": [
-          "mul_2"
-         ]
-        },
-        {
-         "cost": 0.0004541243675311339,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_4"
-         ]
-        },
-        {
-         "cost": 0.0004541243675311339,
-         "op": "ios18.tanh",
-         "outputs": [
-          "tanh_2"
-         ]
-        },
-        {
-         "cost": 0.0020305898732633472,
-         "op": "ios19.mul",
-         "outputs": [
-          "mul_3"
-         ]
-        },
-        {
-         "cost": 0.001269278502504323,
-         "op": "ios19.add",
-         "outputs": [
-          "c_new1"
-         ]
-        },
-        {
-         "cost": 0.0004541243675311339,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_5"
-         ]
-        },
-        {
-         "cost": 0.0004541243675311339,
-         "op": "ios18.tanh",
-         "outputs": [
-          "tanh_3"
-         ]
-        },
-        {
-         "cost": 0.0020305898732633472,
-         "op": "ios19.mul",
-         "outputs": [
-          "h_new1"
-         ]
-        },
-        {
-         "cost": 0.0006818961206209683,
-         "op": "ios19.stack",
-         "outputs": [
-          "stack_0"
-         ]
-        },
-        {
-         "cost": 0.0006818961206209683,
-         "op": "ios19.stack",
-         "outputs": [
-          "stack_1"
-         ]
-        },
-        {
-         "cost": 0.0004548339368554013,
-         "op": "ios19.expand_dims",
-         "outputs": [
-          "expand_dims_0"
-         ]
-        },
-        {
-         "cost": 0.000681186551296701,
-         "op": "ios18.cast",
-         "outputs": [
-          "decoder"
-         ]
-        },
-        {
-         "cost": 0.001362373102593402,
-         "op": "ios18.cast",
-         "outputs": [
-          "c_out"
-         ]
-        },
-        {
-         "cost": 0.001362373102593402,
-         "op": "ios18.cast",
-         "outputs": [
-          "h_out"
-         ]
-        }
-       ],
+       "cpu_ops": {
+        "omitted_entries": 50,
+        "detail": "see full record"
+       },
        "estimated_cost_share_by_preferred_device": {
         "cpu": 1
        },
        "operators_by_preferred_device": {
         "cpu": {
-         "ios18.cast": 8,
-         "ios18.gather": 1,
-         "ios18.linear": 4,
-         "ios18.sigmoid": 6,
-         "ios18.tanh": 4,
-         "ios19.add": 5,
-         "ios19.expand_dims": 1,
-         "ios19.greater_equal": 1,
-         "ios19.mul": 6,
-         "ios19.reshape": 1,
-         "ios19.select": 1,
-         "ios19.slice_by_index": 4,
-         "ios19.split": 2,
-         "ios19.squeeze": 4,
-         "ios19.stack": 2
+         "omitted_entries": 15,
+         "detail": "see full record"
         }
        },
        "ops_with_usage_by_preferred_device": {
@@ -460,380 +97,17 @@
      "functions": {
       "main": {
        "compute_units": "cpuOnly",
-       "cpu_ops": [
-        {
-         "cost": 2.12870797280219e-06,
-         "op": "ios19.reshape",
-         "outputs": [
-          "reshape_0"
-         ]
-        },
-        {
-         "cost": 1.064353986401095e-06,
-         "op": "ios18.cast",
-         "outputs": [
-          "reshape_0_to_int16"
-         ]
-        },
-        {
-         "cost": 1.064353986401095e-06,
-         "op": "ios18.cast",
-         "outputs": [
-          "cast_0"
-         ]
-        },
-        {
-         "cost": 1.5965309796016423e-06,
-         "op": "ios19.greater_equal",
-         "outputs": [
-          "greater_equal_0"
-         ]
-        },
-        {
-         "cost": 1.983247660163005e-06,
-         "op": "ios19.add",
-         "outputs": [
-          "add_0"
-         ]
-        },
-        {
-         "cost": 2.3061003038690395e-06,
-         "op": "ios19.select",
-         "outputs": [
-          "select_0"
-         ]
-        },
-        {
-         "cost": 1.064353986401095e-06,
-         "op": "ios18.cast",
-         "outputs": [
-          "select_0_to_int16"
-         ]
-        },
-        {
-         "cost": 0.5203418278204097,
-         "op": "ios18.gather",
-         "outputs": [
-          "embed_cast_uint16_cast_uint16"
-         ]
-        },
-        {
-         "cost": 0.0013623731025934017,
-         "op": "ios18.cast",
-         "outputs": [
-          "h_in_fp16"
-         ]
-        },
-        {
-         "cost": 0.0006854439672423051,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_0"
-         ]
-        },
-        {
-         "cost": 0.00045483393685540123,
-         "op": "ios19.squeeze",
-         "outputs": [
-          "h0"
-         ]
-        },
-        {
-         "cost": 0.0013623731025934017,
-         "op": "ios18.cast",
-         "outputs": [
-          "c_in_fp16"
-         ]
-        },
-        {
-         "cost": 0.0006854439672423051,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_1"
-         ]
-        },
-        {
-         "cost": 0.00045483393685540123,
-         "op": "ios19.squeeze",
-         "outputs": [
-          "c0"
-         ]
-        },
-        {
-         "cost": 0.1088613799299171,
-         "op": "ios18.linear",
-         "outputs": [
-          "linear_0"
-         ]
-        },
-        {
-         "cost": 0.1088613799299171,
-         "op": "ios18.linear",
-         "outputs": [
-          "linear_1"
-         ]
-        },
-        {
-         "cost": 0.005077114010017292,
-         "op": "ios19.add",
-         "outputs": [
-          "gates0"
-         ]
-        },
-        {
-         "cost": 0.0011367300574763694,
-         "op": "ios19.split",
-         "outputs": [
-          "gate_split0_0",
-          "gate_split0_1"
-         ]
-        },
-        {
-         "cost": 0.00045412436753113387,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_0"
-         ]
-        },
-        {
-         "cost": 0.002030589873263347,
-         "op": "ios19.mul",
-         "outputs": [
-          "mul_0"
-         ]
-        },
-        {
-         "cost": 0.00045412436753113387,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_1"
-         ]
-        },
-        {
-         "cost": 0.00045412436753113387,
-         "op": "ios18.tanh",
-         "outputs": [
-          "tanh_0"
-         ]
-        },
-        {
-         "cost": 0.002030589873263347,
-         "op": "ios19.mul",
-         "outputs": [
-          "mul_1"
-         ]
-        },
-        {
-         "cost": 0.001269278502504323,
-         "op": "ios19.add",
-         "outputs": [
-          "c_new0"
-         ]
-        },
-        {
-         "cost": 0.00045412436753113387,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_2"
-         ]
-        },
-        {
-         "cost": 0.00045412436753113387,
-         "op": "ios18.tanh",
-         "outputs": [
-          "tanh_1"
-         ]
-        },
-        {
-         "cost": 0.002030589873263347,
-         "op": "ios19.mul",
-         "outputs": [
-          "h_new0"
-         ]
-        },
-        {
-         "cost": 0.0006854439672423051,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_2"
-         ]
-        },
-        {
-         "cost": 0.00045483393685540123,
-         "op": "ios19.squeeze",
-         "outputs": [
-          "h1"
-         ]
-        },
-        {
-         "cost": 0.0006854439672423051,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_3"
-         ]
-        },
-        {
-         "cost": 0.00045483393685540123,
-         "op": "ios19.squeeze",
-         "outputs": [
-          "c1"
-         ]
-        },
-        {
-         "cost": 0.1088613799299171,
-         "op": "ios18.linear",
-         "outputs": [
-          "linear_2"
-         ]
-        },
-        {
-         "cost": 0.1088613799299171,
-         "op": "ios18.linear",
-         "outputs": [
-          "linear_3"
-         ]
-        },
-        {
-         "cost": 0.005077114010017292,
-         "op": "ios19.add",
-         "outputs": [
-          "gates1"
-         ]
-        },
-        {
-         "cost": 0.0011367300574763694,
-         "op": "ios19.split",
-         "outputs": [
-          "gate_split1_0",
-          "gate_split1_1"
-         ]
-        },
-        {
-         "cost": 0.00045412436753113387,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_3"
-         ]
-        },
-        {
-         "cost": 0.002030589873263347,
-         "op": "ios19.mul",
-         "outputs": [
-          "mul_2"
-         ]
-        },
-        {
-         "cost": 0.00045412436753113387,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_4"
-         ]
-        },
-        {
-         "cost": 0.00045412436753113387,
-         "op": "ios18.tanh",
-         "outputs": [
-          "tanh_2"
-         ]
-        },
-        {
-         "cost": 0.002030589873263347,
-         "op": "ios19.mul",
-         "outputs": [
-          "mul_3"
-         ]
-        },
-        {
-         "cost": 0.001269278502504323,
-         "op": "ios19.add",
-         "outputs": [
-          "c_new1"
-         ]
-        },
-        {
-         "cost": 0.00045412436753113387,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_5"
-         ]
-        },
-        {
-         "cost": 0.00045412436753113387,
-         "op": "ios18.tanh",
-         "outputs": [
-          "tanh_3"
-         ]
-        },
-        {
-         "cost": 0.002030589873263347,
-         "op": "ios19.mul",
-         "outputs": [
-          "h_new1"
-         ]
-        },
-        {
-         "cost": 0.0006818961206209683,
-         "op": "ios19.stack",
-         "outputs": [
-          "stack_0"
-         ]
-        },
-        {
-         "cost": 0.0006818961206209683,
-         "op": "ios19.stack",
-         "outputs": [
-          "stack_1"
-         ]
-        },
-        {
-         "cost": 0.00045483393685540123,
-         "op": "ios19.expand_dims",
-         "outputs": [
-          "expand_dims_0"
-         ]
-        },
-        {
-         "cost": 0.0006811865512967009,
-         "op": "ios18.cast",
-         "outputs": [
-          "decoder"
-         ]
-        },
-        {
-         "cost": 0.0013623731025934017,
-         "op": "ios18.cast",
-         "outputs": [
-          "c_out"
-         ]
-        },
-        {
-         "cost": 0.0013623731025934017,
-         "op": "ios18.cast",
-         "outputs": [
-          "h_out"
-         ]
-        }
-       ],
+       "cpu_ops": {
+        "omitted_entries": 50,
+        "detail": "see full record"
+       },
        "estimated_cost_share_by_preferred_device": {
         "cpu": 1
        },
        "operators_by_preferred_device": {
         "cpu": {
-         "ios18.cast": 8,
-         "ios18.gather": 1,
-         "ios18.linear": 4,
-         "ios18.sigmoid": 6,
-         "ios18.tanh": 4,
-         "ios19.add": 5,
-         "ios19.expand_dims": 1,
-         "ios19.greater_equal": 1,
-         "ios19.mul": 6,
-         "ios19.reshape": 1,
-         "ios19.select": 1,
-         "ios19.slice_by_index": 4,
-         "ios19.split": 2,
-         "ios19.squeeze": 4,
-         "ios19.stack": 2
+         "omitted_entries": 15,
+         "detail": "see full record"
         }
        },
        "ops_with_usage_by_preferred_device": {
@@ -897,155 +171,17 @@
      "functions": {
       "main": {
        "compute_units": "cpuAndNeuralEngine",
-       "cpu_ops": [
-        {
-         "cost": 0.0021702502659612724,
-         "op": "ios18.cast",
-         "outputs": [
-          "cast_0"
-         ]
-        },
-        {
-         "cost": 0.0014496593573413187,
-         "op": "ios19.reshape",
-         "outputs": [
-          "encoder_step_fp16"
-         ]
-        },
-        {
-         "cost": 0.0013564064162257955,
-         "op": "ios18.cast",
-         "outputs": [
-          "cast_1"
-         ]
-        },
-        {
-         "cost": 0.0009070967908510006,
-         "op": "ios19.reshape",
-         "outputs": [
-          "decoder_step_fp16"
-         ]
-        },
-        {
-         "cost": 0.5533692632398812,
-         "op": "ios18.linear",
-         "outputs": [
-          "joint_enc"
-         ]
-        },
-        {
-         "cost": 0.21626274519808644,
-         "op": "ios18.linear",
-         "outputs": [
-          "joint_pred"
-         ]
-        },
-        {
-         "cost": 0.002527439071568575,
-         "op": "ios19.add",
-         "outputs": [
-          "add_0"
-         ]
-        },
-        {
-         "cost": 0.00046507857149929137,
-         "op": "ios18.relu",
-         "outputs": [
-          "joint_hidden"
-         ]
-        },
-        {
-         "cost": 0.21636562194309433,
-         "op": "ios18.linear",
-         "outputs": [
-          "joint_logits"
-         ]
-        },
-        {
-         "cost": 0.0014574304357676123,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "tok_logits"
-         ]
-        },
-        {
-         "cost": 0.0007368395271476585,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "dur_logits"
-         ]
-        },
-        {
-         "cost": 0.0007273022945335709,
-         "op": "ios18.reduce_argmax",
-         "outputs": [
-          "reduce_argmax_0"
-         ]
-        },
-        {
-         "cost": 7.064616751176017e-06,
-         "op": "ios19.reshape",
-         "outputs": [
-          "token_id"
-         ]
-        },
-        {
-         "cost": 0.0014496593573413187,
-         "op": "ios18.softmax",
-         "outputs": [
-          "softmax_0"
-         ]
-        },
-        {
-         "cost": 0.0007265958328584533,
-         "op": "ios16.reduce_max",
-         "outputs": [
-          "reduce_max_0"
-         ]
-        },
-        {
-         "cost": 5.651693400940813e-06,
-         "op": "ios19.reshape",
-         "outputs": [
-          "reshape_0"
-         ]
-        },
-        {
-         "cost": 6.711385913617216e-06,
-         "op": "ios18.reduce_argmax",
-         "outputs": [
-          "reduce_argmax_1"
-         ]
-        },
-        {
-         "cost": 7.064616751176017e-06,
-         "op": "ios19.reshape",
-         "outputs": [
-          "duration"
-         ]
-        },
-        {
-         "cost": 2.119385025352805e-06,
-         "op": "ios18.cast",
-         "outputs": [
-          "token_prob"
-         ]
-        }
-       ],
+       "cpu_ops": {
+        "omitted_entries": 19,
+        "detail": "see full record"
+       },
        "estimated_cost_share_by_preferred_device": {
         "cpu": 1
        },
        "operators_by_preferred_device": {
         "cpu": {
-         "ios16.reduce_max": 1,
-         "ios18.cast": 3,
-         "ios18.linear": 3,
-         "ios18.reduce_argmax": 2,
-         "ios18.relu": 1,
-         "ios18.softmax": 1,
-         "ios19.add": 1,
-         "ios19.reshape": 5,
-         "ios19.slice_by_index": 2
+         "omitted_entries": 9,
+         "detail": "see full record"
         }
        },
        "ops_with_usage_by_preferred_device": {
@@ -1064,155 +200,17 @@
      "functions": {
       "main": {
        "compute_units": "cpuOnly",
-       "cpu_ops": [
-        {
-         "cost": 0.0021702502659612724,
-         "op": "ios18.cast",
-         "outputs": [
-          "cast_0"
-         ]
-        },
-        {
-         "cost": 0.0014496593573413187,
-         "op": "ios19.reshape",
-         "outputs": [
-          "encoder_step_fp16"
-         ]
-        },
-        {
-         "cost": 0.0013564064162257955,
-         "op": "ios18.cast",
-         "outputs": [
-          "cast_1"
-         ]
-        },
-        {
-         "cost": 0.0009070967908510006,
-         "op": "ios19.reshape",
-         "outputs": [
-          "decoder_step_fp16"
-         ]
-        },
-        {
-         "cost": 0.5533692632398812,
-         "op": "ios18.linear",
-         "outputs": [
-          "joint_enc"
-         ]
-        },
-        {
-         "cost": 0.21626274519808644,
-         "op": "ios18.linear",
-         "outputs": [
-          "joint_pred"
-         ]
-        },
-        {
-         "cost": 0.002527439071568575,
-         "op": "ios19.add",
-         "outputs": [
-          "add_0"
-         ]
-        },
-        {
-         "cost": 0.00046507857149929137,
-         "op": "ios18.relu",
-         "outputs": [
-          "joint_hidden"
-         ]
-        },
-        {
-         "cost": 0.21636562194309433,
-         "op": "ios18.linear",
-         "outputs": [
-          "joint_logits"
-         ]
-        },
-        {
-         "cost": 0.0014574304357676123,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "tok_logits"
-         ]
-        },
-        {
-         "cost": 0.0007368395271476585,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "dur_logits"
-         ]
-        },
-        {
-         "cost": 0.0007273022945335709,
-         "op": "ios18.reduce_argmax",
-         "outputs": [
-          "reduce_argmax_0"
-         ]
-        },
-        {
-         "cost": 7.064616751176017e-06,
-         "op": "ios19.reshape",
-         "outputs": [
-          "token_id"
-         ]
-        },
-        {
-         "cost": 0.0014496593573413187,
-         "op": "ios18.softmax",
-         "outputs": [
-          "softmax_0"
-         ]
-        },
-        {
-         "cost": 0.0007265958328584533,
-         "op": "ios16.reduce_max",
-         "outputs": [
-          "reduce_max_0"
-         ]
-        },
-        {
-         "cost": 5.651693400940813e-06,
-         "op": "ios19.reshape",
-         "outputs": [
-          "reshape_0"
-         ]
-        },
-        {
-         "cost": 6.711385913617216e-06,
-         "op": "ios18.reduce_argmax",
-         "outputs": [
-          "reduce_argmax_1"
-         ]
-        },
-        {
-         "cost": 7.064616751176017e-06,
-         "op": "ios19.reshape",
-         "outputs": [
-          "duration"
-         ]
-        },
-        {
-         "cost": 2.119385025352805e-06,
-         "op": "ios18.cast",
-         "outputs": [
-          "token_prob"
-         ]
-        }
-       ],
+       "cpu_ops": {
+        "omitted_entries": 19,
+        "detail": "see full record"
+       },
        "estimated_cost_share_by_preferred_device": {
         "cpu": 1
        },
        "operators_by_preferred_device": {
         "cpu": {
-         "ios16.reduce_max": 1,
-         "ios18.cast": 3,
-         "ios18.linear": 3,
-         "ios18.reduce_argmax": 2,
-         "ios18.relu": 1,
-         "ios18.softmax": 1,
-         "ios19.add": 1,
-         "ios19.reshape": 5,
-         "ios19.slice_by_index": 2
+         "omitted_entries": 9,
+         "detail": "see full record"
         }
        },
        "ops_with_usage_by_preferred_device": {
@@ -1273,95 +271,56 @@
        "compute_units": "cpuAndNeuralEngine",
        "cpu_ops": [
         {
-         "cost": 0.0021718774422018867,
-         "op": "ios18.cast",
-         "outputs": [
-          "cast_0"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.0014507462602207912,
-         "op": "ios19.reshape",
-         "outputs": [
-          "encoder_step_fp16"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.0013574234013761792,
-         "op": "ios18.cast",
-         "outputs": [
-          "cast_1"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.0009077768996703198,
-         "op": "ios19.reshape",
-         "outputs": [
-          "decoder_step_fp16"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.5537841597758028,
-         "op": "ios18.linear",
-         "outputs": [
-          "joint_enc"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.21642489129074477,
-         "op": "ios18.linear",
-         "outputs": [
-          "joint_pred"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.002529334055235371,
-         "op": "ios19.add",
-         "outputs": [
-          "add_0"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.00046542727082371103,
-         "op": "ios18.relu",
-         "outputs": [
-          "joint_hidden"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.21652784516906665,
-         "op": "ios18.linear",
-         "outputs": [
-          "joint_logits"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.001458523165124509,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_0"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.0007373919831434139,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_1"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 1.06048703232514e-05,
-         "op": "ios18.cast",
-         "outputs": [
-          "duration_logits"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.0021739984162665368,
-         "op": "ios18.cast",
-         "outputs": [
-          "token_logits"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         }
        ],
        "estimated_cost_share_by_preferred_device": {
@@ -1369,12 +328,8 @@
        },
        "operators_by_preferred_device": {
         "cpu": {
-         "ios18.cast": 4,
-         "ios18.linear": 3,
-         "ios18.relu": 1,
-         "ios19.add": 1,
-         "ios19.reshape": 2,
-         "ios19.slice_by_index": 2
+         "omitted_entries": 6,
+         "detail": "see full record"
         }
        },
        "ops_with_usage_by_preferred_device": {
@@ -1395,95 +350,56 @@
        "compute_units": "cpuOnly",
        "cpu_ops": [
         {
-         "cost": 0.0021718774422018867,
-         "op": "ios18.cast",
-         "outputs": [
-          "cast_0"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.0014507462602207912,
-         "op": "ios19.reshape",
-         "outputs": [
-          "encoder_step_fp16"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.0013574234013761792,
-         "op": "ios18.cast",
-         "outputs": [
-          "cast_1"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.0009077768996703198,
-         "op": "ios19.reshape",
-         "outputs": [
-          "decoder_step_fp16"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.5537841597758028,
-         "op": "ios18.linear",
-         "outputs": [
-          "joint_enc"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.21642489129074477,
-         "op": "ios18.linear",
-         "outputs": [
-          "joint_pred"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.002529334055235371,
-         "op": "ios19.add",
-         "outputs": [
-          "add_0"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.00046542727082371103,
-         "op": "ios18.relu",
-         "outputs": [
-          "joint_hidden"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.21652784516906665,
-         "op": "ios18.linear",
-         "outputs": [
-          "joint_logits"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.001458523165124509,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_0"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.0007373919831434139,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_1"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 1.06048703232514e-05,
-         "op": "ios18.cast",
-         "outputs": [
-          "duration_logits"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         },
         {
-         "cost": 0.0021739984162665368,
-         "op": "ios18.cast",
-         "outputs": [
-          "token_logits"
-         ]
+         "omitted_entries": 3,
+         "detail": "see full record"
         }
        ],
        "estimated_cost_share_by_preferred_device": {
@@ -1491,12 +407,8 @@
        },
        "operators_by_preferred_device": {
         "cpu": {
-         "ios18.cast": 4,
-         "ios18.linear": 3,
-         "ios18.relu": 1,
-         "ios19.add": 1,
-         "ios19.reshape": 2,
-         "ios19.slice_by_index": 2
+         "omitted_entries": 6,
+         "detail": "see full record"
         }
        },
        "ops_with_usage_by_preferred_device": {
@@ -1572,383 +484,17 @@
      "functions": {
       "main": {
        "compute_units": "cpuAndNeuralEngine",
-       "cpu_ops": [
-        {
-         "cost": 1.4192080044392657e-06,
-         "op": "ios19.reshape",
-         "outputs": [
-          "reshape_0"
-         ]
-        },
-        {
-         "cost": 7.096040022196329e-07,
-         "op": "ios18.cast",
-         "outputs": [
-          "reshape_0_to_int16"
-         ]
-        },
-        {
-         "cost": 7.096040022196329e-07,
-         "op": "ios18.cast",
-         "outputs": [
-          "cast_1"
-         ]
-        },
-        {
-         "cost": 1.0644060033294492e-06,
-         "op": "ios19.greater_equal",
-         "outputs": [
-          "greater_equal_0"
-         ]
-        },
-        {
-         "cost": 1.322229723405246e-06,
-         "op": "ios19.add",
-         "outputs": [
-          "add_1"
-         ]
-        },
-        {
-         "cost": 1.5374753381425379e-06,
-         "op": "ios19.select",
-         "outputs": [
-          "select_0"
-         ]
-        },
-        {
-         "cost": 7.096040022196329e-07,
-         "op": "ios18.cast",
-         "outputs": [
-          "select_0_to_int16"
-         ]
-        },
-        {
-         "cost": 0.3469115052522548,
-         "op": "ios18.gather",
-         "outputs": [
-          "embed_cast_uint16_cast_uint16"
-         ]
-        },
-        {
-         "cost": 0.0009082931228411301,
-         "op": "ios18.cast",
-         "outputs": [
-          "h_in_fp16"
-         ]
-        },
-        {
-         "cost": 0.00045698497742944355,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_0"
-         ]
-        },
-        {
-         "cost": 0.00030323744361518976,
-         "op": "ios19.squeeze",
-         "outputs": [
-          "h0"
-         ]
-        },
-        {
-         "cost": 0.0009082931228411301,
-         "op": "ios18.cast",
-         "outputs": [
-          "c_in_fp16"
-         ]
-        },
-        {
-         "cost": 0.00045698497742944355,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_1"
-         ]
-        },
-        {
-         "cost": 0.00030323744361518976,
-         "op": "ios19.squeeze",
-         "outputs": [
-          "c0"
-         ]
-        },
-        {
-         "cost": 0.07257780012326706,
-         "op": "ios18.linear",
-         "outputs": [
-          "linear_0"
-         ]
-        },
-        {
-         "cost": 0.07257780012326706,
-         "op": "ios18.linear",
-         "outputs": [
-          "linear_1"
-         ]
-        },
-        {
-         "cost": 0.003384908091917429,
-         "op": "ios19.add",
-         "outputs": [
-          "gates0"
-         ]
-        },
-        {
-         "cost": 0.0007578570743705679,
-         "op": "ios19.split",
-         "outputs": [
-          "gate_split0_0",
-          "gate_split0_1"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803767,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_0"
-         ]
-        },
-        {
-         "cost": 0.001353792741272572,
-         "op": "ios19.mul",
-         "outputs": [
-          "mul_0"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803767,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_1"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803767,
-         "op": "ios18.tanh",
-         "outputs": [
-          "tanh_0"
-         ]
-        },
-        {
-         "cost": 0.001353792741272572,
-         "op": "ios19.mul",
-         "outputs": [
-          "mul_1"
-         ]
-        },
-        {
-         "cost": 0.0008462270229793572,
-         "op": "ios19.add",
-         "outputs": [
-          "c_new0"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803767,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_2"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803767,
-         "op": "ios18.tanh",
-         "outputs": [
-          "tanh_1"
-         ]
-        },
-        {
-         "cost": 0.001353792741272572,
-         "op": "ios19.mul",
-         "outputs": [
-          "h_new0"
-         ]
-        },
-        {
-         "cost": 0.00045698497742944355,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_2"
-         ]
-        },
-        {
-         "cost": 0.00030323744361518976,
-         "op": "ios19.squeeze",
-         "outputs": [
-          "h1"
-         ]
-        },
-        {
-         "cost": 0.00045698497742944355,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_3"
-         ]
-        },
-        {
-         "cost": 0.00030323744361518976,
-         "op": "ios19.squeeze",
-         "outputs": [
-          "c1"
-         ]
-        },
-        {
-         "cost": 0.07257780012326706,
-         "op": "ios18.linear",
-         "outputs": [
-          "linear_2"
-         ]
-        },
-        {
-         "cost": 0.07257780012326706,
-         "op": "ios18.linear",
-         "outputs": [
-          "linear_3"
-         ]
-        },
-        {
-         "cost": 0.003384908091917429,
-         "op": "ios19.add",
-         "outputs": [
-          "gates1"
-         ]
-        },
-        {
-         "cost": 0.0007578570743705679,
-         "op": "ios19.split",
-         "outputs": [
-          "gate_split1_0",
-          "gate_split1_1"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803767,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_3"
-         ]
-        },
-        {
-         "cost": 0.001353792741272572,
-         "op": "ios19.mul",
-         "outputs": [
-          "mul_2"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803767,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_4"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803767,
-         "op": "ios18.tanh",
-         "outputs": [
-          "tanh_2"
-         ]
-        },
-        {
-         "cost": 0.001353792741272572,
-         "op": "ios19.mul",
-         "outputs": [
-          "mul_3"
-         ]
-        },
-        {
-         "cost": 0.0008462270229793572,
-         "op": "ios19.add",
-         "outputs": [
-          "c_new1"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803767,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_5"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803767,
-         "op": "ios18.tanh",
-         "outputs": [
-          "tanh_3"
-         ]
-        },
-        {
-         "cost": 0.001353792741272572,
-         "op": "ios19.mul",
-         "outputs": [
-          "h_new1"
-         ]
-        },
-        {
-         "cost": 0.0004546196307553781,
-         "op": "ios19.stack",
-         "outputs": [
-          "stack_0"
-         ]
-        },
-        {
-         "cost": 0.0004546196307553781,
-         "op": "ios19.stack",
-         "outputs": [
-          "stack_1"
-         ]
-        },
-        {
-         "cost": 0.000726634498272904,
-         "op": "ios18.cast",
-         "outputs": [
-          "cast_0"
-         ]
-        },
-        {
-         "cost": 0.0004853691375182288,
-         "op": "ios19.reshape",
-         "outputs": [
-          "encoder_step_fp16"
-         ]
-        },
-        {
-         "cost": 0.18527687947355514,
-         "op": "ios18.linear",
-         "outputs": [
-          "joint_enc"
-         ]
-        },
-        {
-         "cost": 0.07240822582391362,
-         "op": "ios18.linear",
-         "outputs": [
-          "joint_pred"
-         ]
-        }
-       ],
+       "cpu_ops": {
+        "omitted_entries": 50,
+        "detail": "see full record"
+       },
        "estimated_cost_share_by_preferred_device": {
         "cpu": 1
        },
        "operators_by_preferred_device": {
         "cpu": {
-         "ios16.reduce_max": 1,
-         "ios18.cast": 9,
-         "ios18.gather": 1,
-         "ios18.linear": 7,
-         "ios18.reduce_argmax": 2,
-         "ios18.relu": 1,
-         "ios18.sigmoid": 6,
-         "ios18.softmax": 1,
-         "ios18.tanh": 4,
-         "ios19.add": 6,
-         "ios19.greater_equal": 1,
-         "ios19.mul": 6,
-         "ios19.reshape": 5,
-         "ios19.select": 1,
-         "ios19.slice_by_index": 6,
-         "ios19.split": 2,
-         "ios19.squeeze": 4,
-         "ios19.stack": 2
+         "omitted_entries": 18,
+         "detail": "see full record"
         }
        },
        "ops_with_usage_by_preferred_device": {
@@ -1967,383 +513,17 @@
      "functions": {
       "main": {
        "compute_units": "cpuOnly",
-       "cpu_ops": [
-        {
-         "cost": 1.4192080044392655e-06,
-         "op": "ios19.reshape",
-         "outputs": [
-          "reshape_0"
-         ]
-        },
-        {
-         "cost": 7.096040022196327e-07,
-         "op": "ios18.cast",
-         "outputs": [
-          "reshape_0_to_int16"
-         ]
-        },
-        {
-         "cost": 7.096040022196327e-07,
-         "op": "ios18.cast",
-         "outputs": [
-          "cast_1"
-         ]
-        },
-        {
-         "cost": 1.064406003329449e-06,
-         "op": "ios19.greater_equal",
-         "outputs": [
-          "greater_equal_0"
-         ]
-        },
-        {
-         "cost": 1.3222297234052457e-06,
-         "op": "ios19.add",
-         "outputs": [
-          "add_1"
-         ]
-        },
-        {
-         "cost": 1.5374753381425376e-06,
-         "op": "ios19.select",
-         "outputs": [
-          "select_0"
-         ]
-        },
-        {
-         "cost": 7.096040022196327e-07,
-         "op": "ios18.cast",
-         "outputs": [
-          "select_0_to_int16"
-         ]
-        },
-        {
-         "cost": 0.3469115052522547,
-         "op": "ios18.gather",
-         "outputs": [
-          "embed_cast_uint16_cast_uint16"
-         ]
-        },
-        {
-         "cost": 0.00090829312284113,
-         "op": "ios18.cast",
-         "outputs": [
-          "h_in_fp16"
-         ]
-        },
-        {
-         "cost": 0.00045698497742944344,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_0"
-         ]
-        },
-        {
-         "cost": 0.0003032374436151897,
-         "op": "ios19.squeeze",
-         "outputs": [
-          "h0"
-         ]
-        },
-        {
-         "cost": 0.00090829312284113,
-         "op": "ios18.cast",
-         "outputs": [
-          "c_in_fp16"
-         ]
-        },
-        {
-         "cost": 0.00045698497742944344,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_1"
-         ]
-        },
-        {
-         "cost": 0.0003032374436151897,
-         "op": "ios19.squeeze",
-         "outputs": [
-          "c0"
-         ]
-        },
-        {
-         "cost": 0.07257780012326705,
-         "op": "ios18.linear",
-         "outputs": [
-          "linear_0"
-         ]
-        },
-        {
-         "cost": 0.07257780012326705,
-         "op": "ios18.linear",
-         "outputs": [
-          "linear_1"
-         ]
-        },
-        {
-         "cost": 0.0033849080919174284,
-         "op": "ios19.add",
-         "outputs": [
-          "gates0"
-         ]
-        },
-        {
-         "cost": 0.0007578570743705678,
-         "op": "ios19.split",
-         "outputs": [
-          "gate_split0_0",
-          "gate_split0_1"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803766,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_0"
-         ]
-        },
-        {
-         "cost": 0.0013537927412725717,
-         "op": "ios19.mul",
-         "outputs": [
-          "mul_0"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803766,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_1"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803766,
-         "op": "ios18.tanh",
-         "outputs": [
-          "tanh_0"
-         ]
-        },
-        {
-         "cost": 0.0013537927412725717,
-         "op": "ios19.mul",
-         "outputs": [
-          "mul_1"
-         ]
-        },
-        {
-         "cost": 0.0008462270229793571,
-         "op": "ios19.add",
-         "outputs": [
-          "c_new0"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803766,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_2"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803766,
-         "op": "ios18.tanh",
-         "outputs": [
-          "tanh_1"
-         ]
-        },
-        {
-         "cost": 0.0013537927412725717,
-         "op": "ios19.mul",
-         "outputs": [
-          "h_new0"
-         ]
-        },
-        {
-         "cost": 0.00045698497742944344,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_2"
-         ]
-        },
-        {
-         "cost": 0.0003032374436151897,
-         "op": "ios19.squeeze",
-         "outputs": [
-          "h1"
-         ]
-        },
-        {
-         "cost": 0.00045698497742944344,
-         "op": "ios19.slice_by_index",
-         "outputs": [
-          "slice_by_index_3"
-         ]
-        },
-        {
-         "cost": 0.0003032374436151897,
-         "op": "ios19.squeeze",
-         "outputs": [
-          "c1"
-         ]
-        },
-        {
-         "cost": 0.07257780012326705,
-         "op": "ios18.linear",
-         "outputs": [
-          "linear_2"
-         ]
-        },
-        {
-         "cost": 0.07257780012326705,
-         "op": "ios18.linear",
-         "outputs": [
-          "linear_3"
-         ]
-        },
-        {
-         "cost": 0.0033849080919174284,
-         "op": "ios19.add",
-         "outputs": [
-          "gates1"
-         ]
-        },
-        {
-         "cost": 0.0007578570743705678,
-         "op": "ios19.split",
-         "outputs": [
-          "gate_split1_0",
-          "gate_split1_1"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803766,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_3"
-         ]
-        },
-        {
-         "cost": 0.0013537927412725717,
-         "op": "ios19.mul",
-         "outputs": [
-          "mul_2"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803766,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_4"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803766,
-         "op": "ios18.tanh",
-         "outputs": [
-          "tanh_2"
-         ]
-        },
-        {
-         "cost": 0.0013537927412725717,
-         "op": "ios19.mul",
-         "outputs": [
-          "mul_3"
-         ]
-        },
-        {
-         "cost": 0.0008462270229793571,
-         "op": "ios19.add",
-         "outputs": [
-          "c_new1"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803766,
-         "op": "ios18.sigmoid",
-         "outputs": [
-          "sigmoid_5"
-         ]
-        },
-        {
-         "cost": 0.0003027643742803766,
-         "op": "ios18.tanh",
-         "outputs": [
-          "tanh_3"
-         ]
-        },
-        {
-         "cost": 0.0013537927412725717,
-         "op": "ios19.mul",
-         "outputs": [
-          "h_new1"
-         ]
-        },
-        {
-         "cost": 0.00045461963075537807,
-         "op": "ios19.stack",
-         "outputs": [
-          "stack_0"
-         ]
-        },
-        {
-         "cost": 0.00045461963075537807,
-         "op": "ios19.stack",
-         "outputs": [
-          "stack_1"
-         ]
-        },
-        {
-         "cost": 0.0007266344982729039,
-         "op": "ios18.cast",
-         "outputs": [
-          "cast_0"
-         ]
-        },
-        {
-         "cost": 0.00048536913751822877,
-         "op": "ios19.reshape",
-         "outputs": [
-          "encoder_step_fp16"
-         ]
-        },
-        {
-         "cost": 0.1852768794735551,
-         "op": "ios18.linear",
-         "outputs": [
-          "joint_enc"
-         ]
-        },
-        {
-         "cost": 0.07240822582391361,
-         "op": "ios18.linear",
-         "outputs": [
-          "joint_pred"
-         ]
-        }
-       ],
+       "cpu_ops": {
+        "omitted_entries": 50,
+        "detail": "see full record"
+       },
        "estimated_cost_share_by_preferred_device": {
         "cpu": 1
        },
        "operators_by_preferred_device": {
         "cpu": {
-         "ios16.reduce_max": 1,
-         "ios18.cast": 9,
-         "ios18.gather": 1,
-         "ios18.linear": 7,
-         "ios18.reduce_argmax": 2,
-         "ios18.relu": 1,
-         "ios18.sigmoid": 6,
-         "ios18.softmax": 1,
-         "ios18.tanh": 4,
-         "ios19.add": 6,
-         "ios19.greater_equal": 1,
-         "ios19.mul": 6,
-         "ios19.reshape": 5,
-         "ios19.select": 1,
-         "ios19.slice_by_index": 6,
-         "ios19.split": 2,
-         "ios19.squeeze": 4,
-         "ios19.stack": 2
+         "omitted_entries": 18,
+         "detail": "see full record"
         }
        },
        "ops_with_usage_by_preferred_device": {
@@ -2366,102 +546,14 @@
   "platform": "macOS-27.0-arm64-arm-64bit",
   "machine": "arm64"
  },
- "pass_pipeline": [
-  "common::lower_complex_dialect_ops",
-  "common::update_output_dtypes",
-  "common::cast_optimization",
-  "common::noop_elimination",
-  "common::int_op_canonicalization",
-  "common::nullify_redundant_quantization_zero_point",
-  "common::dequantize_quantize_pair_elimination",
-  "common::distributive_quantized_binary_op_scale_normalization",
-  "common::dequantize_to_constexpr",
-  "common::canonicalize_quantized_lut_pattern",
-  "common::const_elimination",
-  "common::sanitize_input_output_names",
-  "common::divide_to_multiply",
-  "common::select_optimization",
-  "common::add_conv_transpose_output_shape",
-  "common::const_elimination",
-  "common::const_deduplication",
-  "common::loop_invariant_elimination",
-  "common::remove_symbolic_reshape",
-  "common::noop_elimination",
-  "common::fuse_matmul_weight_bias",
-  "common::fuse_linear_bias",
-  "common::fuse_gelu_tanh_approximation",
-  "common::fuse_gelu_exact",
-  "common::fuse_leaky_relu",
-  "common::rank0_expand_dims_swap",
-  "common::fuse_squeeze_expand_dims",
-  "common::compose_conv1d",
-  "common::use_reflection_padding",
-  "common::merge_consecutive_paddings",
-  "common::fuse_pad_conv",
-  "common::image_input_preprocess",
-  "common::replace_stack_reshape",
-  "common::reduce_transposes",
-  "common::fuse_dilated_conv",
-  "common::fuse_conv_scale",
-  "common::fuse_conv_bias",
-  "common::fuse_onehot_matmul_to_gather",
-  "common::fuse_layernorm_or_instancenorm",
-  "common::fuse_elementwise_to_batchnorm",
-  "common::fuse_reduce_mean",
-  "common::fuse_conv_batchnorm",
-  "common::fuse_conv_scale",
-  "common::fuse_conv_bias",
-  "common::fuse_conv_batchnorm",
-  "common::detect_concat_interleave",
-  "common::concat_to_pixel_shuffle",
-  "common::fuse_prelu",
-  "common::prelu_to_lrelu",
-  "common::merge_consecutive_relus",
-  "common::merge_consecutive_reshapes",
-  "common::merge_consecutive_transposes",
-  "common::fuse_transpose_matmul",
-  "common::expand_high_rank_reshape_and_transpose",
-  "common::fuse_stack_split",
-  "common::reduce_transposes",
-  "common::remove_redundant_ops",
-  "common::dedup_op_and_var_names",
-  "common::add_fp16_cast",
-  "common::add_int16_cast",
-  "common::update_output_dtypes",
-  "common::guard_negative_gather_indices",
-  "common::const_elimination",
-  "common::dead_code_elimination",
-  "common::cast_optimization",
-  "common::dead_code_elimination",
-  "common::add_int16_cast",
-  "common::const_elimination",
-  "common::dead_code_elimination",
-  "common::cast_optimization",
-  "common::dead_code_elimination",
-  "common::const_elimination",
-  "common::canonicalize_inplace_pattern",
-  "common::prefer_state_in_downstream",
-  "common::const_elimination",
-  "common::dead_code_elimination",
-  "common::dead_code_elimination",
-  "common::const_elimination",
-  "common::cast_optimization",
-  "common::dead_code_elimination",
-  "common::const_elimination",
-  "common::const_deduplication",
-  "common::dead_code_elimination",
-  "common::merge_affine_dequantize_with_consecutive_ops",
-  "common::expand_dynamic_linear",
-  "common::fuse_transpose_matmul",
-  "common::dead_code_elimination",
-  "common::const_deduplication",
-  "common::loop_invariant_elimination",
-  "common::noop_elimination",
-  "common::dedup_op_and_var_names",
-  "common::reduce_transposes",
-  "common::remove_redundant_ops",
-  "common::topological_reorder",
-  "common::dead_code_elimination"
- ],
- "peak_rss_mb": 872.6
+ "pass_pipeline": {
+  "omitted_entries": 95,
+  "detail": "see full record"
+ },
+ "peak_rss_mb": 872.6,
+ "_evidence": {
+  "sha256": "d9b225257a4517231fe2a276ca7438184757ff3d567b560648e41b2f0469904f",
+  "bytes": 55799,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/builds/seed0-decoder.json"
+ }
 }

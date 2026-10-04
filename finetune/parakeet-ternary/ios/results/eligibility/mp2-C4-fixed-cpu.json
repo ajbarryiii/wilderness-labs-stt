@@ -107,5 +107,10 @@
   "results/probes/stress.json": "501b9f754c270a26d9f8015b6f3cc5cb2ff876de0e5c16b3cc3669528f0cbe9e"
  },
  "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
- "built": "2026-10-03 07:00"
+ "built": "2026-10-03 07:00",
+ "_evidence": {
+  "sha256": "bfb0d691377620740ce649fb242dfff52b71e894a12d079852bbeea3d1be04c5",
+  "bytes": 2921,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/eligibility/mp2-C4-fixed-cpu.json"
+ }
 }

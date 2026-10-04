@@ -113,5 +113,10 @@
    1.0004517093391125
   ]
  },
- "note": "Fingerprints (64 seeded values per tensor) stay in the artifact directories; this summary holds no weight values. B0 mapping: module_* names -> encoder.* NeMo keys; const_K [1024,1,9] -> depthwise_conv.weight * batch_norm gamma / sqrt(running_var + 1e-5) (BatchNorm folded); op_K [1,8,128,375] -> linear_pos(rel_pos_emb(188)) per layer, laid out [1, head, d_k, position]."
+ "note": "Fingerprints (64 seeded values per tensor) stay in the artifact directories; this summary holds no weight values. B0 mapping: module_* names -> encoder.* NeMo keys; const_K [1024,1,9] -> depthwise_conv.weight * batch_norm gamma / sqrt(running_var + 1e-5) (BatchNorm folded); op_K [1,8,128,375] -> linear_pos(rel_pos_emb(188)) per layer, laid out [1, head, d_k, position].",
+ "_evidence": {
+  "sha256": "96b3b8f3bdd5a6154c8218b5d544b47d8340b8db5063feb06aa349d263e0bfa1",
+  "bytes": 4069,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/g0_probe.summary.json"
+ }
 }

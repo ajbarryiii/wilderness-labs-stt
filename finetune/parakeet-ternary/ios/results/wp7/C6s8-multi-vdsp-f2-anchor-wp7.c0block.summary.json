@@ -299,5 +299,10 @@
    0,
    1
   ]
+ },
+ "_evidence": {
+  "sha256": "4eadac2cdc9421816fd1c1bdaeedfe5ebe91e82ca663311103c5ab630eee1546",
+  "bytes": 8768,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/wp7/C6s8-multi-vdsp-f2-anchor-wp7.c0block.summary.json"
  }
 }

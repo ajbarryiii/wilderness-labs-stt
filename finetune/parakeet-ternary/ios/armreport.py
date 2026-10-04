@@ -42,6 +42,8 @@ import statistics
 import sys
 from pathlib import Path
 
+from mil import evidence
+
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
@@ -100,7 +102,7 @@ def per_clip_median(records: list[dict], key) -> dict[str, float]:
 
 
 def load_run(path: str) -> tuple[dict, dict, list[dict], list[dict], dict]:
-    lines = [json.loads(l) for l in Path(path).read_text().splitlines() if l.strip()]
+    lines = [json.loads(l) for l in evidence.read_text(Path(path)).splitlines() if l.strip()]
     load = next((l for l in lines if l.get("record") == "load"), {})
     end = next((l for l in lines if l.get("record") == "end"), {})
     diagnostics = [l for l in lines if l.get("record") == "diagnostic"]
@@ -149,16 +151,16 @@ def thermal_summary(blocks: list[dict]) -> dict:
 def check_c0_baseline(bload: dict, run_dir: Path) -> dict | str:
     """The baseline must be the pinned published C0 export on its prescribed compute units (review WP7 r1
     finding 3); WP5's migrated runs predate the check and are labelled unverified."""
-    pinned = json.loads((HERE / "c0.json").read_text())
+    pinned = json.loads(evidence.read_text((HERE / "c0.json")))
     ident = bload.get("c0_identity") or {}
     if not ident:
-        if (run_dir / "MIGRATED").exists():
+        if evidence.exists((run_dir / "MIGRATED")):
             return "unverified: WP5 run recorded before C0 identity checks"
         raise SystemExit("baseline has no C0 identity record (c0_identity)")
     problems = []
     if not ident.get("verified") or ident.get("revision") != pinned["revision"] or ident.get("repo") != pinned["repo"]:
         problems.append(f"C0 identity {ident} is not the pinned {pinned['repo']}@{pinned['revision']}")
-    if ident.get("c0_json_sha256") != __import__("hashlib").sha256((HERE / "c0.json").read_bytes()).hexdigest():
+    if ident.get("c0_json_sha256") != __import__("hashlib").sha256(evidence.read_bytes((HERE / "c0.json"))).hexdigest():
         problems.append("c0.json changed since the baseline ran")
     if bload.get("compute_units") != "cpuAndNeuralEngine" or bload.get("preprocessor_units") != "cpuOnly":
         problems.append(f"C0 ran on {bload.get('compute_units')} / preprocessor {bload.get('preprocessor_units')}, "
@@ -245,8 +247,8 @@ def main() -> None:
     if not eligible and not args.smoke:
         raise SystemExit(f"{completeness['timed_per_clip']} timed calls / {completeness['warmups']} warm-ups per clip "
                          f"(< {args.min_timed} / 3): pass --smoke")
-    clips = {c["id"]: c for c in json.loads((HERE / "clips.json").read_text())["clips"]}
-    trace = {t["id"]: t for t in json.loads((HERE / "traces.json").read_text())["clips"]}
+    clips = {c["id"]: c for c in json.loads(evidence.read_text((HERE / "clips.json")))["clips"]}
+    trace = {t["id"]: t for t in json.loads(evidence.read_text((HERE / "traces.json")))["clips"]}
     mode = load.get("mode") or (timed[0]["mode"] if timed else None)
 
     out: dict = {"label": "baseline-eligible" if eligible else "smoke",
@@ -364,7 +366,7 @@ def main() -> None:
                            for b in sorted({c["bucket"] for c in timed})},
             "all_clips": {s: paired(timed, btimed, s, args.bootstrap) for s in PAIRED_STAGES}}
     if args.plan:
-        out["compute_plan"] = json.loads(Path(args.plan).read_text())
+        out["compute_plan"] = json.loads(evidence.read_text(Path(args.plan)))
     text = json.dumps(out, indent=1)
     if args.out:
         dest = Path(args.out).resolve()
@@ -372,7 +374,7 @@ def main() -> None:
             import artifacts
             dest = artifacts.check(dest)
         dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(text + "\n")
+        evidence.write_text(dest, text + "\n")
     print(text)
 
 

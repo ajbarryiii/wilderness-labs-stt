@@ -29,6 +29,8 @@ import sys
 import time
 from pathlib import Path
 
+from mil import evidence
+
 import numpy as np
 
 SENTINEL = 0xDEADBEEF
@@ -87,7 +89,7 @@ def cmd_extract(args) -> None:
 
     t0 = time.time()
     model = Path(args.model)
-    mil = (model / "model.mil").read_text()
+    mil = evidence.read_text((model / "model.mil"))
     blobs = Blobs(model / "weights" / "weight.bin")
     reader = _BlobStorageReader(str(model / "weights" / "weight.bin"))
     ops = [m.groups() for m in LUT_OP.finditer(mil)]
@@ -138,7 +140,7 @@ def cmd_extract(args) -> None:
         "seconds": round(time.time() - t0, 1), "tensors": tensors,
     }
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(result) + "\n")
+    evidence.write_text(out, json.dumps(result) + "\n")
     summary = {k: v for k, v in result.items() if k != "tensors"}
     print(json.dumps(summary, indent=1))
 
@@ -173,7 +175,7 @@ def cmd_compare(args) -> None:
     import torch
 
     sys.path.insert(0, str(Path(__file__).resolve().parent))
-    probe = json.loads(Path(args.probe).read_text())
+    probe = json.loads(evidence.read_text(Path(args.probe)))
     import tarfile
 
     with tarfile.open(args.nemo, "r:") as tar:  # B0's model_weights.ckpt, read from the pinned .nemo

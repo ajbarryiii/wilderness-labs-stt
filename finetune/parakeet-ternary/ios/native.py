@@ -30,6 +30,8 @@ import sys
 import time
 from pathlib import Path
 
+from mil import evidence
+
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
@@ -120,7 +122,7 @@ def write_blob(out: Path, stem: str, tensors: list[tuple[str, np.ndarray]], meta
         (out / f"{stem}.f16bin").write_bytes(half)
         manifest["fp16_copy"] = {"file": f"{stem}.f16bin", "bytes": len(half), "sha256": sha256(half),
                                  "note": "exact: every FP32 value is FP16-representable; `widen` rebuilds the FP32 blob"}
-    (out / f"{stem}.json").write_text(json.dumps(manifest, indent=1) + "\n")
+    evidence.write_text((out / f"{stem}.json"), json.dumps(manifest, indent=1) + "\n")
     return manifest
 
 
@@ -162,11 +164,11 @@ def cmd_widen(args) -> None:
     import artifacts
 
     d = artifacts.check(args.dir)
-    for manifest_path in sorted(d.glob("*.json")):
-        m = json.loads(manifest_path.read_text())
+    for manifest_path in sorted(evidence.glob(d, "*.json")):
+        m = json.loads(evidence.read_text(manifest_path))
         if "fp16_copy" not in m:
             continue
-        half = (d / m["fp16_copy"]["file"]).read_bytes()
+        half = evidence.read_bytes((d / m["fp16_copy"]["file"]))
         if sha256(half) != m["fp16_copy"]["sha256"]:
             raise ValueError(f"{m['fp16_copy']['file']}: SHA-256 mismatch")
         full = np.frombuffer(half, "<f2").astype("<f4").tobytes()
@@ -196,7 +198,7 @@ def cmd_reference(args) -> None:
     state = model.state_dict()
     same = all(np.array_equal(state[k].numpy(), raw[k].astype(np.float32)) for k in DECODER_KEYS)
     manifest = clipmod.load_manifest()
-    traces = {t["id"]: t for t in json.loads((HERE / "traces.json").read_text())["clips"]}
+    traces = {t["id"]: t for t in json.loads(evidence.read_text((HERE / "traces.json")))["clips"]}
     import traces as tracemod
 
     kinds = set(args.kinds.split(","))
@@ -222,7 +224,7 @@ def cmd_reference(args) -> None:
                  greedy_tokens=np.asarray(g_trace.tokens, np.int64), greedy_steps=len(g_trace))
         index["clips"][clip["id"]] = {"frames": length, "enc_sha256": sha256(data), "replay_steps": len(trace),
                                       "greedy_tokens": len(g_trace.tokens)}
-    (out / "index.json").write_text(json.dumps(index, indent=1) + "\n")
+    evidence.write_text((out / "index.json"), json.dumps(index, indent=1) + "\n")
     peak = __import__("resource").getrusage(__import__("resource").RUSAGE_SELF).ru_maxrss / 1024
     print(json.dumps({"clips": len(index["clips"]), "decoder_joint_equal": same, "seconds": round(time.time() - t0, 1),
                       "peak_rss_mb": round(peak)}))
@@ -231,8 +233,8 @@ def cmd_reference(args) -> None:
 # --- gates ---------------------------------------------------------------------------------------------------
 
 def load_blob(d: Path, stem: str) -> dict[str, np.ndarray]:
-    m = json.loads((d / f"{stem}.json").read_text())
-    blob = (d / m["file"]).read_bytes()
+    m = json.loads(evidence.read_text((d / f"{stem}.json")))
+    blob = evidence.read_bytes((d / m["file"]))
     if sha256(blob) != m["sha256"]:
         raise ValueError(f"{m['file']}: SHA-256 mismatch")
     return {t["name"]: np.frombuffer(blob, "<f4", count=int(np.prod(t["shape"])), offset=t["offset"]).reshape(t["shape"])
@@ -283,7 +285,7 @@ def cmd_gate_frontend(args) -> None:
     feat.window = torch.from_numpy(consts["window"].copy())
     feat.fb = torch.from_numpy(consts["fb"].copy())[None]
     sw = Path(args.swift)
-    records = {json.loads(l)["clip"]: json.loads(l) for l in (sw / "features.jsonl").read_text().splitlines() if l.strip()}
+    records = {json.loads(l)["clip"]: json.loads(l) for l in evidence.read_text((sw / "features.jsonl")).splitlines() if l.strip()}
     write = None
     if args.write_ref:
         import artifacts
@@ -336,7 +338,7 @@ def write_summary(out, doc: dict) -> None:
     if not dest.is_relative_to((HERE / "results").resolve()):
         dest = artifacts.check(dest)
     dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(json.dumps(doc, indent=1) + "\n")
+    evidence.write_text(dest, json.dumps(doc, indent=1) + "\n")
 
 
 def cmd_gate_frontend_encoder(args) -> None:
@@ -347,7 +349,7 @@ def cmd_gate_frontend_encoder(args) -> None:
     import clips as clipmod
 
     d = Path(args.encoded)
-    meta = {json.loads(l)["id"]: json.loads(l) for l in (d / "encode.jsonl").read_text().splitlines() if l.strip()}
+    meta = {json.loads(l)["id"]: json.loads(l) for l in evidence.read_text((d / "encode.jsonl")).splitlines() if l.strip()}
     rows = []
     for clip in clipmod.load_manifest()["clips"]:
         keys = {tag: f"{clip['id']}.{tag}" for tag in ("vdsp", "ref64", "ref32")}
@@ -389,12 +391,12 @@ def cmd_gate_frontend_encoder(args) -> None:
 def cmd_gate_f2(args) -> None:
     """F2 diagnostic replay (sections logits, h, c) vs the reference's replay, and F2 free tokens vs greedy."""
     ref_dir, diag_dir = Path(args.ref), Path(args.diag)
-    lines = [json.loads(l) for l in Path(args.results).read_text().splitlines() if l.strip()]
+    lines = [json.loads(l) for l in evidence.read_text(Path(args.results)).splitlines() if l.strip()]
     diags = [l for l in lines if l.get("record") == "diagnostic"]
     rows = []
     for d in diags:
         ref = np.load(ref_dir / "ref" / f"{d['clip']}.npz")
-        blob = (diag_dir / d["arrays"]["file"]).read_bytes()
+        blob = evidence.read_bytes((diag_dir / d["arrays"]["file"]))
         if sha256(blob) != d["arrays"]["sha256"]:
             raise ValueError(d["arrays"]["file"])
         sec = {s["name"]: np.frombuffer(blob, "<f4", count=int(np.prod(s["shape"])), offset=s["offset"]).reshape(s["shape"])

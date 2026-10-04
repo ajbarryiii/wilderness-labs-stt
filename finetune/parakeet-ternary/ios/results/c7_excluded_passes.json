@@ -1,5 +1,10 @@
 {
  "excluded_passes": [],
  "source": "probes.py folding",
- "date": "2026-10-02"
+ "date": "2026-10-02",
+ "_evidence": {
+  "sha256": "c2b73755b104a820e3f367f59d5e94d2a9052cdfc19eba2bd4b0d24968cacbcf",
+  "bytes": 82,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/c7_excluded_passes.json"
+ }
 }

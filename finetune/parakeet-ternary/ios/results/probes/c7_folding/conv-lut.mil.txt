@@ -8,3 +8,5 @@ main[CoreML9](%x: (1, 256, 8, fp32)(Tensor)) {
     %out: (1, 256, 8, fp32)(Tensor) = cast(x=%row_scale, dtype="fp32", name="cast_2")
   } -> (%out)
 }
+
+Full record: SHA-256 09c255c9b7b120f509f5f4e8228b380f17fee003480e8c06c838ceb794f96934; 612 bytes; 504c07c0cdecde864a45e1d0612f59d24896f914/probes/c7_folding/conv-lut.mil.txt

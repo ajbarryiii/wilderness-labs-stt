@@ -317,5 +317,10 @@
   }
  },
  "complete": true,
- "design": "half A in the listed arm order, half B in reverse (position counterbalanced)"
+ "design": "half A in the listed arm order, half B in reverse (position counterbalanced)",
+ "_evidence": {
+  "sha256": "ab9ae6d558343ef187bc96a6ca84e2535926d7b3c4baa3f39887b7955f12e517",
+  "bytes": 7330,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/wp7/manifest.json"
+ }
 }

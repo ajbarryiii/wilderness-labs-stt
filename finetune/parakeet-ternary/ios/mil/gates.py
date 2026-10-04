@@ -36,6 +36,9 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from mil import evidence
+
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     __package__ = "mil"
@@ -197,7 +200,7 @@ def load_decoders(model: str, units: str):
 
 
 def traces_by_id() -> dict:
-    return {r["id"]: r for r in json.loads((IOS / "traces.json").read_text())["clips"]}
+    return {r["id"]: r for r in json.loads(evidence.read_text((IOS / "traces.json")))["clips"]}
 
 
 # --- encoder gate ---------------------------------------------------------------------------------------
@@ -295,7 +298,7 @@ def encoder_gate(args) -> dict:
 def write(doc: dict, name: str) -> None:
     GATES.mkdir(parents=True, exist_ok=True)
     text = json.dumps(doc, indent=0, default=float) + "\n"
-    (GATES / name).write_text(text)
+    evidence.write_text((GATES / name), text)
 
 
 def decoder_gate(args) -> dict:
@@ -361,10 +364,10 @@ def g0_gate(args) -> dict:
 
 def summary(args) -> None:
     rows = []
-    for p in sorted(GATES.glob("*.json")):
+    for p in sorted(evidence.glob(GATES, "*.json")):
         if p.name.endswith("-gate3.json") or p.name in ("summary.json",):
             continue
-        d = json.loads(p.read_text())
+        d = json.loads(evidence.read_text(p))
         s = d["summary"]
         row = {"file": p.name, "model": d.get("model", "c0"), "arm": d["arm"], "variant": d.get("variant"), "units": d["units"]}
         if "gate4_encoder" in s:
@@ -386,7 +389,7 @@ def summary(args) -> None:
             row["g4_enc_rel_max"] = s["rel_max"]
             row["g4_enc_abs_max"] = s["abs_max"]
         rows.append(row)
-    (GATES / "summary.json").write_text(json.dumps(rows, indent=1) + "\n")
+    evidence.write_text((GATES / "summary.json"), json.dumps(rows, indent=1) + "\n")
     cols = ["model", "arm", "variant", "units", "g4_enc", "g4_enc_rel_max", "g4_enc_abs_max", "g5", "g5_rel_max",
             "g4_heads", "token_rel_max", "duration_rel_max", "h_rel_max", "c_rel_max", "token_agree", "token_decisive",
             "duration_agree", "duration_decisive"]
@@ -399,7 +402,7 @@ def summary(args) -> None:
     lines = ["| " + " | ".join(cols) + " |", "|" + "---|" * len(cols)]
     for r in rows:
         lines.append("| " + " | ".join(fmt(r.get(c)) for c in cols) + " |")
-    (GATES / "summary.md").write_text("\n".join(lines) + "\n")
+    evidence.write_text((GATES / "summary.md"), "\n".join(lines) + "\n")
     print("\n".join(lines))
 
 

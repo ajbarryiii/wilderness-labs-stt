@@ -4,6 +4,65 @@ Design: [DESIGN.md](DESIGN.md). Nothing here is a model or audio; generated weig
 outputs and logs live outside Git (NixOS `/mnt/hd/wilderness-labs-stt/parakeet-ios/`, Mac
 `/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/`).
 
+## Evidence storage and verification
+
+The result paths used throughout this README are logical names. Since the evidence
+cleanup, files in `ios/results/` are compact, human-readable summaries. Their
+`_evidence` blocks (or text footers) cite the full record's SHA-256, byte count and
+relative archive path. `results/INDEX.json` maps every active logical result to
+that immutable full record. Summaries alone never authorize a timing run.
+
+Full records resolve under `IOS_RESULTS_ROOT`, set in the environment or the
+untracked `mil/local.json`. The default is `<artifacts>/results-archive`:
+`/mnt/hd/wilderness-labs-stt/parakeet-ios/results-archive` on Linux (mounted disk
+required), or `/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/results-archive`
+on the Mac. Overrides must remain in the machine's allowed artifact area, outside
+the repository. Existing records use `<source-commit>/<result-relative-path>`;
+new records use `live/<SHA-256>/<result-relative-path>`.
+
+Python result readers/writers use `mil/evidence.py`. Reads verify the original
+full bytes, so historical eligibility input hashes still apply. Writes publish
+immutable full bytes outside Git, a cited summary and the current index. Failed
+numerical results retain their original NaN/Infinity values in the full record;
+the display uses strings. The Swift arm and pipeline checks use
+`ResultEvidence.read`, verify archive size/hash and the original prerequisite
+digests, and still enforce revision, components and executable identity. Missing,
+tampered, stale or quarantined records are refused. A newly built executable
+still needs its own reviewed pipeline gates before it can time an arm.
+
+Every exchange of new result commits between machines must include the corresponding
+full records. Git transfers the summaries/index only. Export from the producer,
+transfer the bundle through the existing authorized artifact transport, update
+the receiver to the matching Git index, then import and verify **before** any
+experiment. Import refuses a different index, missing/extra members, altered
+bytes and immutable-file collisions.
+
+From `finetune/parakeet-ternary/` on Linux:
+
+```sh
+./python ios/mil/evidence.py verify
+./python ios/mil/evidence.py export --out /mnt/hd/wilderness-labs-stt/parakeet-ios/scratch/evidence-BUNDLE_ID.tar.gz
+# Transfer this bundle to the receiver's artifacts, then update its Git checkout.
+```
+
+On the Mac, from the same project directory:
+
+```sh
+A=/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios
+ios/macguard --rss-cap 1G --timeout 300 -- ios/pyenv/.venv/bin/python ios/mil/evidence.py import --bundle "$A/scratch/evidence-BUNDLE_ID.tar.gz"
+ios/macguard --rss-cap 1G --timeout 300 -- ios/pyenv/.venv/bin/python ios/mil/evidence.py verify
+```
+
+For Mac-produced records, run the guarded export on the Mac, transfer its bundle
+to `/mnt/hd`, update Linux's checkout, and use `./python ios/mil/evidence.py import
+--bundle PATH` followed by `verify`. Export captures immutable entries from one
+index snapshot even if another writer publishes while the bundle is being made.
+Use a new bundle filename for every export.
+
+The cleanup inventory, byte totals and validation are in
+[plans/evidence-cleanup-report.md](plans/evidence-cleanup-report.md).
+No branch history was rewritten.
+
 ## S0 tooling: reference, surrogates, golden outputs, Mac guard
 
 | File | What |

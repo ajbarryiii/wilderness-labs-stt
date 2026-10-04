@@ -31,3 +31,5 @@ CPU_AND_GPU compute plans (plain multifunction): ops on the GPU / ops with usage
 | C3 | 4/1393 (0.000) | 7/1393 (0.002) | 6/1393 (0.002) | 9/1393 (0.002) |
 | C6s8 | 4/1393 (0.000) | 7/1393 (0.002) | 6/1393 (0.002) | 9/1393 (0.002) |
 | C1 | 339/1393 (0.123) | 342/1393 (0.380) | 341/1393 (0.501) | 344/1393 (0.489) |
+
+Full record: SHA-256 1f37e74867d87caae53971edfb96f0342ea4702e177fe7417b83baaf54110a47; 3431 bytes; 504c07c0cdecde864a45e1d0612f59d24896f914/wp6a_table.txt
