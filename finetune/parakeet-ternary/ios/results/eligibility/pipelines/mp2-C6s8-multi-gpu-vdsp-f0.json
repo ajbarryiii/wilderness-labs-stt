@@ -1,0 +1,191 @@
+{
+ "design_revision": 10,
+ "code_version": "wp7-pipegate-5",
+ "kind": "pipeline",
+ "model": "mp2",
+ "arm": "C6s8",
+ "variant": "multi",
+ "backend": "gpu",
+ "compute_units": "cpuAndGPU",
+ "front_end": "vdsp",
+ "decode": "f0",
+ "decoder_precision": "fp32",
+ "encoder_record": {
+  "file": "mp2-C6s8-multi-gpu.json",
+  "sha256": "7378074473455ac48f31a9a2a4eb53979ccdbbbb54fe2d98e86e8ce7e896d694"
+ },
+ "components": {
+  "compute_units": "cpuAndGPU",
+  "configuration": {
+   "allow_low_precision_accumulation_on_gpu": true,
+   "compute_units": "cpuAndGPU",
+   "label_loop": {
+    "blank": 1024,
+    "durations": [
+     0,
+     1,
+     2,
+     3,
+     4
+    ],
+    "max_symbols": 10
+   }
+  },
+  "decode": {
+   "kind": "f0",
+   "manifest_sha256": "46ee70abf046c9686d8dce8ed12ec3f6dce2369ba1aa13e467fde092db93f638",
+   "models_sha256": {
+    "Decoder": "24d02ae1fa45d90124b3f5133577ca0dfbf4d84fcb8f9c07555c2d5d80b03783",
+    "JointDecision": "af852997542b56aa034a0a87d83d57462598ff50fd09d104a1f3c49dbf17bbb8"
+   },
+   "precision": "fp32"
+  },
+  "encoder": {
+   "arm": "C6s8",
+   "model": "mp2",
+   "package": "mp2/C6s8/multi.mlmodelc",
+   "sha256": "c3a4fd6ce888250861f88099adba4ba6f7313e87999fb7fd1d16be2de36b910d",
+   "variant": "multi"
+  },
+  "executable_sha256": "726372ae7d7539be0d8d6da19af463084fb186a4400a8b8e46b6a45b8575d530",
+  "front_end": {
+   "constants_sha256": "efe8a64a770fa51eeafaca31c1f7f744c900e11f5f19ed1aa39716da8d4f20d3",
+   "kind": "vdsp",
+   "manifest_sha256": "8b754605cf5f6743535695457b6ac72754c7489ca132a08f0c759211b714485e",
+   "provenance": {
+    "export_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/pilot-P2-lr5e-4/export",
+    "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6",
+    "model": "mp2"
+   }
+  }
+ },
+ "build": {
+  "commit": "ee63bdc62cb49b3ff79f0e52846a077b7d5177a7",
+  "clean": true,
+  "modified_tracked_files": 0,
+  "executable_sha256": "726372ae7d7539be0d8d6da19af463084fb186a4400a8b8e46b6a45b8575d530",
+  "built_from_commit": "ee63bdc62cb49b3ff79f0e52846a077b7d5177a7"
+ },
+ "eligible": true,
+ "timing_allowed": true,
+ "selection_eligible": true,
+ "reasons": [],
+ "checks": {
+  "encoder_record": {
+   "pass": true,
+   "record": "mp2-C6s8-multi-gpu.json"
+  },
+  "decoder_precision": {
+   "pass": true,
+   "precision": "fp32"
+  },
+  "problems": {
+   "pass": true,
+   "list": []
+  },
+  "encoder": {
+   "pass": true,
+   "clips": 82,
+   "passed": 82,
+   "max_rel": 0.012141441936855136,
+   "max_abs": 0.173125682859665,
+   "reference": "FP32 reference encoder (fp16s scales) on FP64-evaluated reference features (ref64)",
+   "diag_vs_reference_on_fp32_features": {
+    "max_rel": 0.3237932678745325,
+    "over_ceiling": [
+     "silence-3s"
+    ]
+   }
+  },
+  "coverage": {
+   "pass": true,
+   "missing_or_incomplete": []
+  },
+  "finite": {
+   "pass": true,
+   "free": 0,
+   "replay": 0,
+   "replay_recount": 0,
+   "values": 38713897
+  },
+  "decisions": {
+   "pass": true,
+   "token": {
+    "steps": 3025,
+    "agree_all": 0.9996694214876033,
+    "decisive_fraction": 0.9662809917355372,
+    "agree_decisive": 1.0,
+    "reference_margin": {
+     "n": 3025,
+     "min": 0.0101,
+     "p1": 0.2829,
+     "p5": 1.474,
+     "p25": 6.3857,
+     "median": 8.9682
+    },
+    "pipeline_margin": {
+     "n": 3025,
+     "min": 0.0002,
+     "p1": 0.2649,
+     "p5": 1.478,
+     "p25": 6.3368,
+     "median": 8.9688
+    },
+    "reference_margin_of_disagreements": [
+     0.3956
+    ],
+    "pass": true
+   },
+   "duration": {
+    "steps": 3025,
+    "agree_all": 0.9976859504132232,
+    "decisive_fraction": 0.8502479338842975,
+    "agree_decisive": 0.999611197511664,
+    "reference_margin": {
+     "n": 3025,
+     "min": 0.0017,
+     "p1": 0.0588,
+     "p5": 0.3049,
+     "p25": 1.8061,
+     "median": 4.4218
+    },
+    "pipeline_margin": {
+     "n": 3025,
+     "min": 0.0005,
+     "p1": 0.0684,
+     "p5": 0.297,
+     "p25": 1.7782,
+     "median": 4.4269
+    },
+    "reference_margin_of_disagreements": [
+     0.0087,
+     0.01,
+     0.0868,
+     0.4792,
+     0.6579,
+     0.7535,
+     1.1267
+    ],
+    "pass": true
+   }
+  },
+  "free_decoding": {
+   "pass": true,
+   "clips": 64,
+   "identical": 64
+  },
+  "wer": {
+   "pass": true,
+   "reference_wer_pct": 2.711,
+   "pipeline_wer_pct": 2.711,
+   "clips": 64,
+   "limit_points": 0.2
+  }
+ },
+ "inputs": {
+  "results/pipegates/mp2-C6s8-multi-gpu-vdsp.json": "adff4f28884685f46fe7ea1c5fd291908f34ed916d40f7825a08401edc0b665e",
+  "results/eligibility/mp2-C6s8-multi-gpu.json": "7378074473455ac48f31a9a2a4eb53979ccdbbbb54fe2d98e86e8ce7e896d694"
+ },
+ "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
+ "built": "2026-10-03 18:10"
+}

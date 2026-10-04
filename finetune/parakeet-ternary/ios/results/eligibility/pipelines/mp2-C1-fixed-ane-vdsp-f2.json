@@ -1,0 +1,196 @@
+{
+ "design_revision": 10,
+ "code_version": "wp7-pipegate-5",
+ "kind": "pipeline",
+ "model": "mp2",
+ "arm": "C1",
+ "variant": "fixed",
+ "backend": "ane",
+ "compute_units": "cpuAndNeuralEngine",
+ "front_end": "vdsp",
+ "decode": "f2",
+ "decoder_precision": "fp32",
+ "encoder_record": {
+  "file": "mp2-C1-fixed-ane.json",
+  "sha256": "daf6cfb82daae9827949cc76af8b4c17c0334ef2466eb2e38f165e68cb4b402d"
+ },
+ "components": {
+  "compute_units": "cpuAndNeuralEngine",
+  "configuration": {
+   "allow_low_precision_accumulation_on_gpu": true,
+   "compute_units": "cpuAndNeuralEngine",
+   "label_loop": {
+    "blank": 1024,
+    "durations": [
+     0,
+     1,
+     2,
+     3,
+     4
+    ],
+    "max_symbols": 10
+   }
+  },
+  "decode": {
+   "kind": "f2",
+   "manifest_sha256": "39bc3a7d199bc7de86899e4de2ab7afc741feca467239e94fe9921e340201c64",
+   "native_weights_sha256": "e7db077a4f2b2db2bdd3ab887e9ecc0baade7b914379d4a2ba7e8653136eee71",
+   "precision": "fp32",
+   "provenance": {
+    "export_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/pilot-P2-lr5e-4/export",
+    "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6",
+    "model": "mp2"
+   }
+  },
+  "encoder": {
+   "arm": "C1",
+   "model": "mp2",
+   "package": "mp2/C1/fixed.mlmodelc",
+   "sha256": "e06d384ef8bcbfa3edad56fa17acbb373338cba3753eb903e406fa3ccf059bee",
+   "variant": "fixed"
+  },
+  "executable_sha256": "726372ae7d7539be0d8d6da19af463084fb186a4400a8b8e46b6a45b8575d530",
+  "front_end": {
+   "constants_sha256": "efe8a64a770fa51eeafaca31c1f7f744c900e11f5f19ed1aa39716da8d4f20d3",
+   "kind": "vdsp",
+   "manifest_sha256": "8b754605cf5f6743535695457b6ac72754c7489ca132a08f0c759211b714485e",
+   "provenance": {
+    "export_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/pilot-P2-lr5e-4/export",
+    "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6",
+    "model": "mp2"
+   }
+  }
+ },
+ "build": {
+  "commit": "ee63bdc62cb49b3ff79f0e52846a077b7d5177a7",
+  "clean": true,
+  "modified_tracked_files": 0,
+  "executable_sha256": "726372ae7d7539be0d8d6da19af463084fb186a4400a8b8e46b6a45b8575d530",
+  "built_from_commit": "ee63bdc62cb49b3ff79f0e52846a077b7d5177a7"
+ },
+ "eligible": true,
+ "timing_allowed": true,
+ "selection_eligible": true,
+ "reasons": [],
+ "checks": {
+  "encoder_record": {
+   "pass": true,
+   "record": "mp2-C1-fixed-ane.json"
+  },
+  "decoder_precision": {
+   "pass": true,
+   "precision": "fp32"
+  },
+  "problems": {
+   "pass": true,
+   "list": []
+  },
+  "encoder": {
+   "pass": true,
+   "clips": 82,
+   "passed": 82,
+   "max_rel": 0.014957472582273873,
+   "max_abs": 0.18922695994129754,
+   "reference": "FP32 reference encoder (fp16s scales) on FP64-evaluated reference features (ref64)",
+   "diag_vs_reference_on_fp32_features": {
+    "max_rel": 0.3235214536592797,
+    "over_ceiling": [
+     "silence-3s"
+    ]
+   }
+  },
+  "coverage": {
+   "pass": true,
+   "missing_or_incomplete": []
+  },
+  "finite": {
+   "pass": true,
+   "free": 0,
+   "replay": 0,
+   "replay_recount": 0,
+   "values": 38707930
+  },
+  "decisions": {
+   "pass": true,
+   "token": {
+    "steps": 3025,
+    "agree_all": 0.9996694214876033,
+    "decisive_fraction": 0.9662809917355372,
+    "agree_decisive": 1.0,
+    "reference_margin": {
+     "n": 3025,
+     "min": 0.0101,
+     "p1": 0.2829,
+     "p5": 1.474,
+     "p25": 6.3857,
+     "median": 8.9682
+    },
+    "pipeline_margin": {
+     "n": 3025,
+     "min": 0.0037,
+     "p1": 0.2521,
+     "p5": 1.4623,
+     "p25": 6.3578,
+     "median": 8.9719
+    },
+    "reference_margin_of_disagreements": [
+     0.3956
+    ],
+    "pass": true
+   },
+   "duration": {
+    "steps": 3025,
+    "agree_all": 0.996694214876033,
+    "decisive_fraction": 0.8502479338842975,
+    "agree_decisive": 0.999611197511664,
+    "reference_margin": {
+     "n": 3025,
+     "min": 0.0017,
+     "p1": 0.0588,
+     "p5": 0.3049,
+     "p25": 1.8061,
+     "median": 4.4218
+    },
+    "pipeline_margin": {
+     "n": 3025,
+     "min": 0.0022,
+     "p1": 0.0606,
+     "p5": 0.3004,
+     "p25": 1.7891,
+     "median": 4.4404
+    },
+    "reference_margin_of_disagreements": [
+     0.0047,
+     0.01,
+     0.0118,
+     0.0198,
+     0.0869,
+     0.2578,
+     0.4792,
+     0.6579,
+     0.7535,
+     1.1267
+    ],
+    "pass": true
+   }
+  },
+  "free_decoding": {
+   "pass": true,
+   "clips": 64,
+   "identical": 64
+  },
+  "wer": {
+   "pass": true,
+   "reference_wer_pct": 2.711,
+   "pipeline_wer_pct": 2.711,
+   "clips": 64,
+   "limit_points": 0.2
+  }
+ },
+ "inputs": {
+  "results/pipegates/mp2-C1-fixed-ane-vdsp.json": "5b254a11b281a585894af23bf8a645d6b9f904a37e581f94f970f03e8d3177b2",
+  "results/eligibility/mp2-C1-fixed-ane.json": "daf6cfb82daae9827949cc76af8b4c17c0334ef2466eb2e38f165e68cb4b402d"
+ },
+ "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
+ "built": "2026-10-03 15:12"
+}

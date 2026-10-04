@@ -1,0 +1,1795 @@
+{
+ "design_revision": 10,
+ "code_version": "wp7-pipegate-5",
+ "thresholds": {
+  "encoder_rel": 0.1,
+  "tau": 0.001,
+  "decisive_margin": 1.0,
+  "agree_decisive": 0.995,
+  "agree_all": 0.99,
+  "decisive_min": 0.5,
+  "identical_min": 61,
+  "wer_points": 0.2,
+  "diag_head_rel": 0.02
+ },
+ "header": {
+  "arm": "C3-ane",
+  "clip_ids": [
+   "n02-1272-141231-0016",
+   "n02-174-50561-0014",
+   "n02-1919-142785-0048",
+   "n02-1988-24833-0006",
+   "n02-2078-142845-0023",
+   "n02-2277-149896-0004",
+   "n02-2428-83699-0004",
+   "n02-251-136532-0022",
+   "n02-3081-166546-0073",
+   "n02-3752-4944-0046",
+   "n02-6313-66129-0032",
+   "n02-6345-93302-0028",
+   "n02-777-126732-0081",
+   "n02-7976-105575-0017",
+   "n02-84-121123-0007",
+   "n02-8842-304647-0007",
+   "n04-1462-170142-0035",
+   "n04-174-50561-0017",
+   "n04-1919-142785-0024",
+   "n04-1988-24833-0000",
+   "n04-2035-147961-0034",
+   "n04-2277-149874-0009",
+   "n04-2428-83699-0026",
+   "n04-3081-166546-0060",
+   "n04-3576-138058-0031",
+   "n04-3752-4943-0016",
+   "n04-5536-43358-0012",
+   "n04-5694-64029-0003",
+   "n04-6241-61943-0022",
+   "n04-6313-66125-0014",
+   "n04-6319-57405-0007",
+   "n04-8297-275154-0024",
+   "n08-1272-141231-0019",
+   "n08-1462-170142-0020",
+   "n08-174-84280-0003",
+   "n08-1919-142785-0038",
+   "n08-1993-147965-0003",
+   "n08-2086-149220-0016",
+   "n08-2277-149897-0033",
+   "n08-2412-153948-0009",
+   "n08-2803-154320-0010",
+   "n08-3853-163249-0041",
+   "n08-5338-284437-0029",
+   "n08-5694-64025-0020",
+   "n08-6313-76958-0016",
+   "n08-6345-93306-0019",
+   "n08-652-130726-0027",
+   "n08-8842-302201-0007",
+   "n15-1272-141231-0025",
+   "n15-1462-170142-0001",
+   "n15-1673-143396-0001",
+   "n15-174-168635-0010",
+   "n15-2277-149874-0014",
+   "n15-2412-153947-0005",
+   "n15-3000-15664-0011",
+   "n15-3536-23268-0008",
+   "n15-3752-4944-0027",
+   "n15-3853-163249-0022",
+   "n15-422-122949-0008",
+   "n15-6241-61943-0008",
+   "n15-6313-76958-0013",
+   "n15-652-129742-0001",
+   "n15-8297-275155-0005",
+   "n15-84-121550-0029",
+   "b02-N31840",
+   "b02-N32000",
+   "b04-N32001",
+   "b04-N32160",
+   "b04-N63840",
+   "b04-N64000",
+   "b08-N64001",
+   "b08-N64160",
+   "b08-N127840",
+   "b08-N128000",
+   "b15-N128001",
+   "b15-N128160",
+   "b15-N239200",
+   "b15-N239360",
+   "b15-N239520",
+   "b15-N240000",
+   "silence-3s",
+   "impulse-3s"
+  ],
+  "clips_json_sha256": "72962a14962be946a1ba52299028834d5af47ca07ea68b3e414cbaf8292b248a",
+  "compute_units": "cpuAndNeuralEngine",
+  "decodes": [
+   "f2",
+   "f0",
+   "f1"
+  ],
+  "diag_sections": {
+   "f0": "logits [1030] (diagnostic JointLogits on the same inputs), h_step, c_step [2, 640] per step; decoder_out, h, c per Decoder call",
+   "f1": "h_out, c_out [2, 640] per step (F1's own); F1's logits are unavailable (DESIGN.md rev. 10); proxy_logits [1030], proxy_h, proxy_c per step are an informational proxy: FP32 Decoder + JointLogits on F1's own inputs",
+   "f2": "logits [1030], h, c [2, 640] per step",
+   "f2_predictions": "pred_g [640], pred_h, pred_c [2, 640] per prediction-network run"
+  },
+  "encoder_load_ms": 191934.22475,
+  "executable_sha256": "726372ae7d7539be0d8d6da19af463084fb186a4400a8b8e46b6a45b8575d530",
+  "front_end": "vdsp",
+  "model": "mp2",
+  "os": "Version 27.0 (Build 26A428)",
+  "pipelines": {
+   "f0": {
+    "components": {
+     "compute_units": "cpuAndNeuralEngine",
+     "configuration": {
+      "allow_low_precision_accumulation_on_gpu": true,
+      "compute_units": "cpuAndNeuralEngine",
+      "label_loop": {
+       "blank": 1024,
+       "durations": [
+        0,
+        1,
+        2,
+        3,
+        4
+       ],
+       "max_symbols": 10
+      }
+     },
+     "decode": {
+      "kind": "f0",
+      "manifest_sha256": "46ee70abf046c9686d8dce8ed12ec3f6dce2369ba1aa13e467fde092db93f638",
+      "models_sha256": {
+       "Decoder": "24d02ae1fa45d90124b3f5133577ca0dfbf4d84fcb8f9c07555c2d5d80b03783",
+       "JointDecision": "af852997542b56aa034a0a87d83d57462598ff50fd09d104a1f3c49dbf17bbb8"
+      },
+      "precision": "fp32"
+     },
+     "encoder": {
+      "arm": "C3-ane",
+      "model": "mp2",
+      "package": "mp2/C3-ane/multi.mlmodelc",
+      "sha256": "2879ef6b5e2104021cf1964bd97a54c057bf14cd17bd8aa4a54f371b73efa7c6",
+      "variant": "multi"
+     },
+     "executable_sha256": "726372ae7d7539be0d8d6da19af463084fb186a4400a8b8e46b6a45b8575d530",
+     "front_end": {
+      "constants_sha256": "efe8a64a770fa51eeafaca31c1f7f744c900e11f5f19ed1aa39716da8d4f20d3",
+      "kind": "vdsp",
+      "manifest_sha256": "8b754605cf5f6743535695457b6ac72754c7489ca132a08f0c759211b714485e",
+      "provenance": {
+       "export_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/pilot-P2-lr5e-4/export",
+       "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6",
+       "model": "mp2"
+      }
+     }
+    },
+    "record": "mp2-C3-ane-multi-ane-vdsp-f0.json"
+   },
+   "f0_diagnostic_joint_logits_sha256": "19f286320c974a64927f2d3789622a015e5e9da4b05d840a945df05209c563a6",
+   "f1": {
+    "components": {
+     "compute_units": "cpuAndNeuralEngine",
+     "configuration": {
+      "allow_low_precision_accumulation_on_gpu": true,
+      "compute_units": "cpuAndNeuralEngine",
+      "label_loop": {
+       "blank": 1024,
+       "durations": [
+        0,
+        1,
+        2,
+        3,
+        4
+       ],
+       "max_symbols": 10
+      }
+     },
+     "decode": {
+      "kind": "f1",
+      "manifest_sha256": "46ee70abf046c9686d8dce8ed12ec3f6dce2369ba1aa13e467fde092db93f638",
+      "models_sha256": {
+       "DecoderJoint": "c7044821d2d43851a2a201244bd3ae2255fcf8198b0b1602625cf4b7fa656a3a"
+      },
+      "precision": "fp32"
+     },
+     "encoder": {
+      "arm": "C3-ane",
+      "model": "mp2",
+      "package": "mp2/C3-ane/multi.mlmodelc",
+      "sha256": "2879ef6b5e2104021cf1964bd97a54c057bf14cd17bd8aa4a54f371b73efa7c6",
+      "variant": "multi"
+     },
+     "executable_sha256": "726372ae7d7539be0d8d6da19af463084fb186a4400a8b8e46b6a45b8575d530",
+     "front_end": {
+      "constants_sha256": "efe8a64a770fa51eeafaca31c1f7f744c900e11f5f19ed1aa39716da8d4f20d3",
+      "kind": "vdsp",
+      "manifest_sha256": "8b754605cf5f6743535695457b6ac72754c7489ca132a08f0c759211b714485e",
+      "provenance": {
+       "export_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/pilot-P2-lr5e-4/export",
+       "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6",
+       "model": "mp2"
+      }
+     }
+    },
+    "record": "mp2-C3-ane-multi-ane-vdsp-f1.json"
+   },
+   "f1_informational_proxy_models_sha256": {
+    "Decoder": "24d02ae1fa45d90124b3f5133577ca0dfbf4d84fcb8f9c07555c2d5d80b03783",
+    "JointLogits": "19f286320c974a64927f2d3789622a015e5e9da4b05d840a945df05209c563a6"
+   },
+   "f2": {
+    "components": {
+     "compute_units": "cpuAndNeuralEngine",
+     "configuration": {
+      "allow_low_precision_accumulation_on_gpu": true,
+      "compute_units": "cpuAndNeuralEngine",
+      "label_loop": {
+       "blank": 1024,
+       "durations": [
+        0,
+        1,
+        2,
+        3,
+        4
+       ],
+       "max_symbols": 10
+      }
+     },
+     "decode": {
+      "kind": "f2",
+      "manifest_sha256": "39bc3a7d199bc7de86899e4de2ab7afc741feca467239e94fe9921e340201c64",
+      "native_weights_sha256": "e7db077a4f2b2db2bdd3ab887e9ecc0baade7b914379d4a2ba7e8653136eee71",
+      "precision": "fp32",
+      "provenance": {
+       "export_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/pilot-P2-lr5e-4/export",
+       "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6",
+       "model": "mp2"
+      }
+     },
+     "encoder": {
+      "arm": "C3-ane",
+      "model": "mp2",
+      "package": "mp2/C3-ane/multi.mlmodelc",
+      "sha256": "2879ef6b5e2104021cf1964bd97a54c057bf14cd17bd8aa4a54f371b73efa7c6",
+      "variant": "multi"
+     },
+     "executable_sha256": "726372ae7d7539be0d8d6da19af463084fb186a4400a8b8e46b6a45b8575d530",
+     "front_end": {
+      "constants_sha256": "efe8a64a770fa51eeafaca31c1f7f744c900e11f5f19ed1aa39716da8d4f20d3",
+      "kind": "vdsp",
+      "manifest_sha256": "8b754605cf5f6743535695457b6ac72754c7489ca132a08f0c759211b714485e",
+      "provenance": {
+       "export_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/pilot-P2-lr5e-4/export",
+       "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6",
+       "model": "mp2"
+      }
+     }
+    },
+    "record": "mp2-C3-ane-multi-ane-vdsp-f2.json"
+   }
+  },
+  "record": "header",
+  "variant": "multi"
+ },
+ "build": {
+  "commit": "ee63bdc62cb49b3ff79f0e52846a077b7d5177a7",
+  "clean": true,
+  "modified_tracked_files": 0,
+  "executable_sha256": "726372ae7d7539be0d8d6da19af463084fb186a4400a8b8e46b6a45b8575d530",
+  "built_from_commit": "ee63bdc62cb49b3ff79f0e52846a077b7d5177a7"
+ },
+ "refcache_provenance": {
+  "name": "mp2",
+  "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+  "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+ },
+ "ref64_index_sha256": "e05d67fb9db1988f8c784e76f9158a0bb773c4f775b7d0f8a7f7af5e824e4e94",
+ "problems": [],
+ "encoder": {
+  "pass": true,
+  "clips": 82,
+  "passed": 82,
+  "max_rel": 0.03463192788916107,
+  "max_abs": 0.4833694933404328,
+  "reference": "FP32 reference encoder (fp16s scales) on FP64-evaluated reference features (ref64)",
+  "diag_vs_reference_on_fp32_features": {
+   "max_rel": 0.32663289839312437,
+   "over_ceiling": [
+    "silence-3s"
+   ]
+  }
+ },
+ "evaluated": "2026-10-03 15:23",
+ "pipegate_py_sha256": "aed16fe04f5c5ff79cfc51d1f45e88868fba5eca48e4ebf4ef7c9f34ce7ca7b2",
+ "decodes": {
+  "f2": {
+   "coverage": {
+    "pass": true,
+    "missing_or_incomplete": []
+   },
+   "finite": {
+    "pass": true,
+    "free": 0,
+    "replay": 0,
+    "replay_recount": 0,
+    "values": 38680380
+   },
+   "decisions": {
+    "pass": true,
+    "token": {
+     "steps": 3025,
+     "agree_all": 0.9986776859504132,
+     "decisive_fraction": 0.9662809917355372,
+     "agree_decisive": 1.0,
+     "reference_margin": {
+      "n": 3025,
+      "min": 0.0101,
+      "p1": 0.2829,
+      "p5": 1.474,
+      "p25": 6.3857,
+      "median": 8.9682
+     },
+     "pipeline_margin": {
+      "n": 3025,
+      "min": 0.0081,
+      "p1": 0.2651,
+      "p5": 1.491,
+      "p25": 6.3236,
+      "median": 8.9426
+     },
+     "reference_margin_of_disagreements": [
+      0.0137,
+      0.0344,
+      0.3956,
+      0.8894
+     ],
+     "pass": true
+    },
+    "duration": {
+     "steps": 3025,
+     "agree_all": 0.9910743801652893,
+     "decisive_fraction": 0.8502479338842975,
+     "agree_decisive": 0.999611197511664,
+     "reference_margin": {
+      "n": 3025,
+      "min": 0.0017,
+      "p1": 0.0588,
+      "p5": 0.3049,
+      "p25": 1.8061,
+      "median": 4.4218
+     },
+     "pipeline_margin": {
+      "n": 3025,
+      "min": 0.0023,
+      "p1": 0.0733,
+      "p5": 0.2975,
+      "p25": 1.776,
+      "median": 4.407
+     },
+     "reference_margin_of_disagreements": [
+      0.0017,
+      0.003,
+      0.0076,
+      0.0095,
+      0.01,
+      0.0267,
+      0.0329,
+      0.033,
+      0.0516,
+      0.0522,
+      0.0533,
+      0.0613,
+      0.0702,
+      0.0868,
+      0.0869,
+      0.1034,
+      0.1931,
+      0.2112,
+      0.2375,
+      0.2578,
+      0.2941,
+      0.4792,
+      0.4927,
+      0.6579,
+      0.6582,
+      0.7535,
+      1.1267
+     ],
+     "pass": true
+    }
+   },
+   "head_errors": {
+    "reference": "FP32-feature reference (refcache fp16s), forced replay; tau 1e-3",
+    "token_logits": {
+     "clips": 82,
+     "rel_max": 0.035566426549539266,
+     "rel_median": 0.0041541365741464015,
+     "abs_max": 0.18094913773133378,
+     "clips_over_diag_ceiling": 1
+    },
+    "duration_logits": {
+     "clips": 82,
+     "rel_max": 0.09314777566078628,
+     "rel_median": 0.00957683797120687,
+     "abs_max": 0.2712055744681366,
+     "clips_over_diag_ceiling": 5
+    },
+    "h": {
+     "clips": 82,
+     "rel_max": 1.0406448749652897e-06,
+     "rel_median": 5.645477811803522e-07,
+     "abs_max": 4.451941346417763e-05,
+     "clips_over_diag_ceiling": 0
+    },
+    "c": {
+     "clips": 82,
+     "rel_max": 6.368038810709628e-07,
+     "rel_median": 3.130774195295623e-07,
+     "abs_max": 1.8593882605059503e-05,
+     "clips_over_diag_ceiling": 0
+    }
+   },
+   "token_prob_max_abs_diff_vs_reference_softmax": 0.2752298578017843,
+   "free_decoding": {
+    "pass": true,
+    "clips": 64,
+    "identical": 63
+   },
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "pipeline_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  "f0": {
+   "coverage": {
+    "pass": true,
+    "missing_or_incomplete": []
+   },
+   "finite": {
+    "pass": true,
+    "free": 0,
+    "replay": 0,
+    "replay_recount": 0,
+    "values": 38686342
+   },
+   "decisions": {
+    "pass": true,
+    "token": {
+     "steps": 3025,
+     "agree_all": 0.9986776859504132,
+     "decisive_fraction": 0.9662809917355372,
+     "agree_decisive": 1.0,
+     "reference_margin": {
+      "n": 3025,
+      "min": 0.0101,
+      "p1": 0.2829,
+      "p5": 1.474,
+      "p25": 6.3857,
+      "median": 8.9682
+     },
+     "pipeline_margin": {
+      "n": 3025,
+      "min": 0.0081,
+      "p1": 0.2651,
+      "p5": 1.4909,
+      "p25": 6.3236,
+      "median": 8.9426
+     },
+     "reference_margin_of_disagreements": [
+      0.0137,
+      0.0344,
+      0.3956,
+      0.8894
+     ],
+     "pass": true
+    },
+    "duration": {
+     "steps": 3025,
+     "agree_all": 0.9910743801652893,
+     "decisive_fraction": 0.8502479338842975,
+     "agree_decisive": 0.999611197511664,
+     "reference_margin": {
+      "n": 3025,
+      "min": 0.0017,
+      "p1": 0.0588,
+      "p5": 0.3049,
+      "p25": 1.8061,
+      "median": 4.4218
+     },
+     "pipeline_margin": {
+      "n": 3025,
+      "min": 0.0023,
+      "p1": 0.0733,
+      "p5": 0.2975,
+      "p25": 1.776,
+      "median": 4.407
+     },
+     "reference_margin_of_disagreements": [
+      0.0017,
+      0.003,
+      0.0076,
+      0.0095,
+      0.01,
+      0.0267,
+      0.0329,
+      0.033,
+      0.0516,
+      0.0522,
+      0.0533,
+      0.0613,
+      0.0702,
+      0.0868,
+      0.0869,
+      0.1034,
+      0.1931,
+      0.2112,
+      0.2375,
+      0.2578,
+      0.2941,
+      0.4792,
+      0.4927,
+      0.6579,
+      0.6582,
+      0.7535,
+      1.1267
+     ],
+     "pass": true
+    }
+   },
+   "head_errors": {
+    "reference": "FP32-feature reference (refcache fp16s), forced replay; tau 1e-3",
+    "token_logits": {
+     "clips": 82,
+     "rel_max": 0.0355664512893748,
+     "rel_median": 0.00415414493553089,
+     "abs_max": 0.18094922026932772,
+     "clips_over_diag_ceiling": 1
+    },
+    "duration_logits": {
+     "clips": 82,
+     "rel_max": 0.09314777442399277,
+     "rel_median": 0.009576859457283508,
+     "abs_max": 0.27120595012951204,
+     "clips_over_diag_ceiling": 5
+    },
+    "h": {
+     "clips": 82,
+     "rel_max": 4.853206144678739e-07,
+     "rel_median": 3.2489908342180664e-07,
+     "abs_max": 1.3381640239538002e-05,
+     "clips_over_diag_ceiling": 0
+    },
+    "c": {
+     "clips": 82,
+     "rel_max": 3.197785250985183e-07,
+     "rel_median": 2.0167017956019354e-07,
+     "abs_max": 1.0721506481566656e-05,
+     "clips_over_diag_ceiling": 0
+    }
+   },
+   "token_prob_max_abs_diff_vs_reference_softmax": 0.2752326817399557,
+   "free_decoding": {
+    "pass": true,
+    "clips": 64,
+    "identical": 63
+   },
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "pipeline_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  },
+  "f1": {
+   "coverage": {
+    "pass": true,
+    "missing_or_incomplete": []
+   },
+   "finite": {
+    "pass": true,
+    "free": 0,
+    "replay": 0,
+    "replay_recount": 0,
+    "values": 36672262
+   },
+   "decisions": {
+    "pass": true,
+    "token": {
+     "steps": 3025,
+     "agree_all": 0.9986776859504132,
+     "decisive_fraction": 0.9662809917355372,
+     "agree_decisive": 1.0,
+     "reference_margin": {
+      "n": 3025,
+      "min": 0.0101,
+      "p1": 0.2829,
+      "p5": 1.474,
+      "p25": 6.3857,
+      "median": 8.9682
+     },
+     "pipeline_margin": "unavailable",
+     "reference_margin_of_disagreements": [
+      0.0137,
+      0.0344,
+      0.3956,
+      0.8894
+     ],
+     "pass": true
+    },
+    "duration": {
+     "steps": 3025,
+     "agree_all": 0.9910743801652893,
+     "decisive_fraction": 0.8502479338842975,
+     "agree_decisive": 0.999611197511664,
+     "reference_margin": {
+      "n": 3025,
+      "min": 0.0017,
+      "p1": 0.0588,
+      "p5": 0.3049,
+      "p25": 1.8061,
+      "median": 4.4218
+     },
+     "pipeline_margin": "unavailable",
+     "reference_margin_of_disagreements": [
+      0.0017,
+      0.003,
+      0.0076,
+      0.0095,
+      0.01,
+      0.0267,
+      0.0329,
+      0.033,
+      0.0516,
+      0.0522,
+      0.0533,
+      0.0613,
+      0.0702,
+      0.0868,
+      0.0869,
+      0.1034,
+      0.1931,
+      0.2112,
+      0.2375,
+      0.2578,
+      0.2941,
+      0.4792,
+      0.4927,
+      0.6579,
+      0.6582,
+      0.7535,
+      1.1267
+     ],
+     "pass": true
+    }
+   },
+   "head_errors": {
+    "reference": "FP32-feature reference (refcache fp16s), forced replay; tau 1e-3",
+    "token_logits": "unavailable",
+    "duration_logits": "unavailable",
+    "h": {
+     "clips": 82,
+     "rel_max": 4.853206144678739e-07,
+     "rel_median": 3.2489908342180664e-07,
+     "abs_max": 1.3381640239538002e-05,
+     "clips_over_diag_ceiling": 0
+    },
+    "c": {
+     "clips": 82,
+     "rel_max": 3.197785250985183e-07,
+     "rel_median": 2.0167017956019354e-07,
+     "abs_max": 1.0721506481566656e-05,
+     "clips_over_diag_ceiling": 0
+    },
+    "note": "DESIGN.md rev. 10: DecoderJoint outputs only decisions, a probability and its state, so F1's token and duration logit errors are unavailable; h and c are F1's own (h_out, c_out)"
+   },
+   "token_prob_max_abs_diff_vs_reference_softmax": 0.2752326817399557,
+   "free_decoding": {
+    "pass": true,
+    "clips": 64,
+    "identical": 63
+   },
+   "informational_proxy": {
+    "label": "informational proxy (DESIGN.md rev. 10), not F1's own head error: FP32 Decoder + JointLogits evaluated on F1's own inputs (pending token, F1's input state h_in/c_in, the same encoder frame)",
+    "token_logits_vs_reference": {
+     "clips": 82,
+     "rel_max": 0.0355664512893748,
+     "rel_median": 0.00415414493553089,
+     "abs_max": 0.18094922026932772,
+     "clips_over_diag_ceiling": 1
+    },
+    "duration_logits_vs_reference": {
+     "clips": 82,
+     "rel_max": 0.09314777442399277,
+     "rel_median": 0.009576859457283508,
+     "abs_max": 0.27120595012951204,
+     "clips_over_diag_ceiling": 5
+    },
+    "consistency_with_f1": {
+     "state_rel_max_vs_h_out_c_out": 0.0,
+     "token_argmax_agreement": 1.0,
+     "duration_argmax_agreement": 1.0,
+     "steps": 3025
+    }
+   },
+   "wer": {
+    "pass": true,
+    "reference_wer_pct": 2.711,
+    "pipeline_wer_pct": 2.711,
+    "clips": 64,
+    "limit_points": 0.2
+   }
+  }
+ },
+ "encoder_rows": [
+  {
+   "clip": "n02-1272-141231-0016",
+   "bucket": 2,
+   "rel": 0.01211516480622267,
+   "abs": 0.08566468721786594,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012115593643727917,
+    "abs": 0.08567075331054222
+   }
+  },
+  {
+   "clip": "n02-174-50561-0014",
+   "bucket": 2,
+   "rel": 0.014329443393251802,
+   "abs": 0.08236225030696726,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.014329418587115053,
+    "abs": 0.08236127914480884
+   }
+  },
+  {
+   "clip": "n02-1919-142785-0048",
+   "bucket": 2,
+   "rel": 0.011064449529925616,
+   "abs": 0.121043232813618,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011064470990120562,
+    "abs": 0.12104252426281707
+   }
+  },
+  {
+   "clip": "n02-1988-24833-0006",
+   "bucket": 2,
+   "rel": 0.012646868408918703,
+   "abs": 0.08697084003541894,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012646860863675906,
+    "abs": 0.08696815460852303
+   }
+  },
+  {
+   "clip": "n02-2078-142845-0023",
+   "bucket": 2,
+   "rel": 0.008926749198033684,
+   "abs": 0.05825709304342388,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.008926793316970154,
+    "abs": 0.058261136648700536
+   }
+  },
+  {
+   "clip": "n02-2277-149896-0004",
+   "bucket": 2,
+   "rel": 0.012952294124275763,
+   "abs": 0.14985666501764794,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012952209055462781,
+    "abs": 0.14985321226536952
+   }
+  },
+  {
+   "clip": "n02-2428-83699-0004",
+   "bucket": 2,
+   "rel": 0.03463192788916107,
+   "abs": 0.4833694933404328,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.03463279349174683,
+    "abs": 0.4833820969342552
+   }
+  },
+  {
+   "clip": "n02-251-136532-0022",
+   "bucket": 2,
+   "rel": 0.012789149410365198,
+   "abs": 0.09122078561301025,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012788949128158008,
+    "abs": 0.09121983939372803
+   }
+  },
+  {
+   "clip": "n02-3081-166546-0073",
+   "bucket": 2,
+   "rel": 0.010951135667638631,
+   "abs": 0.0650829742647822,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.010951184036887147,
+    "abs": 0.06508396349326698
+   }
+  },
+  {
+   "clip": "n02-3752-4944-0046",
+   "bucket": 2,
+   "rel": 0.015031902628349275,
+   "abs": 0.18891531832217429,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.015031811190391818,
+    "abs": 0.18891219839715068
+   }
+  },
+  {
+   "clip": "n02-6313-66129-0032",
+   "bucket": 2,
+   "rel": 0.011764633825195714,
+   "abs": 0.11438997503067524,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.01176495176785162,
+    "abs": 0.11439935759929946
+   }
+  },
+  {
+   "clip": "n02-6345-93302-0028",
+   "bucket": 2,
+   "rel": 0.01734948223908243,
+   "abs": 0.15734063081388813,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.017349977466537613,
+    "abs": 0.15734836030324234
+   }
+  },
+  {
+   "clip": "n02-777-126732-0081",
+   "bucket": 2,
+   "rel": 0.01113795629743028,
+   "abs": 0.08519999778835655,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.01113791321569603,
+    "abs": 0.0852024039336608
+   }
+  },
+  {
+   "clip": "n02-7976-105575-0017",
+   "bucket": 2,
+   "rel": 0.01044747265609079,
+   "abs": 0.05658578172458834,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.010447409438462785,
+    "abs": 0.05658432481983145
+   }
+  },
+  {
+   "clip": "n02-84-121123-0007",
+   "bucket": 2,
+   "rel": 0.010854789502589219,
+   "abs": 0.07363292420796844,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.010854801990618411,
+    "abs": 0.07363163002101364
+   }
+  },
+  {
+   "clip": "n02-8842-304647-0007",
+   "bucket": 2,
+   "rel": 0.011675060694782444,
+   "abs": 0.08775630459195807,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011675141444035898,
+    "abs": 0.08775630851843304
+   }
+  },
+  {
+   "clip": "n04-1462-170142-0035",
+   "bucket": 4,
+   "rel": 0.01545660692394155,
+   "abs": 0.20079467908288184,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.015457208447181904,
+    "abs": 0.20080542421972933
+   }
+  },
+  {
+   "clip": "n04-174-50561-0017",
+   "bucket": 4,
+   "rel": 0.010232842042504674,
+   "abs": 0.07557444415009745,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.010232783342647,
+    "abs": 0.07557266185019658
+   }
+  },
+  {
+   "clip": "n04-1919-142785-0024",
+   "bucket": 4,
+   "rel": 0.008880543361183171,
+   "abs": 0.0696868977403911,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.008880541163175657,
+    "abs": 0.06968834684830685
+   }
+  },
+  {
+   "clip": "n04-1988-24833-0000",
+   "bucket": 4,
+   "rel": 0.010864599970258057,
+   "abs": 0.0782578868254185,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.010864640143649767,
+    "abs": 0.07825878491642001
+   }
+  },
+  {
+   "clip": "n04-2035-147961-0034",
+   "bucket": 4,
+   "rel": 0.010753635221841704,
+   "abs": 0.07011139605560303,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.010753660829593217,
+    "abs": 0.0701140248313105
+   }
+  },
+  {
+   "clip": "n04-2277-149874-0009",
+   "bucket": 4,
+   "rel": 0.011533368827985809,
+   "abs": 0.08570226249985051,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.01153353504135236,
+    "abs": 0.08570845308905399
+   }
+  },
+  {
+   "clip": "n04-2428-83699-0026",
+   "bucket": 4,
+   "rel": 0.013755354522351514,
+   "abs": 0.1531859944140201,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.013755556879202907,
+    "abs": 0.15319000213022552
+   }
+  },
+  {
+   "clip": "n04-3081-166546-0060",
+   "bucket": 4,
+   "rel": 0.010189213830719664,
+   "abs": 0.07877408957347358,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.01018922604001938,
+    "abs": 0.07877431190895963
+   }
+  },
+  {
+   "clip": "n04-3576-138058-0031",
+   "bucket": 4,
+   "rel": 0.010992377866840644,
+   "abs": 0.056759457244231544,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.010992376287752521,
+    "abs": 0.0567604928614315
+   }
+  },
+  {
+   "clip": "n04-3752-4943-0016",
+   "bucket": 4,
+   "rel": 0.009895441730115561,
+   "abs": 0.0728264541388003,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.00989548664063842,
+    "abs": 0.07282688418611032
+   }
+  },
+  {
+   "clip": "n04-5536-43358-0012",
+   "bucket": 4,
+   "rel": 0.015229991978332568,
+   "abs": 0.3308428045920458,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.015229918200729655,
+    "abs": 0.3308462081594135
+   }
+  },
+  {
+   "clip": "n04-5694-64029-0003",
+   "bucket": 4,
+   "rel": 0.0144550044323633,
+   "abs": 0.19720882878326354,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.014455147326247883,
+    "abs": 0.19721106457356938
+   }
+  },
+  {
+   "clip": "n04-6241-61943-0022",
+   "bucket": 4,
+   "rel": 0.009351412161754991,
+   "abs": 0.08566498315817937,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.009351448069889816,
+    "abs": 0.0856631604335197
+   }
+  },
+  {
+   "clip": "n04-6313-66125-0014",
+   "bucket": 4,
+   "rel": 0.01212584248868692,
+   "abs": 0.10871950807385929,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012126026497152567,
+    "abs": 0.10872116431034483
+   }
+  },
+  {
+   "clip": "n04-6319-57405-0007",
+   "bucket": 4,
+   "rel": 0.010578214549408594,
+   "abs": 0.08571499004955148,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.010578183442567458,
+    "abs": 0.0857138164321723
+   }
+  },
+  {
+   "clip": "n04-8297-275154-0024",
+   "bucket": 4,
+   "rel": 0.016268790165337235,
+   "abs": 0.23868116427749825,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.016268865378792904,
+    "abs": 0.23868117812140371
+   }
+  },
+  {
+   "clip": "n08-1272-141231-0019",
+   "bucket": 8,
+   "rel": 0.011593759818617632,
+   "abs": 0.08786084308018527,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011593763729101616,
+    "abs": 0.08786084680965887
+   }
+  },
+  {
+   "clip": "n08-1462-170142-0020",
+   "bucket": 8,
+   "rel": 0.010869039587787928,
+   "abs": 0.09582263645175329,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.010868985668732073,
+    "abs": 0.09581656427111071
+   }
+  },
+  {
+   "clip": "n08-174-84280-0003",
+   "bucket": 8,
+   "rel": 0.011610634422563956,
+   "abs": 0.1368104231775739,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011610624019091137,
+    "abs": 0.1368121322320009
+   }
+  },
+  {
+   "clip": "n08-1919-142785-0038",
+   "bucket": 8,
+   "rel": 0.010908430408597437,
+   "abs": 0.10896789886681396,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.010908443120247002,
+    "abs": 0.10896684169211941
+   }
+  },
+  {
+   "clip": "n08-1993-147965-0003",
+   "bucket": 8,
+   "rel": 0.013591306466241196,
+   "abs": 0.2092570109375066,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.013591314558599186,
+    "abs": 0.20925632421814475
+   }
+  },
+  {
+   "clip": "n08-2086-149220-0016",
+   "bucket": 8,
+   "rel": 0.012070185510820307,
+   "abs": 0.1449930368247635,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012070239686285105,
+    "abs": 0.14499164238397738
+   }
+  },
+  {
+   "clip": "n08-2277-149897-0033",
+   "bucket": 8,
+   "rel": 0.011425089887289417,
+   "abs": 0.11624155805081691,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011425082869282038,
+    "abs": 0.11624238091141262
+   }
+  },
+  {
+   "clip": "n08-2412-153948-0009",
+   "bucket": 8,
+   "rel": 0.011734102731252331,
+   "abs": 0.09514173075252286,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011734141956372166,
+    "abs": 0.09514010418610538
+   }
+  },
+  {
+   "clip": "n08-2803-154320-0010",
+   "bucket": 8,
+   "rel": 0.011002062997008628,
+   "abs": 0.13729741910119092,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011002169754477925,
+    "abs": 0.13730938468783932
+   }
+  },
+  {
+   "clip": "n08-3853-163249-0041",
+   "bucket": 8,
+   "rel": 0.012351023111141779,
+   "abs": 0.13321783889669925,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012351085964303704,
+    "abs": 0.13321868557687866
+   }
+  },
+  {
+   "clip": "n08-5338-284437-0029",
+   "bucket": 8,
+   "rel": 0.010998987633283688,
+   "abs": 0.10500617631429063,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.010998882045102956,
+    "abs": 0.10500350399495059
+   }
+  },
+  {
+   "clip": "n08-5694-64025-0020",
+   "bucket": 8,
+   "rel": 0.012774030568279545,
+   "abs": 0.13599895099001336,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012774014967933428,
+    "abs": 0.13599767816981356
+   }
+  },
+  {
+   "clip": "n08-6313-76958-0016",
+   "bucket": 8,
+   "rel": 0.01309697486007846,
+   "abs": 0.13101386629755102,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.013096934915544341,
+    "abs": 0.13102604874758117
+   }
+  },
+  {
+   "clip": "n08-6345-93306-0019",
+   "bucket": 8,
+   "rel": 0.011488353047159179,
+   "abs": 0.12879151884310655,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011488344061999597,
+    "abs": 0.12879506882102168
+   }
+  },
+  {
+   "clip": "n08-652-130726-0027",
+   "bucket": 8,
+   "rel": 0.01127749163914835,
+   "abs": 0.08008134842169844,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011277499161643782,
+    "abs": 0.08008302844883812
+   }
+  },
+  {
+   "clip": "n08-8842-302201-0007",
+   "bucket": 8,
+   "rel": 0.011935853832718408,
+   "abs": 0.11747037979547949,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011936083866527272,
+    "abs": 0.11750067940238229
+   }
+  },
+  {
+   "clip": "n15-1272-141231-0025",
+   "bucket": 15,
+   "rel": 0.011520586660383459,
+   "abs": 0.09060341768642394,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011520601337928137,
+    "abs": 0.09060468757592023
+   }
+  },
+  {
+   "clip": "n15-1462-170142-0001",
+   "bucket": 15,
+   "rel": 0.012246141843934789,
+   "abs": 0.37961912544148246,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012246187326250671,
+    "abs": 0.3796241619276056
+   }
+  },
+  {
+   "clip": "n15-1673-143396-0001",
+   "bucket": 15,
+   "rel": 0.011511063262148886,
+   "abs": 0.12184634159859856,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.01151102811333508,
+    "abs": 0.12184178113814248
+   }
+  },
+  {
+   "clip": "n15-174-168635-0010",
+   "bucket": 15,
+   "rel": 0.013110891758473844,
+   "abs": 0.20749300822555894,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.013110930253488149,
+    "abs": 0.20749849172500234
+   }
+  },
+  {
+   "clip": "n15-2277-149874-0014",
+   "bucket": 15,
+   "rel": 0.012883478366941856,
+   "abs": 0.15077407832504006,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.01288341737098701,
+    "abs": 0.1507706954259321
+   }
+  },
+  {
+   "clip": "n15-2412-153947-0005",
+   "bucket": 15,
+   "rel": 0.013247871308385005,
+   "abs": 0.20590055296718837,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.013247935155148239,
+    "abs": 0.20590226134140444
+   }
+  },
+  {
+   "clip": "n15-3000-15664-0011",
+   "bucket": 15,
+   "rel": 0.01162676518842258,
+   "abs": 0.14174572014703293,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011626792452836592,
+    "abs": 0.1417472503190841
+   }
+  },
+  {
+   "clip": "n15-3536-23268-0008",
+   "bucket": 15,
+   "rel": 0.011278327038114056,
+   "abs": 0.1490658830391243,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011278357777712363,
+    "abs": 0.14906459256424986
+   }
+  },
+  {
+   "clip": "n15-3752-4944-0027",
+   "bucket": 15,
+   "rel": 0.013006344016808292,
+   "abs": 0.16557207070849317,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.01300633309058507,
+    "abs": 0.16556344227353736
+   }
+  },
+  {
+   "clip": "n15-3853-163249-0022",
+   "bucket": 15,
+   "rel": 0.01059552007603862,
+   "abs": 0.09210646498229241,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.010595457925172027,
+    "abs": 0.09210561568909961
+   }
+  },
+  {
+   "clip": "n15-422-122949-0008",
+   "bucket": 15,
+   "rel": 0.011967134297274185,
+   "abs": 0.17292689461299218,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011966954281632457,
+    "abs": 0.17291936991062498
+   }
+  },
+  {
+   "clip": "n15-6241-61943-0008",
+   "bucket": 15,
+   "rel": 0.013960449963569951,
+   "abs": 0.21202266573931072,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.013960400616819987,
+    "abs": 0.21202392925337837
+   }
+  },
+  {
+   "clip": "n15-6313-76958-0013",
+   "bucket": 15,
+   "rel": 0.016643222038425987,
+   "abs": 0.3070921267789633,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.016642678091438837,
+    "abs": 0.30707025741757127
+   }
+  },
+  {
+   "clip": "n15-652-129742-0001",
+   "bucket": 15,
+   "rel": 0.012191894381924081,
+   "abs": 0.17936660262376172,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012191963185853775,
+    "abs": 0.17937319646124222
+   }
+  },
+  {
+   "clip": "n15-8297-275155-0005",
+   "bucket": 15,
+   "rel": 0.0101137181223052,
+   "abs": 0.08941442639369648,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.010113762459297761,
+    "abs": 0.0894144242623577
+   }
+  },
+  {
+   "clip": "n15-84-121550-0029",
+   "bucket": 15,
+   "rel": 0.011794654617740583,
+   "abs": 0.08411861407855949,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011794616173703839,
+    "abs": 0.0841186153123428
+   }
+  },
+  {
+   "clip": "b02-N31840",
+   "bucket": 2,
+   "rel": 0.01495008330775006,
+   "abs": 0.14501591868427566,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.014949860593465853,
+    "abs": 0.14501592562322235
+   }
+  },
+  {
+   "clip": "b02-N32000",
+   "bucket": 2,
+   "rel": 0.012977109259053913,
+   "abs": 0.11618645959605799,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.0129770888236351,
+    "abs": 0.1161856901956478
+   }
+  },
+  {
+   "clip": "b04-N32001",
+   "bucket": 4,
+   "rel": 0.01306402049813683,
+   "abs": 0.10542110183792057,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.01306426356488679,
+    "abs": 0.10541901761071765
+   }
+  },
+  {
+   "clip": "b04-N32160",
+   "bucket": 4,
+   "rel": 0.02004030169248161,
+   "abs": 0.3424526390961911,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.02003983987421053,
+    "abs": 0.3424403433903948
+   }
+  },
+  {
+   "clip": "b04-N63840",
+   "bucket": 4,
+   "rel": 0.011974099060869376,
+   "abs": 0.09232763511080011,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011973876024219798,
+    "abs": 0.09232176972742225
+   }
+  },
+  {
+   "clip": "b04-N64000",
+   "bucket": 4,
+   "rel": 0.012123004694450165,
+   "abs": 0.09703006655798256,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012123040900941504,
+    "abs": 0.09703253878925631
+   }
+  },
+  {
+   "clip": "b08-N64001",
+   "bucket": 8,
+   "rel": 0.011216590067993863,
+   "abs": 0.12545017580709675,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011216575376611202,
+    "abs": 0.12544952588675046
+   }
+  },
+  {
+   "clip": "b08-N64160",
+   "bucket": 8,
+   "rel": 0.011327791119883997,
+   "abs": 0.09937022472453898,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011327827326341229,
+    "abs": 0.09936926097607293
+   }
+  },
+  {
+   "clip": "b08-N127840",
+   "bucket": 8,
+   "rel": 0.011932099250012708,
+   "abs": 0.15713096030909415,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011932119584768587,
+    "abs": 0.15713358961656523
+   }
+  },
+  {
+   "clip": "b08-N128000",
+   "bucket": 8,
+   "rel": 0.018589075403130588,
+   "abs": 0.20843919400107375,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.018588942432268267,
+    "abs": 0.20842134949755003
+   }
+  },
+  {
+   "clip": "b15-N128001",
+   "bucket": 15,
+   "rel": 0.013489000780795325,
+   "abs": 0.18793692277787316,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.013488924350309864,
+    "abs": 0.1879338607746078
+   }
+  },
+  {
+   "clip": "b15-N128160",
+   "bucket": 15,
+   "rel": 0.014764069667526627,
+   "abs": 0.3601654088643559,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.01476393033973714,
+    "abs": 0.36015915438239055
+   }
+  },
+  {
+   "clip": "b15-N239200",
+   "bucket": 15,
+   "rel": 0.012010365074794825,
+   "abs": 0.12978433332998335,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.012010364134510077,
+    "abs": 0.1297836223028181
+   }
+  },
+  {
+   "clip": "b15-N239360",
+   "bucket": 15,
+   "rel": 0.012799841040163388,
+   "abs": 0.1984557732029206,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.01279979458822267,
+    "abs": 0.19845406726788553
+   }
+  },
+  {
+   "clip": "b15-N239520",
+   "bucket": 15,
+   "rel": 0.014235724024705647,
+   "abs": 0.18959060583119824,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.014235562687240483,
+    "abs": 0.18958409966762324
+   }
+  },
+  {
+   "clip": "b15-N240000",
+   "bucket": 15,
+   "rel": 0.011702821389825273,
+   "abs": 0.12530244386044923,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.011702786516014954,
+    "abs": 0.12530203231669634
+   }
+  },
+  {
+   "clip": "silence-3s",
+   "bucket": 4,
+   "rel": 0.010139193385106264,
+   "abs": 0.07102062300391512,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.32663289839312437,
+    "abs": 2.694465180776449
+   }
+  },
+  {
+   "clip": "impulse-3s",
+   "bucket": 4,
+   "rel": 0.006877029867425602,
+   "abs": 0.05356615316569207,
+   "length_ok": true,
+   "finite": true,
+   "pass": true,
+   "diag_vs_reference_on_fp32_features": {
+    "rel": 0.006877302151744346,
+    "abs": 0.053569518664154506
+   }
+  }
+ ]
+}
