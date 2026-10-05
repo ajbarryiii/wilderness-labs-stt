@@ -151,14 +151,90 @@ model-index:
 
 # Parakeet-TDT-0.6B-v2 with ternary encoder weights {-1, 0, +1}
 
+On one RTX 5090, the custom CUDA runtime in our GitHub repository transcribes a 10 s
+clip from these weights in 4.46 ms, with 1.89 GB of process VRAM and 1.57 J of GPU
+energy (expanded mode). That is 23.2% lower latency, 13.5% lower process VRAM and
+17.1% less GPU energy than our own optimized BF16 build of the original. The compact
+mode uses 1.27 GB, 41.8% less VRAM than that build. The weight file is **180.8 MB**,
+against 2,472 MB for the original `.nemo` file. On the seven Open ASR Leaderboard
+test sets we could score, mean WER rises from 6.45% to 6.84%.
+
 Every large matrix in the 24-layer FastConformer encoder of
 [nvidia/parakeet-tdt-0.6b-v2](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2)
 (the attention and feed-forward projections and the pointwise convolutions, 98% of
-the model's parameters) is constrained to three values with one FP32 scale per
-output row, recovered by quantization-aware training (QAT) with distillation from
-the original model. The weight file is **180.8 MB**, against 2,472 MB for the
-original `.nemo` file. On the seven Open ASR Leaderboard test sets we could
-score, mean WER rises from 6.45% to 6.84%.
+the model's parameters) is constrained to three values (-1, 0, +1) with one FP32
+scale per output row. The accuracy loss is largely recovered by quantization-aware
+training (QAT) with distillation from the original model.
+
+## Runtime results (custom CUDA runtime on GitHub)
+
+The [custom CUDA runtime](https://github.com/ajbarryiii/wilderness-labs-stt/tree/main/finetune/parakeet-ternary/inference)
+runs `export.safetensors` from its packed codes, without rebuilding dense floating-point
+encoder weights on the GPU.
+The runtime is MIT-licensed code in the GitHub repository and is not part of this
+download. `load_ternary.py` here still rebuilds a dense FP32 NeMo model (see Use).
+
+The table shows warm batch-one transcription of a 10 s LibriSpeech clip on one
+RTX 5090 at a 400 W power limit:
+
+| Configuration | Latency | Process VRAM | GPU energy |
+| --- | ---: | ---: | ---: |
+| Ternary expanded — optimized by Wilderness Labs | **4.46 ms** | 1.89 GB | **1.57 J** |
+| Ternary compact — optimized by Wilderness Labs | 5.27 ms | **1.27 GB** | 1.86 J |
+| Original BF16 — optimized by Wilderness Labs | 5.81 ms | 2.18 GB | 1.90 J |
+| ONNX ASR / ORT CUDA — off the shelf | 15.74 ms | 4.14 GB | 3.75 J |
+
+- **Ternary expanded** (`--optimized --encoder-storage expanded`) keeps the packed
+  codes and scales plus a cached exact INT8 copy of the codes (603,979,776 bytes,
+  about 604 MB). Against our optimized BF16 build of the original at 10 s, it has
+  23.2% lower latency, 13.5% lower process VRAM and 17.1% less GPU energy. It is
+  also lower on all three at the 3 s and 30.04 s clips.
+- **Ternary compact** (`--optimized`) keeps the ternary matrices as packed 2-bit
+  codes with per-row FP32 scales and unpacks them inside the kernels. It used the
+  least process VRAM of the four configurations at every length tested: 41.8% less
+  than BF16 at 10 s, with 9.3% lower latency. Its 10 s energy is within 2% of BF16,
+  and at 30.04 s its latency and energy are higher than BF16's.
+- **Original BF16 — optimized by Wilderness Labs** is NVIDIA's original checkpoint
+  with a BF16 encoder, plus our own CUDA graphs, fused FP32 decoder and graph
+  allocation fix. It is not stock NeMo. The two checkpoints produce different
+  transcripts and therefore different decoder work, so this row compares complete
+  runtimes, not the effect of ternarization alone.
+- **ONNX ASR / ORT CUDA — off the shelf** is the unmodified
+  [onnx-asr](https://github.com/istupakov/onnx-asr) 0.12.0 package with
+  onnxruntime-gpu 1.24.4. It runs the published FP32 export
+  [istupakov/parakeet-tdt-0.6b-v2-onnx](https://huggingface.co/istupakov/parakeet-tdt-0.6b-v2-onnx)
+  at a pinned revision, with the CUDA execution provider and default options. It is
+  one common way to run this model without NeMo, and its weights are FP32 rather
+  than BF16. Our BF16 build also has 63.1% lower latency than this row; the two
+  configurations differ in precision and runtime. This comparison is not a survey
+  of optimized engines.
+
+Both ternary modes use the weights in this repository and keep the non-ternary
+tensors in floating point. Both run the ternary matrices on INT8 Tensor Cores, with
+each activation split into three residual INT8 components, int32 accumulation and
+FP32 outputs, and both run a fused FP32 prediction/joint decoder, with NeMo's greedy
+TDT loop in conditional CUDA graphs. The runtime needs the GitHub
+repository's pinned environment (NeMo 3.0, PyTorch 2.11 with CUDA 12.8, Triton 3.6,
+NVRTC 12.9); it is not a pip package. The
+[runtime guide](https://github.com/ajbarryiii/wilderness-labs-stt/tree/main/finetune/parakeet-ternary/inference)
+has results for 3, 10 and 30.04 s clips, plus usage and reproduction steps.
+
+*Method and quality.*
+
+- Latency covers a CPU waveform in to CPU text out, including feature extraction and
+  host-device transfers, and excludes file I/O, loading, compilation and first graph
+  capture.
+- Each configuration ran in a fresh process, with one clip per length. Values are
+  medians of three 5 s windows.
+- Process VRAM is the warm process's sampled peak, in decimal GB.
+- GPU energy is NVML's board counter and excludes host power. The ternary rows draw as
+  much power or more and use less energy because they finish sooner.
+- Compact and expanded modes produce identical text, tokens and timestamps on 2,048
+  utterances from eight test sets. That checks agreement between the two modes, not
+  accuracy against the original. Recognition accuracy for this model is the
+  full-corpus WER below.
+
+## Recognition accuracy
 
 Test WER (%), greedy decoding:
 
@@ -224,9 +300,11 @@ measured decoding on an NVIDIA RTX 5090 (CUDA, strict FP32). Loading on the CPU
 was tested; decoding on the CPU was not. Other environments rebuild the same
 weights, but WER was only measured as described here.
 
-The rebuilt model runs dense FP32 matrices: it needs the same memory and compute
-as the original. The small file is a storage and download saving only; this
-repository ships no packed ternary kernels.
+The rebuilt model runs dense FP32 matrices, so it needs the same memory and
+compute as the original. With `load_ternary.py`, the small file is a storage and
+download saving only. This Hugging Face repository ships no packed ternary
+kernels. The runtime results above come from the separate custom CUDA runtime on
+GitHub, which reads the same `export.safetensors`.
 
 **Long audio:** each input is decoded in one pass with full attention, with no
 chunking; memory grows roughly quadratically with length. The model was trained
@@ -306,8 +384,11 @@ Longer inputs were not evaluated; split long recordings into segments of about
 ## Limitations
 
 - English only, like the base model.
-- Activations are floating point and the loader rebuilds dense FP32 weights. No
-  speed, memory or energy benefit is claimed for this checkpoint.
+- `load_ternary.py` keeps activations in floating point and rebuilds dense FP32
+  weights, so no speed, memory or energy benefit is claimed for that loader. The
+  runtime results above apply only to the custom CUDA runtime on GitHub. They were
+  measured on one RTX 5090 at a 400 W limit, warm, at batch one, with one clip per
+  length. Other GPUs, batch sizes, cold starts and host energy were not measured.
 - The gap to the original is largest on Common Voice (+4.06 points), which is
   outside the training mixture, followed by LibriSpeech test-other (+1.01) and
   SPGISpeech (+0.81). Expect larger degradation on domains far from
@@ -315,8 +396,11 @@ Longer inputs were not evaluated; split long recordings into segments of about
 - AMI: 1.43% of this model's AMI test hypotheses are empty, fewer than the FP32
   original's 3.12%. The utterances empty only for this model are mostly one-word
   backchannels.
-- Only greedy decoding was evaluated. Beam search, timestamps, and inputs longer
-  than the test utterances were not evaluated. TED-LIUM was not evaluated.
+- Only greedy decoding was evaluated. Beam search and inputs longer than the test
+  utterances were not evaluated. Timestamp accuracy was not evaluated either: the
+  runtime check that compact and expanded modes emit identical timestamps shows
+  that the two modes agree, not that the timestamps are correct. TED-LIUM was not
+  evaluated.
 - YODAS (training data) and GigaSpeech (a test set) both draw on YouTube, so some
   test audio may overlap the training audio. The original model was also trained
   on YODAS, so the same applies to its numbers.

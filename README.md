@@ -1,10 +1,49 @@
 # wilderness-labs-stt
 
-Low-bit, low-power speech-to-text, taken from packed binary/ternary kernels
-through failed from-scratch training to a working ternary Whisper, and then to a
-ternary Parakeet within 0.4 WER points of the original.
+Low-bit, low-power speech-to-text. This repository contains:
 
-**Headline (October 2026):** NVIDIA's Parakeet-TDT-0.6B-v2 with 264 encoder
+- a ternary-weight Parakeet-TDT-0.6B-v2 within 0.4 WER points of the original;
+- a custom CUDA runtime for it whose expanded mode, on an RTX 5090, has lower
+  latency, process VRAM and GPU energy than our own optimized BF16 build of the
+  original for the clips we measured;
+- a ternary Whisper tiny.en;
+- packed binary/ternary CPU and GPU kernels.
+
+The from-scratch training attempts that did not work are documented below.
+
+**Headline (October 2026):** a ternary-weight Parakeet-TDT-0.6B-v2 and a custom
+CUDA runtime that runs it from its packed weights. The table shows warm batch-one
+transcription of a 10 s LibriSpeech clip on one RTX 5090 at a 400 W power limit:
+
+| Configuration (10 s clip) | Latency | Process VRAM | GPU energy |
+| --- | ---: | ---: | ---: |
+| Ternary expanded — optimized by Wilderness Labs | **4.46 ms** | 1.89 GB | **1.57 J** |
+| Ternary compact — optimized by Wilderness Labs | 5.27 ms | **1.27 GB** | 1.86 J |
+| Original BF16 — optimized by Wilderness Labs | 5.81 ms | 2.18 GB | 1.90 J |
+| ONNX ASR / ORT CUDA — off the shelf | 15.74 ms | 4.14 GB | 3.75 J |
+
+The BF16 row is NVIDIA's original checkpoint running with our own CUDA graphs and
+fused decoder, not stock NeMo. Against it at 10 s, the expanded ternary mode has
+23.2% lower latency, 13.5% lower process VRAM and 17.1% less GPU energy. It is
+also lower on all three at the 3 s and 30.04 s clips.
+
+The compact mode uses the least VRAM at every length (41.8% less than BF16 at
+10 s). Its 10 s energy is within 2% of BF16, and at 30.04 s its latency and
+energy are higher than BF16's.
+
+The off-the-shelf row is the unmodified
+[onnx-asr](https://github.com/istupakov/onnx-asr) package running the published
+FP32 ONNX export of the original on ONNX Runtime's CUDA provider with default
+options. It is one common way to run the model without NeMo; the comparison is
+not a survey of optimized engines. Our BF16 build of the original also has 63.1%
+lower latency than this row, and the two configurations differ in precision and
+runtime.
+
+Energy is GPU-board only, and each length is a single clip on one GPU. All three
+lengths, the method and the validation are in
+[`finetune/parakeet-ternary/inference/`](finetune/parakeet-ternary/inference/).
+
+**The model:** NVIDIA's Parakeet-TDT-0.6B-v2 with 264 encoder
 modules (98% of its parameters) constrained to {-1, 0, +1}, recovered by
 quantization-aware training with online teacher transcripts and encoder-output
 matching, averages **6.84% WER on seven Open ASR Leaderboard test sets from a
@@ -19,7 +58,10 @@ bundle and is excluded from the mean.
 | **Ternary, QAT** | **2.05** | **4.20** | **10.42** | **11.72** | **10.35** | **2.94** | **6.19** | **6.84** | **180.8 MB** |
 
 Model: [rajb3/parakeet-tdt-0.6b-v2-ternary](https://huggingface.co/rajb3/parakeet-tdt-0.6b-v2-ternary)
-(CC-BY-4.0, needs `nemo_toolkit[asr]`). Design, pilot, main run and every
+(CC-BY-4.0). Its standalone loader needs `nemo_toolkit[asr]` and rebuilds dense
+FP32 weights. The CUDA runtime, its benchmark and its tests are in
+[`finetune/parakeet-ternary/inference/`](finetune/parakeet-ternary/inference/)
+(MIT, this repository only). Design, pilot, main run and every
 number: [`finetune/parakeet-ternary/`](finetune/parakeet-ternary/), results in
 [`finetune/parakeet-ternary/results/TEST.md`](finetune/parakeet-ternary/results/TEST.md).
 Common Voice, outside the leaderboard mean and the training mixture, shows the
@@ -67,6 +109,7 @@ what does it cost in accuracy and energy? Nothing here is a fielded system.
 
 | Directory | What it is | State |
 | --- | --- | --- |
+| [`finetune/parakeet-ternary/`](finetune/parakeet-ternary/) | Ternary-weight QAT of Parakeet-TDT-0.6B-v2 (design, streamed training, export, leaderboard evaluation, Hugging Face staging) and a custom CUDA runtime in [`inference/`](finetune/parakeet-ternary/inference/) with RTX 5090 benchmarks and tests | Complete, results above |
 | [`finetune/whisper-ternary/`](finetune/whisper-ternary/) | Ternary-weight QAT of Whisper tiny.en: preregistered design, training, export, evaluation, resumable sweep, power flight recorder, transcription demo, tests | Complete, results above |
 | [`custom/cpu-inference/`](custom/cpu-inference/) | Hand-written AVX-512 VPOPCNTDQ binary/ternary kernels for a Whisper medium.en-shaped graph on a Ryzen 9 9950X3D, with RAPL energy measurement and bit-exact verification | Complete, benchmarks below |
 | [`custom/inference-efficiency/`](custom/inference-efficiency/) | Packed CUDA GEMV and fused decoder kernels on an RTX 5090, NVML energy measurement, CTranslate2 controls, independent audit | Complete, benchmarks below |
