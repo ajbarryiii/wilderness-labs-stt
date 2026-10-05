@@ -21,4 +21,11 @@ export HF_HUB_DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 WANDB_MODE=disabled TOKENIZERS_
 export PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS="${OMP_NUM_THREADS:-4}" OPENBLAS_NUM_THREADS=1
 export TRITON_LIBCUDA_PATH=/run/opengl-driver/lib
 export LD_LIBRARY_PATH="/run/opengl-driver/lib:/nix/store/hngmi01i8wgi25a0byrxcn4ysz5j79mw-gcc-15.2.0-lib/lib:/nix/store/dbz6pb9g67kpgpl95k8d85kzpxm1c32p-zlib-1.3.2/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-exec "$repo/custom/autoresearch/.training-runtime/bin/python3" "$@"
+# cuda-python's NVRTC discovery does not find this existing project-local wheel
+# automatically. Without it NeMo silently falls back to host-controlled decoder
+# loops. Keep this optional so ordinary inference still works without that wheel.
+nvrtc_lib=/mnt/hd/wilderness-labs-stt/inference-efficiency/deps/nvidia/cuda_nvrtc/lib
+if [[ -f "$nvrtc_lib/libnvrtc.so.12" ]]; then
+  export LD_LIBRARY_PATH="$nvrtc_lib:$LD_LIBRARY_PATH"
+fi
+exec "${PARAKEET_PYTHON:-$repo/custom/autoresearch/.training-runtime/bin/python3}" "$@"
