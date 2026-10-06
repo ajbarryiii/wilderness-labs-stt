@@ -312,6 +312,14 @@ on 1 to 30 s utterances and evaluated on test utterances up to about 106 s.
 Longer inputs were not evaluated; split long recordings into segments of about
 30 s or less.
 
+## Used in
+
+- [LocalFlow](https://github.com/ajbarryiii/LocalFlow), an offline macOS
+  dictation app (beta; Apple Silicon, macOS 26 or later) forked from
+  [FreeFlow](https://github.com/zachlatta/freeflow). It runs a Core ML
+  conversion of these weights (ternary lookup tables, FP16 values) on the
+  Mac's Neural Engine, and audio never leaves the device.
+
 ## What is in the files
 
 - `export.safetensors` (180,797,564 bytes):
