@@ -1,4 +1,4 @@
-parakeet-tdt-0.6b-v2-ternary
+kea-t (formerly parakeet-tdt-0.6b-v2-ternary)
 
 Model weights and model card (export.safetensors, manifest.json,
 reconstruction.json, tokenizer/, README.md): CC-BY-4.0, see LICENSE.

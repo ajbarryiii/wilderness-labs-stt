@@ -149,7 +149,9 @@ model-index:
       name: Test WER
 ---
 
-# Parakeet-TDT-0.6B-v2 with ternary encoder weights {-1, 0, +1}
+# Kea-T: Parakeet-TDT-0.6B-v2 with ternary encoder weights {-1, 0, +1}
+
+Formerly published as `rajb3/parakeet-tdt-0.6b-v2-ternary`.
 
 On one RTX 5090, the custom CUDA runtime in our GitHub repository transcribes a 10 s
 clip from these weights in 4.46 ms, with 1.89 GB of process VRAM and 1.57 J of GPU

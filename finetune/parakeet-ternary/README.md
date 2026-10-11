@@ -1,6 +1,6 @@
 # Ternary-weight QAT of Parakeet-TDT-0.6B-v2
 
-**Published:** [rajb3/parakeet-tdt-0.6b-v2-ternary](https://huggingface.co/rajb3/parakeet-tdt-0.6b-v2-ternary)
+**Published:** [rajb3/kea-t](https://huggingface.co/rajb3/kea-t)
 (CC-BY-4.0). Test results: [`results/TEST.md`](results/TEST.md). The upload folder is built
 by `hf/stage.py` (52 required checks, including identical tensors and transcripts between the
 standalone `hf/load_ternary.py` and this repository's loader) and was verified on a private

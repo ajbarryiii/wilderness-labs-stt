@@ -1,7 +1,7 @@
 # CUDA runtime for ternary Parakeet-TDT-0.6B-v2
 
 This directory runs the published ternary checkpoint
-[rajb3/parakeet-tdt-0.6b-v2-ternary](https://huggingface.co/rajb3/parakeet-tdt-0.6b-v2-ternary)
+[rajb3/kea-t](https://huggingface.co/rajb3/kea-t)
 on NVIDIA SM120 GPUs (target: RTX 5090) directly from its packed weights. Unlike the `load_ternary.py` loader in the
 Hugging Face download, it does not rebuild a dense FP32 model, and it lives only in this
 repository (MIT). All numbers come from one RTX 5090 at its configured 400 W power limit,
@@ -132,7 +132,7 @@ EXPORT=/mnt/hd/wilderness-labs-stt/parakeet-ternary/exports/parakeet-v2
 mountpoint -q /mnt/hd || exit 1       # the project disk must be mounted
 export HF_HOME=/mnt/hd/wilderness-labs-stt/parakeet-ternary/caches/huggingface   # any cache on the mounted disk
 export HF_HUB_CACHE="$HF_HOME/hub"
-hf download rajb3/parakeet-tdt-0.6b-v2-ternary --local-dir "$EXPORT"
+hf download rajb3/kea-t --local-dir "$EXPORT"
 
 $P/python -m inference --export "$EXPORT" --optimized clip.wav                              # compact
 $P/python -m inference --export "$EXPORT" --optimized --encoder-storage expanded clip.wav   # expanded

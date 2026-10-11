@@ -57,7 +57,7 @@ bundle and is excluded from the mean.
 | Ternary, no training | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 180.8 MB |
 | **Ternary, QAT** | **2.05** | **4.20** | **10.42** | **11.72** | **10.35** | **2.94** | **6.19** | **6.84** | **180.8 MB** |
 
-Model: [rajb3/parakeet-tdt-0.6b-v2-ternary](https://huggingface.co/rajb3/parakeet-tdt-0.6b-v2-ternary)
+Model: [rajb3/kea-t](https://huggingface.co/rajb3/kea-t)
 (CC-BY-4.0). Its standalone loader needs `nemo_toolkit[asr]` and rebuilds dense
 FP32 weights. The CUDA runtime, its benchmark and its tests are in
 [`finetune/parakeet-ternary/inference/`](finetune/parakeet-ternary/inference/)
