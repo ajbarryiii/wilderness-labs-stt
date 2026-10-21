@@ -6,6 +6,8 @@ Low-bit, low-power speech-to-text. This repository contains:
 - a custom CUDA runtime for it whose expanded mode, on an RTX 5090, has lower
   latency, process VRAM and GPU energy than our own optimized BF16 build of the
   original for the clips we measured;
+- a binary-weight (1-bit) version of that Parakeet, 105.3 MB, within 0.6 WER
+  points of the original;
 - a ternary Whisper tiny.en;
 - packed binary/ternary CPU and GPU kernels.
 
@@ -56,6 +58,7 @@ bundle and is excluded from the mean.
 | FP32 original (our scoring) | 1.70 | 3.19 | 11.15 | 11.24 | 9.78 | 2.14 | 5.94 | 6.45 | 2,472 MB |
 | Ternary, no training | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 180.8 MB |
 | **Ternary, QAT** | **2.05** | **4.20** | **10.42** | **11.72** | **10.35** | **2.94** | **6.19** | **6.84** | **180.8 MB** |
+| Binary, QAT (Kea-B) | 2.20 | 4.56 | 10.65 | 12.17 | 10.46 | 3.01 | 6.30 | 7.05 | 105.3 MB |
 
 Model: [rajb3/kea-t](https://huggingface.co/rajb3/kea-t)
 (CC-BY-4.0). Its standalone loader needs `nemo_toolkit[asr]` and rebuilds dense
@@ -66,6 +69,14 @@ number: [`finetune/parakeet-ternary/`](finetune/parakeet-ternary/), results in
 [`finetune/parakeet-ternary/results/TEST.md`](finetune/parakeet-ternary/results/TEST.md).
 Common Voice, outside the leaderboard mean and the training mixture, shows the
 largest gap (12.56% against 8.50%).
+
+The binary sibling, [rajb3/kea-b](https://huggingface.co/rajb3/kea-b)
+(CC-BY-4.0), is trained from the ternary model with the same 264 modules
+constrained to {-1, +1}. It averages **7.05% from a 105.3 MB file**, against
+6.84% for Kea-T and 6.45% for the original, and its loader works the same way.
+Training, export and test scoring:
+[`finetune/parakeet-binary/`](finetune/parakeet-binary/), results in
+[`finetune/parakeet-binary/results/TEST.md`](finetune/parakeet-binary/results/TEST.md).
 
 **Earlier result (September 2026):** Whisper tiny.en with every attention and
 feed-forward projection *and* the token embedding constrained to three values
@@ -110,6 +121,7 @@ what does it cost in accuracy and energy? Nothing here is a fielded system.
 | Directory | What it is | State |
 | --- | --- | --- |
 | [`finetune/parakeet-ternary/`](finetune/parakeet-ternary/) | Ternary-weight QAT of Parakeet-TDT-0.6B-v2 (design, streamed training, export, leaderboard evaluation, Hugging Face staging) and a custom CUDA runtime in [`inference/`](finetune/parakeet-ternary/inference/) with RTX 5090 benchmarks and tests | Complete, results above |
+| [`finetune/parakeet-binary/`](finetune/parakeet-binary/) | Binary-weight (1-bit) QAT of Parakeet-TDT-0.6B-v2 trained from the ternary model (pilot, training, export, test scoring, Hugging Face staging), with draft native 1-bit GPU and CPU kernels | Model complete and published, results above; kernels in progress |
 | [`finetune/whisper-ternary/`](finetune/whisper-ternary/) | Ternary-weight QAT of Whisper tiny.en: preregistered design, training, export, evaluation, resumable sweep, power flight recorder, transcription demo, tests | Complete, results above |
 | [`custom/cpu-inference/`](custom/cpu-inference/) | Hand-written AVX-512 VPOPCNTDQ binary/ternary kernels for a Whisper medium.en-shaped graph on a Ryzen 9 9950X3D, with RAPL energy measurement and bit-exact verification | Complete, benchmarks below |
 | [`custom/inference-efficiency/`](custom/inference-efficiency/) | Packed CUDA GEMV and fused decoder kernels on an RTX 5090, NVML energy measurement, CTranslate2 controls, independent audit | Complete, benchmarks below |

@@ -1,5 +1,10 @@
 # Binary-weight QAT of Parakeet-TDT-0.6B-v2
 
+**Published:** on Hugging Face as [Kea-B](https://huggingface.co/rajb3/kea-b)
+(CC-BY-4.0). The upload folder is built by `hf/stage.py` (61 required checks) and
+was verified from a fresh download before being made public
+([plans/release.md](plans/release.md)).
+
 All 264 encoder projection matrices (604M weights) quantized to {-1, +1} with
 one FP32 scale per row; activations stay floating point. Trained from the
 ternary model M1 (`../parakeet-ternary`) by ramping its ternary weights to
@@ -60,6 +65,7 @@ All pilot arms ran 12k steps; results are full-dev means.
 | `binary_eval.py`, `binary_sweep.py` | zero-step points, gate, pilot arms, selection, main report |
 | `binary_main.py`, `binary_main_paths.py` | MB1 entry point (stream seed, provenance) |
 | `binary_test.py`, `binary_report_test.py` | one-time test scoring with precheck, dev gate, attempt ledger |
+| `hf/` | Hugging Face release: `stage.py` builds and checks the upload folder, `load_binary.py` is the standalone loader (MIT), `verify_download.py` checks a fresh download; model card, LICENSE, NOTICE |
 | `gpu1bit/` | native 1-bit RTX 5090 kernels, in progress ([plans/gpu-kernel.md](plans/gpu-kernel.md)) |
 | `diagnostics/` | pre-pilot latent analysis |
 
