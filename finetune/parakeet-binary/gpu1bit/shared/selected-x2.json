@@ -1,0 +1,54 @@
+{
+ "about": "CANDIDATE selection for the INT8x2 deployment default (plans/x2-default.md Y1, Z2). The gates (g0-g5), the recorded benchmark (b1-b6) and test scoring use THIS file explicitly (GPU1BIT_SELECTION / selection=). Promotion replaces shared/selected.json with a byte-identical copy of this file, after every gate passes and the benchmark is written; until then shared/selected.json stays the x3 document. Identities hash this file's content.",
+ "kernel": "int8_mma",
+ "runtime": "hybrid",
+ "imports": [],
+ "hybrid": {
+  "provider": "gpu1bit.int8_mma.hybrid_exact:HybridProjectionExact",
+  "pipeline": "gpu1bit.int8_mma.hybrid_exact:exact_hybrid_pipeline",
+  "imports": [
+   "gpu1bit.int8_mma.row_exact"
+  ]
+ },
+ "default_parts": 2,
+ "m1_default_parts": 2,
+ "parts": {
+  "2": {
+   "kernel": "int8_mma:x2",
+   "imports": [],
+   "hybrid": {
+    "provider": "gpu1bit.int8_mma.hybrid_x2:HybridProjectionX2",
+    "pipeline": "gpu1bit.int8_mma.hybrid_x2:exact_hybrid_pipeline_x2",
+    "imports": []
+   }
+  },
+  "3": {
+   "kernel": "int8_mma",
+   "imports": [],
+   "hybrid": {
+    "provider": "gpu1bit.int8_mma.hybrid_exact:HybridProjectionExact",
+    "pipeline": "gpu1bit.int8_mma.hybrid_exact:exact_hybrid_pipeline",
+    "imports": [
+     "gpu1bit.int8_mma.row_exact"
+    ]
+   }
+  }
+ },
+ "arms": {
+  "default": "MB1-B-hybrid-x2",
+  "override_x3": "MB1-B-hybrid-x3",
+  "m1_default": "M1-x2",
+  "m1_override_x3": "M1-x3"
+ },
+ "selection": {
+  "x3_selection": {
+   "session": "sel-20261020b",
+   "variant": "B-hybrid",
+   "report": "/mnt/hd/wilderness-labs-stt/parakeet-binary/gpu1bit/H/selection/sel-20261020b/report-corrected.json",
+   "note": "the kernel ranking was established at x3 only (plans/x2-default.md Scope)"
+  },
+  "x2_plan": "plans/x2-default.md (CLEAN at plan review round 4)",
+  "decision": "user, 2026-10-21: INT8x2 becomes the deployment default, subject to the dev gates g0-g5",
+  "status": "candidate (not promoted; gates pending)"
+ }
+}

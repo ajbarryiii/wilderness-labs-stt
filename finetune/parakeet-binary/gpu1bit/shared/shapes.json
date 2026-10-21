@@ -1,0 +1,5010 @@
+{
+ "about": "MB1's 264 quantized encoder layers and the batch-1 M (rows = B*T frames) of the 3, 10 and 30.04 s LibriSpeech test-clean clips used by M1's recorded runs (compare_v2.py, EXPERIMENTS4.md; cuda_experiments.py --rows 38 126 376). Written by gpu1bit/shared/make_shapes.py from one eager CPU forward per clip length.",
+ "export": "/mnt/hd/wilderness-labs-stt/parakeet-binary/runs/main-binB-m1-lr2e-4/export",
+ "export_sha256": "9873d2f1a53127c673d0201db98cd3ba859ba432f334fef55e9e24fd057b9651",
+ "packed_code_bytes": 75497472,
+ "scale_bytes": 1769472,
+ "budget": {
+  "factor": 1.1,
+  "code_budget_bytes_total": 83047219,
+  "definition": "see gpu1bit/shared/api.py weight_budget_bytes and plans/gpu-kernel.md A5"
+ },
+ "clips": [
+  {
+   "target_seconds": 3,
+   "id": "3575-170457-0052",
+   "duration": 3.0,
+   "samples": 48000,
+   "manifest": "test_librispeech_clean.jsonl",
+   "feature_tensor_frames": 301,
+   "feature_length": 300,
+   "encoder_frames_T": 38,
+   "encoded_length": 38
+  },
+  {
+   "target_seconds": 10,
+   "id": "1320-122617-0010",
+   "duration": 10.0,
+   "samples": 160000,
+   "manifest": "test_librispeech_clean.jsonl",
+   "feature_tensor_frames": 1001,
+   "feature_length": 1000,
+   "encoder_frames_T": 126,
+   "encoded_length": 125
+  },
+  {
+   "target_seconds": 30,
+   "id": "121-123859-0002",
+   "duration": 30.04,
+   "samples": 480640,
+   "manifest": "test_librispeech_clean.jsonl",
+   "feature_tensor_frames": 3005,
+   "feature_length": 3004,
+   "encoder_frames_T": 376,
+   "encoded_length": 376
+  }
+ ],
+ "M_rules": {
+  "T": "every layer except linear_pos: one row per encoder tensor frame (B*T; T = encoder output tensor frames, which can exceed encoded_length by one)",
+  "2T-1": "self_attn.linear_pos projects the relative positional embedding [1, 2T-1, 1024] (batch 1 regardless of B); M1's optimized runtimes compute it eagerly at warm-up and replay a cached result inside CUDA graphs (transforms.py position=True), so it is not in the timed graph"
+ },
+ "distinct_shapes": [
+  {
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "count": 24,
+   "M_rules": [
+    "T"
+   ],
+   "modules": [
+    "conv.pointwise_conv2"
+   ],
+   "M_per_clip": {
+    "3.0s": [
+     38
+    ],
+    "10.0s": [
+     126
+    ],
+    "30.04s": [
+     376
+    ]
+   },
+   "input_stride_pattern_3s": [
+    "[38912, 38, 1]"
+   ]
+  },
+  {
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "count": 24,
+   "M_rules": [
+    "T"
+   ],
+   "modules": [
+    "conv.pointwise_conv1"
+   ],
+   "M_per_clip": {
+    "3.0s": [
+     38
+    ],
+    "10.0s": [
+     126
+    ],
+    "30.04s": [
+     376
+    ]
+   },
+   "input_stride_pattern_3s": [
+    "[38912, 1, 1024]"
+   ]
+  },
+  {
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "count": 120,
+   "M_rules": [
+    "2T-1",
+    "T"
+   ],
+   "modules": [
+    "self_attn.linear_k",
+    "self_attn.linear_out",
+    "self_attn.linear_pos",
+    "self_attn.linear_q",
+    "self_attn.linear_v"
+   ],
+   "M_per_clip": {
+    "3.0s": [
+     38,
+     75
+    ],
+    "10.0s": [
+     126,
+     251
+    ],
+    "30.04s": [
+     376,
+     751
+    ]
+   },
+   "input_stride_pattern_3s": [
+    "[10238976, 1024, 1]",
+    "[38912, 1024, 1]"
+   ]
+  },
+  {
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "count": 48,
+   "M_rules": [
+    "T"
+   ],
+   "modules": [
+    "feed_forward1.linear2",
+    "feed_forward2.linear2"
+   ],
+   "M_per_clip": {
+    "3.0s": [
+     38
+    ],
+    "10.0s": [
+     126
+    ],
+    "30.04s": [
+     376
+    ]
+   },
+   "input_stride_pattern_3s": [
+    "[155648, 4096, 1]"
+   ]
+  },
+  {
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "count": 48,
+   "M_rules": [
+    "T"
+   ],
+   "modules": [
+    "feed_forward1.linear1",
+    "feed_forward2.linear1"
+   ],
+   "M_per_clip": {
+    "3.0s": [
+     38
+    ],
+    "10.0s": [
+     126
+    ],
+    "30.04s": [
+     376
+    ]
+   },
+   "input_stride_pattern_3s": [
+    "[38912, 1024, 1]"
+   ]
+  }
+ ],
+ "m1_runtime_calls_per_encoder_forward": {
+  "about": "Projection calls M1's optimized/expanded/hybrid encoder (encoder_transform qkv=True, silu=True, norm_quant=True, position=True, layer_fusions) makes per forward inside the graph; Q/K/V run as one fused [3072, 1024] projection.",
+  "calls": [
+   {
+    "what": "self_attn fused QKV (norm_self_att fused into quantization)",
+    "kind": "linear",
+    "N": 3072,
+    "K": 1024,
+    "count": 24,
+    "M": "T"
+   },
+   {
+    "what": "self_attn.linear_out",
+    "kind": "linear",
+    "N": 1024,
+    "K": 1024,
+    "count": 24,
+    "M": "T"
+   },
+   {
+    "what": "feed_forward{1,2}.linear1 (+norm fused, SiLU epilogue)",
+    "kind": "linear",
+    "N": 4096,
+    "K": 1024,
+    "count": 48,
+    "M": "T"
+   },
+   {
+    "what": "feed_forward{1,2}.linear2",
+    "kind": "linear",
+    "N": 1024,
+    "K": 4096,
+    "count": 48,
+    "M": "T"
+   },
+   {
+    "what": "conv.pointwise_conv1 (+norm_conv fused)",
+    "kind": "conv",
+    "N": 2048,
+    "K": 1024,
+    "count": 24,
+    "M": "T"
+   },
+   {
+    "what": "conv.pointwise_conv2 (SiLU on input fused)",
+    "kind": "conv",
+    "N": 1024,
+    "K": 1024,
+    "count": 24,
+    "M": "T"
+   },
+   {
+    "what": "self_attn.linear_pos (cached outside the graph)",
+    "kind": "linear",
+    "N": 1024,
+    "K": 1024,
+    "count": 24,
+    "M": "2T-1"
+   }
+  ]
+ },
+ "layers": [
+  {
+   "name": "encoder.layers.0.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.0.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.0.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.0.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.0.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.0.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.0.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.0.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.0.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.0.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.0.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.1.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.1.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.1.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.1.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.1.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.1.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.1.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.1.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.1.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.1.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.1.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.10.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.10.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.10.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.10.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.10.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.10.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.10.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.10.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.10.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.10.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.10.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.11.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.11.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.11.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.11.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.11.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.11.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.11.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.11.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.11.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.11.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.11.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.12.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.12.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.12.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.12.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.12.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.12.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.12.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.12.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.12.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.12.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.12.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.13.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.13.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.13.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.13.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.13.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.13.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.13.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.13.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.13.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.13.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.13.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.14.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.14.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.14.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.14.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.14.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.14.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.14.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.14.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.14.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.14.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.14.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.15.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.15.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.15.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.15.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.15.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.15.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.15.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.15.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.15.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.15.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.15.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.16.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.16.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.16.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.16.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.16.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.16.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.16.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.16.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.16.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.16.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.16.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.17.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.17.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.17.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.17.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.17.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.17.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.17.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.17.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.17.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.17.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.17.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.18.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.18.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.18.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.18.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.18.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.18.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.18.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.18.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.18.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.18.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.18.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.19.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.19.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.19.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.19.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.19.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.19.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.19.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.19.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.19.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.19.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.19.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.2.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.2.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.2.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.2.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.2.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.2.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.2.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.2.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.2.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.2.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.2.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.20.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.20.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.20.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.20.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.20.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.20.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.20.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.20.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.20.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.20.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.20.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.21.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.21.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.21.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.21.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.21.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.21.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.21.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.21.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.21.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.21.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.21.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.22.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.22.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.22.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.22.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.22.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.22.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.22.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.22.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.22.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.22.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.22.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.23.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.23.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.23.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.23.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.23.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.23.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.23.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.23.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.23.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.23.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.23.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.3.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.3.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.3.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.3.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.3.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.3.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.3.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.3.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.3.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.3.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.3.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.4.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.4.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.4.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.4.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.4.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.4.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.4.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.4.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.4.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.4.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.4.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.5.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.5.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.5.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.5.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.5.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.5.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.5.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.5.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.5.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.5.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.5.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.6.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.6.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.6.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.6.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.6.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.6.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.6.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.6.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.6.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.6.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.6.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.7.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.7.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.7.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.7.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.7.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.7.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.7.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.7.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.7.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.7.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.7.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.8.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.8.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.8.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.8.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.8.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.8.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.8.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.8.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.8.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.8.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.8.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.9.conv.pointwise_conv1",
+   "kind": "conv",
+   "N": 2048,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    1,
+    1024
+   ]
+  },
+  {
+   "name": "encoder.layers.9.conv.pointwise_conv2",
+   "kind": "conv",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    1024,
+    38
+   ],
+   "input_stride_3s": [
+    38912,
+    38,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.9.feed_forward1.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.9.feed_forward1.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.9.feed_forward2.linear1",
+   "kind": "linear",
+   "N": 4096,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.9.feed_forward2.linear2",
+   "kind": "linear",
+   "N": 1024,
+   "K": 4096,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    4096
+   ],
+   "input_stride_3s": [
+    155648,
+    4096,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.9.self_attn.linear_k",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.9.self_attn.linear_out",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.9.self_attn.linear_pos",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "2T-1",
+   "input_shape_3s": [
+    1,
+    75,
+    1024
+   ],
+   "input_stride_3s": [
+    10238976,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.9.self_attn.linear_q",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  },
+  {
+   "name": "encoder.layers.9.self_attn.linear_v",
+   "kind": "linear",
+   "N": 1024,
+   "K": 1024,
+   "bias": false,
+   "M_rule": "T",
+   "input_shape_3s": [
+    1,
+    38,
+    1024
+   ],
+   "input_stride_3s": [
+    38912,
+    1024,
+    1
+   ]
+  }
+ ],
+ "source_sha256": "60f18a202a0fbfd5baf80fb84e1a72c1b7958df71337a9ade1ff59bf8f5632be"
+}

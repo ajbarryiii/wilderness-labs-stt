@@ -1,0 +1,22 @@
+# x86 golden-vector generator (plans/cpu-benchmark-mac.md M8). Runs on NixOS (Ryzen 9950X3D,
+# AVX-512 VNNI/VBMI) against the measured, read-only LocalFlow snapshot; its own workspace, not a
+# member of cpu1bit. Build/run: cpu1bit/shared/golden/run.sh (as a `job ... --needs cpu-heavy`).
+[package]
+build = "build.rs"
+name = "cpu1bit-golden-x86"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+lf-cpu = { path = "/mnt/hd/wilderness-labs-stt/parakeet-ternary/cpu-bitplanes/20261008T121546/snapshot/crates/lf-cpu" }
+lf-model = { path = "/mnt/hd/wilderness-labs-stt/parakeet-ternary/cpu-bitplanes/20261008T121546/snapshot/crates/lf-model" }
+serde_json = "=1.0.151"
+sha2 = "=0.10.9"
+libc = "=0.2.177"
+
+[profile.release]
+codegen-units = 1
+debug = "line-tables-only"
+
+[workspace]

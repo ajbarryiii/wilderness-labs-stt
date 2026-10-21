@@ -1,0 +1,4 @@
+# Same codegen for every arm (plans/cpu-benchmark-mac.md "Code"). shared/core/build.rs fails the build
+# on aarch64-apple-darwin if these flags are missing or overridden (e.g. by RUSTFLAGS).
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "target-cpu=apple-m1"]

@@ -1,0 +1,32 @@
+{
+ "about": "The selected gpu1bit kernel and runtime stack, read by gpu1bit/runtime.py for its defaults. A kernel that wins under the same rules (A12 gate, A5 audit, A14 winner rule on a dev selection session) replaces 'kernel' here by its registry name (gpu1bit/shared/registry.py, e.g. 'int8_mma:b01'); runtime.py itself is not edited.",
+ "kernel": "int8_mma",
+ "runtime": "hybrid",
+ "imports": [],
+ "hybrid": {
+  "provider": "gpu1bit.int8_mma.hybrid_exact:HybridProjectionExact",
+  "pipeline": "gpu1bit.int8_mma.hybrid_exact:exact_hybrid_pipeline",
+  "imports": [
+   "gpu1bit.int8_mma.row_exact"
+  ]
+ },
+ "selection": {
+  "session": "sel-20261020b",
+  "report": "/mnt/hd/wilderness-labs-stt/parakeet-binary/gpu1bit/H/selection/sel-20261020b/report-corrected.json",
+  "variant": "B-hybrid",
+  "rule": "plans/gpu-kernel.md A14 (lowest median paired GPU energy per full transcription on dev_24 among A12-passing candidates; <1% or <16/24 -> latency); implementation: common reference (Codex c1 finding 3) and the anchored tie set for three or more candidates (Codex GPU c2; adopted from plans/cpu-benchmark.md review round 2)",
+  "winner": "B-hybrid = registry kernel int8_mma (+1/-1 operands) under R-hybrid's stack with B's exact integer deferred split-K (gpu1bit/int8_mma/hybrid_exact.py, row_exact finish_residual routing)",
+  "decided_by": "A* = int8_mma:b01 (lowest energy vs R-expanded, -11.83%); tie set {int8_mma:b01, B-hybrid-b01 (+0.63%, 10 vs 14 lower), B-hybrid (-1.87%, 15 vs 9 lower)}; lowest latency vs R-expanded within it: B-hybrid -7.49% (B-hybrid-b01 -5.29%, int8_mma:b01 -3.88%)",
+  "timing": "clean quiet-host rerun 2026-10-20 17:47-18:51 (agent-jobs gpu1bit-timing-selb), 34/34 steps accepted",
+  "confirmed": "pending coordinator (Codex GPU c2 correction, 2026-10-21)",
+  "supersedes": {
+   "session": "sel-20261020",
+   "winner": "B-hybrid (int8_mma, frozen FP32-deferred hybrid.py)"
+  },
+  "checks": "A12 gates, A5 audits and deferred-A3 re-run under the complete-export fingerprints in check run sel-20261020b-fp2 (2026-10-21); timing as recorded, binding re-verified",
+  "previous": {
+   "winner": "B-hybrid-b01 (top-two implementation)",
+   "file": "/mnt/hd/wilderness-labs-stt/parakeet-binary/gpu1bit/H/selection/sel-20261020b/selected-before-c2-switch.json"
+  }
+ }
+}

@@ -1,0 +1,30 @@
+# cpu1bit Rust workspace (plans/cpu-benchmark-mac.md). Owned by agent H; kernel crates are owned by
+# their agents (v_sdot V, t_lut T, p_bitserial P). Built on the Mac only through shared/push.py +
+# shared/mac/cargo (stable toolchain pinned in shared/core/build.rs, -C target-cpu=apple-m1 for all).
+# push.py stages only members that have a Cargo.toml and records the staged member list.
+[workspace]
+resolver = "3"
+members = ["shared/core", "shared/bneon", "v_sdot", "t_lut", "p_bitserial"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace.dependencies]
+shared = { path = "shared/core", package = "cpu1bit-shared" }
+libc = "=0.2.177"
+serde_json = "=1.0.151"
+sha2 = "=0.10.9"
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+debug = "line-tables-only"
+panic = "abort"
+
+# Contract tests run optimized (they are the release code paths, with debug assertions on).
+[profile.test]
+opt-level = 3
+debug-assertions = true
+overflow-checks = true

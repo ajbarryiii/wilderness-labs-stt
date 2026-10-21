@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# One interpreter for every gpu1bit run, baselines and candidates alike (plans/gpu-kernel.md A7):
+# exactly the environment of finetune/parakeet-ternary/python (NeMo 3.0 / torch 2.11 cu128, NVRTC
+# 12.9 on the library path, which M1's hybrid CUDA path `ptx_row_best` needs, and its caches), with
+# finetune/parakeet-binary on PYTHONPATH so `gpu1bit.*` and `binary_export` import. The ternary
+# wrapper prepends its own directory, so `paths`, `export`, `quant` and `inference` resolve to
+# parakeet-ternary first, as they do for the binary modules. GPU runs: `timeout 600 <this> ...`,
+# one paths.gpu_lock per process (A9).
+set -euo pipefail
+mountpoint -q /mnt/hd || { echo '/mnt/hd is not mounted; refusing artifact writes.' >&2; exit 1; }
+here="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+binary="$(cd -- "$here/../.." && pwd)"
+repo="$(cd -- "$binary/../.." && pwd)"
+export PYTHONPATH="$binary${PYTHONPATH:+:$PYTHONPATH}"
+export GPU1BIT_WRAPPER="gpu1bit/shared/python"
+exec "$repo/finetune/parakeet-ternary/python" "$@"

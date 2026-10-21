@@ -1,0 +1,20 @@
+{
+ "about": "P's frozen tuning grid (plans/cpu-benchmark-mac.md M7: the same grid size as B-NEON's, 6 points). Each point is a KernelConfig.tuning value for p_bitserial::BitSerial; the first is the default (tuning Null). Every point passes H's contract (tests/contract.rs for the default, tests/grid.rs for the others). F = frames[C - 1] * C frame-parts per register tile.",
+ "arm": "p-bitserial",
+ "points": [
+  {"accum": "udot", "o": 4, "frames": [4, 2, 1], "split": "outputs"},
+  {"accum": "udot", "o": 4, "frames": [2, 1, 1], "split": "outputs"},
+  {"accum": "udot_lane", "o": 4, "frames": [6, 3, 2], "split": "outputs"},
+  {"accum": "udot", "o": 4, "frames": [4, 2, 1], "split": "frames"},
+  {"accum": "udot", "o": 4, "frames": [2, 1, 1], "split": "frames"},
+  {"accum": "uadalp", "o": 4, "frames": [2, 3, 2], "split": "outputs"}
+ ],
+ "why": [
+  "default: fastest dev point on every shape (E-core 1.87-1.90 cycles per triple = the isolated-triple rate); F = 4 (i8x2), 3 (i8x3); 16 accumulators, no spills",
+  "F = 2 (i8x2): tied on the E-core; half the accumulators and twice the frame tiles, if Firestorm prefers the shorter epilogue spacing",
+  "UDOT pinned to its by-element encoding (2 constant registers instead of LLVM's 8 splats), enabling F = 6 (24 accumulators): the most independent UDOT chains and the fewest weight loads per triple, in case Firestorm's 4-wide issue is latency- or load-limited at F = 4",
+  "frame split: each thread packs its own frame tiles inside the GEMM job and uses them L1-hot (no packing barrier, no cross-cluster plane traffic), weights streamed from L2; P-core cluster/L2 behaviour cannot be measured on the E-cores",
+  "frame split with 1-frame tiles: the same, load-balanced (T = 200 gives 25 tiles per thread at 8 threads)",
+  "the classic CNT + UADALP form at its best tile (F = 6): a hedge in case Firestorm sustains EOR+CNT+UADALP triples better than EOR+CNT+UDOT (they were equal on the E-core, 0.540 vs 0.538 per cycle)"
+ ]
+}

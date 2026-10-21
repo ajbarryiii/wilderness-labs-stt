@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Prints the Mac's cpu1bit artifacts root without hard-coding a user name: $CPU1BIT_MAC_ROOT if set,
+# else the Mac's $HOME (asked over the macos-ssh helper) + /wilderness-labs-stt-artifacts/cpu1bit.
+# On the Mac itself the same root is $CPU1BIT_ROOT, default $HOME/wilderness-labs-stt-artifacts/cpu1bit.
+set -euo pipefail
+if [[ -n ${CPU1BIT_MAC_ROOT:-} ]]; then
+  printf '%s\n' "$CPU1BIT_MAC_ROOT"
+  exit 0
+fi
+home=$("$HOME/.claude/skills/macos-ssh/scripts/run.sh" -- sh -c 'printf %s "$HOME"')
+[[ $home == /* ]] || { echo "mac-root: cannot read the Mac's \$HOME ($home)" >&2; exit 1; }
+printf '%s\n' "$home/wilderness-labs-stt-artifacts/cpu1bit"

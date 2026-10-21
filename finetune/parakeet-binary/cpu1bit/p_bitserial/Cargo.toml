@@ -1,0 +1,19 @@
+# Agent P: the bit-serial control arm (plans/cpu-benchmark-mac.md "Arms", row P).
+[package]
+name = "p_bitserial"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+shared.workspace = true
+serde_json.workspace = true
+libc.workspace = true
+
+[[bin]]
+name = "p-ubench"
+path = "src/bin/p_ubench.rs"
+
+[[bin]]
+name = "replay-p"
+path = "src/bin/replay-p.rs"

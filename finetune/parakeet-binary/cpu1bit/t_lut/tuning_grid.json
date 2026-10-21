@@ -1,0 +1,12 @@
+{
+  "arm": "t-lut",
+  "about": "T's frozen tuning grid (6 points, the default first). v: index vectors (8 outputs each) per out-block; n_panel: outputs per index panel; k_chunk: inputs per K-chunk. With k_chunk 1024 a frame-block's tables are 32 KB (C = 2) and the panel n_panel / 2 KB, so the n_panel sweep brackets the P-core's 128 KB L1D; k_chunk 2048 halves the chunks of the K = 4096 calls at twice the per-thread table footprint; v 2 is the narrow-block control.",
+  "points": [
+    {"v": 4, "n_panel": 64, "k_chunk": 1024},
+    {"v": 4, "n_panel": 128, "k_chunk": 1024},
+    {"v": 4, "n_panel": 32, "k_chunk": 1024},
+    {"v": 4, "n_panel": 256, "k_chunk": 1024},
+    {"v": 4, "n_panel": 64, "k_chunk": 2048},
+    {"v": 2, "n_panel": 64, "k_chunk": 1024}
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "arm": "v-sdot",
+  "frozen": "2026-10-21",
+  "size": 6,
+  "default_point": 0,
+  "keys": {
+    "split": "auto = frames split whenever every thread gets a full panel (all timed T at 4/8 threads)",
+    "fmax2": "most frames per panel for i8x2 when K <= 2048 (R = 2 * fmax2 accumulators)",
+    "fmax2_wide": "most frames per panel for i8x2 when K > 2048 (the K = 4096 ff linear2 calls)",
+    "fmax3": "most frames per panel for i8x3 (R = 3 * fmax3)"
+  },
+  "rationale": "E-core dev-tuning (background QoS, not comparable), % of SDOT peak loop: frames split beat groups split 1.5-2.6x in every run (split fixed to auto); i8x3 R=15 best at both K (fmax3 fixed to 5); i8x2 K=1024 R=16 84.4, R=15 84.6, R=12 82.0, R=8 77.3; K=4096 R=16 82.3, R=15 83.7, R=12 82.5, R=8 78.0 (the 64 KB activation panel of R=16 at K=4096 competes for L1). Grid = every (narrow >= wide) pair of i8x2 panel caps in {8, 7, 6}.",
+  "points": [
+    {"split": "auto", "fmax2": 8, "fmax2_wide": 8, "fmax3": 5},
+    {"split": "auto", "fmax2": 8, "fmax2_wide": 7, "fmax3": 5},
+    {"split": "auto", "fmax2": 8, "fmax2_wide": 6, "fmax3": 5},
+    {"split": "auto", "fmax2": 7, "fmax2_wide": 7, "fmax3": 5},
+    {"split": "auto", "fmax2": 7, "fmax2_wide": 6, "fmax3": 5},
+    {"split": "auto", "fmax2": 6, "fmax2_wide": 6, "fmax3": 5}
+  ]
+}
