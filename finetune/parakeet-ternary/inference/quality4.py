@@ -1,4 +1,4 @@
-"""Validate expanded encoder against the third-pass packed runtime."""
+"""Validate experimental encoders with text/token/timestamp checks."""
 import argparse,contextlib,time
 from pathlib import Path
 import torch
@@ -15,8 +15,12 @@ def main():
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--export',type=Path,default=DEFAULT_EXPORT)
  p.add_argument('--utterances-per-set',type=int,default=256);p.add_argument('--batch-size',type=int,default=8)
  p.add_argument('--limit-batches',type=int,default=0)
+ p.add_argument('--reference',choices=['packed','expanded'],default='packed')
+ p.add_argument('--candidate',choices=['expanded','ptx_rowfusion','ptx_compiler','ptx_geometry','ptx_row_best'],default='expanded')
+ p.add_argument('--compile-workers',type=int,default=0,help='precompile predicted batch-one CUDA shapes on CPU')
  args=p.parse_args();paths.require_mount()
- if args.batch_size<1 or args.utterances_per_set<1:p.error('positive batch size and utterance count required')
+ if args.batch_size<1 or args.utterances_per_set<1 or args.compile_workers<0:p.error('positive batch size/count; nonnegative compiler workers required')
+ if args.compile_workers and (args.batch_size!=1 or args.candidate=='expanded'):p.error('CPU precompile is for batch-one CUDA validation')
  out=paths.ARTIFACTS/'kernel-runs'/f'{time.strftime("%Y%m%dT%H%M%S")}-quality4';out.mkdir();print('RESULTS',out,flush=True)
  records=records_for_sets(args.utterances_per_set);rows=[];errors=[]
  with paths.gpu_lock('expanded encoder quality validation'),torch.inference_mode(),energy_meter() as meter,contextlib.ExitStack() as stack:
@@ -25,8 +29,37 @@ def main():
   old=load_packed(args.export);new=load_packed(args.export)
   for model in [old,new]:
    stack.enter_context(ev.inference_settings(model));model.decoding.decoding.decoding_computer.force_cuda_graphs_mode('full_graph')
-  enable_optimizations(old);stack.callback(disable_optimizations,old)
-  enable_optimizations(new,encoder_storage='expanded');stack.callback(disable_optimizations,new)
+  enable_optimizations(old,encoder_storage=args.reference);stack.callback(disable_optimizations,old)
+  if args.candidate=='expanded':
+   enable_optimizations(new,encoder_storage='expanded');stack.callback(disable_optimizations,new)
+  else:
+   from .cuda_pipeline import experimental_pipeline
+   provider=stack.enter_context(experimental_pipeline(new,args.candidate))
+   if args.compile_workers:
+    import concurrent.futures
+    import soundfile as sf
+    from .runtime import PackedLinear
+    activations={id(ff.linear1) for layer in new.encoder.layers for ff in [layer.feed_forward1,layer.feed_forward2]}
+    specs={(mod.out_features,mod.in_features,mod.bias is not None,'silu' if id(mod) in activations else '')
+           for mod in new.encoder.modules() if isinstance(mod,PackedLinear) and mod.in_features%128==0}
+    specs.add((3072,1024,new.encoder.layers[0].self_attn.linear_q.bias is not None,''))
+    hop=round(new.cfg.preprocessor.window_stride*new.cfg.preprocessor.sample_rate)
+    factor=new.encoder.subsampling_factor
+    frames={((sf.info(rec['audio_filepath']).frames//hop+1)+factor-1)//factor for rec in records}
+    tasks={(m,*spec) for m in frames for spec in specs}
+    tasks.update((2*m-1,1024,1024,new.encoder.layers[0].self_attn.linear_pos.bias is not None,'') for m in frames)
+    print('CPU precompile',len(tasks),'kernels;',args.compile_workers,'workers; no matmul launches',flush=True)
+    def precompile(task):
+     torch.cuda.set_device(0)
+     provider.prewarm(*task)
+    start=time.perf_counter()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.compile_workers) as executor:
+     futures=[executor.submit(precompile,task) for task in sorted(tasks)]
+     for i,future in enumerate(concurrent.futures.as_completed(futures),1):
+      future.result()
+      if i%64==0:print('CPU precompiled',i,'/',len(tasks),flush=True)
+    save(out,'precompile.json',dict(kernels=len(provider.kernels),seconds=time.perf_counter()-start,
+                                  workers=args.compile_workers,predicted_frames=sorted(frames)))
   def decode(model,e,l):
    result=model.decoding.rnnt_decoder_predictions_tensor(e,l,return_hypotheses=True)
    h=(result[0] if isinstance(result,tuple) else result)[0]

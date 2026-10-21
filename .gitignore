@@ -268,3 +268,14 @@ pytorch_model*.bin
 
 # The ternary Parakeet experiment publishes its result tables.
 !finetune/parakeet-ternary/results/*.md
+
+# The binary Parakeet experiment publishes its result tables (README links).
+!finetune/parakeet-binary/results/*.md
+!finetune/parakeet-binary/gpu1bit/RESULTS.md
+
+# Linked from finetune/parakeet-ternary/inference/README.md.
+!finetune/parakeet-ternary/inference/CUDA_RESULTS.md
+
+# Superseded local drafts of the published Kea-T card.
+/finetune/parakeet-ternary/hf/INFERENCE_PUBLICATION_NOTES.md
+/finetune/parakeet-ternary/hf/MODEL_CARD_WITH_INFERENCE_DRAFT.md

@@ -1,0 +1,15 @@
+#!/bin/sh
+# Mac-side cargo for a pushed cpu1bit workspace (MAC/ws/<agent>): the shared lock, the pinned stable
+# toolchain (rust-toolchain.toml; exact version asserted by shared/core/build.rs), -C target-cpu=apple-m1
+# from .cargo/config.toml (asserted too), and a per-workspace target dir. Run it through the job
+# supervisor (cpu1bit/shared/mac-job on NixOS), never directly.
+set -eu
+ws=$(cd "$(dirname "$0")/../.." && pwd)
+agent=$(basename "$ws")
+root=${CPU1BIT_ROOT:-$HOME/wilderness-labs-stt-artifacts/cpu1bit}
+export CARGO_TARGET_DIR="$root/target/$agent"
+export PATH="$HOME/.cargo/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+unset RUSTFLAGS CARGO_ENCODED_RUSTFLAGS RUSTUP_TOOLCHAIN CARGO_BUILD_RUSTFLAGS
+export CPU1BIT_WS="$ws" CPU1BIT_ROOT="$root"
+cd "$ws"
+exec /usr/bin/perl "$ws/shared/mac/withlock" shared "$root/lock/active.lock" -- cargo "$@"

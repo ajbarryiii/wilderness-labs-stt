@@ -1,0 +1,128 @@
+{
+ "design_revision": 8,
+ "code_version": "wp3-eligibility-2",
+ "model": "mp2",
+ "arm": "C5",
+ "variant": "fixed",
+ "backend": "ane",
+ "compute_units": "cpuAndNeuralEngine",
+ "decoder_precision": "fp32",
+ "decoder_models": "arms/mp2/decoder-fp32",
+ "eligible": false,
+ "timing_allowed": false,
+ "selection_eligible": false,
+ "reasons": [
+  "scope: {\"note\": \"exploratory W8A8 (DESIGN.md: scope reduction; numerics fail)\"}",
+  "gate4a: {\"topology\": \"dense+activation_quantization\", \"source\": null, \"own_fp32_build\": false, \"rel_max\": null, \"abs_max\": null}",
+  "gate4b: encoder rel <= 0.1 fails on 82 cases; jd token agreement (decisive 0.7229, all 0.7091, decisive fraction 0.966); jd duration agreement (decisive 0.5272, all 0.5031, decisive fraction 0.850); jd free-decoding sequence identity 8/64 = 0.125 < 0.95; dj token agreement (decisive 0.7229, all 0.7091, decisive fraction 0.966); dj duration agreement (decisive 0.5272, all 0.5031, decisive fraction 0.850); dj free-decoding sequence identity 8/64 = 0.125 < 0.95",
+  "wer: {\"reference_wer_pct\": 2.711, \"jd_wer_pct\": 28.467, \"dj_wer_pct\": 28.467, \"clips\": 64, \"limit_points\": 0.2}"
+ ],
+ "checks": {
+  "scope": {
+   "pass": false,
+   "note": "exploratory W8A8 (DESIGN.md: scope reduction; numerics fail)"
+  },
+  "gate2": {
+   "pass": true,
+   "modules": 240
+  },
+  "gate4a": {
+   "pass": false,
+   "topology": "dense+activation_quantization",
+   "source": null,
+   "own_fp32_build": false,
+   "rel_max": null,
+   "abs_max": null
+  },
+  "gate4a_decoder": {
+   "pass": true
+  },
+  "gate4b": {
+   "pass": false,
+   "result_design_revision": 8,
+   "decoder_precision": "fp32",
+   "encoder_rel_max": 1.5286522716837336,
+   "encoder_failing": 82,
+   "heads": {
+    "jd": {
+     "token": {
+      "decisive_fraction": 0.9662809917355372,
+      "agreement_on_decisive": 0.7228874444064317,
+      "agreement_all_steps": 0.7090909090909091,
+      "pass": false
+     },
+     "duration": {
+      "decisive_fraction": 0.8502479338842975,
+      "agreement_on_decisive": 0.5272161741835147,
+      "agreement_all_steps": 0.5031404958677685,
+      "pass": false
+     }
+    },
+    "dj": {
+     "token": {
+      "decisive_fraction": 0.9662809917355372,
+      "agreement_on_decisive": 0.7228874444064317,
+      "agreement_all_steps": 0.7090909090909091,
+      "pass": false
+     },
+     "duration": {
+      "decisive_fraction": 0.8502479338842975,
+      "agreement_on_decisive": 0.5272161741835147,
+      "agreement_all_steps": 0.5031404958677685,
+      "pass": false
+     }
+    }
+   },
+   "sequence_identity": {
+    "jd": 0.125,
+    "dj": 0.125
+   },
+   "rev5_diagnostic_encoder_pass": false,
+   "failed_conditions": [
+    "encoder rel <= 0.1 fails on 82 cases",
+    "jd token agreement (decisive 0.7229, all 0.7091, decisive fraction 0.966)",
+    "jd duration agreement (decisive 0.5272, all 0.5031, decisive fraction 0.850)",
+    "jd free-decoding sequence identity 8/64 = 0.125 < 0.95",
+    "dj token agreement (decisive 0.7229, all 0.7091, decisive fraction 0.966)",
+    "dj duration agreement (decisive 0.5272, all 0.5031, decisive fraction 0.850)",
+    "dj free-decoding sequence identity 8/64 = 0.125 < 0.95"
+   ]
+  },
+  "gate5": {
+   "pass": true,
+   "applicable": false,
+   "gated_rel_max": null
+  },
+  "wer": {
+   "pass": false,
+   "reference_wer_pct": 2.711,
+   "jd_wer_pct": 28.467,
+   "dj_wer_pct": 28.467,
+   "clips": 64,
+   "limit_points": 0.2
+  },
+  "stress": {
+   "pass": true,
+   "detail": {
+    "pass": true,
+    "nonfinite_where_c4_finite": [],
+    "nonfinite_at_x1": [],
+    "missing_c4_reference": [],
+    "nonfinite_cases_total": 0
+   }
+  }
+ },
+ "inputs": {
+  "results/gate2/mp2-C5.json": "1bd3a0eba34df2755f8abbec21500c314830f9b6bbacab1ecb7634d490a19293",
+  "results/gates/v7/mp2-decoder-fp32-cpuOnly-4a.json": "1df69d43b6b988cbb95ee22806905790104135bcd3916c103e8a54414272913d",
+  "results/gates/v7/mp2-C5-fixed-cpuAndNeuralEngine-dec-fp32.json": "d87cade27553f37524b04774b632a721138efd99897b19b4d277bcf87a1aa005",
+  "results/probes/stress.json": "501b9f754c270a26d9f8015b6f3cc5cb2ff876de0e5c16b3cc3669528f0cbe9e"
+ },
+ "tokenizer_sha256": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
+ "built": "2026-10-03 07:00",
+ "_evidence": {
+  "sha256": "c74d1b8973f31c30685845e1cb87cccb5a50fef7d8929e0f885a33c4d0600910",
+  "bytes": 4226,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/eligibility/mp2-C5-fixed-ane.json"
+ }
+}

@@ -1,0 +1,51 @@
+{
+ "gate": "F2 (native CPU decode loop, FP32) vs reference replay of the B0 trace, same encoder output",
+ "ceilings": {
+  "rel": 1e-05,
+  "abs": 0.0001
+ },
+ "replay_clips": 64,
+ "replay_passed": 64,
+ "max_logits": {
+  "rel": 1.4080759150390403e-07,
+  "abs": 8.922651688659475e-07
+ },
+ "max_token_logits": {
+  "rel": 1.4075537816024104e-07,
+  "abs": 8.901507080026797e-07
+ },
+ "max_duration_logits": {
+  "rel": 3.767776526828409e-07,
+  "abs": 3.015139154805857e-06
+ },
+ "max_h": {
+  "rel": 1.0273862930276544e-06,
+  "abs": 2.9020613852502856e-05
+ },
+ "max_c": {
+  "rel": 8.218772769037162e-07,
+  "abs": 3.3606601809483964e-05
+ },
+ "argmax_equal_all_clips": {
+  "token": true,
+  "duration": true
+ },
+ "free_decoding": {
+  "clips": 64,
+  "token_sequences_equal": 64,
+  "differing": []
+ },
+ "rows": {
+  "omitted_entries": 64,
+  "detail": "see full record"
+ },
+ "free_rows": {
+  "omitted_entries": 64,
+  "detail": "see full record"
+ },
+ "_evidence": {
+  "sha256": "3fe63c9488ed0239ba6bcd4f10aba47b3d8cd0565657f2d9ebc0bca5e7e5363d",
+  "bytes": 44408,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/wp4/f2_gate_mp2.json"
+ }
+}

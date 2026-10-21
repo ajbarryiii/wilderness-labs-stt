@@ -1,0 +1,48 @@
+{
+ "design_revision": 8,
+ "code_version": "wp6b-mlxarm-1",
+ "arm": "MLX",
+ "model": "mp2",
+ "variant": "multi",
+ "backend": "gpu-mlx",
+ "date": "2026-10-03 05:27",
+ "environment": {
+  "mlx": "0.32.3",
+  "device": "Device(gpu, 0)",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "python": "3.12.14",
+  "group_size": 64,
+  "bits": 2,
+  "encoder_py_sha256": "e0262e29af87c13c2dcae7b6fe6169235f5ba8b9d6721dfaa0581fc2903cdda6",
+  "gates_py_sha256": "8587f38766f3bc1b2a93ebba646cbe1bcdf430a3f247e3ba8878d1a1bc7a8e0a"
+ },
+ "gate": "4a",
+ "pass": true,
+ "precision": "fp32 (FP32 activations; scales/biases = FP16(s) in FP32; same packed 2-bit weights and quantized_matmul kernel)",
+ "ceilings": {
+  "rel": 1e-05,
+  "abs": 0.0001,
+  "tau": 1e-06
+ },
+ "reference": {
+  "cache": "refcache mp2 fp16s",
+  "provenance": {
+   "name": "mp2",
+   "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+   "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+  }
+ },
+ "runs": 200,
+ "passed": 200,
+ "max_rel": 2.5472179801221552e-06,
+ "max_abs": 3.410552528049188e-05,
+ "rows": {
+  "omitted_entries": 200,
+  "detail": "see full record"
+ },
+ "_evidence": {
+  "sha256": "9a20d38836883768f744c8c703611b35be523006a5399adeab26b27dc566eeab",
+  "bytes": 41796,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/mlxarm/4a.json"
+ }
+}

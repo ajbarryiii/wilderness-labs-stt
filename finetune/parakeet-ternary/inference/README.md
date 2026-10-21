@@ -182,6 +182,25 @@ prepare:
 
 Run one GPU job at a time; the benchmark checks for the 400 W limit before it starts.
 
+## Experimental hybrid CUDA/Triton path
+
+`--experimental-cuda` (batch size 1 only) runs an RTX 5090 CUDA encoder with expanded
+weights and fused row kernels (`cuda_pipeline.experimental_pipeline(model,
+"ptx_row_best")`). It is opt-in; the published results above do not use it. On our RTX 5090
+at its 400 W cap it had 3.43% lower median full-transcription latency and 3.01% lower GPU
+energy per transcription than the expanded runtime, with process VRAM essentially unchanged.
+Text, token IDs and timestamps matched on 2,048 sampled utterances.
+[CUDA_IMPROVEMENTS.md](CUDA_IMPROVEMENTS.md) has the results and their limits;
+[CUDA_RESULTS.md](CUDA_RESULTS.md) covers the older hand-written CUDA and cuBLAS trials and
+the decoder token-cache ablation.
+
+The development ledgers behind the published runtime are
+[EXPERIMENTS.md](EXPERIMENTS.md) (second pass), [EXPERIMENTS3.md](EXPERIMENTS3.md) (third
+pass), [EXPERIMENTS4.md](EXPERIMENTS4.md) (expanded encoder),
+[COMPONENTS.md](COMPONENTS.md) (isolated encoder and decoder measurements),
+[COMPARISON.md](COMPARISON.md) (the comparison against NeMo and ONNX Runtime) and the
+first kernel measurements in [MEASUREMENTS.md](MEASUREMENTS.md).
+
 ## Limitations
 
 - Measured on one RTX 5090, warm, at batch one, with one clip per length up to 30.04 s. Other

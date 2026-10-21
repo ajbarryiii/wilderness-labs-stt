@@ -1,0 +1,106 @@
+{
+ "gate": "DESIGN.md gate 5 (rev. 5), encoder: C0's encoder (cpuAndNeuralEngine) on front end A's features vs on the FP64 reference front end's features, valid frames",
+ "encoder": "C0 Encoder.mlmodelc (c0.json), fixed 15 s window, cpuAndNeuralEngine",
+ "ceilings": {
+  "rel": 0.02,
+  "abs": 0.25,
+  "tau": 0.001
+ },
+ "clips": 82,
+ "passed": 79,
+ "max_rel": 0.025762070586037362,
+ "max_abs": 0.6747505630968064,
+ "median_rel": 0.001991213661333278,
+ "info_vs_fp32_reference_features": {
+  "max_rel_non_silence": 0.09328443084170106,
+  "max_abs_non_silence": 3.1908377984864864,
+  "silence": [
+   0.6930791484189043,
+   6.492295205548646
+  ]
+ },
+ "failures": [
+  {
+   "clip": "n08-6345-93306-0019",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 96,
+    "ref64": 96,
+    "ref32": 96
+   },
+   "rel": 0.012289701936135421,
+   "abs": 0.40160371014000895,
+   "info_vs_fp32_reference_features": [
+    0.09328443084170106,
+    3.1908377984864864
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.08593929993765546,
+    2.9690546664047353
+   ],
+   "pass": false
+  },
+  {
+   "clip": "n15-1673-143396-0001",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 176,
+    "ref64": 176,
+    "ref32": 176
+   },
+   "rel": 0.01645434213002338,
+   "abs": 0.6747505630968064,
+   "info_vs_fp32_reference_features": [
+    0.012315900567615064,
+    0.48987866930344187
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.004722299522332277,
+    0.18486316797172775
+   ],
+   "pass": false
+  },
+  {
+   "clip": "n15-174-168635-0010",
+   "kind": "natural",
+   "encoder_length": {
+    "vdsp": 126,
+    "ref64": 126,
+    "ref32": 126
+   },
+   "rel": 0.025762070586037362,
+   "abs": 0.5597101312319154,
+   "info_vs_fp32_reference_features": [
+    0.027241541439874777,
+    0.48801840562661
+   ],
+   "info_fp32_vs_fp64_reference_features": [
+    0.0031379102863090765,
+    0.07177961988317692
+   ],
+   "pass": false
+  }
+ ],
+ "rows": {
+  "omitted_entries": 82,
+  "detail": "see full record"
+ },
+ "determinism_check": {
+  "clips": [
+   "n08-6345-93306-0019",
+   "n15-1673-143396-0001",
+   "n15-174-168635-0010"
+  ],
+  "tags": [
+   "ref64",
+   "vdsp"
+  ],
+  "result": "bit-identical encoder outputs on a second run (6 of 6)"
+ },
+ "note": "The 3 failures (rel 1.2e-2..2.6e-2, abs 0.40..0.67) come from feature differences of rel <= 6e-6 that C0's FP16 encoder amplifies; it casts the mel input to FP16 before running on the ANE. On the same clips, the two reference evaluations themselves (FP32 reference.Featurizer vs FP64) give encoder outputs differing by up to rel 8.6e-2 / abs 3.0, and over all non-silence clips by up to rel 9.3e-2 / abs 3.2 vs front end A. The encoder is deterministic. Rerun with the M_P2 arms once WP3's models exist.",
+ "_evidence": {
+  "sha256": "67bc280961c085538a1bbdc0702cfd91b204678f1f4fab2c912bb28ba861750f",
+  "bytes": 37179,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/wp4/gate5_frontend_a_encoder_c0.json"
+ }
+}

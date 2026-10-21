@@ -1,0 +1,178 @@
+{
+ "design_revision": 8,
+ "gate_code_version": "wp3-gates7-2",
+ "gate": "4b",
+ "gates7_py_sha256": "b6bd69724101ed92b8aeaf2328145b6a0fafcae3abf2bb4f33ca49c8dae3d9fe",
+ "date": "2026-10-03 02:42",
+ "model": "mp2",
+ "decoder_precision": "fp32",
+ "arm": "C5",
+ "label": "C5",
+ "variant": "multi",
+ "units": "cpuAndNeuralEngine",
+ "backend": "ane",
+ "thresholds": {
+  "encoder_rel": 0.1,
+  "tau": 0.001,
+  "decisive_margin": 1.0,
+  "agree_decisive": 0.995,
+  "agree_all": 0.99,
+  "decisive_min": 0.5,
+  "sequence_identity": 0.95,
+  "wer_points": 0.2
+ },
+ "rev5_diagnostic_thresholds": {
+  "encoder_rel": 0.02,
+  "encoder_abs": 0.25,
+  "heads_rel": 0.02
+ },
+ "build_provenance": {
+  "name": "mp2",
+  "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+  "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+ },
+ "build_chain": "C3 weights; quantize(int8, per-tensor) -> dequantize on the activation",
+ "decoder_models": {
+  "dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder-fp32",
+  "provenance": {
+   "name": "mp2",
+   "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+   "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+  },
+  "precision": "fp32"
+ },
+ "decoder_role": "deployed (revision 8)",
+ "pass": false,
+ "pass_scope": "all 4b conditions except WER (eligibility.py) and gate 5 where applicable",
+ "summary": {
+  "encoder_4b": {
+   "pass": false,
+   "cases": 200,
+   "failing_cases": 200,
+   "failing_examples": {
+    "omitted_entries": 20,
+    "detail": "see full record"
+   },
+   "rel_max": 2.39717544915313,
+   "abs_max": 17.879351098428703,
+   "rel_median": 1.2205640144836742,
+   "all_finite_valid": true,
+   "all_finite_padded_frames": true,
+   "note": "gated on the valid frames; padded frames are unspecified (MASKING.md) and reported"
+  },
+  "encoder_rev5_diagnostic": {
+   "pass": false,
+   "failing_cases": 200
+  },
+  "gate5": {
+   "pass": false,
+   "gated_cases": 22,
+   "gated_rel_max": 1.7358567304095223,
+   "all_cases": 118,
+   "all_rel_max": 1.7358567304095223,
+   "pass_rev5_gated": false
+  },
+  "heads_4b": {
+   "clips": 82,
+   "steps": 3025,
+   "all_finite": true,
+   "paths": {
+    "jd": {
+     "token": {
+      "decisive_fraction": 0.9662809917355372,
+      "agreement_on_decisive": 0.5138556277796784,
+      "agreement_all_steps": 0.5084297520661157,
+      "disagreements_all": 1487,
+      "disagreements_decisive": 1421,
+      "pass": false
+     },
+     "duration": {
+      "decisive_fraction": 0.8502479338842975,
+      "agreement_on_decisive": 0.4261275272161742,
+      "agreement_all_steps": 0.40297520661157027,
+      "disagreements_all": 1806,
+      "disagreements_decisive": 1476,
+      "pass": false
+     }
+    },
+    "dj": {
+     "token": {
+      "decisive_fraction": 0.9662809917355372,
+      "agreement_on_decisive": 0.5138556277796784,
+      "agreement_all_steps": 0.5084297520661157,
+      "disagreements_all": 1487,
+      "disagreements_decisive": 1421,
+      "pass": false
+     },
+     "duration": {
+      "decisive_fraction": 0.8502479338842975,
+      "agreement_on_decisive": 0.4261275272161742,
+      "agreement_all_steps": 0.40297520661157027,
+      "disagreements_all": 1806,
+      "disagreements_decisive": 1476,
+      "pass": false
+     }
+    }
+   },
+   "rev5_diagnostic": {
+    "token": {
+     "rel_max": 0.7207542744988937,
+     "pass_rev5": false
+    },
+    "duration": {
+     "rel_max": 1.151221011434917,
+     "pass_rev5": false
+    },
+    "h": {
+     "rel_max": 4.853206144678739e-07,
+     "pass_rev5": true
+    },
+    "c": {
+     "rel_max": 3.197785250985183e-07,
+     "pass_rev5": true
+    }
+   },
+   "pass": false
+  },
+  "free_decoding": {
+   "clips": 64,
+   "jd": {
+    "identical": 0,
+    "identity_fraction": 0.0,
+    "pass_identity": false
+   },
+   "dj": {
+    "identical": 0,
+    "identity_fraction": 0.0,
+    "pass_identity": false
+   },
+   "pass_identity": false,
+   "wer": "evaluated by mil/eligibility.py from the token sequences (within +0.2 points of the reference)"
+  }
+ },
+ "encoder_cases": {
+  "omitted_entries": 200,
+  "detail": "see full record"
+ },
+ "heads_per_clip": {
+  "omitted_entries": 82,
+  "detail": "see full record"
+ },
+ "free_decoding_tokens": {
+  "omitted_entries": 64,
+  "detail": "see full record"
+ },
+ "load_s": {
+  "b15": 24.66,
+  "b8": 26.22,
+  "b4": 20.78,
+  "b2": 18.1
+ },
+ "seconds": 112.3,
+ "peak_rss_mb": 1088.8,
+ "_evidence": {
+  "sha256": "039db839f1ba9e66898921394bd0913757fc8016728b71d52a8834a6d3643666",
+  "bytes": 139277,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/gates/v7/mp2-C5-multi-cpuAndNeuralEngine-dec-fp32.json"
+ }
+}

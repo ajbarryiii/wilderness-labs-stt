@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Serialized append to cpu1bit/NOTES.md (plans/cpu-benchmark-mac.md "Collaboration").
+#   ./note <agent> <<'TXT'
+#   ...entry text...
+#   TXT
+set -euo pipefail
+[[ $# -eq 1 && -n "$1" ]] || { echo "usage: note <agent> < text" >&2; exit 2; }
+here="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+body="$(cat)"
+exec 9>>"$here/NOTES.md"
+flock 9
+printf '\n## %s %s\n%s\n' "$1" "$(date '+%Y-%m-%d %H:%M')" "$body" >&9

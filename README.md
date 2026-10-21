@@ -117,7 +117,6 @@ what does it cost in accuracy and energy? Nothing here is a fielded system.
 | [`custom/stt-distillation/`](custom/stt-distillation/) | 604M ternary student distilled from pretrained teachers, with onset, recovery and augmentation pilots | Negative result, documented |
 | [`custom/stt/`](custom/stt/), [`custom/autoresearch/`](custom/autoresearch/) | Small ternary CTC pilot, real-audio VAD gating, and a sandboxed one-hour GPU autoresearch loop with an independent evaluator | Pipelines work; models did not reach usable accuracy |
 | [`finetune/stt/`](finetune/stt/) | Hash-locked local Whisper tiny.en reference used as the working recognizer and QAT base | Complete |
-| [`custom/PLAN.md`](custom/PLAN.md), [`DATA_PLAN.md`](DATA_PLAN.md) | The original architecture, precision contract and data plan | Historical |
 
 ## Results in more detail
 
@@ -159,8 +158,7 @@ not recognition.
 | W2A2 AVX-512, optimized | 1.92 | 151 | 200 MB |
 
 All packed outputs match the dense reference bit for bit across every core
-placement tested. Details and audits: [`custom/cpu-inference/RESULTS.md`](custom/cpu-inference/RESULTS.md),
-[`custom/cpu-inference/OPTIMIZATION_RESULTS.md`](custom/cpu-inference/OPTIMIZATION_RESULTS.md).
+placement tested.
 
 The last kernel iteration, measured against the original AVX-512 backend over
 480 timed clips in fresh-process windows (whiskers are observed window ranges):

@@ -1,0 +1,68 @@
+{
+ "design_revision": 8,
+ "gate_code_version": "wp6a-gates7-3",
+ "gate": "4a",
+ "gates7_py_sha256": "818937a9b0eafc9adadfc1c2dd36d1646305b812653a34654e5e454f635dfb44",
+ "date": "2026-10-03 05:12",
+ "model": "mp2",
+ "arm": "C4-ane",
+ "layout": "ane",
+ "label": "C4-ane-fp32",
+ "variant": "multi",
+ "units": "cpuOnly",
+ "topology": "dense",
+ "thresholds": {
+  "rel": 1e-05,
+  "abs": 0.0001,
+  "tau": 1e-06
+ },
+ "build_provenance": {
+  "name": "mp2",
+  "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+  "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+ },
+ "build_chain": "constexpr_lut_to_dense(uint2, fp16 LUT {-1,0,+1,0}) -> constexpr_blockwise_shift_scale(fp16 per-row scale)",
+ "pass": true,
+ "summary": {
+  "cases": 200,
+  "failing_cases": 0,
+  "failing_examples": [],
+  "rel_max": 2.293214422322248e-06,
+  "abs_max": 4.178491507874833e-05,
+  "rel_median": 6.574345999415529e-07,
+  "buckets": [
+   2,
+   4,
+   8,
+   15
+  ]
+ },
+ "cases": {
+  "omitted_entries": 200,
+  "detail": "see full record"
+ },
+ "load_s": {
+  "b15": {
+   "first_s": 10.6,
+   "cached_s": 0.001
+  },
+  "b8": {
+   "first_s": 15.84,
+   "cached_s": 0.001
+  },
+  "b4": {
+   "first_s": 20.2,
+   "cached_s": 0.001
+  },
+  "b2": {
+   "first_s": 9.32,
+   "cached_s": 0.001
+  }
+ },
+ "seconds": 92.9,
+ "_evidence": {
+  "sha256": "658eecfc8f97aa267875aa489e3ab81fc94f67733a369419b6a5e5c8547ead5d",
+  "bytes": 35119,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/gates/v7/mp2-C4-ane-fp32-multi-cpuOnly-4a.json"
+ }
+}

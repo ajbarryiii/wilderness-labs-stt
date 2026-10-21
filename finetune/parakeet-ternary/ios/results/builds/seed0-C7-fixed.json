@@ -1,0 +1,377 @@
+{
+ "schema": 1,
+ "model": "seed0",
+ "arm": "C7",
+ "variant": "fixed",
+ "layers": 24,
+ "exact": true,
+ "exploratory": false,
+ "provenance": {
+  "name": "seed0",
+  "file": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/random/seed0/model.safetensors",
+  "digest": "75e0503b99e43b8206f7e0882eebff1924e94fc68f0a13f17c25fab31ff861db",
+  "file_sha256": "e64e8bfe47f8b96eedb152442b35285d3746fda3a144715ea1a6e877a5619b1a"
+ },
+ "opset": "iOS26",
+ "minimum_deployment_target": "iOS26",
+ "compute_precision": "FLOAT16 (graph authored in FP16; fp32/int32 I/O)",
+ "functions": {
+  "main": {
+   "mel": [
+    1,
+    128,
+    1501
+   ],
+   "encoder_frames": 188
+  }
+ },
+ "default_function": "main",
+ "encoding": {
+  "arm": "C7",
+  "chain": "constexpr_lut_to_dense(uint2, fp16 LUT {-1,0,+1,0}); matmul; mul(fp16 per-row scale)",
+  "modules": 240,
+  "constexpr_inputs_by_module": {
+   "feed_forward1.linear1": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       4096,
+       1024
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       4096
+      ]
+     }
+    }
+   },
+   "feed_forward1.linear2": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       1024,
+       4096
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       1024
+      ]
+     }
+    }
+   },
+   "self_attn.linear_q": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       1024,
+       1024
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       1024
+      ]
+     }
+    }
+   },
+   "self_attn.linear_k": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       1024,
+       1024
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       1024
+      ]
+     }
+    }
+   },
+   "self_attn.linear_v": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       1024,
+       1024
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       1024
+      ]
+     }
+    }
+   },
+   "self_attn.linear_out": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       1024,
+       1024
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       1024
+      ]
+     }
+    }
+   },
+   "conv.pointwise_conv1": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       2048,
+       1024,
+       1
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       2048
+      ]
+     }
+    }
+   },
+   "conv.pointwise_conv2": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       1024,
+       1024,
+       1
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       1024
+      ]
+     }
+    }
+   },
+   "feed_forward2.linear1": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       4096,
+       1024
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       4096
+      ]
+     }
+    }
+   },
+   "feed_forward2.linear2": {
+    "count": 24,
+    "inputs": {
+     "indices": {
+      "dtype": "uint2",
+      "shape": [
+       1024,
+       4096
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1,
+       1,
+       4,
+       1
+      ]
+     },
+     "post_scale": {
+      "dtype": "float16",
+      "shape": [
+       1024
+      ]
+     }
+    }
+   }
+  },
+  "encoded_bytes_by_const": {
+   "indices": 144703488,
+   "lut": 1920,
+   "post_scale": 835584
+  },
+  "encoded_bytes_total": 145540992,
+  "position_tables": {
+   "layers": 24,
+   "dtype": "float16",
+   "full_shape": [
+    1,
+    8,
+    128,
+    375
+   ],
+   "note": "linear_pos folded: pos_emb @ (codes x FP16(s))^T in FP32, cast to FP16; per bucket the middle 2T-1 columns"
+  },
+  "activation_quantization": null
+ },
+ "pass_pipeline": {
+  "name": "DEFAULT",
+  "excluded": [],
+  "passes": {
+   "omitted_entries": 95,
+   "detail": "see full record"
+  },
+  "multifunction": null
+ },
+ "program": {
+  "omitted_entries": 1,
+  "detail": "see full record"
+ },
+ "sizes": {
+  "mlpackage_bytes": 174213619,
+  "weight_bin_bytes": 173544704
+ },
+ "timing_s": {
+  "build_graph": 3.8,
+  "convert": 6.7,
+  "save": 0.1
+ },
+ "peak_rss_mb_after_save": 1526.3,
+ "environment": {
+  "coremltools": "9.0",
+  "numpy": "2.2.6",
+  "python": "3.12.14",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "machine": "arm64"
+ },
+ "paths": {
+  "mlpackage": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/seed0/C7/fixed.mlpackage",
+  "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/seed0/C7/fixed.mlmodelc"
+ },
+ "compile": {
+  "compile_s": 0.35,
+  "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/seed0/C7/fixed.mlmodelc",
+  "mlmodelc_bytes": 174251325
+ },
+ "peak_rss_mb_after_compile": 1526.3,
+ "compute_plan": {
+  "omitted_entries": 1,
+  "detail": "see full record"
+ },
+ "_evidence": {
+  "sha256": "e0a99e6c985d1efe01182d8462370903666d6068ea212aa771f463034664dc4f",
+  "bytes": 14316,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/builds/seed0-C7-fixed.json"
+ }
+}

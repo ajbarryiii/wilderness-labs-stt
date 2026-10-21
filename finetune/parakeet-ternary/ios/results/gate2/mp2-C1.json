@@ -1,0 +1,20 @@
+{
+ "package": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/C1/fixed.mlpackage",
+ "model": "mp2",
+ "arm": "C1",
+ "function": "main",
+ "modules_checked": 240,
+ "bit_exact": true,
+ "failures": [],
+ "chains": {
+  "const -> linear": 192,
+  "const -> conv": 48
+ },
+ "method": "coremltools materialized_val_inference / decompress of the saved program's constexpr ops; C7/C8 effective matrices with the post-matmul FP16 multiplier; compared as FP16 bit patterns",
+ "peak_rss_mb": 2043,
+ "_evidence": {
+  "sha256": "d564fbb2006fdecb786897087d2464e088168f32a8509d6f1df60eb952cf0723",
+  "bytes": 502,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/gate2/mp2-C1.json"
+ }
+}

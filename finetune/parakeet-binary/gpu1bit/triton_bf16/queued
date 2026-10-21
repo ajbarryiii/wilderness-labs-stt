@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Wait (without taking it) until the GPU lock looks free, then run `timeout 600 <command>` so the
+# timeout bounds the lock hold rather than the queue wait (plans/gpu-kernel.md A9). The command
+# itself takes paths.gpu_lock once at start; if another job wins the race, it simply waits inside.
+#   gpu1bit/triton_bf16/queued gpu1bit/shared/python -m gpu1bit.shared.bench kernel ...
+set -euo pipefail
+lock=/mnt/hd/wilderness-labs-stt/parakeet-ternary/gpu.lock
+while ! flock -n "$lock" true 2>/dev/null; do sleep 5; done
+exec timeout 600 "$@"

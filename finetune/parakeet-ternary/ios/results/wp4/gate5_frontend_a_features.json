@@ -1,0 +1,45 @@
+{
+ "gate": "DESIGN.md gate 5 (rev. 5), features: front end A (vDSP, FP32) vs the FP64 reference front end, same stored constants",
+ "ceilings": {
+  "rel": 1e-05,
+  "abs": 0.001
+ },
+ "clips": 82,
+ "passed": 82,
+ "max_rel": 6.032621781191642e-06,
+ "max_abs": 0.00048222458413976966,
+ "median_rel": 1.1356349071034548e-06,
+ "silence": {
+  "clip": "silence-3s",
+  "kind": "silence",
+  "frames": 301,
+  "mel_length": 300,
+  "mel_length_ok": true,
+  "rel": 0.0,
+  "abs": 0.0,
+  "vs_fp32_reference": [
+   1.0,
+   1.0016652800877812
+  ],
+  "fp32_reference_vs_fp64": [
+   159873.38633726587,
+   160139.62030410767
+  ],
+  "pass": true
+ },
+ "info_vs_fp32_reference": {
+  "max_rel": 7.473254579816807e-06,
+  "max_abs": 0.0004339749536789901,
+  "note": "non-silence clips; for silence the FP32 reference is rounding noise"
+ },
+ "failures": [],
+ "rows": {
+  "omitted_entries": 82,
+  "detail": "see full record"
+ },
+ "_evidence": {
+  "sha256": "52086b7b8b18b0e0e4c1e112a8d70fbfca33b99a3248c9f50bd848d6e0cee26a",
+  "bytes": 32660,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/wp4/gate5_frontend_a_features.json"
+ }
+}

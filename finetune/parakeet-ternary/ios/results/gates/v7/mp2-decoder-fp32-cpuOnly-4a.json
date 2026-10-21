@@ -1,0 +1,42 @@
+{
+ "design_revision": 7,
+ "gate_code_version": "wp3-gates7-1",
+ "gate": "4a-decoder",
+ "gates7_py_sha256": "63f92b3224e8597720a136f800ddb50d23668e9d328eb6e8dbbbc261c7d3af44",
+ "date": "2026-10-02 20:54",
+ "model": "mp2",
+ "label": "decoder-fp32",
+ "units": "cpuOnly",
+ "thresholds": {
+  "rel": 1e-05,
+  "abs": 0.0001,
+  "tau": 1e-06
+ },
+ "build_provenance": {
+  "name": "mp2",
+  "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+  "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+ },
+ "pass": true,
+ "summary": {
+  "clips": 82,
+  "failing": [],
+  "failing_clips": 0,
+  "logits_rel_max": 2.806061298412782e-07,
+  "h_rel_max": 4.853206144678739e-07,
+  "c_rel_max": 3.197785250985183e-07,
+  "logits_abs_max": 2.221490763928986e-06,
+  "h_abs_max": 1.3381640239538002e-05,
+  "c_abs_max": 1.0721506481566656e-05
+ },
+ "per_clip": {
+  "omitted_entries": 82,
+  "detail": "see full record"
+ },
+ "seconds": 14.8,
+ "_evidence": {
+  "sha256": "1df69d43b6b988cbb95ee22806905790104135bcd3916c103e8a54414272913d",
+  "bytes": 34835,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/gates/v7/mp2-decoder-fp32-cpuOnly-4a.json"
+ }
+}

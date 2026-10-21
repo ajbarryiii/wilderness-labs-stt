@@ -1,0 +1,53 @@
+{
+ "model": "mp2",
+ "arm": "decoder",
+ "units": "cpuOnly",
+ "heads_input": "the reference's own (fp16s) encoder output",
+ "summary": {
+  "gate4_heads": {
+   "clips": 82,
+   "steps": 3025,
+   "all_finite": true,
+   "token": {
+    "rel_max": 0.0022187428868650615,
+    "rel_median": 0.002124260874467625,
+    "clips_over_rel_ceiling": [],
+    "decisive_fraction": 0.955702479338843,
+    "agreement_on_decisive": 1.0,
+    "agreement_all_steps": 0.9973553719008265,
+    "degenerate": false
+   },
+   "duration": {
+    "rel_max": 0.005070973857754546,
+    "rel_median": 0.0032159905625055085,
+    "clips_over_rel_ceiling": [],
+    "decisive_fraction": 0.979504132231405,
+    "agreement_on_decisive": 1.0,
+    "agreement_all_steps": 0.9976859504132232,
+    "degenerate": false
+   },
+   "h": {
+    "rel_max": 0.007620652867986074,
+    "rel_median": 0.005471156504794489,
+    "clips_over_rel_ceiling": []
+   },
+   "c": {
+    "rel_max": 0.00521665888776724,
+    "rel_median": 0.0034239230483138535,
+    "clips_over_rel_ceiling": []
+   },
+   "pass": true
+  }
+ },
+ "heads_per_clip": {
+  "omitted_entries": 82,
+  "detail": "see full record"
+ },
+ "seconds": 4.3,
+ "peak_rss_mb": 332.1,
+ "_evidence": {
+  "sha256": "bba3c46229c299e7c482741c64ce698e3224443a1e09707f5aa036a1c4cbeeae",
+  "bytes": 50795,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/gates/mp2-decoder-cpuOnly.json"
+ }
+}

@@ -22,7 +22,7 @@ import paths
 ROOT = paths.ARTIFACTS / 'comparison'
 EXPORT = paths.RUNS / 'main-M1-P2-lr5e-4/export'
 VARIANTS = ['packed_previous', 'packed_second', 'packed_optimized', 'packed_expanded', 'nemo_fp32', 'nemo_bf16',
-            'nemo_bf16_graphs', 'nemo_bf16_graphs_fused_decoder', 'onnx_cuda']
+            'nemo_bf16_graphs', 'nemo_bf16_graphs_fused_decoder', 'onnx_cuda','packed_cuda_rowfusion','packed_cuda_best']
 
 
 def main():
@@ -33,6 +33,7 @@ def main():
     p.add_argument('--repeats', type=int, default=3)
     p.add_argument('--durations', type=float, nargs='+', default=[3, 10, 30])
     p.add_argument('--quality-per-set', type=int, default=0)
+    p.add_argument('--multi-corpus',action='store_true',help='24 distinct utterances from all eight corpora')
     args = p.parse_args()
     paths.require_mount()
     args.out.mkdir(parents=True, exist_ok=True)
@@ -116,6 +117,9 @@ def main():
                 enable_optimizations(model,decoder=args.variant!='packed_second',position_dot=args.variant!='packed_second',
                                      encoder_storage='expanded' if args.variant=='packed_expanded' else 'packed')
                 stack.callback(disable_optimizations, model)
+            elif args.variant in ('packed_cuda_rowfusion','packed_cuda_best'):
+                from .cuda_pipeline import experimental_pipeline
+                stack.enter_context(experimental_pipeline(model,'ptx_row_best' if args.variant=='packed_cuda_best' else 'ptx_rowfusion'))
             elif args.variant == 'packed_previous': enable_encoder_graphs(model)
             elif args.variant.startswith('nemo_bf16_graphs'):
                 original = model.encoder.forward
@@ -146,9 +150,13 @@ def main():
                         'torch_peak_reserved': torch.cuda.max_memory_reserved()}
         report['load_seconds'] = time.perf_counter()-started
         report['loaded'] = snapshot(); save()
-        records = [json.loads(x) for x in (paths.MANIFESTS/'test_librispeech_clean.jsonl').read_text().splitlines()]
-        for duration in args.durations:
-            rec = min(records,key=lambda r:abs(r['duration']-duration))
+        if args.multi_corpus:
+            from .cuda_experiments import sample_records
+            workloads=sample_records()
+        else:
+            records=[json.loads(x) for x in (paths.MANIFESTS/'test_librispeech_clean.jsonl').read_text().splitlines()]
+            workloads=[min(records,key=lambda r:abs(r['duration']-duration)) for duration in args.durations]
+        for rec in workloads:
             audio, rate = sf.read(rec['audio_filepath'],dtype='float32'); assert rate==16000 and audio.ndim==1
             if not is_ort: torch.cuda.reset_peak_memory_stats()
             begin_samples = len(samples)
@@ -172,7 +180,7 @@ def main():
             row['summary']={k:statistics.median(w[k] for w in row['windows']) for k in ['median_ms','p95_ms','joules_per_iteration','average_watts']}
             row['process_sampled_peak_including_first_bytes']=max([v for _,v in samples[begin_samples:]]+[memory()])
             report['workloads'].append(row); save()
-            print(args.variant, duration, row['summary'], row['windows'][-1]['memory'],flush=True)
+            print(args.variant, rec['id'], rec['duration'], row['summary'], row['windows'][-1]['memory'],flush=True)
         report['performance_phase_process_peak_bytes']=max(v for _,v in samples)
         if args.quality_per_set:
             from .benchmark import records_for_sets

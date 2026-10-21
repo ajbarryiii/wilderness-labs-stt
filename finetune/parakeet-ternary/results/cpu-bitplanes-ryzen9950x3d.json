@@ -1,0 +1,937 @@
+{
+  "status": "complete",
+  "results": [
+    {
+      "cpus": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "components": 2,
+      "tiles": {
+        "masked": 2,
+        "pn": 2,
+        "swar": 4
+      },
+      "exact_encoder_text_tokens_all_utterances": true,
+      "utterances": 16,
+      "backends": {
+        "vnni": {
+          "full_ms": {
+            "median_across_utterances_ms": 49.73477,
+            "mean_of_utterance_medians_ms": 62.706203625
+          },
+          "encoder_ms": {
+            "median_across_utterances_ms": 47.23083375,
+            "mean_of_utterance_medians_ms": 59.695189875
+          },
+          "projections_ms": {
+            "median_across_utterances_ms": 34.60609575,
+            "mean_of_utterance_medians_ms": 43.4809184375
+          },
+          "decoder_ms": {
+            "median_across_utterances_ms": 1.664758,
+            "mean_of_utterance_medians_ms": 1.739270875
+          },
+          "timed_calls": 640
+        },
+        "pn": {
+          "full_ms": {
+            "median_across_utterances_ms": 105.08137124999999,
+            "mean_of_utterance_medians_ms": 135.07242890625,
+            "paired_median_change_percent": 113.00698152096413,
+            "paired_bootstrap_95_percent_interval": [
+              111.57258711376512,
+              117.55531217456578
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              111.02186392500121,
+              117.03400246582282,
+              112.26233541093494,
+              120.11310425145987,
+              111.54688138472437,
+              118.30036479342868,
+              111.57258711376512,
+              117.55531217456578,
+              111.58179210362262,
+              119.44153248842979,
+              110.93964006544796,
+              116.69391525211567,
+              111.43071199823899,
+              113.75162763099334,
+              111.93675036141025,
+              118.23836153531514
+            ]
+          },
+          "encoder_ms": {
+            "median_across_utterances_ms": 102.38770500000001,
+            "mean_of_utterance_medians_ms": 131.80457446875,
+            "paired_median_change_percent": 118.59269104224508,
+            "paired_bootstrap_95_percent_interval": [
+              117.00209470748986,
+              123.01774204663269
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              116.82116499005288,
+              122.51536012185001,
+              115.94632904552702,
+              123.88619270504186,
+              116.74179339067456,
+              123.31222242380271,
+              117.00209470748986,
+              122.74330177957076,
+              117.64355462494964,
+              124.36801895556559,
+              116.56547642849682,
+              123.01774204663269,
+              117.61420248956051,
+              119.54182745954051,
+              117.1780922772324,
+              124.85254311998145
+            ]
+          },
+          "projections_ms": {
+            "median_across_utterances_ms": 89.90116400000001,
+            "mean_of_utterance_medians_ms": 115.63132796875,
+            "paired_median_change_percent": 160.35209082196303,
+            "paired_bootstrap_95_percent_interval": [
+              159.71492717285577,
+              170.82142256491522
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              159.76503784670356,
+              169.16187859030777,
+              158.8994532973106,
+              171.7687653053356,
+              159.80335254283403,
+              170.89327635311454,
+              160.1746504276325,
+              167.35827520842474,
+              160.15918423372426,
+              172.09663060797152,
+              159.62650180287753,
+              170.82142256491522,
+              159.19022313140357,
+              160.52953121629355,
+              159.44663495069557,
+              172.70418196549963
+            ]
+          },
+          "decoder_ms": {
+            "median_across_utterances_ms": 1.9058869999999999,
+            "mean_of_utterance_medians_ms": 1.9884039687500001,
+            "paired_median_change_percent": 14.382634944982742,
+            "paired_bootstrap_95_percent_interval": [
+              13.643743790401041,
+              15.066856926520966
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              13.288685472339367,
+              13.798902289086845,
+              4.981362522663391,
+              8.151811176506275,
+              13.963391646443203,
+              14.799245105828751,
+              13.998802108462716,
+              14.318355448685228,
+              15.36070824127993,
+              15.066856926520966,
+              15.700262214224514,
+              16.356505634666398,
+              14.88174138669891,
+              14.446914441280256,
+              12.728355301499006,
+              15.575825854939197
+            ]
+          },
+          "timed_calls": 320
+        },
+        "masked": {
+          "full_ms": {
+            "median_across_utterances_ms": 76.73560699999999,
+            "mean_of_utterance_medians_ms": 98.2482360625,
+            "paired_median_change_percent": 55.15477314929751,
+            "paired_bootstrap_95_percent_interval": [
+              54.75128960073516,
+              57.93767285684059
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              53.84078122650309,
+              57.49842834312779,
+              54.826815760390076,
+              60.10945057788195,
+              54.69888834807786,
+              58.556792432285306,
+              54.75128960073516,
+              57.93960728420831,
+              54.86695870994676,
+              58.700769779424135,
+              54.30063255072666,
+              57.23239591987532,
+              53.78046136298338,
+              55.20255392092051,
+              55.106992377674516,
+              57.93767285684059
+            ]
+          },
+          "encoder_ms": {
+            "median_across_utterances_ms": 74.05348749999999,
+            "mean_of_utterance_medians_ms": 94.988793,
+            "paired_median_change_percent": 57.64306136208869,
+            "paired_bootstrap_95_percent_interval": [
+              56.9938694462681,
+              60.20482125824793
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              56.42827870400946,
+              60.20482125824793,
+              56.5042110681512,
+              61.95676997672139,
+              56.9938694462681,
+              60.78390239703453,
+              57.226797161674895,
+              60.16298579900188,
+              57.629637695223224,
+              61.0152212746367,
+              56.98917884614241,
+              60.01143727008271,
+              56.65977447217783,
+              57.65648502895415,
+              57.45034218478962,
+              60.728298941920514
+            ]
+          },
+          "projections_ms": {
+            "median_across_utterances_ms": 61.5517855,
+            "mean_of_utterance_medians_ms": 78.943188625,
+            "paired_median_change_percent": 78.41814975635486,
+            "paired_bootstrap_95_percent_interval": [
+              77.95201910737686,
+              84.23180769842564
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              77.11831831169191,
+              83.37783684213464,
+              77.43910703387724,
+              86.21421088487715,
+              78.1702669055173,
+              84.86967563076881,
+              78.42545192566031,
+              82.16852107727604,
+              78.41084758704942,
+              85.15961592140862,
+              78.31100586932477,
+              84.23180769842564,
+              77.14893078977492,
+              77.47858628909339,
+              78.20006870718694,
+              84.65261178238468
+            ]
+          },
+          "decoder_ms": {
+            "median_across_utterances_ms": 1.870432,
+            "mean_of_utterance_medians_ms": 1.978279125,
+            "paired_median_change_percent": 13.21150012927238,
+            "paired_bootstrap_95_percent_interval": [
+              12.188885040534903,
+              14.520577251805245
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              11.478219275879042,
+              13.690284366029015,
+              8.28881091768463,
+              8.454286009301516,
+              11.867544359603022,
+              15.438039378096269,
+              13.177168592383403,
+              13.263098061067357,
+              14.520577251805245,
+              15.022246359340684,
+              13.245831666161356,
+              17.131850401192473,
+              12.188885040534903,
+              12.721691291438653,
+              12.3060907495117,
+              15.701295337265964
+            ]
+          },
+          "timed_calls": 432
+        },
+        "swar": {
+          "full_ms": {
+            "median_across_utterances_ms": 157.57511275,
+            "mean_of_utterance_medians_ms": 201.76560859375,
+            "paired_median_change_percent": 220.64760056218398,
+            "paired_bootstrap_95_percent_interval": [
+              218.17537475529193,
+              224.10668345813343
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              215.4017064816696,
+              224.10668345813343,
+              219.84922126624457,
+              228.81703170711506,
+              218.26941364955624,
+              226.24105745418692,
+              217.6996383558945,
+              225.41911120995067,
+              216.41446675660822,
+              225.86891297461545,
+              215.5347828452732,
+              221.44597985812342,
+              218.28607732129922,
+              221.68723832094753,
+              218.17537475529193,
+              221.7515661850138
+            ]
+          },
+          "encoder_ms": {
+            "median_across_utterances_ms": 154.90418975,
+            "mean_of_utterance_medians_ms": 198.480059875,
+            "paired_median_change_percent": 232.09938291507126,
+            "paired_bootstrap_95_percent_interval": [
+              228.68439529789794,
+              235.02182509616563
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              227.04500733955322,
+              235.02182509616563,
+              226.98691962059684,
+              236.2338904496618,
+              228.68439529789794,
+              236.2318143790623,
+              228.5975780489932,
+              235.51643877013558,
+              228.73696185319722,
+              235.844146194843,
+              227.0796036870255,
+              234.00491863318308,
+              230.8991447749162,
+              233.29962105522628,
+              228.75879016567873,
+              234.29276022252233
+            ]
+          },
+          "projections_ms": {
+            "median_across_utterances_ms": 142.18054149999998,
+            "mean_of_utterance_medians_ms": 182.12319059375,
+            "paired_median_change_percent": 311.96498009291327,
+            "paired_bootstrap_95_percent_interval": [
+              310.74856679564203,
+              324.48344095296653
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              309.64921619255546,
+              323.8444030344144,
+              309.63731747650564,
+              327.3774708498058,
+              311.6901414090418,
+              327.4478652271142,
+              312.02181594291403,
+              320.5338215746162,
+              310.74856679564203,
+              326.5814878596675,
+              310.29670419296986,
+              324.7068499000941,
+              311.69597213864984,
+              311.90814424291256,
+              310.12093350848573,
+              324.48344095296653
+            ]
+          },
+          "decoder_ms": {
+            "median_across_utterances_ms": 1.9379675,
+            "mean_of_utterance_medians_ms": 2.00237046875,
+            "paired_median_change_percent": 15.707022860720999,
+            "paired_bootstrap_95_percent_interval": [
+              13.855914736365872,
+              16.612571061515634
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              15.502155898393255,
+              13.855914736365872,
+              15.868400265767058,
+              8.24522017378866,
+              15.54564545567494,
+              11.189813928328341,
+              16.612571061515634,
+              12.7990805424697,
+              16.847075507467736,
+              13.758443967703581,
+              17.336004039377272,
+              16.23864873722156,
+              17.02818364867007,
+              17.661525680151115,
+              14.224789297532126,
+              16.281251746945145
+            ]
+          },
+          "timed_calls": 256
+        }
+      }
+    },
+    {
+      "cpus": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "components": 3,
+      "tiles": {
+        "masked": 2,
+        "pn": 2,
+        "swar": 4
+      },
+      "exact_encoder_text_tokens_all_utterances": true,
+      "utterances": 16,
+      "backends": {
+        "vnni": {
+          "full_ms": {
+            "median_across_utterances_ms": 64.78876199999999,
+            "mean_of_utterance_medians_ms": 81.66700740625
+          },
+          "encoder_ms": {
+            "median_across_utterances_ms": 62.249553500000005,
+            "mean_of_utterance_medians_ms": 78.65205106250001
+          },
+          "projections_ms": {
+            "median_across_utterances_ms": 49.64750325,
+            "mean_of_utterance_medians_ms": 62.6535705625
+          },
+          "decoder_ms": {
+            "median_across_utterances_ms": 1.64713375,
+            "mean_of_utterance_medians_ms": 1.7218390625
+          },
+          "timed_calls": 512
+        },
+        "pn": {
+          "full_ms": {
+            "median_across_utterances_ms": 150.733902,
+            "mean_of_utterance_medians_ms": 193.708363875,
+            "paired_median_change_percent": 135.54955722942276,
+            "paired_bootstrap_95_percent_interval": [
+              133.43867035831573,
+              139.43682451163107
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              131.6902073257999,
+              139.67825573346965,
+              136.5433616953949,
+              143.17604686209484,
+              133.43867035831573,
+              140.49032087873718,
+              132.91780591741778,
+              137.64538062620443,
+              133.98313325359462,
+              140.59011782012968,
+              133.10091768473256,
+              138.47912700570757,
+              131.44479005563974,
+              134.54189937613918,
+              134.5557527634506,
+              139.43682451163107
+            ]
+          },
+          "encoder_ms": {
+            "median_across_utterances_ms": 147.86378375,
+            "mean_of_utterance_medians_ms": 190.46397303125002,
+            "paired_median_change_percent": 139.84190676785227,
+            "paired_bootstrap_95_percent_interval": [
+              138.52851522615367,
+              144.5355438123797
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              137.18639295943453,
+              144.5355438123797,
+              139.89676986045635,
+              146.70876952449782,
+              138.44234333262645,
+              145.0899180016042,
+              137.6613042590465,
+              142.34595894292755,
+              139.78704367524819,
+              145.40269120683118,
+              138.52851522615367,
+              144.25090581676986,
+              137.03290770130346,
+              139.75312186029822,
+              139.23603226189164,
+              145.39155320030997
+            ]
+          },
+          "projections_ms": {
+            "median_across_utterances_ms": 135.13532725,
+            "mean_of_utterance_medians_ms": 174.1906273125,
+            "paired_median_change_percent": 174.51500602351308,
+            "paired_bootstrap_95_percent_interval": [
+              172.93028751835422,
+              182.22813803982248
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              171.9061865224558,
+              181.0687535398865,
+              174.5246554142583,
+              184.4374193906884,
+              172.93028751835422,
+              182.81373089340494,
+              171.9705748991363,
+              177.2583787653494,
+              174.5053566327679,
+              182.5280303678938,
+              173.10206812474144,
+              182.22813803982248,
+              170.32309932174687,
+              172.74376904787556,
+              173.73530600472705,
+              182.79289384848764
+            ]
+          },
+          "decoder_ms": {
+            "median_across_utterances_ms": 1.8520132500000002,
+            "mean_of_utterance_medians_ms": 1.9595493125,
+            "paired_median_change_percent": 13.554010315713505,
+            "paired_bootstrap_95_percent_interval": [
+              12.761578412377684,
+              14.411056619287056
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              13.418378374467665,
+              14.94110348855957,
+              9.556625547154795,
+              11.37241431625553,
+              13.375894328144966,
+              13.746308921993489,
+              14.411056619287056,
+              13.061326783951133,
+              13.689642256959345,
+              12.761578412377684,
+              11.444916505514446,
+              15.191109289483173,
+              16.27845721437191,
+              15.642583975585378,
+              12.554910088951154,
+              14.188097011240174
+            ]
+          },
+          "timed_calls": 256
+        },
+        "masked": {
+          "full_ms": {
+            "median_across_utterances_ms": 107.2868915,
+            "mean_of_utterance_medians_ms": 139.08743959375,
+            "paired_median_change_percent": 66.60876273351616,
+            "paired_bootstrap_95_percent_interval": [
+              65.84518028600093,
+              73.8016403845332
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              65.40855318950977,
+              71.6296882137594,
+              66.62331780108124,
+              75.20292458215295,
+              66.09448030435523,
+              74.76007248832333,
+              65.7697386506587,
+              71.0151417231034,
+              65.49198503398333,
+              75.05112725223913,
+              65.34383988848514,
+              73.88870980039673,
+              65.84518028600093,
+              66.59420766595107,
+              66.05910953855683,
+              73.8016403845332
+            ]
+          },
+          "encoder_ms": {
+            "median_across_utterances_ms": 104.6083655,
+            "mean_of_utterance_medians_ms": 135.83057325,
+            "paired_median_change_percent": 68.74245000225503,
+            "paired_bootstrap_95_percent_interval": [
+              68.1436872920748,
+              76.74157889799527
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              68.04978408192963,
+              73.92176064437447,
+              68.33076985415998,
+              76.96647053035888,
+              68.4772915748323,
+              77.07934957656528,
+              68.04375627774452,
+              73.18709651222943,
+              68.0076231469093,
+              77.52811778188824,
+              67.74443278398748,
+              76.80095784585403,
+              68.38160772316316,
+              69.00760842967775,
+              68.1436872920748,
+              76.74157889799527
+            ]
+          },
+          "projections_ms": {
+            "median_across_utterances_ms": 91.94235325,
+            "mean_of_utterance_medians_ms": 119.6706435625,
+            "paired_median_change_percent": 85.59209499477105,
+            "paired_bootstrap_95_percent_interval": [
+              85.3332583227072,
+              96.3647214781439
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              85.41308529130632,
+              92.26755910207143,
+              85.32397780257774,
+              96.66389408775305,
+              85.75469522973557,
+              96.82282060474319,
+              84.96757303402644,
+              91.01550279076773,
+              85.08028210591085,
+              97.00157286004851,
+              84.7839156761189,
+              96.98584197918825,
+              85.3332583227072,
+              85.42949475980652,
+              85.35586014924436,
+              96.3647214781439
+            ]
+          },
+          "decoder_ms": {
+            "median_across_utterances_ms": 1.890048,
+            "mean_of_utterance_medians_ms": 1.9670498749999998,
+            "paired_median_change_percent": 14.205043295695784,
+            "paired_bootstrap_95_percent_interval": [
+              13.142145642136494,
+              14.845419606843247
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              14.605578450674184,
+              13.06551970921741,
+              7.296776760843615,
+              9.485710561545147,
+              14.713534165927356,
+              13.142145642136494,
+              14.845419606843247,
+              13.350103578084727,
+              18.065617949612435,
+              12.75427330236598,
+              14.891811469310978,
+              14.147162589371764,
+              13.515641199666462,
+              14.262924002019805,
+              17.509794580450656,
+              15.701575167086235
+            ]
+          },
+          "timed_calls": 320
+        },
+        "swar": {
+          "full_ms": {
+            "median_across_utterances_ms": 230.19200875,
+            "mean_of_utterance_medians_ms": 294.3418025625,
+            "paired_median_change_percent": 259.0393548890879,
+            "paired_bootstrap_95_percent_interval": [
+              255.17026145813242,
+              262.08577327826964
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              252.9789984167198,
+              265.98386956294394,
+              259.68335402849993,
+              268.67063972100505,
+              257.8633759784456,
+              266.25338421503824,
+              255.8808804043223,
+              261.84440283249734,
+              254.3490605674748,
+              264.48819252803935,
+              251.92519257299364,
+              260.96751803039615,
+              253.8619278242729,
+              258.39535574967596,
+              255.17026145813242,
+              260.9034804801924
+            ]
+          },
+          "encoder_ms": {
+            "median_across_utterances_ms": 227.55521174999998,
+            "mean_of_utterance_medians_ms": 291.10204525,
+            "paired_median_change_percent": 268.0637257280265,
+            "paired_bootstrap_95_percent_interval": [
+              265.37740482443144,
+              272.48696177376274
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              263.833878323822,
+              275.55494170934014,
+              266.48018357736936,
+              275.24624317935394,
+              267.32415048856546,
+              275.215138398315,
+              265.37740482443144,
+              271.02931843400773,
+              265.55683281126494,
+              273.5581117228026,
+              262.38859384970954,
+              272.43730290942716,
+              264.9833572741569,
+              268.8033009674876,
+              264.60704748975434,
+              272.48696177376274
+            ]
+          },
+          "projections_ms": {
+            "median_across_utterances_ms": 214.8109205,
+            "mean_of_utterance_medians_ms": 274.72412209375,
+            "paired_median_change_percent": 333.9783785773326,
+            "paired_bootstrap_95_percent_interval": [
+              331.4744201878132,
+              343.54711147223657
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              330.7968510378621,
+              345.0873583489204,
+              333.06385956184255,
+              345.9365797862521,
+              334.89289759282264,
+              346.4496833022661,
+              332.15198933776435,
+              337.7185512463445,
+              332.0024863715021,
+              343.54711147223657,
+              328.85014620609854,
+              343.92248878851416,
+              329.9268469544262,
+              331.9379770111313,
+              330.48601379863766,
+              343.1310783627903
+            ]
+          },
+          "decoder_ms": {
+            "median_across_utterances_ms": 1.864512,
+            "mean_of_utterance_medians_ms": 1.9432963125,
+            "paired_median_change_percent": 12.595460549820247,
+            "paired_bootstrap_95_percent_interval": [
+              10.942893031526978,
+              13.670812506914487
+            ],
+            "faster_utterances": 0,
+            "per_utterance_change_percent": [
+              13.670812506914487,
+              15.151574103773303,
+              10.55177079188223,
+              10.655137819440963,
+              13.20890987015677,
+              10.942893031526978,
+              13.625911444030049,
+              8.658542352803789,
+              15.141893254036564,
+              15.072187202294952,
+              12.717249820709874,
+              11.986479726897503,
+              12.47367127893062,
+              12.175831205904908,
+              10.820931605031326,
+              14.519694135777872
+            ]
+          },
+          "timed_calls": 192
+        }
+      }
+    }
+  ],
+  "energy": {
+    "available": false,
+    "method": null,
+    "unavailable_reason": "linux_powercap_package_energy: PermissionError: [Errno 13] Permission denied: '/sys/class/powercap/intel-rapl/intel-rapl:0/energy_uj'; linux_perf_package_energy: PermissionError: [Errno 13] perf_event_open energy-pkg CPU 0: Permission denied",
+    "domains": [],
+    "sample_interval_s": 0.1,
+    "energy_scope": "CPU package(s), including other processes and uncore; excludes discrete GPU and wall-plug losses",
+    "counter_wrap_policy": "At most one wrap per sample interval; decreases away from range boundaries fail",
+    "background_activity": "Package energy includes all host processes; process affinity does not isolate energy",
+    "perf_event_paranoid": "2",
+    "direct_msr_present": false
+  },
+  "method": "16 complete public utterances, eight corpora, 15-30s; 4 rotated backend windows per configuration; >=10s and >=2 complete corpus cycles per window; paired bootstrap resamples utterances, not repeated calls",
+  "scope": "warm waveform-to-text and component timings; no trained-weight or activation-precision changes; benchmark holds all backend caches, so RSS is not deployment memory",
+  "cpu": "AMD Ryzen 9 9950X3D",
+  "corpus": {
+    "utterances": 16,
+    "sources": [
+      "ami",
+      "common_voice",
+      "earnings22",
+      "gigaspeech",
+      "librispeech_clean",
+      "librispeech_other",
+      "spgispeech",
+      "voxpopuli"
+    ],
+    "min_audio_seconds": 15.0,
+    "max_audio_seconds": 28.1960625,
+    "total_audio_seconds": 330.42125
+  },
+  "artifacts": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/cpu-bitplanes/20261008T121546",
+  "audit": {
+    "status": "passed",
+    "binary_sha256": "fb511f3e4e9e4843e6904e446bbf89a5f8218707f46791367e59e79a1fa3d004",
+    "configurations": [
+      {
+        "components": 2,
+        "windows": 16,
+        "timed_calls": 1648,
+        "measured_seconds": 179.351351472,
+        "fully_balanced_backend_order": true,
+        "complete_equal_corpus_cycles": true,
+        "other_busy_cpu_cores_estimate_mean": 0.3659821957579565
+      },
+      {
+        "components": 3,
+        "windows": 16,
+        "timed_calls": 1280,
+        "measured_seconds": 193.385884001,
+        "fully_balanced_backend_order": true,
+        "complete_equal_corpus_cycles": true,
+        "other_busy_cpu_cores_estimate_mean": 0.2322769384351295
+      }
+    ],
+    "energy_available": false,
+    "speech_validation": "bit-identical encoder outputs, decoder emissions and text on all 16 selected utterances for each configuration",
+    "simd_assembly": [
+      {
+        "function": "00000000000473b0 <lf_cpu::gemm_bitplanes::swar_kernel>:",
+        "vector_popcount_instructions": 0,
+        "vector_uint64_multiply_instructions": 6,
+        "vector_stack_stores": 0
+      },
+      {
+        "function": "00000000000478b0 <lf_cpu::gemm_bitplanes::swar_kernel>:",
+        "vector_popcount_instructions": 0,
+        "vector_uint64_multiply_instructions": 6,
+        "vector_stack_stores": 0
+      },
+      {
+        "function": "0000000000047ff0 <lf_cpu::gemm_bitplanes::swar_kernel>:",
+        "vector_popcount_instructions": 0,
+        "vector_uint64_multiply_instructions": 12,
+        "vector_stack_stores": 1
+      },
+      {
+        "function": "0000000000048bb0 <lf_cpu::gemm_bitplanes::swar_kernel>:",
+        "vector_popcount_instructions": 0,
+        "vector_uint64_multiply_instructions": 10,
+        "vector_stack_stores": 0
+      },
+      {
+        "function": "0000000000049620 <lf_cpu::gemm_bitplanes::swar_kernel>:",
+        "vector_popcount_instructions": 0,
+        "vector_uint64_multiply_instructions": 16,
+        "vector_stack_stores": 2
+      },
+      {
+        "function": "000000000004a640 <lf_cpu::gemm_bitplanes::swar_kernel>:",
+        "vector_popcount_instructions": 0,
+        "vector_uint64_multiply_instructions": 14,
+        "vector_stack_stores": 2
+      },
+      {
+        "function": "000000000004b440 <lf_cpu::gemm_bitplanes::swar_kernel>:",
+        "vector_popcount_instructions": 0,
+        "vector_uint64_multiply_instructions": 8,
+        "vector_stack_stores": 0
+      },
+      {
+        "function": "000000000004bd30 <lf_cpu::gemm_bitplanes::swar_kernel>:",
+        "vector_popcount_instructions": 0,
+        "vector_uint64_multiply_instructions": 12,
+        "vector_stack_stores": 0
+      },
+      {
+        "function": "000000000004d7c0 <lf_cpu::gemm_bitplanes::kernel>:",
+        "vector_popcount_instructions": 32,
+        "vector_uint64_multiply_instructions": 0,
+        "vector_stack_stores": 0
+      },
+      {
+        "function": "000000000004ddd0 <lf_cpu::gemm_bitplanes::kernel>:",
+        "vector_popcount_instructions": 16,
+        "vector_uint64_multiply_instructions": 0,
+        "vector_stack_stores": 0
+      },
+      {
+        "function": "000000000004e2c0 <lf_cpu::gemm_bitplanes::kernel>:",
+        "vector_popcount_instructions": 16,
+        "vector_uint64_multiply_instructions": 0,
+        "vector_stack_stores": 0
+      },
+      {
+        "function": "000000000004e690 <lf_cpu::gemm_bitplanes::kernel>:",
+        "vector_popcount_instructions": 8,
+        "vector_uint64_multiply_instructions": 0,
+        "vector_stack_stores": 0
+      }
+    ]
+  },
+  "localflow_revision": "3bbbb0c9c5789efbf6c5aec4ca429a4296ea7e5f",
+  "model_manifest_sha256": "5c8b4bea0393db4072351e07b0d2206079373ca52646efdec4bb30876e0c8c61",
+  "weight_representation": {
+    "vnni": "2-bit stored weights, expanded INT8 L2 tiles",
+    "pn": "positive and negative bit masks, 2 bits per weight",
+    "masked": "active and negative bit masks, 2 bits per weight",
+    "swar": "8 reversed offset ternary bytes per UINT64, 1 byte per weight; guard spacing needed for exact multiplication"
+  },
+  "reproduce": [
+    "finetune/parakeet-ternary/python -B finetune/parakeet-ternary/cpu-bitplanes/prepare.py",
+    "finetune/parakeet-ternary/python -B finetune/parakeet-ternary/cpu-bitplanes/run.py --out PRINTED_ARTIFACT_DIRECTORY --configs 16:2,16:3 --windows 4"
+  ]
+}

@@ -1,0 +1,136 @@
+{
+ "design_revision": 10,
+ "model": "mp2",
+ "arm": "C6s2",
+ "variant": "multi",
+ "backend": "cpu",
+ "front_end": "vdsp",
+ "decode": "f2",
+ "timing_allowed": true,
+ "selection_eligible": true,
+ "reasons": [],
+ "built": "2026-10-03 16:43",
+ "checks": {
+  "encoder_record": {
+   "pass": true
+  },
+  "decoder_precision": {
+   "pass": true
+  },
+  "problems": {
+   "pass": true
+  },
+  "encoder": {
+   "pass": true
+  },
+  "coverage": {
+   "pass": true
+  },
+  "finite": {
+   "pass": true
+  },
+  "decisions": {
+   "pass": true
+  },
+  "free_decoding": {
+   "pass": true
+  },
+  "wer": {
+   "pass": true
+  }
+ },
+ "wer": {
+  "pass": true,
+  "reference_wer_pct": 2.711,
+  "pipeline_wer_pct": 2.711,
+  "clips": 64,
+  "limit_points": 0.2
+ },
+ "encoder": {
+  "pass": true,
+  "clips": 82,
+  "passed": 82,
+  "max_rel": 0.00879241100603108,
+  "max_abs": 0.1254483604506286,
+  "reference": "FP32 reference encoder (fp16s scales) on FP64-evaluated reference features (ref64)",
+  "diag_vs_reference_on_fp32_features": {
+   "max_rel": 0.3238137078580813,
+   "over_ceiling": [
+    "silence-3s"
+   ]
+  }
+ },
+ "free_decoding": {
+  "pass": true,
+  "clips": 64,
+  "identical": 64
+ },
+ "decisions": {
+  "pass": true,
+  "token": {
+   "steps": 3025,
+   "agree_all": 0.9996694214876033,
+   "decisive_fraction": 0.9662809917355372,
+   "agree_decisive": 1.0,
+   "reference_margin": {
+    "n": 3025,
+    "min": 0.0101,
+    "p1": 0.2829,
+    "p5": 1.474,
+    "p25": 6.3857,
+    "median": 8.9682
+   },
+   "pipeline_margin": {
+    "n": 3025,
+    "min": 0.0036,
+    "p1": 0.2607,
+    "p5": 1.4875,
+    "p25": 6.333,
+    "median": 8.9719
+   },
+   "reference_margin_of_disagreements": [
+    0.3956
+   ],
+   "pass": true
+  },
+  "duration": {
+   "steps": 3025,
+   "agree_all": 0.9970247933884298,
+   "decisive_fraction": 0.8502479338842975,
+   "agree_decisive": 0.999611197511664,
+   "reference_margin": {
+    "n": 3025,
+    "min": 0.0017,
+    "p1": 0.0588,
+    "p5": 0.3049,
+    "p25": 1.8061,
+    "median": 4.4218
+   },
+   "pipeline_margin": {
+    "n": 3025,
+    "min": 0.0004,
+    "p1": 0.0581,
+    "p5": 0.2997,
+    "p25": 1.7792,
+    "median": 4.4295
+   },
+   "reference_margin_of_disagreements": [
+    0.0047,
+    0.01,
+    0.0293,
+    0.0329,
+    0.0868,
+    0.4792,
+    0.6579,
+    0.7535,
+    1.1267
+   ],
+   "pass": true
+  }
+ },
+ "_evidence": {
+  "sha256": "d26839ea6eb737c7ab7f2616e618409c5c7ee7c3f7cc61328568ae6ea1bf96ed",
+  "bytes": 4820,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/eligibility/pipelines/mp2-C6s2-multi-cpu-vdsp-f2.json"
+ }
+}

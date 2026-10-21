@@ -1,0 +1,70 @@
+{
+ "gate": "front end A (vDSP) vs reference.Featurizer, same stored constants",
+ "ceilings": {
+  "rel": 1e-05,
+  "abs": 0.0001
+ },
+ "clips": 82,
+ "passed": 58,
+ "max_rel": 1.0,
+ "max_abs": 1.0016652800877812,
+ "median_rel": 1.2216161706554695e-06,
+ "non_silence": {
+  "clips": 81,
+  "max_vdsp_vs_ref": {
+   "rel": 7.473254579816807e-06,
+   "abs": 0.0004339749536789901
+  },
+  "rel_le_1e-5_all": true,
+  "clips_abs_over_1e-4": {
+   "vdsp_vs_ref": 23,
+   "fp64_vs_ref": 19,
+   "vdsp_vs_fp64": 23,
+   "ref_vs_fp64": 19
+  }
+ },
+ "fp64_analysis": {
+  "max_fp64_vs_ref": {
+   "rel": 6.462641477497355e-06,
+   "abs": 0.00032306832694339784
+  },
+  "max_vdsp_vs_fp64": {
+   "rel": 6.0326217812043465e-06,
+   "abs": 0.000482224584150548
+  },
+  "max_ref_vs_fp64": {
+   "rel": 6.462641474754268e-06,
+   "abs": 0.00032306832538855755
+  }
+ },
+ "silence": {
+  "clip": "silence-3s",
+  "kind": "silence",
+  "vdsp_vs_ref": [
+   1.0,
+   1.0016652800877812
+  ],
+  "fp64_vs_ref": [
+   0.9999999977815209,
+   1.0016652778655766
+  ],
+  "vdsp_vs_fp64": [
+   0.0003546807250047532,
+   0.00035527136775362144
+  ],
+  "ref_vs_fp64": [
+   159873.3859825901,
+   160139.6199488363
+  ]
+ },
+ "interpretation": "The FP32 reference (torch.stft) is itself up to 3.2e-4 abs from the exact (FP64) result on 19 of 81 clips, worst in mel band 0 where pre-emphasis leaves little energy; front end A (vDSP, FP32) is at a comparable distance from FP64 (max 4.8e-4 abs, 6.0e-6 rel). For silence every feature is constant, the std guard makes the reference amplify float32 rounding of its mean by 1e5, and the exact answer (0) is what front end A returns.",
+ "rows": {
+  "omitted_entries": 82,
+  "detail": "see full record"
+ },
+ "_evidence": {
+  "sha256": "e2016ce0160e1153cfa559a84b48cbeca0c1c4cbcae918fae88819385c81e277",
+  "bytes": 19050,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/wp4/frontend_a_gate.json"
+ }
+}

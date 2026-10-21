@@ -1,0 +1,107 @@
+{
+ "design_revision": 8,
+ "code_version": "wp6b-mlxarm-1",
+ "arm": "MLX",
+ "model": "mp2",
+ "variant": "multi",
+ "backend": "gpu-mlx",
+ "date": "2026-10-03 05:27",
+ "environment": {
+  "mlx": "0.32.3",
+  "device": "Device(gpu, 0)",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "python": "3.12.14",
+  "group_size": 64,
+  "bits": 2,
+  "encoder_py_sha256": "e0262e29af87c13c2dcae7b6fe6169235f5ba8b9d6721dfaa0581fc2903cdda6",
+  "gates_py_sha256": "8587f38766f3bc1b2a93ebba646cbe1bcdf430a3f247e3ba8878d1a1bc7a8e0a"
+ },
+ "gate": "4b",
+ "pass": true,
+ "precision": "fp16 (FP16 activations and scales), MLX GPU",
+ "deployed_decoder": "F2 (native FP32 CPU loop); evaluated with reference.py's FP32 decoder/joint and M_P2's weights (F2 = reference within 1.4e-7, WP4); results/mlxarm/f2_swift.json checks F2 itself",
+ "thresholds": {
+  "encoder_rel": 0.1,
+  "tau": 0.001,
+  "decisive_margin": 1.0,
+  "agree_decisive": 0.995,
+  "agree_all": 0.99,
+  "decisive_min": 0.5,
+  "sequence_identity": 0.95
+ },
+ "rev5_diagnostic_ceilings": {
+  "encoder_rel": 0.02,
+  "encoder_abs": 0.25,
+  "heads_rel": 0.02
+ },
+ "reference": {
+  "cache": "refcache mp2 fp16s",
+  "provenance": {
+   "name": "mp2",
+   "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+   "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+  }
+ },
+ "encoder": {
+  "pass": true,
+  "runs": 200,
+  "passed": 200,
+  "max_rel": 0.002342772736088173,
+  "max_abs": 0.04506717662428547,
+  "rev5_passed": 200
+ },
+ "decisions": {
+  "pass": true,
+  "token": {
+   "steps": 3025,
+   "agree_all": 1.0,
+   "decisive_fraction": 0.9662809917355372,
+   "agree_decisive": 1.0
+  },
+  "duration": {
+   "steps": 3025,
+   "agree_all": 0.9993388429752066,
+   "decisive_fraction": 0.8502479338842975,
+   "agree_decisive": 1.0
+  }
+ },
+ "free_decoding": {
+  "clips": 64,
+  "identical": 64,
+  "identity": 1.0,
+  "pass": true
+ },
+ "gate5": {
+  "pass": true,
+  "runs": 22,
+  "max_rel": 0.0017517824687643953,
+  "rev5_passed": 22,
+  "rows": {
+   "omitted_entries": 22,
+   "detail": "see full record"
+  }
+ },
+ "heads_diagnostic": {
+  "token_logits_rel": 0.0005048181182659186,
+  "duration_logits_rel": 0.0020317237176229893,
+  "h_rel": 0.0,
+  "c_rel": 0.0
+ },
+ "free_tokens": {
+  "omitted_entries": 64,
+  "detail": "see full record"
+ },
+ "encoder_rows": {
+  "omitted_entries": 200,
+  "detail": "see full record"
+ },
+ "head_rows": {
+  "omitted_entries": 82,
+  "detail": "see full record"
+ },
+ "_evidence": {
+  "sha256": "44abcba18aafa047d48ac61b8f39d5f627faa40f102d4a383a50bbdce7f5b988",
+  "bytes": 80763,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/mlxarm/4b.json"
+ }
+}

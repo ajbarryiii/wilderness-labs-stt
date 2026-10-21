@@ -40,6 +40,11 @@ Results for 3, 10 and 30.04 s clips, the method, usage and tests are in
 [`inference/README.md`](inference/README.md), with evidence in
 [`inference/results/rtx5090.json`](inference/results/rtx5090.json). Accuracy for this
 checkpoint is the full-corpus WER in [`results/TEST.md`](results/TEST.md).
+The complete optimization ledger is in [`inference/EXPERIMENTS.md`](inference/EXPERIMENTS.md).
+
+Deployment loader with a selectable activation part count (INT8x2 / INT8x3,
+[`../parakeet-binary/plans/x2-default.md`](../parakeet-binary/plans/x2-default.md)):
+`gpu1bit.runtime_m1.load_ternary_packed` in [`../parakeet-binary/gpu1bit/runtime_m1.py`](../parakeet-binary/gpu1bit/runtime_m1.py).
 
 ## Model and evaluation
 

@@ -1,0 +1,29 @@
+{
+ "model": "mp2",
+ "scales": "fp16s",
+ "features": "native.fp64_features (FP64 reference front end), cast to FP32",
+ "frontend_manifest_sha256": "8b754605cf5f6743535695457b6ac72754c7489ca132a08f0c759211b714485e",
+ "refcache_provenance": {
+  "name": "mp2",
+  "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+  "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+ },
+ "model_provenance": {
+  "name": "mp2",
+  "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+  "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+ },
+ "clips_json_sha256": "72962a14962be946a1ba52299028834d5af47ca07ea68b3e414cbaf8292b248a",
+ "reference_code_sha256": "1a5d6d0802753008ba6b01900f9b1f8a1d01e8e446575805e9a250e1bb2d21d2",
+ "torch": "2.7.0",
+ "seconds": 66.7,
+ "clips": {
+  "omitted_entries": 82,
+  "detail": "see full record"
+ },
+ "_evidence": {
+  "sha256": "e05d67fb9db1988f8c784e76f9158a0bb773c4f775b7d0f8a7f7af5e824e4e94",
+  "bytes": 27760,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/pipegates/ref64_index.json"
+ }
+}

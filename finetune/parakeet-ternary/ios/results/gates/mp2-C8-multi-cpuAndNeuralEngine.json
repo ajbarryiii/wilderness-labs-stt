@@ -1,0 +1,124 @@
+{
+ "model": "mp2",
+ "arm": "C8",
+ "variant": "multi",
+ "units": "cpuAndNeuralEngine",
+ "thresholds": {
+  "rel": 0.02,
+  "abs": 0.25,
+  "tau": 0.001,
+  "agreement": 0.995,
+  "decisive_min": 0.5
+ },
+ "summary": {
+  "gate4_encoder": {
+   "pass": false,
+   "cases": 200,
+   "rel_max": 0.03382915536939034,
+   "abs_max": 0.4703507131483937,
+   "rel_median": 0.012304433490614296,
+   "failures": {
+    "omitted_entries": 19,
+    "detail": "see full record"
+   },
+   "per_bucket": {
+    "15": {
+     "cases": 82,
+     "rel_max": 0.03181632160993131,
+     "abs_max": 0.4327601829968701,
+     "pass": false
+    },
+    "8": {
+     "cases": 60,
+     "rel_max": 0.03181632160993131,
+     "abs_max": 0.4327601829968701,
+     "pass": false
+    },
+    "4": {
+     "cases": 40,
+     "rel_max": 0.03181632160993131,
+     "abs_max": 0.4327601829968701,
+     "pass": false
+    },
+    "2": {
+     "cases": 18,
+     "rel_max": 0.03382915536939034,
+     "abs_max": 0.4703507131483937,
+     "pass": false
+    }
+   }
+  },
+  "gate5_buckets_vs_15s": {
+   "pass": true,
+   "gated_cases": 22,
+   "gated_rel_max": 0.002069161398328343,
+   "gated_abs_max": 0.017926220445596577,
+   "all_cases": 118,
+   "all_rel_max": 0.003292520949205542,
+   "all_abs_max": 0.041765828020454296,
+   "all_pass": true
+  },
+  "gate4_heads": {
+   "clips": 82,
+   "steps": 3025,
+   "all_finite": true,
+   "token": {
+    "rel_max": 0.010357735057421958,
+    "rel_median": 0.005070914239841277,
+    "clips_over_rel_ceiling": [],
+    "decisive_fraction": 0.9282644628099174,
+    "agreement_on_decisive": 1.0,
+    "agreement_all_steps": 0.9973553719008265,
+    "degenerate": false
+   },
+   "duration": {
+    "rel_max": 0.03631015799911242,
+    "rel_median": 0.010711399613061268,
+    "clips_over_rel_ceiling": [
+     "n02-2428-83699-0004",
+     "n04-5694-64029-0003",
+     "n08-5694-64025-0020",
+     "n15-6313-76958-0013",
+     "b04-N32160"
+    ],
+    "decisive_fraction": 0.9246280991735537,
+    "agreement_on_decisive": 1.0,
+    "agreement_all_steps": 0.9917355371900827,
+    "degenerate": false
+   },
+   "h": {
+    "rel_max": 0.007620652867986074,
+    "rel_median": 0.005471156504794489,
+    "clips_over_rel_ceiling": []
+   },
+   "c": {
+    "rel_max": 0.00521665888776724,
+    "rel_median": 0.0034239230483138535,
+    "clips_over_rel_ceiling": []
+   },
+   "pass": false
+  }
+ },
+ "load_s": {
+  "b15": 120.5,
+  "b8": 103.67,
+  "b4": 97.13,
+  "b2": 93.22
+ },
+ "seconds": 426.0,
+ "peak_rss_mb": 595.9,
+ "encoder_cases": {
+  "omitted_entries": 200,
+  "detail": "see full record"
+ },
+ "heads_per_clip": {
+  "omitted_entries": 82,
+  "detail": "see full record"
+ },
+ "heads_input": "arm encoder output from the clip's own bucket",
+ "_evidence": {
+  "sha256": "0ddecb2d76bc9236448d9651412c6ea8f56cecd0857dca4b5a1349b660b0f21a",
+  "bytes": 98996,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/gates/mp2-C8-multi-cpuAndNeuralEngine.json"
+ }
+}

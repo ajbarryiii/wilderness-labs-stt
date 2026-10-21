@@ -1,0 +1,558 @@
+{
+ "schema": 1,
+ "model": "mp2",
+ "provenance": {
+  "name": "mp2",
+  "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+  "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+ },
+ "opset": "iOS26",
+ "compute_precision": "FLOAT16 (graph authored in FP16; fp32/int32 I/O)",
+ "models": {
+  "Decoder": {
+   "program": {
+    "main": {
+     "ops": 92,
+     "op_histogram": {
+      "add": 5,
+      "cast": 8,
+      "const": 41,
+      "expand_dims": 1,
+      "gather": 1,
+      "greater_equal": 1,
+      "identity": 1,
+      "linear": 4,
+      "mul": 6,
+      "reshape": 1,
+      "select": 1,
+      "sigmoid": 6,
+      "slice_by_index": 4,
+      "split": 2,
+      "squeeze": 4,
+      "stack": 2,
+      "tanh": 4
+     },
+     "constexpr_inputs": {},
+     "matmul_followed_by_mul": 0,
+     "consts_with_shared_weight_id": 0,
+     "inputs": {
+      "targets": "int32 [1, 1]",
+      "target_length": "int32 [1]",
+      "h_in": "fp32 [2, 1, 640]",
+      "c_in": "fp32 [2, 1, 640]"
+     },
+     "outputs": {
+      "decoder": "fp32 [1, 640, 1]",
+      "h_out": "fp32 [2, 1, 640]",
+      "c_out": "fp32 [2, 1, 640]"
+     }
+    }
+   },
+   "convert_s": 0.2,
+   "mlpackage_bytes": 14448227,
+   "paths": {
+    "mlpackage": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder/Decoder.mlpackage",
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder/Decoder.mlmodelc"
+   },
+   "compile": {
+    "compile_s": 0.1,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder/Decoder.mlmodelc",
+    "mlmodelc_bytes": 14448347
+   },
+   "compute_plan": {
+    "cpuAndNeuralEngine": {
+     "compute_units": "cpuAndNeuralEngine",
+     "tool": "mil/computeplan.swift (MLComputePlan, functionName set)",
+     "functions": {
+      "main": {
+       "compute_units": "cpuAndNeuralEngine",
+       "cpu_ops": {
+        "omitted_entries": 50,
+        "detail": "see full record"
+       },
+       "estimated_cost_share_by_preferred_device": {
+        "cpu": 1
+       },
+       "operators_by_preferred_device": {
+        "cpu": {
+         "omitted_entries": 15,
+         "detail": "see full record"
+        }
+       },
+       "ops_with_usage_by_preferred_device": {
+        "cpu": 50
+       },
+       "ops_without_usage": {
+        "const": 41,
+        "identity": 1
+       },
+       "plan_load_s": 0.1746159791946411
+      }
+     }
+    },
+    "cpuOnly": {
+     "compute_units": "cpuOnly",
+     "tool": "mil/computeplan.swift (MLComputePlan, functionName set)",
+     "functions": {
+      "main": {
+       "compute_units": "cpuOnly",
+       "cpu_ops": {
+        "omitted_entries": 50,
+        "detail": "see full record"
+       },
+       "estimated_cost_share_by_preferred_device": {
+        "cpu": 1
+       },
+       "operators_by_preferred_device": {
+        "cpu": {
+         "omitted_entries": 15,
+         "detail": "see full record"
+        }
+       },
+       "ops_with_usage_by_preferred_device": {
+        "cpu": 50
+       },
+       "ops_without_usage": {
+        "const": 41,
+        "identity": 1
+       },
+       "plan_load_s": 0.07523298263549805
+      }
+     }
+    }
+   }
+  },
+  "JointDecision": {
+   "program": {
+    "main": {
+     "ops": 46,
+     "op_histogram": {
+      "add": 1,
+      "cast": 3,
+      "const": 27,
+      "linear": 3,
+      "reduce_argmax": 2,
+      "reduce_max": 1,
+      "relu": 1,
+      "reshape": 5,
+      "slice_by_index": 2,
+      "softmax": 1
+     },
+     "constexpr_inputs": {},
+     "matmul_followed_by_mul": 0,
+     "consts_with_shared_weight_id": 0,
+     "inputs": {
+      "encoder_step": "fp32 [1, 1024, 1]",
+      "decoder_step": "fp32 [1, 640, 1]"
+     },
+     "outputs": {
+      "token_id": "int32 [1, 1, 1]",
+      "token_prob": "fp32 [1, 1, 1]",
+      "duration": "int32 [1, 1, 1]"
+     }
+    }
+   },
+   "convert_s": 0.1,
+   "mlpackage_bytes": 3461077,
+   "paths": {
+    "mlpackage": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder/JointDecision.mlpackage",
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder/JointDecision.mlmodelc"
+   },
+   "compile": {
+    "compile_s": 0.03,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder/JointDecision.mlmodelc",
+    "mlmodelc_bytes": 3461123
+   },
+   "compute_plan": {
+    "cpuAndNeuralEngine": {
+     "compute_units": "cpuAndNeuralEngine",
+     "tool": "mil/computeplan.swift (MLComputePlan, functionName set)",
+     "functions": {
+      "main": {
+       "compute_units": "cpuAndNeuralEngine",
+       "cpu_ops": {
+        "omitted_entries": 19,
+        "detail": "see full record"
+       },
+       "estimated_cost_share_by_preferred_device": {
+        "cpu": 1
+       },
+       "operators_by_preferred_device": {
+        "cpu": {
+         "omitted_entries": 9,
+         "detail": "see full record"
+        }
+       },
+       "ops_with_usage_by_preferred_device": {
+        "cpu": 19
+       },
+       "ops_without_usage": {
+        "const": 27
+       },
+       "plan_load_s": 0.09901297092437744
+      }
+     }
+    },
+    "cpuOnly": {
+     "compute_units": "cpuOnly",
+     "tool": "mil/computeplan.swift (MLComputePlan, functionName set)",
+     "functions": {
+      "main": {
+       "compute_units": "cpuOnly",
+       "cpu_ops": {
+        "omitted_entries": 19,
+        "detail": "see full record"
+       },
+       "estimated_cost_share_by_preferred_device": {
+        "cpu": 1
+       },
+       "operators_by_preferred_device": {
+        "cpu": {
+         "omitted_entries": 9,
+         "detail": "see full record"
+        }
+       },
+       "ops_with_usage_by_preferred_device": {
+        "cpu": 19
+       },
+       "ops_without_usage": {
+        "const": 27
+       },
+       "plan_load_s": 0.05668008327484131
+      }
+     }
+    }
+   }
+  },
+  "JointLogits": {
+   "program": {
+    "main": {
+     "ops": 29,
+     "op_histogram": {
+      "add": 1,
+      "cast": 4,
+      "const": 16,
+      "linear": 3,
+      "relu": 1,
+      "reshape": 2,
+      "slice_by_index": 2
+     },
+     "constexpr_inputs": {},
+     "matmul_followed_by_mul": 0,
+     "consts_with_shared_weight_id": 0,
+     "inputs": {
+      "encoder_step": "fp32 [1, 1024, 1]",
+      "decoder_step": "fp32 [1, 640, 1]"
+     },
+     "outputs": {
+      "token_logits": "fp32 [1, 1025]",
+      "duration_logits": "fp32 [1, 5]"
+     }
+    }
+   },
+   "convert_s": 0.1,
+   "mlpackage_bytes": 3458742,
+   "paths": {
+    "mlpackage": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder/JointLogits.mlpackage",
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder/JointLogits.mlmodelc"
+   },
+   "compile": {
+    "compile_s": 0.03,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder/JointLogits.mlmodelc",
+    "mlmodelc_bytes": 3458844
+   },
+   "compute_plan": {
+    "cpuAndNeuralEngine": {
+     "compute_units": "cpuAndNeuralEngine",
+     "tool": "mil/computeplan.swift (MLComputePlan, functionName set)",
+     "functions": {
+      "main": {
+       "compute_units": "cpuAndNeuralEngine",
+       "cpu_ops": [
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        }
+       ],
+       "estimated_cost_share_by_preferred_device": {
+        "cpu": 1
+       },
+       "operators_by_preferred_device": {
+        "cpu": {
+         "omitted_entries": 6,
+         "detail": "see full record"
+        }
+       },
+       "ops_with_usage_by_preferred_device": {
+        "cpu": 13
+       },
+       "ops_without_usage": {
+        "const": 16
+       },
+       "plan_load_s": 0.07311701774597168
+      }
+     }
+    },
+    "cpuOnly": {
+     "compute_units": "cpuOnly",
+     "tool": "mil/computeplan.swift (MLComputePlan, functionName set)",
+     "functions": {
+      "main": {
+       "compute_units": "cpuOnly",
+       "cpu_ops": [
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        },
+        {
+         "omitted_entries": 3,
+         "detail": "see full record"
+        }
+       ],
+       "estimated_cost_share_by_preferred_device": {
+        "cpu": 1
+       },
+       "operators_by_preferred_device": {
+        "cpu": {
+         "omitted_entries": 6,
+         "detail": "see full record"
+        }
+       },
+       "ops_with_usage_by_preferred_device": {
+        "cpu": 13
+       },
+       "ops_without_usage": {
+        "const": 16
+       },
+       "plan_load_s": 0.049784064292907715
+      }
+     }
+    }
+   }
+  },
+  "DecoderJoint": {
+   "program": {
+    "main": {
+     "ops": 129,
+     "op_histogram": {
+      "add": 6,
+      "cast": 9,
+      "const": 64,
+      "gather": 1,
+      "greater_equal": 1,
+      "linear": 7,
+      "mul": 6,
+      "reduce_argmax": 2,
+      "reduce_max": 1,
+      "relu": 1,
+      "reshape": 5,
+      "select": 1,
+      "sigmoid": 6,
+      "slice_by_index": 6,
+      "softmax": 1,
+      "split": 2,
+      "squeeze": 4,
+      "stack": 2,
+      "tanh": 4
+     },
+     "constexpr_inputs": {},
+     "matmul_followed_by_mul": 0,
+     "consts_with_shared_weight_id": 0,
+     "inputs": {
+      "targets": "int32 [1, 1]",
+      "h_in": "fp32 [2, 1, 640]",
+      "c_in": "fp32 [2, 1, 640]",
+      "encoder_step": "fp32 [1, 1024, 1]"
+     },
+     "outputs": {
+      "token_id": "int32 [1, 1, 1]",
+      "token_prob": "fp32 [1, 1, 1]",
+      "duration": "int32 [1, 1, 1]",
+      "h_out": "fp32 [2, 1, 640]",
+      "c_out": "fp32 [2, 1, 640]"
+     }
+    }
+   },
+   "convert_s": 0.2,
+   "mlpackage_bytes": 17906949,
+   "paths": {
+    "mlpackage": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder/DecoderJoint.mlpackage",
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder/DecoderJoint.mlmodelc"
+   },
+   "compile": {
+    "compile_s": 0.03,
+    "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder/DecoderJoint.mlmodelc",
+    "mlmodelc_bytes": 17907365
+   },
+   "compute_plan": {
+    "cpuAndNeuralEngine": {
+     "compute_units": "cpuAndNeuralEngine",
+     "tool": "mil/computeplan.swift (MLComputePlan, functionName set)",
+     "functions": {
+      "main": {
+       "compute_units": "cpuAndNeuralEngine",
+       "cpu_ops": {
+        "omitted_entries": 50,
+        "detail": "see full record"
+       },
+       "estimated_cost_share_by_preferred_device": {
+        "cpu": 1
+       },
+       "operators_by_preferred_device": {
+        "cpu": {
+         "omitted_entries": 18,
+         "detail": "see full record"
+        }
+       },
+       "ops_with_usage_by_preferred_device": {
+        "cpu": 65
+       },
+       "ops_without_usage": {
+        "const": 64
+       },
+       "plan_load_s": 0.1732269525527954
+      }
+     }
+    },
+    "cpuOnly": {
+     "compute_units": "cpuOnly",
+     "tool": "mil/computeplan.swift (MLComputePlan, functionName set)",
+     "functions": {
+      "main": {
+       "compute_units": "cpuOnly",
+       "cpu_ops": {
+        "omitted_entries": 50,
+        "detail": "see full record"
+       },
+       "estimated_cost_share_by_preferred_device": {
+        "cpu": 1
+       },
+       "operators_by_preferred_device": {
+        "cpu": {
+         "omitted_entries": 18,
+         "detail": "see full record"
+        }
+       },
+       "ops_with_usage_by_preferred_device": {
+        "cpu": 65
+       },
+       "ops_without_usage": {
+        "const": 64
+       },
+       "plan_load_s": 0.08729100227355957
+      }
+     }
+    }
+   }
+  }
+ },
+ "environment": {
+  "coremltools": "9.0",
+  "numpy": "2.2.6",
+  "python": "3.12.14",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "machine": "arm64"
+ },
+ "pass_pipeline": {
+  "omitted_entries": 95,
+  "detail": "see full record"
+ },
+ "peak_rss_mb": 361.3,
+ "_evidence": {
+  "sha256": "752c21bfc012c9c26653fbe13f7de7340b51aedd837e75a3f929f25c83e04690",
+  "bytes": 55706,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/builds/mp2-decoder.json"
+ }
+}

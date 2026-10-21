@@ -1,0 +1,103 @@
+{
+ "model": "seed0",
+ "arm": "C7",
+ "variant": "fixed",
+ "units": "cpuAndNeuralEngine",
+ "thresholds": {
+  "rel": 0.02,
+  "abs": 0.25,
+  "tau": 0.001,
+  "agreement": 0.995,
+  "decisive_min": 0.5
+ },
+ "summary": {
+  "gate4_encoder": {
+   "pass": false,
+   "cases": 82,
+   "rel_max": 0.020695996855676243,
+   "abs_max": 0.32662456640570137,
+   "rel_median": 0.014810140114701244,
+   "failures": {
+    "omitted_entries": 17,
+    "detail": "see full record"
+   },
+   "per_bucket": {
+    "15": {
+     "cases": 82,
+     "rel_max": 0.020695996855676243,
+     "abs_max": 0.32662456640570137,
+     "pass": false
+    }
+   }
+  },
+  "gate5_buckets_vs_15s": {
+   "pass": null,
+   "note": "fixed 15 s window: no smaller buckets"
+  },
+  "gate4_heads": {
+   "clips": 82,
+   "steps": 3025,
+   "all_finite": true,
+   "token": {
+    "rel_max": 0.261934438024478,
+    "rel_median": 0.20243580229130914,
+    "clips_over_rel_ceiling": {
+     "omitted_entries": 75,
+     "detail": "see full record"
+    },
+    "decisive_fraction": 0.09917355371900827,
+    "agreement_on_decisive": 1.0,
+    "agreement_all_steps": 0.32231404958677684,
+    "degenerate": true
+   },
+   "duration": {
+    "rel_max": 0.23269232763692071,
+    "rel_median": 0.1635470593617242,
+    "clips_over_rel_ceiling": {
+     "omitted_entries": 72,
+     "detail": "see full record"
+    },
+    "decisive_fraction": 0.20760330578512395,
+    "agreement_on_decisive": 1.0,
+    "agreement_all_steps": 0.6,
+    "degenerate": true
+   },
+   "h": {
+    "rel_max": 1.0040890167984255,
+    "rel_median": 0.7266324137070169,
+    "clips_over_rel_ceiling": {
+     "omitted_entries": 78,
+     "detail": "see full record"
+    }
+   },
+   "c": {
+    "rel_max": 1.0168054409550185,
+    "rel_median": 0.7281559390423222,
+    "clips_over_rel_ceiling": {
+     "omitted_entries": 78,
+     "detail": "see full record"
+    }
+   },
+   "pass": false
+  }
+ },
+ "load_s": {
+  "main": 22.85
+ },
+ "seconds": 30.1,
+ "peak_rss_mb": 495.8,
+ "encoder_cases": {
+  "omitted_entries": 82,
+  "detail": "see full record"
+ },
+ "heads_per_clip": {
+  "omitted_entries": 82,
+  "detail": "see full record"
+ },
+ "heads_input": "arm encoder output from the clip's own bucket (15 s window)",
+ "_evidence": {
+  "sha256": "6aa2070a4e8cce3b7e4ffa98b244c4677457e61930acbf7b0444c112a686a5bc",
+  "bytes": 73206,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/gates/seed0-C7-fixed-cpuAndNeuralEngine.json"
+ }
+}

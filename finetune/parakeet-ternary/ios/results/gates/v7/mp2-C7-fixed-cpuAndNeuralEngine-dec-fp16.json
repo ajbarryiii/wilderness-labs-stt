@@ -1,0 +1,166 @@
+{
+ "design_revision": 7,
+ "gate_code_version": "wp3-gates7-1",
+ "gate": "4b",
+ "gates7_py_sha256": "63f92b3224e8597720a136f800ddb50d23668e9d328eb6e8dbbbc261c7d3af44",
+ "date": "2026-10-02 21:25",
+ "model": "mp2",
+ "arm": "C7",
+ "label": "C7",
+ "variant": "fixed",
+ "units": "cpuAndNeuralEngine",
+ "backend": "ane",
+ "thresholds": {
+  "encoder_rel": 0.1,
+  "tau": 0.001,
+  "decisive_margin": 1.0,
+  "agree_decisive": 0.995,
+  "agree_all": 0.99,
+  "decisive_min": 0.5,
+  "sequence_identity": 0.95,
+  "wer_points": 0.2
+ },
+ "rev5_diagnostic_thresholds": {
+  "encoder_rel": 0.02,
+  "encoder_abs": 0.25,
+  "heads_rel": 0.02
+ },
+ "build_provenance": {
+  "name": "mp2",
+  "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+  "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+ },
+ "build_chain": "constexpr_lut_to_dense(uint2, fp16 LUT {-1,0,+1,0}); matmul; mul(fp16 per-row scale)",
+ "decoder_models": {
+  "dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/decoder",
+  "provenance": {
+   "name": "mp2",
+   "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+   "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+  },
+  "precision": "fp16"
+ },
+ "pass": false,
+ "pass_scope": "all 4b conditions except WER (eligibility.py) and gate 5 where applicable",
+ "summary": {
+  "encoder_4b": {
+   "pass": true,
+   "cases": 82,
+   "failing_cases": 0,
+   "failing_examples": [],
+   "rel_max": 0.034222014154706444,
+   "abs_max": 0.4723555414231416,
+   "rel_median": 0.012346047215741226,
+   "all_finite_valid": true,
+   "all_finite_padded_frames": true,
+   "note": "gated on the valid frames; padded frames are unspecified (MASKING.md) and reported"
+  },
+  "encoder_rev5_diagnostic": {
+   "pass": false,
+   "failing_cases": 7
+  },
+  "gate5": {
+   "pass": null,
+   "note": "fixed 15 s window: no smaller buckets"
+  },
+  "heads_4b": {
+   "clips": 82,
+   "steps": 3025,
+   "all_finite": true,
+   "paths": {
+    "jd": {
+     "token": {
+      "decisive_fraction": 0.9662809917355372,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 0.9970247933884298,
+      "disagreements_all": 9,
+      "disagreements_decisive": 0,
+      "pass": true
+     },
+     "duration": {
+      "decisive_fraction": 0.8502479338842975,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 0.9917355371900827,
+      "disagreements_all": 25,
+      "disagreements_decisive": 0,
+      "pass": true
+     }
+    },
+    "dj": {
+     "token": {
+      "decisive_fraction": 0.9662809917355372,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 0.9970247933884298,
+      "disagreements_all": 9,
+      "disagreements_decisive": 0,
+      "pass": true
+     },
+     "duration": {
+      "decisive_fraction": 0.8502479338842975,
+      "agreement_on_decisive": 1.0,
+      "agreement_all_steps": 0.9917355371900827,
+      "disagreements_all": 25,
+      "disagreements_decisive": 0,
+      "pass": true
+     }
+    }
+   },
+   "rev5_diagnostic": {
+    "token": {
+     "rel_max": 0.010949489478666608,
+     "pass_rev5": true
+    },
+    "duration": {
+     "rel_max": 0.03860533093790492,
+     "pass_rev5": false
+    },
+    "h": {
+     "rel_max": 0.007620652867986074,
+     "pass_rev5": true
+    },
+    "c": {
+     "rel_max": 0.00521665888776724,
+     "pass_rev5": true
+    }
+   },
+   "pass": true
+  },
+  "free_decoding": {
+   "clips": 64,
+   "jd": {
+    "identical": 59,
+    "identity_fraction": 0.921875,
+    "pass_identity": false
+   },
+   "dj": {
+    "identical": 59,
+    "identity_fraction": 0.921875,
+    "pass_identity": false
+   },
+   "pass_identity": false,
+   "wer": "evaluated by mil/eligibility.py from the token sequences (within +0.2 points of the reference)"
+  }
+ },
+ "encoder_cases": {
+  "omitted_entries": 82,
+  "detail": "see full record"
+ },
+ "heads_per_clip": {
+  "omitted_entries": 82,
+  "detail": "see full record"
+ },
+ "free_decoding_tokens": {
+  "omitted_entries": 64,
+  "detail": "see full record"
+ },
+ "load_s": {
+  "b15": 22.61
+ },
+ "seconds": 37.9,
+ "peak_rss_mb": 499.4,
+ "_evidence": {
+  "sha256": "7115463fc6ffa91c065b682deb28d4cb8532836eb699cbce81a45abcf683b379",
+  "bytes": 112602,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/gates/v7/mp2-C7-fixed-cpuAndNeuralEngine-dec-fp16.json"
+ }
+}

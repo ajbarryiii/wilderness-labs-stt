@@ -1,0 +1,10 @@
+[package]
+name = "v_sdot"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+build = "build.rs"
+
+[dependencies]
+shared.workspace = true
+serde_json.workspace = true

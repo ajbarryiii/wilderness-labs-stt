@@ -54,7 +54,7 @@ def _quantize(X, Q, S, NW, NB, M: tl.constexpr, K: tl.constexpr, T: tl.constexpr
 def _int8_dot(X, XS, W, WS, Bias, Y, P, M: tl.constexpr, N: tl.constexpr, K: tl.constexpr,
               HAS_BIAS: tl.constexpr, BM: tl.constexpr, BN: tl.constexpr, BK: tl.constexpr,
               SPLIT: tl.constexpr, COMPONENTS: tl.constexpr, ACTIVATION: tl.constexpr = "", DENSE: tl.constexpr = False,
-              COLUMN: tl.constexpr = False):
+              COLUMN: tl.constexpr = False, WEIGHT_BITS: tl.constexpr = 8, CTA_GROUPS: tl.constexpr = 1):
     m = tl.program_id(0) * BM + tl.arange(0, BM)
     n = tl.program_id(1) * BN + tl.arange(0, BN)
     part = tl.program_id(2)
@@ -64,13 +64,29 @@ def _int8_dot(X, XS, W, WS, Bias, Y, P, M: tl.constexpr, N: tl.constexpr, K: tl.
     acc = tl.zeros((BM, BN), tl.int32)
     acc2 = tl.zeros((BM, BN), tl.int32)
     acc3 = tl.zeros((BM, BN), tl.int32)
-    for tile in range(tl.cdiv(K, BK * SPLIT)):
-        start = (tile * SPLIT + part) * BK
+    for tile in range(tl.cdiv(K, BK * SPLIT * CTA_GROUPS)):
+        start = (tile * SPLIT * CTA_GROUPS + part) * BK
         a = tl.load(X + m[:, None] * K + (start+k[None, :]),
                     (m[:, None] < M) & (start+k[None, :] < K), other=0)
         if DENSE:
             if COLUMN:
-                b = tl.load(W+n[None,:]*K+start+k[:,None],(start+k[:,None]<K)&(n[None,:]<N),other=0)
+                if WEIGHT_BITS == 8:
+                    b = tl.load(W+n[None,:]*K+start+k[:,None],(start+k[:,None]<K)&(n[None,:]<N),other=0)
+                else:
+                    pk=tl.arange(0,BK//(8//WEIGHT_BITS))
+                    packed=tl.load(W+n[:,None]*(K//(8//WEIGHT_BITS))+start//(8//WEIGHT_BITS)+pk[None,:],
+                                   (n[:,None]<N)&(start//(8//WEIGHT_BITS)+pk[None,:]<K//(8//WEIGHT_BITS)),other=0)
+                    if WEIGHT_BITS == 4:
+                        low=(packed<<4).to(tl.int8)>>4
+                        high=packed.to(tl.int8)>>4
+                        b=tl.join(low,high).reshape(BN,BK).trans()
+                    else:
+                        c0=packed&3;c1=(packed>>2)&3;c2=(packed>>4)&3;c3=(packed>>6)&3
+                        v0=((c0&1).to(tl.int8)-(c0>>1).to(tl.int8))
+                        v1=((c1&1).to(tl.int8)-(c1>>1).to(tl.int8))
+                        v2=((c2&1).to(tl.int8)-(c2>>1).to(tl.int8))
+                        v3=((c3&1).to(tl.int8)-(c3>>1).to(tl.int8))
+                        b=tl.join(tl.join(v0,v1),tl.join(v2,v3)).permute(0,1,3,2).reshape(BN,BK).trans()
             else:
                 b = tl.load(W+(start+k[:,None])*N+n[None,:],(start+k[:,None]<K)&(n[None,:]<N),other=0)
         else:

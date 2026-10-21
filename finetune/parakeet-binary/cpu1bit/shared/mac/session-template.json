@@ -1,0 +1,429 @@
+{
+ "session": "TEMPLATE-copy-and-freeze",
+ "about": "cpu1bit timed session (plans/cpu-benchmark-mac.md). Copy, fill the tune-* grids, the size-tune roster and CANDIDATE, freeze. Stage order: validate -> p-isa -> size-tune -> tune-* -> gapcheck -> size-8t-i8x2, size-4t-i8x2, size-8t-i8x3, size-4t-i8x3 -> screen, screen-4t, screen-i8x3, screen-4t-i8x3 -> confirm. Each sizing stage writes a write-once N per clip (12 s / (0.95 x the fastest roster arm)); confirm uses the primary condition's N. Condition matrix {8, 4 workers} x {i8x2, i8x3} complete; B1T-MB1 measured in every screening condition.",
+ "seed": 20261021,
+ "clips": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7
+ ],
+ "expected_block_s": 175,
+ "arms": {
+  "R-MB1": {
+   "binary": "$CPU1BIT_ROOT/target/frozen/release/replay-b-neon",
+   "export": "$CPU1BIT_ROOT/data/exports/MB1-derived",
+   "captures": "$CPU1BIT_ROOT/data/captures/MB1/timed",
+   "tuning": {
+    "nb": 64,
+    "nr": 16
+   }
+  },
+  "R-M1": {
+   "binary": "$CPU1BIT_ROOT/target/frozen/release/replay-b-neon",
+   "export": "$CPU1BIT_ROOT/data/exports/M1",
+   "captures": "$CPU1BIT_ROOT/data/captures/M1/timed",
+   "tuning": {
+    "nb": 64,
+    "nr": 16
+   }
+  },
+  "B1T-MB1": {
+   "binary": "$CPU1BIT_ROOT/target/frozen/release/replay-b-neon-1bit-tile",
+   "export": "$CPU1BIT_ROOT/data/exports/MB1",
+   "captures": "$CPU1BIT_ROOT/data/captures/MB1/timed",
+   "tuning": {
+    "nb": 64,
+    "nr": 16
+   }
+  },
+  "CTRL-MB1": {
+   "binary": "$CPU1BIT_ROOT/target/frozen/release/replay-b-neon-pre-expanded",
+   "export": "$CPU1BIT_ROOT/data/exports/MB1-derived",
+   "captures": "$CPU1BIT_ROOT/data/captures/MB1/timed",
+   "tuning": {
+    "nb": 64,
+    "nr": 16
+   }
+  },
+  "V": {
+   "binary": "$CPU1BIT_ROOT/target/frozen/release/replay-v-sdot",
+   "export": "$CPU1BIT_ROOT/data/exports/MB1",
+   "captures": "$CPU1BIT_ROOT/data/captures/MB1/timed",
+   "tuning": null
+  },
+  "T": {
+   "binary": "$CPU1BIT_ROOT/target/frozen/release/replay-t-lut",
+   "export": "$CPU1BIT_ROOT/data/exports/MB1",
+   "captures": "$CPU1BIT_ROOT/data/captures/MB1/timed",
+   "tuning": null
+  },
+  "P": {
+   "binary": "$CPU1BIT_ROOT/target/frozen/release/replay-p",
+   "export": "$CPU1BIT_ROOT/data/exports/MB1",
+   "captures": "$CPU1BIT_ROOT/data/captures/MB1/timed",
+   "tuning": null
+  },
+  "BNEON-nb32-nr8": {
+   "binary": "$CPU1BIT_ROOT/target/frozen/release/replay-b-neon",
+   "export": "$CPU1BIT_ROOT/data/exports/MB1-derived",
+   "captures": "$CPU1BIT_ROOT/data/captures/MB1/timed",
+   "tuning": {
+    "nb": 32,
+    "nr": 8
+   }
+  },
+  "BNEON-nb32-nr16": {
+   "binary": "$CPU1BIT_ROOT/target/frozen/release/replay-b-neon",
+   "export": "$CPU1BIT_ROOT/data/exports/MB1-derived",
+   "captures": "$CPU1BIT_ROOT/data/captures/MB1/timed",
+   "tuning": {
+    "nb": 32,
+    "nr": 16
+   }
+  },
+  "BNEON-nb64-nr8": {
+   "binary": "$CPU1BIT_ROOT/target/frozen/release/replay-b-neon",
+   "export": "$CPU1BIT_ROOT/data/exports/MB1-derived",
+   "captures": "$CPU1BIT_ROOT/data/captures/MB1/timed",
+   "tuning": {
+    "nb": 64,
+    "nr": 8
+   }
+  },
+  "BNEON-nb64-nr16": {
+   "binary": "$CPU1BIT_ROOT/target/frozen/release/replay-b-neon",
+   "export": "$CPU1BIT_ROOT/data/exports/MB1-derived",
+   "captures": "$CPU1BIT_ROOT/data/captures/MB1/timed",
+   "tuning": {
+    "nb": 64,
+    "nr": 16
+   }
+  },
+  "BNEON-nb128-nr8": {
+   "binary": "$CPU1BIT_ROOT/target/frozen/release/replay-b-neon",
+   "export": "$CPU1BIT_ROOT/data/exports/MB1-derived",
+   "captures": "$CPU1BIT_ROOT/data/captures/MB1/timed",
+   "tuning": {
+    "nb": 128,
+    "nr": 8
+   }
+  },
+  "BNEON-nb128-nr16": {
+   "binary": "$CPU1BIT_ROOT/target/frozen/release/replay-b-neon",
+   "export": "$CPU1BIT_ROOT/data/exports/MB1-derived",
+   "captures": "$CPU1BIT_ROOT/data/captures/MB1/timed",
+   "tuning": {
+    "nb": 128,
+    "nr": 16
+   }
+  }
+ },
+ "stages": {
+  "plumbing": {
+   "arms": [
+    "R-MB1"
+   ],
+   "replicates": 1,
+   "condition": {
+    "threads": 8,
+    "components": 2
+   }
+  },
+  "p-isa": {
+   "type": "command",
+   "about": "P's instruction-throughput probe (p-ubench --qos-ui isa) at QOS_CLASS_USER_INTERACTIVE in the quiet window; one-off, non-comparison, recorded like validate; QoS readback, child darwin-background state and placement evidence gated (c2 finding 4)",
+   "argv": [
+    "$CPU1BIT_ROOT/target/frozen/release/p-ubench",
+    "--qos-ui",
+    "isa"
+   ],
+   "qos_readback": {
+    "regex": "main-thread qos class (0x[0-9a-fA-F]+) rel (-?[0-9]+)",
+    "class": "0x21",
+    "rel": 0,
+    "min_matches": 1,
+    "source": "p_bitserial/src/bin/p_ubench.rs qos_line(), printed after ThreadPool::new(1, Qos::UserInteractive)"
+   },
+   "placement": {
+    "p_cluster_min_rise": 0.1
+   }
+  },
+  "size-tune": {
+   "type": "sizing",
+   "key": "tune",
+   "about": "N for the tuning grids and the gap check (add the tune-v/t/p grid arms before running); one block per arm, one replay per clip",
+   "arms": [
+    "BNEON-nb32-nr8",
+    "BNEON-nb32-nr16",
+    "BNEON-nb64-nr8",
+    "BNEON-nb64-nr16",
+    "BNEON-nb128-nr8",
+    "BNEON-nb128-nr16",
+    "R-MB1",
+    "CTRL-MB1"
+   ],
+   "condition": {
+    "threads": 8,
+    "components": 2
+   }
+  },
+  "tune-bneon": {
+   "about": "B-NEON frozen tuning grid (M7): 6 points, MB1 derived export, primary condition; pick = lowest median over clips of per-clip mean E_est per replay (ties: latency, name); summarize.py",
+   "arms": [
+    "BNEON-nb32-nr8",
+    "BNEON-nb32-nr16",
+    "BNEON-nb64-nr8",
+    "BNEON-nb64-nr16",
+    "BNEON-nb128-nr8",
+    "BNEON-nb128-nr16"
+   ],
+   "replicates": 1,
+   "condition": {
+    "threads": 8,
+    "components": 2
+   },
+   "sizing_key": "tune"
+  },
+  "tune-v": {
+   "about": "V's frozen 6-point grid: fill arms with one entry per grid point (binary replay-v-sdot, MB1 export, tuning JSON) before the stage runs",
+   "arms": [],
+   "replicates": 1,
+   "condition": {
+    "threads": 8,
+    "components": 2
+   },
+   "sizing_key": "tune"
+  },
+  "tune-t": {
+   "about": "T's frozen 6-point grid (as tune-v)",
+   "arms": [],
+   "replicates": 1,
+   "condition": {
+    "threads": 8,
+    "components": 2
+   },
+   "sizing_key": "tune"
+  },
+  "tune-p": {
+   "about": "P's frozen 6-point grid (as tune-v)",
+   "arms": [],
+   "replicates": 1,
+   "condition": {
+    "threads": 8,
+    "components": 2
+   },
+   "sizing_key": "tune"
+  },
+  "gapcheck": {
+   "about": "M7: B-NEON at the picked point vs the pre-expanded SDOT control (same tuning); gap = (B-NEON - control) / control, latency and energy; > 25% blocks the freeze until explained",
+   "arms": [
+    "R-MB1",
+    "CTRL-MB1"
+   ],
+   "replicates": 1,
+   "condition": {
+    "threads": 8,
+    "components": 2
+   },
+   "sizing_key": "tune"
+  },
+  "size-8t-i8x2": {
+   "type": "sizing",
+   "about": "N for every stage of this condition (screen and, for the primary, confirm)",
+   "arms": [
+    "R-MB1",
+    "R-M1",
+    "B1T-MB1",
+    "V",
+    "T",
+    "P"
+   ],
+   "condition": {
+    "threads": 8,
+    "components": 2
+   }
+  },
+  "size-4t-i8x2": {
+   "type": "sizing",
+   "about": "N for every stage of this condition (screen and, for the primary, confirm)",
+   "arms": [
+    "R-MB1",
+    "R-M1",
+    "B1T-MB1",
+    "V",
+    "T",
+    "P"
+   ],
+   "condition": {
+    "threads": 4,
+    "components": 2
+   }
+  },
+  "size-8t-i8x3": {
+   "type": "sizing",
+   "about": "N for every stage of this condition (screen and, for the primary, confirm)",
+   "arms": [
+    "R-MB1",
+    "R-M1",
+    "B1T-MB1",
+    "V",
+    "T",
+    "P"
+   ],
+   "condition": {
+    "threads": 8,
+    "components": 3
+   }
+  },
+  "size-4t-i8x3": {
+   "type": "sizing",
+   "about": "N for every stage of this condition (screen and, for the primary, confirm)",
+   "arms": [
+    "R-MB1",
+    "R-M1",
+    "B1T-MB1",
+    "V",
+    "T",
+    "P"
+   ],
+   "condition": {
+    "threads": 4,
+    "components": 3
+   }
+  },
+  "screen": {
+   "about": "Williams R=1 over the frozen roster; candidates V, T, P; R-M1 (drift-free M1 reference) and B1T-MB1 (B-NEON 1-bit tile, isolates storage) are descriptive arms, never confirmation candidates. analysis.py screen --baseline R-MB1 --candidates V,T,P; primary condition (8 workers, i8x2)",
+   "arms": [
+    "R-MB1",
+    "R-M1",
+    "B1T-MB1",
+    "V",
+    "T",
+    "P"
+   ],
+   "candidates": [
+    "V",
+    "T",
+    "P"
+   ],
+   "replicates": 1,
+   "condition": {
+    "threads": 8,
+    "components": 2
+   }
+  },
+  "screen-4t": {
+   "about": "Williams R=1 over the frozen roster; candidates V, T, P; R-M1 (drift-free M1 reference) and B1T-MB1 (B-NEON 1-bit tile, isolates storage) are descriptive arms, never confirmation candidates. analysis.py screen --baseline R-MB1 --candidates V,T,P; descriptive: 4 workers, i8x2",
+   "arms": [
+    "R-MB1",
+    "R-M1",
+    "B1T-MB1",
+    "V",
+    "T",
+    "P"
+   ],
+   "candidates": [
+    "V",
+    "T",
+    "P"
+   ],
+   "replicates": 1,
+   "condition": {
+    "threads": 4,
+    "components": 2
+   }
+  },
+  "screen-i8x3": {
+   "about": "Williams R=1 over the frozen roster; candidates V, T, P; R-M1 (drift-free M1 reference) and B1T-MB1 (B-NEON 1-bit tile, isolates storage) are descriptive arms, never confirmation candidates. analysis.py screen --baseline R-MB1 --candidates V,T,P; descriptive: 8 workers, i8x3",
+   "arms": [
+    "R-MB1",
+    "R-M1",
+    "B1T-MB1",
+    "V",
+    "T",
+    "P"
+   ],
+   "candidates": [
+    "V",
+    "T",
+    "P"
+   ],
+   "replicates": 1,
+   "condition": {
+    "threads": 8,
+    "components": 3
+   }
+  },
+  "screen-4t-i8x3": {
+   "about": "Williams R=1 over the frozen roster; candidates V, T, P; R-M1 (drift-free M1 reference) and B1T-MB1 (B-NEON 1-bit tile, isolates storage) are descriptive arms, never confirmation candidates. analysis.py screen --baseline R-MB1 --candidates V,T,P; descriptive: 4 workers, i8x3",
+   "arms": [
+    "R-MB1",
+    "R-M1",
+    "B1T-MB1",
+    "V",
+    "T",
+    "P"
+   ],
+   "candidates": [
+    "V",
+    "T",
+    "P"
+   ],
+   "replicates": 1,
+   "condition": {
+    "threads": 4,
+    "components": 3
+   }
+  },
+  "confirm": {
+   "about": "R=6 Williams for k=2 against R-MB1; set CANDIDATE from analysis.py screen; analysis.py confirm --screen <screen dir>",
+   "arms": [
+    "R-MB1",
+    "CANDIDATE"
+   ],
+   "replicates": 6,
+   "condition": {
+    "threads": 8,
+    "components": 2
+   }
+  }
+ },
+ "tuning_grid_bneon": [
+  {
+   "nb": 32,
+   "nr": 8
+  },
+  {
+   "nb": 32,
+   "nr": 16
+  },
+  {
+   "nb": 64,
+   "nr": 8
+  },
+  {
+   "nb": 64,
+   "nr": 16
+  },
+  {
+   "nb": 128,
+   "nr": 8
+  },
+  {
+   "nb": 128,
+   "nr": 16
+  }
+ ],
+ "instrument_block": {
+  "arm": "R-MB1",
+  "condition": {
+   "threads": 8,
+   "components": 2
+  }
+ }
+}

@@ -1,0 +1,59 @@
+{
+ "design_revision": 8,
+ "code_version": "wp6b-mlxarm-1",
+ "arm": "MLX",
+ "model": "mp2",
+ "variant": "multi",
+ "backend": "gpu-mlx",
+ "date": "2026-10-03 05:29",
+ "environment": {
+  "mlx": "0.32.3",
+  "device": "Device(gpu, 0)",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "python": "3.12.14",
+  "group_size": 64,
+  "bits": 2,
+  "encoder_py_sha256": "e0262e29af87c13c2dcae7b6fe6169235f5ba8b9d6721dfaa0581fc2903cdda6",
+  "gates_py_sha256": "22c27b18aefaeadc897a9d693e9c31700bf9a3b0375766cb99ed41e5beed4e6f"
+ },
+ "informational": "Python, shared Mac; encoder only (mel in GPU memory -> encoder output evaluated), mx.eval + mx.synchronize inside the timed region; front end and decoding excluded",
+ "protocol": {
+  "warmups": 3,
+  "timed": 10,
+  "clips": 64
+ },
+ "weights_load_s": 1.4992079734802246,
+ "per_bucket": {
+  "2": {
+   "clips": 16,
+   "typical_ms": 22.54229149548337,
+   "first_call_ms_bucket": 49.13212498649955
+  },
+  "4": {
+   "clips": 16,
+   "typical_ms": 34.05653123627417,
+   "first_call_ms_bucket": 40.14233301859349
+  },
+  "8": {
+   "clips": 16,
+   "typical_ms": 57.11328124743886,
+   "first_call_ms_bucket": 63.65529203321785
+  },
+  "15": {
+   "clips": 16,
+   "typical_ms": 82.12863525841385,
+   "first_call_ms_bucket": 90.42766701895744
+  }
+ },
+ "peak_memory_mb": 488.4316005706787,
+ "active_memory_mb": 218.11144256591797,
+ "calls": {
+  "omitted_entries": 640,
+  "detail": "see full record"
+ },
+ "_evidence": {
+  "sha256": "b6b0b052ec4056831cde69a8977ef8755a063f4629a343e7a3a37b28dd6dd6c6",
+  "bytes": 65458,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/mlxarm/timing.json"
+ }
+}

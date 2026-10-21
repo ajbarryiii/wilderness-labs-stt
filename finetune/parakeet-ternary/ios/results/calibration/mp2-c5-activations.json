@@ -1,0 +1,31 @@
+{
+ "model": "mp2",
+ "description": "C5 int8 activation calibration: per-tensor symmetric, zero point 0, scale = max|x| / 127 over the calibration clips (FP32 reference, FP32 scales, unpadded clips); x is the input of the site's ternary matmul(s) (att_in feeds q, k and v)",
+ "clips": [
+  "n02-1272-141231-0016",
+  "n02-174-50561-0014",
+  "n02-1919-142785-0048",
+  "n02-1988-24833-0006",
+  "n04-1462-170142-0035",
+  "n04-174-50561-0017",
+  "n04-1919-142785-0024",
+  "n04-1988-24833-0000",
+  "n08-1272-141231-0019",
+  "n08-1462-170142-0020",
+  "n08-174-84280-0003",
+  "n08-1919-142785-0038",
+  "n15-1272-141231-0025",
+  "n15-1462-170142-0001",
+  "n15-1673-143396-0001",
+  "n15-174-168635-0010"
+ ],
+ "sites": {
+  "omitted_entries": 192,
+  "detail": "see full record"
+ },
+ "_evidence": {
+  "sha256": "77e081f87bc311203a71a754a0ce96d01f74380fb85bc68a00a8951ea9831242",
+  "bytes": 18985,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/calibration/mp2-c5-activations.json"
+ }
+}

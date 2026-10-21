@@ -1,0 +1,25 @@
+{
+ "arm": "G0",
+ "variant": "fixed",
+ "units": "cpuAndNeuralEngine",
+ "comparison": "G0 (C0's tensors, our plain graph, iOS17) vs C0's Encoder.mlmodelc on the same mel and mel_length (reference features padded to 1501, mel_length = N // 160), valid frames, gate-4 encoder ceilings",
+ "summary": {
+  "pass": false,
+  "clips": 82,
+  "rel_max": 0.26652520841322574,
+  "abs_max": 5.025499938103789,
+  "rel_median": 0.016396058014473136,
+  "c0_length_differs": 0
+ },
+ "per_clip": {
+  "omitted_entries": 82,
+  "detail": "see full record"
+ },
+ "seconds": 66.2,
+ "peak_rss_mb": 767.5,
+ "_evidence": {
+  "sha256": "3df31cc88501e0be10f06808762afe2ef1403c3b85ebb706d9f53bf40b4618e7",
+  "bytes": 15164,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/gates/c0-G0-fixed-cpuAndNeuralEngine.json"
+ }
+}

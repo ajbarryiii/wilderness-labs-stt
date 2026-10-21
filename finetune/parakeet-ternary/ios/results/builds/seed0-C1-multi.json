@@ -1,0 +1,247 @@
+{
+ "schema": 1,
+ "model": "seed0",
+ "arm": "C1",
+ "variant": "multi",
+ "layers": 24,
+ "exact": true,
+ "exploratory": false,
+ "provenance": {
+  "name": "seed0",
+  "file": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/random/seed0/model.safetensors",
+  "digest": "75e0503b99e43b8206f7e0882eebff1924e94fc68f0a13f17c25fab31ff861db",
+  "file_sha256": "e64e8bfe47f8b96eedb152442b35285d3746fda3a144715ea1a6e877a5619b1a"
+ },
+ "opset": "iOS26",
+ "minimum_deployment_target": "iOS26",
+ "compute_precision": "FLOAT16 (graph authored in FP16; fp32/int32 I/O)",
+ "functions": {
+  "b2": {
+   "mel": [
+    1,
+    128,
+    201
+   ],
+   "encoder_frames": 26
+  },
+  "b4": {
+   "mel": [
+    1,
+    128,
+    401
+   ],
+   "encoder_frames": 51
+  },
+  "b8": {
+   "mel": [
+    1,
+    128,
+    801
+   ],
+   "encoder_frames": 101
+  },
+  "b15": {
+   "mel": [
+    1,
+    128,
+    1501
+   ],
+   "encoder_frames": 188
+  }
+ },
+ "default_function": "b15",
+ "encoding": {
+  "arm": "C1",
+  "chain": "const fp16 (scale folded into weight)",
+  "modules": 240,
+  "constexpr_inputs_by_module": {
+   "feed_forward1.linear1": {
+    "count": 24,
+    "inputs": {
+     "weight": {
+      "dtype": "float16",
+      "shape": [
+       4096,
+       1024
+      ]
+     }
+    }
+   },
+   "feed_forward1.linear2": {
+    "count": 24,
+    "inputs": {
+     "weight": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       4096
+      ]
+     }
+    }
+   },
+   "self_attn.linear_q": {
+    "count": 24,
+    "inputs": {
+     "weight": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1024
+      ]
+     }
+    }
+   },
+   "self_attn.linear_k": {
+    "count": 24,
+    "inputs": {
+     "weight": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1024
+      ]
+     }
+    }
+   },
+   "self_attn.linear_v": {
+    "count": 24,
+    "inputs": {
+     "weight": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1024
+      ]
+     }
+    }
+   },
+   "self_attn.linear_out": {
+    "count": 24,
+    "inputs": {
+     "weight": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1024
+      ]
+     }
+    }
+   },
+   "conv.pointwise_conv1": {
+    "count": 24,
+    "inputs": {
+     "weight": {
+      "dtype": "float16",
+      "shape": [
+       2048,
+       1024,
+       1
+      ]
+     }
+    }
+   },
+   "conv.pointwise_conv2": {
+    "count": 24,
+    "inputs": {
+     "weight": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1024,
+       1
+      ]
+     }
+    }
+   },
+   "feed_forward2.linear1": {
+    "count": 24,
+    "inputs": {
+     "weight": {
+      "dtype": "float16",
+      "shape": [
+       4096,
+       1024
+      ]
+     }
+    }
+   },
+   "feed_forward2.linear2": {
+    "count": 24,
+    "inputs": {
+     "weight": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       4096
+      ]
+     }
+    }
+   }
+  },
+  "encoded_bytes_by_const": {
+   "weight": 1157627904
+  },
+  "encoded_bytes_total": 1157627904,
+  "position_tables": {
+   "layers": 24,
+   "dtype": "float16",
+   "full_shape": [
+    1,
+    8,
+    128,
+    375
+   ],
+   "note": "linear_pos folded: pos_emb @ (codes x FP16(s))^T in FP32, cast to FP16; per bucket the middle 2T-1 columns"
+  },
+  "activation_quantization": null
+ },
+ "pass_pipeline": {
+  "name": "DEFAULT",
+  "excluded": [],
+  "passes": {
+   "omitted_entries": 95,
+   "detail": "see full record"
+  },
+  "multifunction": "frontend_milinternal + main + backend_mlprogram per function, then const_deduplication._deduplicate_const_across_functions, export with skip_all_passes"
+ },
+ "program": {
+  "omitted_entries": 4,
+  "detail": "see full record"
+ },
+ "sizes": {
+  "mlpackage_bytes": 1205183579,
+  "weight_bin_bytes": 1202980416
+ },
+ "timing_s": {
+  "build_graph": 12.6,
+  "convert": 79.0,
+  "save": 1.0
+ },
+ "peak_rss_mb_after_save": 1965.1,
+ "environment": {
+  "coremltools": "9.0",
+  "numpy": "2.2.6",
+  "python": "3.12.14",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "machine": "arm64"
+ },
+ "paths": {
+  "mlpackage": null,
+  "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/seed0/C1/multi.mlmodelc"
+ },
+ "compile": {
+  "compile_s": 0.84,
+  "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/seed0/C1/multi.mlmodelc",
+  "mlmodelc_bytes": 1205270845
+ },
+ "peak_rss_mb_after_compile": 1965.1,
+ "compute_plan": {
+  "omitted_entries": 1,
+  "detail": "see full record"
+ },
+ "_evidence": {
+  "sha256": "654c4e6a1bca24431e89b419571f7fadf21b0120bd42cb1f835024357f00c37b",
+  "bytes": 41914,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/builds/seed0-C1-multi.json"
+ }
+}

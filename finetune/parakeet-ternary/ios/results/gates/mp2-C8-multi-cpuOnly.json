@@ -1,0 +1,120 @@
+{
+ "model": "mp2",
+ "arm": "C8",
+ "variant": "multi",
+ "units": "cpuOnly",
+ "thresholds": {
+  "rel": 0.02,
+  "abs": 0.25,
+  "tau": 0.001,
+  "agreement": 0.995,
+  "decisive_min": 0.5
+ },
+ "summary": {
+  "gate4_encoder": {
+   "pass": false,
+   "cases": 200,
+   "rel_max": 0.02731371935846376,
+   "abs_max": 0.42174653893055775,
+   "rel_median": 0.011034105420761896,
+   "failures": {
+    "omitted_entries": 27,
+    "detail": "see full record"
+   },
+   "per_bucket": {
+    "15": {
+     "cases": 82,
+     "rel_max": 0.024695892827056788,
+     "abs_max": 0.3350000141199005,
+     "pass": false
+    },
+    "8": {
+     "cases": 60,
+     "rel_max": 0.024695892827056788,
+     "abs_max": 0.3350000141199005,
+     "pass": false
+    },
+    "4": {
+     "cases": 40,
+     "rel_max": 0.023844048625646992,
+     "abs_max": 0.42174653893055775,
+     "pass": false
+    },
+    "2": {
+     "cases": 18,
+     "rel_max": 0.02731371935846376,
+     "abs_max": 0.2921677457324512,
+     "pass": false
+    }
+   }
+  },
+  "gate5_buckets_vs_15s": {
+   "pass": true,
+   "gated_cases": 22,
+   "gated_rel_max": 0.009322401550537473,
+   "gated_abs_max": 0.11042457183029962,
+   "all_cases": 118,
+   "all_rel_max": 0.017610171584874296,
+   "all_abs_max": 0.22211778969541893,
+   "all_pass": true
+  },
+  "gate4_heads": {
+   "clips": 82,
+   "steps": 3025,
+   "all_finite": true,
+   "token": {
+    "rel_max": 0.012420141527786597,
+    "rel_median": 0.0033884016430112767,
+    "clips_over_rel_ceiling": [],
+    "decisive_fraction": 0.9398347107438016,
+    "agreement_on_decisive": 1.0,
+    "agreement_all_steps": 0.996694214876033,
+    "degenerate": false
+   },
+   "duration": {
+    "rel_max": 0.022370973993623623,
+    "rel_median": 0.008250554837190496,
+    "clips_over_rel_ceiling": [
+     "n04-5694-64029-0003"
+    ],
+    "decisive_fraction": 0.9484297520661157,
+    "agreement_on_decisive": 1.0,
+    "agreement_all_steps": 0.9930578512396694,
+    "degenerate": false
+   },
+   "h": {
+    "rel_max": 0.007620652867986074,
+    "rel_median": 0.005471156504794489,
+    "clips_over_rel_ceiling": []
+   },
+   "c": {
+    "rel_max": 0.00521665888776724,
+    "rel_median": 0.0034239230483138535,
+    "clips_over_rel_ceiling": []
+   },
+   "pass": false
+  }
+ },
+ "load_s": {
+  "b15": 11.09,
+  "b8": 9.91,
+  "b4": 10.82,
+  "b2": 12.25
+ },
+ "seconds": 114.1,
+ "peak_rss_mb": 2544.1,
+ "encoder_cases": {
+  "omitted_entries": 200,
+  "detail": "see full record"
+ },
+ "heads_per_clip": {
+  "omitted_entries": 82,
+  "detail": "see full record"
+ },
+ "heads_input": "arm encoder output from the clip's own bucket",
+ "_evidence": {
+  "sha256": "c654e4f50be26b05aa811fbc9e0ff6dd96dba600bf5c9bd47f717ed3649be2c2",
+  "bytes": 99819,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/gates/mp2-C8-multi-cpuOnly.json"
+ }
+}

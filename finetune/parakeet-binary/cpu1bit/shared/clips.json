@@ -1,0 +1,372 @@
+{
+ "about": "Freeze the cpu1bit dev workloads (plans/cpu-benchmark-mac.md \"Workloads\", M5) into shared/clips.json.",
+ "rules": "DEV MANIFESTS ONLY, through gpu1bit/shared/workloads.py's checked reader (`_manifest`: the file is\none of paths.DEV_SETS, its metadata split is a dev/validation split, its SHA-256 equals dev.done.json).\nTest manifests are never opened. Rules, fixed before any capture or timing:\n- timed (8): targets 16 s then 28 s, 4 clips each; corpora in DEV_CORPORA order, round-robin\n  continuing across targets (16 s: librispeech_dev_clean, librispeech_dev_other, ami_dev,\n  voxpopuli_dev; 28 s: yodas_dev, librispeech_dev_clean, librispeech_dev_other, ami_dev), each the\n  corpus's closest unused utterance to the target (|duration - target|, then id).\n- exactness (16): 4 + 3 + 3 + 3 + 3 in DEV_CORPORA order, evenly spaced over each full dev manifest\n  (index i * (len - 1) // (count - 1)), skipping timed ids and zero durations by taking the next index.\nFrames: M as workloads._frames (NeMo's encoder TENSOR frames: mel frames samples // 160 + 1, then three\nceil(L / 2)) and T = LocalFlow's frames_for_samples (lf-asr encoder.rs:176: out_len^3(samples // 160),\nout_len(n) = ceil(n / 2)), which equals NeMo's encoded length. The replay uses T (LocalFlow runs each\nutterance at its exact length); when M = T + 1 NeMo's last tensor frame is padding and is not captured.\nCapture bytes = T * 344,064 floats * 4 (schedule.json capture_floats_per_frame).\n(v2, 2026-10-21: T added and used for capture bytes; the v1 freeze an hour earlier used M; same ids.)",
+ "manifests": {
+  "librispeech_dev_clean": {
+   "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/manifests/librispeech_dev_clean.jsonl",
+   "sha256": "d89ede3c2357b11dd4f44ce805ff3bccc8c73f62c2cdd05ff25946f73b73d35e",
+   "split": [
+    "dev-clean"
+   ],
+   "utterances": 2703
+  },
+  "librispeech_dev_other": {
+   "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/manifests/librispeech_dev_other.jsonl",
+   "sha256": "d66037522094c8c3f30e5c8f3c0b1fbc8ae66a848693a9557992ca867396a740",
+   "split": [
+    "dev-other"
+   ],
+   "utterances": 2864
+  },
+  "ami_dev": {
+   "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/manifests/ami_dev.jsonl",
+   "sha256": "574055116a3850bc09c2ed449dc1e6427d33a3590f3b6f7c5167f57fa06e0ad9",
+   "split": "validation",
+   "utterances": 13098
+  },
+  "voxpopuli_dev": {
+   "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/manifests/voxpopuli_dev.jsonl",
+   "sha256": "8da97f8b0018827869a7332323a86161d644746cc1a6f6bc5e9a8d63f576ed03",
+   "split": "validation",
+   "utterances": 1753
+  },
+  "yodas_dev": {
+   "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/manifests/yodas_dev.jsonl",
+   "sha256": "b5ad7344a841f191a5237aeb5dd5af247e2ece8371c6c6f7ff88c8b18e0cb888",
+   "split": "asr_only",
+   "utterances": 2000
+  }
+ },
+ "timed": [
+  {
+   "id": "librispeech:652-129742-0016",
+   "corpus": "librispeech_dev_clean",
+   "duration": 15.99,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/whisper-ternary/data/LibriSpeech/dev-clean/652/129742/652-129742-0016.flac",
+   "text": "TOMATO BASKETS TOMATO BASKETS ARE CHARMING ACCESSORIES FOR HOLDING VEGETABLE SALAD CHICKEN SHRIMPS COLD BEANS ASPARAGUS TIPS SHREDDED CELERY CUCUMBERS CUT IN CUBES AND MINCED PEPPERS",
+   "target_seconds": 16,
+   "samples": 255840,
+   "feature_tensor_frames": 1600,
+   "M": 200,
+   "M_linear_pos": 399,
+   "T": 200,
+   "capture_bytes": 275251200
+  },
+  {
+   "id": "librispeech:2506-11267-0014",
+   "corpus": "librispeech_dev_other",
+   "duration": 16.005,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/audio/librispeech/LibriSpeech/dev-other/2506/11267/2506-11267-0014.flac",
+   "text": "YONDER COMES CAPTAIN BULL SPICK AND SPAN TIGHT AND TRIM WHO TRAVELS FOR FOUR OR SIX MONTHS EVERY YEAR OF HIS LIFE WHO DOES NOT COMMIT HIMSELF BY LUXURY OF RAIMENT OR INSOLENCE OF DEMEANOUR BUT I THINK IS AS GREAT A SNOB AS ANY MAN ON BOARD",
+   "target_seconds": 16,
+   "samples": 256080,
+   "feature_tensor_frames": 1601,
+   "M": 201,
+   "M_linear_pos": 401,
+   "T": 200,
+   "capture_bytes": 275251200
+  },
+  {
+   "id": "ami:AMI_IS1008c_H02_FIE073_0110051_0111652",
+   "corpus": "ami_dev",
+   "duration": 16.01,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/audio/ami/validation/validation-00001-of-00005/AMI_IS1008c_H02_FIE073_0110051_0111652.flac",
+   "text": "MAYBE WHAT YOU COULD DO IS WHEN SOMEBODY ORDERS THE DEVICE ID YOU COULD SEND THEM LIKE UM A UH UH B SOME SORT OF A FOAM RUBBER UM BALL",
+   "target_seconds": 16,
+   "samples": 256160,
+   "feature_tensor_frames": 1602,
+   "M": 201,
+   "M_linear_pos": 401,
+   "T": 201,
+   "capture_bytes": 276627456
+  },
+  {
+   "id": "voxpopuli:20170315-0900-PLENARY-3-en_20170315-09:53:31_34",
+   "corpus": "voxpopuli_dev",
+   "duration": 15.999,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/audio/voxpopuli/validation/validation-00000-of-00001/20170315-0900-PLENARY-3-en_20170315-09_53_31_34.flac",
+   "text": "we have a fragile balancing act to perform a balance between flexibility which is not so loose as to threaten the meaning of a real union and intransigent rigidity which would undermine the whole process of the european project.",
+   "target_seconds": 16,
+   "samples": 255984,
+   "feature_tensor_frames": 1600,
+   "M": 200,
+   "M_linear_pos": 399,
+   "T": 200,
+   "capture_bytes": 275251200
+  },
+  {
+   "id": "yodas:en126_00000214_3pLZkG-AdAY_1258_00_28_00",
+   "corpus": "yodas_dev",
+   "duration": 28.0,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/audio/yodas/reserved/en126-00000214/en126_00000214_3pLZkG-AdAY_1258_00_28_00.flac",
+   "text": "So that is the basic challenge for all of us, that somehow we should work towards an environment that will be conducive to responsible policy formulation and policy making, to make sure that our democracies remain relevant, vibrant, and also deliver peace and prosperity, which are the beliefs that I think all of us share in this world.",
+   "target_seconds": 28,
+   "samples": 448000,
+   "feature_tensor_frames": 2801,
+   "M": 351,
+   "M_linear_pos": 701,
+   "T": 350,
+   "capture_bytes": 481689600
+  },
+  {
+   "id": "librispeech:3170-137482-0000",
+   "corpus": "librispeech_dev_clean",
+   "duration": 27.99,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/whisper-ternary/data/LibriSpeech/dev-clean/3170/137482/3170-137482-0000.flac",
+   "text": "WITH AN EDUCATION WHICH OUGHT TO HAVE ENSURED ME AN HONOURABLE STANDING IN THE WORLD WITH SOME INTELLIGENCE WIT GOOD LITERARY AND SCIENTIFIC KNOWLEDGE AND ENDOWED WITH THOSE ACCIDENTAL PHYSICAL QUALITIES WHICH ARE SUCH A GOOD PASSPORT INTO SOCIETY I FOUND MYSELF AT THE AGE OF TWENTY THE MEAN FOLLOWER OF A SUBLIME ART IN WHICH IF GREAT TALENT IS RIGHTLY ADMIRED MEDIOCRITY IS AS RIGHTLY DESPISED",
+   "target_seconds": 28,
+   "samples": 447840,
+   "feature_tensor_frames": 2800,
+   "M": 350,
+   "M_linear_pos": 699,
+   "T": 350,
+   "capture_bytes": 481689600
+  },
+  {
+   "id": "librispeech:7601-101619-0004",
+   "corpus": "librispeech_dev_other",
+   "duration": 28.17,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/audio/librispeech/LibriSpeech/dev-other/7601/101619/7601-101619-0004.flac",
+   "text": "AND THEREFORE COMMON AND LESS SPECULATIVE SOULS ARE FOUND TO BE MORE PROPER FOR AND MORE SUCCESSFUL IN THE MANAGEMENT OF AFFAIRS AND THE ELEVATED AND EXQUISITE OPINIONS OF PHILOSOPHY UNFIT FOR BUSINESS THIS SHARP VIVACITY OF SOUL AND THE SUPPLE AND RESTLESS VOLUBILITY ATTENDING IT DISTURB OUR NEGOTIATIONS",
+   "target_seconds": 28,
+   "samples": 450720,
+   "feature_tensor_frames": 2818,
+   "M": 353,
+   "M_linear_pos": 705,
+   "T": 353,
+   "capture_bytes": 485818368
+  },
+  {
+   "id": "ami:AMI_ES2011a_H02_FEE043_0031442_0033864",
+   "corpus": "ami_dev",
+   "duration": 24.22,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/audio/ami/validation/validation-00000-of-00005/AMI_ES2011a_H02_FEE043_0031442_0033864.flac",
+   "text": "HE'S A I DUNNO UM THEY'RE I THINK IT'S COOL THE THE UM THE INTERACTION THAT OR THE TH THINGS THAT THE REASONS PEOPLE SEEM TO LIKE YOU KNOW YOU GET EX YOU KNOW PEOPLE ARE SITTING ON THE BEACH AND P THEY'RE LIKE OH LOOK THERE'S DOLPHINS AND IT'S KINDA LIKE BUT THEY'RE YOU KNOW THEY JUMP AROUND IN THE WATER AND THEY'RE HAPPY AND THEY'RE MAMMALS",
+   "target_seconds": 28,
+   "samples": 387520,
+   "feature_tensor_frames": 2423,
+   "M": 303,
+   "M_linear_pos": 605,
+   "T": 303,
+   "capture_bytes": 417005568
+  }
+ ],
+ "exactness": [
+  {
+   "id": "librispeech:1272-128104-0000",
+   "corpus": "librispeech_dev_clean",
+   "duration": 5.855,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/whisper-ternary/data/LibriSpeech/dev-clean/1272/128104/1272-128104-0000.flac",
+   "text": "MISTER QUILTER IS THE APOSTLE OF THE MIDDLE CLASSES AND WE ARE GLAD TO WELCOME HIS GOSPEL",
+   "samples": 93680,
+   "feature_tensor_frames": 586,
+   "M": 74,
+   "M_linear_pos": 147,
+   "T": 74,
+   "capture_bytes": 101842944
+  },
+  {
+   "id": "librispeech:251-118436-0011",
+   "corpus": "librispeech_dev_clean",
+   "duration": 7.47,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/whisper-ternary/data/LibriSpeech/dev-clean/251/118436/251-118436-0011.flac",
+   "text": "ALL DISCARDED PORTIONS OF THE HUMAN BODY STILL REMAIN PART OF IT ATTACHED TO IT BY INTANGIBLE CONNECTIONS",
+   "samples": 119520,
+   "feature_tensor_frames": 748,
+   "M": 94,
+   "M_linear_pos": 187,
+   "T": 94,
+   "capture_bytes": 129368064
+  },
+  {
+   "id": "librispeech:5895-34629-0010",
+   "corpus": "librispeech_dev_clean",
+   "duration": 2.15,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/whisper-ternary/data/LibriSpeech/dev-clean/5895/34629/5895-34629-0010.flac",
+   "text": "THEY BEGAN THEIR PERFORMANCES",
+   "samples": 34400,
+   "feature_tensor_frames": 216,
+   "M": 27,
+   "M_linear_pos": 53,
+   "T": 27,
+   "capture_bytes": 37158912
+  },
+  {
+   "id": "librispeech:8842-304647-0013",
+   "corpus": "librispeech_dev_clean",
+   "duration": 8.875,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/whisper-ternary/data/LibriSpeech/dev-clean/8842/304647/8842-304647-0013.flac",
+   "text": "THOU LIKE ARCTURUS STEADFAST IN THE SKIES WITH TARDY SENSE GUIDEST THY KINGDOM FAIR BEARING ALONE THE LOAD OF LIBERTY",
+   "samples": 142000,
+   "feature_tensor_frames": 888,
+   "M": 111,
+   "M_linear_pos": 221,
+   "T": 111,
+   "capture_bytes": 152764416
+  },
+  {
+   "id": "librispeech:116-288045-0000",
+   "corpus": "librispeech_dev_other",
+   "duration": 10.65,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/audio/librispeech/LibriSpeech/dev-other/116/288045/116-288045-0000.flac",
+   "text": "AS I APPROACHED THE CITY I HEARD BELLS RINGING AND A LITTLE LATER I FOUND THE STREETS ASTIR WITH THRONGS OF WELL DRESSED PEOPLE IN FAMILY GROUPS WENDING THEIR WAY HITHER AND THITHER",
+   "samples": 170400,
+   "feature_tensor_frames": 1066,
+   "M": 134,
+   "M_linear_pos": 267,
+   "T": 134,
+   "capture_bytes": 184418304
+  },
+  {
+   "id": "librispeech:4831-18525-0002",
+   "corpus": "librispeech_dev_other",
+   "duration": 8.065,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/audio/librispeech/LibriSpeech/dev-other/4831/18525/4831-18525-0002.flac",
+   "text": "TOM SELWYN HAD BEEN VERY SOBER DURING ALL THIS MERRY CHATTER AND NOW IN HIS SEAT ACROSS THE NARROW AISLE HE DRUMMED HIS HEELS IMPATIENTLY ON THE FLOOR",
+   "samples": 129040,
+   "feature_tensor_frames": 807,
+   "M": 101,
+   "M_linear_pos": 201,
+   "T": 101,
+   "capture_bytes": 139001856
+  },
+  {
+   "id": "librispeech:8288-274162-0066",
+   "corpus": "librispeech_dev_other",
+   "duration": 7.065,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/audio/librispeech/LibriSpeech/dev-other/8288/274162/8288-274162-0066.flac",
+   "text": "SHE SAID IN THE SAME TONE OF VOICE IT IS NOT I WHO AM GOING TO SPEAK TO HIM WHO THEN",
+   "samples": 113040,
+   "feature_tensor_frames": 707,
+   "M": 89,
+   "M_linear_pos": 177,
+   "T": 89,
+   "capture_bytes": 122486784
+  },
+  {
+   "id": "ami:AMI_ES2011a_H00_FEE041_0003427_0003714",
+   "corpus": "ami_dev",
+   "duration": 2.87,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/audio/ami/validation/validation-00000-of-00005/AMI_ES2011a_H00_FEE041_0003427_0003714.flac",
+   "text": "HERE WE GO",
+   "samples": 45920,
+   "feature_tensor_frames": 288,
+   "M": 36,
+   "M_linear_pos": 71,
+   "T": 36,
+   "capture_bytes": 49545216
+  },
+  {
+   "id": "ami:AMI_IB4010_H03_MIO046_0106502_0106525",
+   "corpus": "ami_dev",
+   "duration": 0.23,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/audio/ami/validation/validation-00001-of-00005/AMI_IB4010_H03_MIO046_0106502_0106525.flac",
+   "text": "NO",
+   "samples": 3680,
+   "feature_tensor_frames": 24,
+   "M": 3,
+   "M_linear_pos": 5,
+   "T": 3,
+   "capture_bytes": 4128768
+  },
+  {
+   "id": "ami:AMI_TS3004d_H03_MTD016ME_0273186_0273206",
+   "corpus": "ami_dev",
+   "duration": 0.2,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/audio/ami/validation/validation-00004-of-00005/AMI_TS3004d_H03_MTD016ME_0273186_0273206.flac",
+   "text": "UH",
+   "samples": 3200,
+   "feature_tensor_frames": 21,
+   "M": 3,
+   "M_linear_pos": 5,
+   "T": 3,
+   "capture_bytes": 4128768
+  },
+  {
+   "id": "voxpopuli:20090203-0900-PLENARY-11-en_20090203-19:30:15_2",
+   "corpus": "voxpopuli_dev",
+   "duration": 7.1599375,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/audio/voxpopuli/validation/validation-00000-of-00001/20090203-0900-PLENARY-11-en_20090203-19_30_15_2.flac",
+   "text": "very often in economically difficult times young people unfortunately get into drug abuse.",
+   "samples": 114559,
+   "feature_tensor_frames": 716,
+   "M": 90,
+   "M_linear_pos": 179,
+   "T": 90,
+   "capture_bytes": 123863040
+  },
+  {
+   "id": "voxpopuli:20170215-0900-PLENARY-19-en_20170215-21:57:09_20",
+   "corpus": "voxpopuli_dev",
+   "duration": 9.9599375,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/audio/voxpopuli/validation/validation-00000-of-00001/20170215-0900-PLENARY-19-en_20170215-21_57_09_20.flac",
+   "text": "and clarifying the effects of the late start for the next years n three will lead to performance payments in the years until.",
+   "samples": 159359,
+   "feature_tensor_frames": 996,
+   "M": 125,
+   "M_linear_pos": 249,
+   "T": 125,
+   "capture_bytes": 172032000
+  },
+  {
+   "id": "voxpopuli:20201022-0900-PLENARY-en_20201022-11:22:30_9",
+   "corpus": "voxpopuli_dev",
+   "duration": 18.2199375,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/audio/voxpopuli/validation/validation-00000-of-00001/20201022-0900-PLENARY-en_20201022-11_22_30_9.flac",
+   "text": "so yes in the beginning of this huge transition we will still need fossil fuels and therefore eu policies should support carbon capture enable government support schemes for blue hydrogen and i expect the commission to move forward in this direction in its energy summer package.",
+   "samples": 291519,
+   "feature_tensor_frames": 1822,
+   "M": 228,
+   "M_linear_pos": 455,
+   "T": 228,
+   "capture_bytes": 313786368
+  },
+  {
+   "id": "yodas:en000_00000316_gDJb_EmZIeQ_294_94_2_54",
+   "corpus": "yodas_dev",
+   "duration": 2.54,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/audio/yodas/reserved/en000-00000316/en000_00000316_gDJb_EmZIeQ_294_94_2_54.flac",
+   "text": "And this is where OpenShift squarely fits within.",
+   "samples": 40640,
+   "feature_tensor_frames": 255,
+   "M": 32,
+   "M_linear_pos": 63,
+   "T": 32,
+   "capture_bytes": 44040192
+  },
+  {
+   "id": "yodas:en100_00000467_21Qz0i_TTME_695_86_3_52",
+   "corpus": "yodas_dev",
+   "duration": 3.52,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/audio/yodas/reserved/en100-00000467/en100_00000467_21Qz0i_TTME_695_86_3_52.flac",
+   "text": "Many medieval churches and castles in Europe are made of limestone.",
+   "samples": 56320,
+   "feature_tensor_frames": 353,
+   "M": 45,
+   "M_linear_pos": 89,
+   "T": 44,
+   "capture_bytes": 60555264
+  },
+  {
+   "id": "yodas:en126_00000214_3pLZkG-AdAY_778_00_18_00",
+   "corpus": "yodas_dev",
+   "duration": 18.0,
+   "audio_filepath": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/audio/yodas/reserved/en126-00000214/en126_00000214_3pLZkG-AdAY_778_00_18_00.flac",
+   "text": "We're also seeing quite considerable burden being placed on government banks that are running this scheme and will eventually be fiscalized, causing about a hundred billion baht of taxpayers' money every year.",
+   "samples": 288000,
+   "feature_tensor_frames": 1801,
+   "M": 226,
+   "M_linear_pos": 451,
+   "T": 225,
+   "capture_bytes": 309657600
+  }
+ ],
+ "budget": {
+  "timed_capture_bytes_per_model": 2968584192,
+  "exactness_capture_bytes_per_model": 1948778496,
+  "largest_clip_bytes": 485818368
+ },
+ "source_sha256": "6b328e386f92b42800e5ed02dcddd984ad877cebfbe2879d4dd16972b84d6245",
+ "frozen_at": "2026-10-21T00:19:18-0700",
+ "content_sha256": "fac16552f0ff4fc5004abfac8d491ca6d352f54be8f90367feb56c0ff5431256"
+}

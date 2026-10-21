@@ -1,0 +1,400 @@
+{
+ "schema": 1,
+ "model": "mp2",
+ "arm": "C6s4",
+ "variant": "multi",
+ "layers": 24,
+ "exact": true,
+ "exploratory": false,
+ "provenance": {
+  "name": "mp2",
+  "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+  "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+ },
+ "opset": "iOS26",
+ "minimum_deployment_target": "iOS26",
+ "compute_precision": "FLOAT16 (graph authored in FP16; fp32/int32 I/O)",
+ "functions": {
+  "b2": {
+   "mel": [
+    1,
+    128,
+    201
+   ],
+   "encoder_frames": 26
+  },
+  "b4": {
+   "mel": [
+    1,
+    128,
+    401
+   ],
+   "encoder_frames": 51
+  },
+  "b8": {
+   "mel": [
+    1,
+    128,
+    801
+   ],
+   "encoder_frames": 101
+  },
+  "b15": {
+   "mel": [
+    1,
+    128,
+    1501
+   ],
+   "encoder_frames": 188
+  }
+ },
+ "default_function": "b15",
+ "encoding": {
+  "arm": "C6s4",
+  "chain": "constexpr_lut_to_sparse(uint1 mask, uintB nonzero indices, fp16 grouped LUT {+-s_r}) -> constexpr_sparse_to_dense",
+  "modules": 240,
+  "constexpr_inputs_by_module": {
+   "feed_forward1.linear1": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       4096,
+       1024
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint3",
+      "shape": [
+       2857811
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1,
+       8,
+       1
+      ]
+     }
+    }
+   },
+   "feed_forward1.linear2": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       1024,
+       4096
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint3",
+      "shape": [
+       2761321
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       256,
+       1,
+       8,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_q": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       1024,
+       1024
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint3",
+      "shape": [
+       719121
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       256,
+       1,
+       8,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_k": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       1024,
+       1024
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint3",
+      "shape": [
+       710171
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       256,
+       1,
+       8,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_v": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       1024,
+       1024
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint3",
+      "shape": [
+       704156
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       256,
+       1,
+       8,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_out": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       1024,
+       1024
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint3",
+      "shape": [
+       714287
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       256,
+       1,
+       8,
+       1
+      ]
+     }
+    }
+   },
+   "conv.pointwise_conv1": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       2048,
+       1024,
+       1
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint3",
+      "shape": [
+       1425781
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       512,
+       1,
+       1,
+       8,
+       1
+      ]
+     }
+    }
+   },
+   "conv.pointwise_conv2": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       1024,
+       1024,
+       1
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint3",
+      "shape": [
+       709268
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       256,
+       1,
+       1,
+       8,
+       1
+      ]
+     }
+    }
+   },
+   "feed_forward2.linear1": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       4096,
+       1024
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint3",
+      "shape": [
+       2859193
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1,
+       8,
+       1
+      ]
+     }
+    }
+   },
+   "feed_forward2.linear2": {
+    "count": 24,
+    "inputs": {
+     "indices_mask": {
+      "dtype": "uint1",
+      "shape": [
+       1024,
+       4096
+      ]
+     },
+     "indices_nonzero_data": {
+      "dtype": "uint3",
+      "shape": [
+       2816435
+      ]
+     },
+     "lut": {
+      "dtype": "float16",
+      "shape": [
+       256,
+       1,
+       8,
+       1
+      ]
+     }
+    }
+   }
+  },
+  "encoded_bytes_by_const": {
+   "indices_mask": 72351744,
+   "indices_nonzero_data": 146892348,
+   "lut": 1671168
+  },
+  "encoded_bytes_total": 220915260,
+  "position_tables": {
+   "layers": 24,
+   "dtype": "float16",
+   "full_shape": [
+    1,
+    8,
+    128,
+    375
+   ],
+   "note": "linear_pos folded: pos_emb @ (codes x FP16(s))^T in FP32, cast to FP16; per bucket the middle 2T-1 columns"
+  },
+  "activation_quantization": null
+ },
+ "pass_pipeline": {
+  "name": "DEFAULT",
+  "excluded": [],
+  "passes": {
+   "omitted_entries": 95,
+   "detail": "see full record"
+  },
+  "multifunction": "frontend_milinternal + main + backend_mlprogram per function, then const_deduplication._deduplicate_const_across_functions, export with skip_all_passes"
+ },
+ "program": {
+  "omitted_entries": 4,
+  "detail": "see full record"
+ },
+ "sizes": {
+  "mlpackage_bytes": 269354641,
+  "weight_bin_bytes": 266559296
+ },
+ "timing_s": {
+  "build_graph": 7.6,
+  "convert": 40.9,
+  "save": 0.2
+ },
+ "peak_rss_mb_after_save": 1634.6,
+ "environment": {
+  "coremltools": "9.0",
+  "numpy": "2.2.6",
+  "python": "3.12.14",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "machine": "arm64"
+ },
+ "paths": {
+  "mlpackage": null,
+  "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/C6s4/multi.mlmodelc"
+ },
+ "compile": {
+  "compile_s": 1.02,
+  "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/C6s4/multi.mlmodelc",
+  "mlmodelc_bytes": 269554475
+ },
+ "peak_rss_mb_after_compile": 1634.6,
+ "compute_plan": {
+  "omitted_entries": 2,
+  "detail": "see full record"
+ },
+ "_evidence": {
+  "sha256": "6149e39b921b03b0491119867d08e5613010989573554db5c47b1001871863f8",
+  "bytes": 229997,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/builds/mp2-C6s4-multi.json"
+ }
+}

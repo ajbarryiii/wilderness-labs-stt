@@ -1,0 +1,49 @@
+{
+ "gate": 3,
+ "model": "mp2",
+ "description": "FP32 reference with FP16-rounded row scales vs FP32 row scales (same clips, same forced replay); the price of FP16 scales, separate from any encoding",
+ "error_definitions": "rel = ||a-r||/max(||r||, 1e-6 sqrt(n)); abs = max|a-r|/max(RMS(r), 1e-6)",
+ "summary": {
+  "encoder": {
+   "rel_median": 0.00025586592036674514,
+   "rel_max": 0.0007820066590298337,
+   "abs_median": 0.002471468149368523,
+   "abs_max": 0.011839720636001536
+  },
+  "token_logits": {
+   "rel_median": 5.570434226401425e-05,
+   "rel_max": 0.00016983879874917488,
+   "abs_median": 0.0002899489983230803,
+   "abs_max": 0.0014217726245143501
+  },
+  "duration_logits": {
+   "rel_median": 0.00016763282625412797,
+   "rel_max": 0.0006150298125090114,
+   "abs_median": 0.0008289188239606432,
+   "abs_max": 0.00546774701703481
+  },
+  "h": {
+   "rel_median": 0.0,
+   "rel_max": 0.0,
+   "abs_median": 0.0,
+   "abs_max": 0.0
+  },
+  "c": {
+   "rel_median": 0.0,
+   "rel_max": 0.0,
+   "abs_median": 0.0,
+   "abs_max": 0.0
+  }
+ },
+ "free_decode_tokens_equal_clips": 82,
+ "clips": 82,
+ "per_clip": {
+  "omitted_entries": 82,
+  "detail": "see full record"
+ },
+ "_evidence": {
+  "sha256": "40302e3d6d671e134ca5e273a651d46e4b4e42512c60f3e348b84041f71be314",
+  "bytes": 36745,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/gates/mp2-gate3.json"
+ }
+}

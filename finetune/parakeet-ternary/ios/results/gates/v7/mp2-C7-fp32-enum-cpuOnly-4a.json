@@ -1,0 +1,52 @@
+{
+ "design_revision": 8,
+ "gate_code_version": "wp3-gates7-2",
+ "gate": "4a",
+ "gates7_py_sha256": "b6bd69724101ed92b8aeaf2328145b6a0fafcae3abf2bb4f33ca49c8dae3d9fe",
+ "date": "2026-10-03 02:45",
+ "model": "mp2",
+ "arm": "C7",
+ "label": "C7-fp32",
+ "variant": "enum",
+ "units": "cpuOnly",
+ "topology": "post_scale",
+ "thresholds": {
+  "rel": 1e-05,
+  "abs": 0.0001,
+  "tau": 1e-06
+ },
+ "build_provenance": {
+  "name": "mp2",
+  "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+  "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+ },
+ "build_chain": "constexpr_lut_to_dense(uint2, fp16 LUT {-1,0,+1,0}); matmul; mul(fp16 per-row scale)",
+ "pass": true,
+ "summary": {
+  "cases": 200,
+  "failing_cases": 0,
+  "failing_examples": [],
+  "rel_max": 1.820269481001914e-06,
+  "abs_max": 2.6560484732233248e-05,
+  "rel_median": 8.749100771794538e-07,
+  "buckets": [
+   2,
+   4,
+   8,
+   15
+  ]
+ },
+ "cases": {
+  "omitted_entries": 200,
+  "detail": "see full record"
+ },
+ "load_s": {
+  "b15": 10.68
+ },
+ "seconds": 75.8,
+ "_evidence": {
+  "sha256": "3d11d1206b987865db1f9a06296ec1013ae9b67401ee240d8574fd10a6c8fede",
+  "bytes": 34936,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/gates/v7/mp2-C7-fp32-enum-cpuOnly-4a.json"
+ }
+}

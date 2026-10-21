@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+# withlock MODE LOCKFILE -- CMD ARGS...    (MODE: shared | exclusive)
+# The cpu1bit Mac-side lock (plans/cpu-benchmark-mac.md "Lock"): builds and correctness tests hold
+# flock(2) LOCK_SH, timed blocks LOCK_EX, so a build never overlaps a timed block. The lock is held
+# by the open descriptor, which is kept across exec (FD_CLOEXEC cleared), so it lasts exactly as
+# long as CMD and is released by the kernel however CMD ends.
+use strict;
+use warnings;
+use Fcntl qw(:flock F_GETFD F_SETFD FD_CLOEXEC);
+use File::Basename qw(dirname);
+use File::Path qw(make_path);
+
+my ($mode, $file, $sep, @cmd) = @ARGV;
+die "usage: withlock shared|exclusive LOCKFILE -- CMD...\n"
+  unless defined $sep && $sep eq '--' && @cmd && ($mode eq 'shared' || $mode eq 'exclusive');
+make_path(dirname($file));
+open(my $fh, '>>', $file) or die "withlock: open $file: $!\n";
+my $t0 = time;
+flock($fh, $mode eq 'exclusive' ? LOCK_EX : LOCK_SH) or die "withlock: flock: $!\n";
+printf STDERR "withlock: %s lock on %s after %d s\n", $mode, $file, time - $t0;
+my $flags = fcntl($fh, F_GETFD, 0) or die "withlock: F_GETFD: $!\n";
+fcntl($fh, F_SETFD, $flags & ~FD_CLOEXEC) or die "withlock: F_SETFD: $!\n";
+exec { $cmd[0] } @cmd or die "withlock: exec $cmd[0]: $!\n";

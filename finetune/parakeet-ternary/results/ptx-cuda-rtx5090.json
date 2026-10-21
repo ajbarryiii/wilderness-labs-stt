@@ -1,0 +1,897 @@
+{
+  "bitwise_output_match_count": 15,
+  "cuda_generation": "single CUDA function enclosing original Triton PTX instruction body as inline assembly; original register names remapped to avoid operand collisions; pointer loads and shared-memory base adapted to CUDA parameters",
+  "date": "2026-10-07",
+  "generated_artifacts": {
+    "m126-n1024-k1024": {
+      "original.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n1024-k1024/original.cubin",
+        "sha256": "cfe5215dee1d9ac911fac72a877c1c198f5cba59d49402517113a954693439a7"
+      },
+      "original.ptx": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n1024-k1024/original.ptx",
+        "sha256": "a0fcad78747857ecb74d2430634f47af9a0f03969a2f78e7fda5d4bcd0cb486a"
+      },
+      "reconstructed.cu": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n1024-k1024/reconstructed.cu",
+        "sha256": "38108eef3e0cfcd5d4f6a2d4403af721e6c07d1445a1adf05891397d872af64e"
+      },
+      "reconstructed.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n1024-k1024/reconstructed.cubin",
+        "sha256": "98da21e14a3089db9d4c33884cba4c340fb82060e89f366ac29279f234d53801"
+      }
+    },
+    "m126-n1024-k4096": {
+      "original.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n1024-k4096/original.cubin",
+        "sha256": "95b65411a7c58b694d6623dac2406b16123af1a2278fbd27cc17ebc007e1dadf"
+      },
+      "original.ptx": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n1024-k4096/original.ptx",
+        "sha256": "9943ae0fdb650cc0388926892a3ce6561251f0de18a67dca56a6bf922595be08"
+      },
+      "reconstructed.cu": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n1024-k4096/reconstructed.cu",
+        "sha256": "9ce20895fe69f49ba0ef912f291a941e046de8e2c020fbdc130cd0a0ba839096"
+      },
+      "reconstructed.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n1024-k4096/reconstructed.cubin",
+        "sha256": "5480378f1fe701a558867d3a589171c7f74706b956fe2837a3b91fc9f313ba67"
+      }
+    },
+    "m126-n2048-k1024": {
+      "original.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n2048-k1024/original.cubin",
+        "sha256": "c9af9da653e0f59e677f79ca7ead068853424616331f6dc7c04f8634b2e3a9b9"
+      },
+      "original.ptx": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n2048-k1024/original.ptx",
+        "sha256": "3d61bb24a9b3eaff44807bd4f672ff982bb290cfdbbc2dc6d004f1fb49a81b50"
+      },
+      "reconstructed.cu": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n2048-k1024/reconstructed.cu",
+        "sha256": "61c456f8a5f08e012eff87c7896514d0105652ab86f1f347d8a76c221be4c7f6"
+      },
+      "reconstructed.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n2048-k1024/reconstructed.cubin",
+        "sha256": "38e9d8b41ab48d00e9162b7320bfc0f5accfe90170ac6d618edb5517471729a7"
+      }
+    },
+    "m126-n3072-k1024": {
+      "original.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n3072-k1024/original.cubin",
+        "sha256": "535645d952e8033edf0ea14437e0841391de776624a706b4d786350087a28377"
+      },
+      "original.ptx": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n3072-k1024/original.ptx",
+        "sha256": "9295bfcf691d5a5057c7ec12e598abebf903ba87529e6a9e395e801d729ef361"
+      },
+      "reconstructed.cu": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n3072-k1024/reconstructed.cu",
+        "sha256": "8c8988bbb87b65ee413fda624f32411e37306aed993458a260e5988277fcaf12"
+      },
+      "reconstructed.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n3072-k1024/reconstructed.cubin",
+        "sha256": "b6f7965d5800e2e7487fa34659949dc6885fcedbbae839f71a3b1ebc1e996621"
+      }
+    },
+    "m126-n4096-k1024": {
+      "original.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n4096-k1024/original.cubin",
+        "sha256": "a35d9f78510908224315920513baf10015545405eef435e235b65e889030ab7e"
+      },
+      "original.ptx": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n4096-k1024/original.ptx",
+        "sha256": "ebfde58cf858d41fceb1d814f99781692702db255be4c73bcda2c19d025127a8"
+      },
+      "reconstructed.cu": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n4096-k1024/reconstructed.cu",
+        "sha256": "44c5eb8dfc1bb4439b6838a916dd75bf78493dfa72d7fc31651b18b9e012ccbe"
+      },
+      "reconstructed.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m126-n4096-k1024/reconstructed.cubin",
+        "sha256": "97a58f2f162c6b298576e60a7be93c1aafa6219006a820d13543c0e65b952957"
+      }
+    },
+    "m376-n1024-k1024": {
+      "original.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n1024-k1024/original.cubin",
+        "sha256": "6b23f8ddd5740217f254c8fe1e438ec733a1e4fa0eacc3269c876aaf6312a471"
+      },
+      "original.ptx": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n1024-k1024/original.ptx",
+        "sha256": "c7121adcc758235b891861470d146588dc5a2c34e76e98a4d04dc737d2089396"
+      },
+      "reconstructed.cu": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n1024-k1024/reconstructed.cu",
+        "sha256": "21d46fbfb4e54c20753c9946882b5439b203c22c5736c19d5d5b3713d7042426"
+      },
+      "reconstructed.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n1024-k1024/reconstructed.cubin",
+        "sha256": "3ba51de9df362e663da18dd1a5ff7bb2ff2b5c032faaf41af33da1572f6de3b7"
+      }
+    },
+    "m376-n1024-k4096": {
+      "original.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n1024-k4096/original.cubin",
+        "sha256": "2b140e4b37a1e98fc780d42cad69d3d16ba01bc8c3d293ea0f8edf60713168f5"
+      },
+      "original.ptx": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n1024-k4096/original.ptx",
+        "sha256": "204aebf077bb86c161fa9a972226d0bfa6cf1634823da6c9d7b4e50b1266f748"
+      },
+      "reconstructed.cu": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n1024-k4096/reconstructed.cu",
+        "sha256": "d209276f9199a070313d5dae88142a9a279a8c4d8ac51429313fa96bd810b1b5"
+      },
+      "reconstructed.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n1024-k4096/reconstructed.cubin",
+        "sha256": "e5700614563ec88108bb461a149ecbcc1aa1ad6cdc9d4419fcf7b23accaae3c1"
+      }
+    },
+    "m376-n2048-k1024": {
+      "original.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n2048-k1024/original.cubin",
+        "sha256": "be3d3ae7963d5a3b58fa81a2c3a4c13645cab63ce661a2529a72134b93521aae"
+      },
+      "original.ptx": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n2048-k1024/original.ptx",
+        "sha256": "16bbf56be4b84db37e8474395e71c0984580ea5ffe2a7bd3363eacd130eb82d0"
+      },
+      "reconstructed.cu": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n2048-k1024/reconstructed.cu",
+        "sha256": "692fef9c347db63dd4b5029d5e29e8f3ca286f04b500a330d46b6dee4a06c6e4"
+      },
+      "reconstructed.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n2048-k1024/reconstructed.cubin",
+        "sha256": "eabae517f614a1f63360fc4514cd8fb1c2a74c85849169bd88efc966acd25443"
+      }
+    },
+    "m376-n3072-k1024": {
+      "original.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n3072-k1024/original.cubin",
+        "sha256": "9f546e45906488dae313aa689fc843935295ff12946453dc9162d877800d2b6c"
+      },
+      "original.ptx": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n3072-k1024/original.ptx",
+        "sha256": "63bfc653e8e27d0183d1b156e2af55f53953b6dde2bb647ba23d9db7f838a45b"
+      },
+      "reconstructed.cu": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n3072-k1024/reconstructed.cu",
+        "sha256": "e1e2a7e15abdb6737d7b58923a5eebc43c30172ce08e81991ebf312b5fdd1c59"
+      },
+      "reconstructed.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n3072-k1024/reconstructed.cubin",
+        "sha256": "23d4c37aa5943b7808aaf9c5dc72234f9fbdf528716a659869d2a0eba1669dd3"
+      }
+    },
+    "m376-n4096-k1024": {
+      "original.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n4096-k1024/original.cubin",
+        "sha256": "f540c86564f5bd33f658a4e0308f33ec0475203523253b92c1c2117b0a4ba383"
+      },
+      "original.ptx": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n4096-k1024/original.ptx",
+        "sha256": "359064f77dd7161f96371a2edcca51006167cdb8f9a6c589d2c6f20929b306ed"
+      },
+      "reconstructed.cu": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n4096-k1024/reconstructed.cu",
+        "sha256": "368705bf374c5067fb3d3c4b7e642e213d2d0b804e82865e63c9cae6f90ff81d"
+      },
+      "reconstructed.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m376-n4096-k1024/reconstructed.cubin",
+        "sha256": "8d2bf26ca4e423caa3f44df95c0a123128ef0895d9cda951c39b41f3dc47c4bb"
+      }
+    },
+    "m38-n1024-k1024": {
+      "original.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n1024-k1024/original.cubin",
+        "sha256": "7e9e9f27a634147c023265d2c99c83086f75435f91c719a0fbabdd359e7d88f7"
+      },
+      "original.ptx": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n1024-k1024/original.ptx",
+        "sha256": "de2aea02a55290cbe93276c6b4a70ca9f2a9464abe01d1e6ac205e3c8103ae5b"
+      },
+      "reconstructed.cu": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n1024-k1024/reconstructed.cu",
+        "sha256": "fd73d4dfc53769826a6eb5c6b2e5df41b8eec3c86c9ef81ced1c4ad5d886c9fa"
+      },
+      "reconstructed.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n1024-k1024/reconstructed.cubin",
+        "sha256": "c41e2e015b84038b6709123eb16de2780c879902b53132b11f293c12f383058c"
+      }
+    },
+    "m38-n1024-k4096": {
+      "original.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n1024-k4096/original.cubin",
+        "sha256": "13ea71cc498d5008594da34cedb558b8f396054bf2cbbd5b861d188c587a98c9"
+      },
+      "original.ptx": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n1024-k4096/original.ptx",
+        "sha256": "486c8b82068e914af2b716e1cc48bb8648e428f5ee4fdfc21768e4a2763e7d87"
+      },
+      "reconstructed.cu": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n1024-k4096/reconstructed.cu",
+        "sha256": "596ff98dbfb21d3e51e0220962521a0533634cdfb9c2c2de2aa823e67276b830"
+      },
+      "reconstructed.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n1024-k4096/reconstructed.cubin",
+        "sha256": "a2c341fd9785fbb65df6bd4197c8282c67ac74580d35c9706f3a26ed8f9b4218"
+      }
+    },
+    "m38-n2048-k1024": {
+      "original.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n2048-k1024/original.cubin",
+        "sha256": "ef0bf72512ccd869650fd8c147ee91bd8b9a44a27c46a73ca64d314f120b1f60"
+      },
+      "original.ptx": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n2048-k1024/original.ptx",
+        "sha256": "5aaa9bd21baecae981fdf958cbd0b33f058864b02711b2173afabd13121a9bcd"
+      },
+      "reconstructed.cu": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n2048-k1024/reconstructed.cu",
+        "sha256": "f1cf42edfcdd133c4e97a550673ec2f2b4ba182ae1154a2f44567626582b6424"
+      },
+      "reconstructed.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n2048-k1024/reconstructed.cubin",
+        "sha256": "9d0ce72b0509cc873865a70b100ac796c18723492aa803a9268e54755a45a774"
+      }
+    },
+    "m38-n3072-k1024": {
+      "original.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n3072-k1024/original.cubin",
+        "sha256": "18d6e917a39201f1bbbbf1c84138df9d2a34429fc7f6af7c45b5dd609b14dac5"
+      },
+      "original.ptx": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n3072-k1024/original.ptx",
+        "sha256": "e752e0086e9c3bb4b12f019e23157fbbdb54517027429727842f48703088dbcc"
+      },
+      "reconstructed.cu": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n3072-k1024/reconstructed.cu",
+        "sha256": "2a686e6deef9a1e68f8500e8806cafe96a09c0bf5513da3aa2be92ec52eaa89c"
+      },
+      "reconstructed.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n3072-k1024/reconstructed.cubin",
+        "sha256": "4636075e1afd6cb2fd83facee8f3beb33ee3def9bf0afabb35475cf58c26db33"
+      }
+    },
+    "m38-n4096-k1024": {
+      "original.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n4096-k1024/original.cubin",
+        "sha256": "3f4ad33e858440af28711653d3100f85acfe05228fca28ac440104480ad396b3"
+      },
+      "original.ptx": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n4096-k1024/original.ptx",
+        "sha256": "e9d897564b6a15cb53b8db6e2cfb3f0334217712904665b1a9b8a9efe8c0759d"
+      },
+      "reconstructed.cu": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n4096-k1024/reconstructed.cu",
+        "sha256": "29a7bc039c23f7a631a9c954889897fb5ae680d31a82c3c0d2fe0476614a24d2"
+      },
+      "reconstructed.cubin": {
+        "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/m38-n4096-k1024/reconstructed.cubin",
+        "sha256": "12b0fd2888d81a6317b458ca9037f486c8558d777e4d8fb07529e968441af994"
+      }
+    }
+  },
+  "hardware": {
+    "compute_capability": [
+      12,
+      0
+    ],
+    "default_power_limit_w": 600.0,
+    "driver_version": "595.71.05",
+    "energy_scope": "GPU board; excludes host energy",
+    "gpu_index": 0,
+    "graphics_clock_mhz": 210,
+    "memory_clock_mhz": 405,
+    "name": "NVIDIA GeForce RTX 5090",
+    "nvml_version": "13.595.71.05",
+    "power_limit_w": 400.0,
+    "sample_interval_s": 0.1,
+    "sm_clock_mhz": 210,
+    "temperature_c": 34,
+    "total_memory_bytes": 34190917632,
+    "uuid": "GPU-449284d2-8525-60e0-d4da-cd9de3df3634"
+  },
+  "method": "synthetic matrices at 15 representative encoder shapes; same INT8x3 arithmetic, bias and split-K finish; three CUDA-graph microbenchmark windows of 25 ms per variant, order alternated by window",
+  "native_code_equality": "not established; binary containers differ, which does not establish whether the instruction sequences differ",
+  "production_runtime_changed": false,
+  "raw_results": {
+    "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124307-ptx-cuda/results.json",
+    "sha256": "bd4a38bf962d4ace48f57cfce0cbe0b83d2fbdfdb54d220c8355b2f723a0f4c2"
+  },
+  "rows": [
+    {
+      "bitwise_output_match": true,
+      "config": [
+        32,
+        64,
+        256,
+        4,
+        4,
+        2
+      ],
+      "k": 1024,
+      "m": 38,
+      "median_us": {
+        "cuda_inline_ptx": 3.0120745841703265,
+        "triton": 3.0403639609788513
+      },
+      "n": 1024,
+      "original_cubin_matches_reconstructed": false,
+      "original_ptx_lines": 1227,
+      "pointer_arguments": 9,
+      "scope": "synthetic resident prequantized dot + same finish kernel; CUDA-graph microbenchmark or check-only; no energy or full encoder measurement",
+      "shared_bytes": 24576,
+      "timing_windows_us": {
+        "cuda_inline_ptx": [
+          3.0127592172579787,
+          3.0120745841703265,
+          3.009294286655013
+        ],
+        "triton": [
+          3.0403639609788513,
+          3.240448352998793,
+          3.0139214429848584
+        ]
+      }
+    },
+    {
+      "bitwise_output_match": true,
+      "config": [
+        16,
+        64,
+        128,
+        1,
+        4,
+        2
+      ],
+      "k": 1024,
+      "m": 38,
+      "median_us": {
+        "cuda_inline_ptx": 5.001518163331431,
+        "triton": 5.016077874155418
+      },
+      "n": 3072,
+      "original_cubin_matches_reconstructed": false,
+      "original_ptx_lines": 787,
+      "pointer_arguments": 9,
+      "scope": "synthetic resident prequantized dot + same finish kernel; CUDA-graph microbenchmark or check-only; no energy or full encoder measurement",
+      "shared_bytes": 14336,
+      "timing_windows_us": {
+        "cuda_inline_ptx": [
+          4.89916082376809,
+          5.001518163331431,
+          5.021182737720726
+        ],
+        "triton": [
+          4.907453555415794,
+          5.016077874155418,
+          5.016138279861099
+        ]
+      }
+    },
+    {
+      "bitwise_output_match": true,
+      "config": [
+        16,
+        64,
+        128,
+        1,
+        4,
+        2
+      ],
+      "k": 1024,
+      "m": 38,
+      "median_us": {
+        "cuda_inline_ptx": 5.445534479422648,
+        "triton": 5.445489113541113
+      },
+      "n": 4096,
+      "original_cubin_matches_reconstructed": false,
+      "original_ptx_lines": 787,
+      "pointer_arguments": 9,
+      "scope": "synthetic resident prequantized dot + same finish kernel; CUDA-graph microbenchmark or check-only; no energy or full encoder measurement",
+      "shared_bytes": 14336,
+      "timing_windows_us": {
+        "cuda_inline_ptx": [
+          5.440930857857824,
+          5.445534479422648,
+          5.451209640502929
+        ],
+        "triton": [
+          5.445489113541113,
+          5.444525322027967,
+          5.450215341535742
+        ]
+      }
+    },
+    {
+      "bitwise_output_match": true,
+      "config": [
+        32,
+        64,
+        128,
+        4,
+        4,
+        2
+      ],
+      "k": 1024,
+      "m": 38,
+      "median_us": {
+        "cuda_inline_ptx": 4.4295443879797105,
+        "triton": 4.418809680367492
+      },
+      "n": 2048,
+      "original_cubin_matches_reconstructed": false,
+      "original_ptx_lines": 1029,
+      "pointer_arguments": 9,
+      "scope": "synthetic resident prequantized dot + same finish kernel; CUDA-graph microbenchmark or check-only; no energy or full encoder measurement",
+      "shared_bytes": 20480,
+      "timing_windows_us": {
+        "cuda_inline_ptx": [
+          4.4295443879797105,
+          4.42575657532236,
+          4.435860794202417
+        ],
+        "triton": [
+          4.417008354410369,
+          4.418809680367492,
+          4.4376972133416865
+        ]
+      }
+    },
+    {
+      "bitwise_output_match": true,
+      "config": [
+        64,
+        64,
+        128,
+        8,
+        4,
+        2
+      ],
+      "k": 4096,
+      "m": 38,
+      "median_us": {
+        "cuda_inline_ptx": 5.917213294241163,
+        "triton": 5.950801470752959
+      },
+      "n": 1024,
+      "original_cubin_matches_reconstructed": false,
+      "original_ptx_lines": 1440,
+      "pointer_arguments": 9,
+      "scope": "synthetic resident prequantized dot + same finish kernel; CUDA-graph microbenchmark or check-only; no energy or full encoder measurement",
+      "shared_bytes": 32768,
+      "timing_windows_us": {
+        "cuda_inline_ptx": [
+          5.917213294241163,
+          5.912482931006769,
+          5.922239476984197
+        ],
+        "triton": [
+          5.939999403722647,
+          5.954076036140431,
+          5.950801470752959
+        ]
+      }
+    },
+    {
+      "bitwise_output_match": true,
+      "config": [
+        32,
+        64,
+        256,
+        4,
+        4,
+        2
+      ],
+      "k": 1024,
+      "m": 126,
+      "median_us": {
+        "cuda_inline_ptx": 4.8851883202268365,
+        "triton": 4.883756126552971
+      },
+      "n": 1024,
+      "original_cubin_matches_reconstructed": false,
+      "original_ptx_lines": 1227,
+      "pointer_arguments": 9,
+      "scope": "synthetic resident prequantized dot + same finish kernel; CUDA-graph microbenchmark or check-only; no energy or full encoder measurement",
+      "shared_bytes": 24576,
+      "timing_windows_us": {
+        "cuda_inline_ptx": [
+          4.881321345822195,
+          4.897207189398958,
+          4.8851883202268365
+        ],
+        "triton": [
+          5.087262701858745,
+          4.870092629143665,
+          4.883756126552971
+        ]
+      }
+    },
+    {
+      "bitwise_output_match": true,
+      "config": [
+        32,
+        64,
+        128,
+        1,
+        4,
+        2
+      ],
+      "k": 1024,
+      "m": 126,
+      "median_us": {
+        "cuda_inline_ptx": 8.022117788141424,
+        "triton": 8.266344199558752
+      },
+      "n": 3072,
+      "original_cubin_matches_reconstructed": false,
+      "original_ptx_lines": 1106,
+      "pointer_arguments": 9,
+      "scope": "synthetic resident prequantized dot + same finish kernel; CUDA-graph microbenchmark or check-only; no energy or full encoder measurement",
+      "shared_bytes": 20480,
+      "timing_windows_us": {
+        "cuda_inline_ptx": [
+          8.02025875123609,
+          8.022117788141424,
+          8.071234658008484
+        ],
+        "triton": [
+          8.002022282006884,
+          8.266344199558752,
+          8.306392947004479
+        ]
+      }
+    },
+    {
+      "bitwise_output_match": true,
+      "config": [
+        64,
+        64,
+        128,
+        1,
+        4,
+        2
+      ],
+      "k": 1024,
+      "m": 126,
+      "median_us": {
+        "cuda_inline_ptx": 8.8532281161152,
+        "triton": 9.202429380146679
+      },
+      "n": 4096,
+      "original_cubin_matches_reconstructed": false,
+      "original_ptx_lines": 1657,
+      "pointer_arguments": 9,
+      "scope": "synthetic resident prequantized dot + same finish kernel; CUDA-graph microbenchmark or check-only; no energy or full encoder measurement",
+      "shared_bytes": 32768,
+      "timing_windows_us": {
+        "cuda_inline_ptx": [
+          8.848199542622552,
+          8.8532281161152,
+          8.870437205183666
+        ],
+        "triton": [
+          8.831802830322022,
+          9.202429380146679,
+          9.212470789655518
+        ]
+      }
+    },
+    {
+      "bitwise_output_match": true,
+      "config": [
+        16,
+        64,
+        128,
+        1,
+        4,
+        2
+      ],
+      "k": 1024,
+      "m": 126,
+      "median_us": {
+        "cuda_inline_ptx": 6.281031129931316,
+        "triton": 6.400886920724381
+      },
+      "n": 2048,
+      "original_cubin_matches_reconstructed": false,
+      "original_ptx_lines": 787,
+      "pointer_arguments": 9,
+      "scope": "synthetic resident prequantized dot + same finish kernel; CUDA-graph microbenchmark or check-only; no energy or full encoder measurement",
+      "shared_bytes": 14336,
+      "timing_windows_us": {
+        "cuda_inline_ptx": [
+          6.281031129931316,
+          6.278817825750519,
+          6.29847580044597
+        ],
+        "triton": [
+          6.280396865495507,
+          6.400886920724381,
+          6.47561390652878
+        ]
+      }
+    },
+    {
+      "bitwise_output_match": true,
+      "config": [
+        64,
+        64,
+        128,
+        8,
+        4,
+        2
+      ],
+      "k": 4096,
+      "m": 126,
+      "median_us": {
+        "cuda_inline_ptx": 10.084695803375041,
+        "triton": 10.12139694293637
+      },
+      "n": 1024,
+      "original_cubin_matches_reconstructed": false,
+      "original_ptx_lines": 1450,
+      "pointer_arguments": 9,
+      "scope": "synthetic resident prequantized dot + same finish kernel; CUDA-graph microbenchmark or check-only; no energy or full encoder measurement",
+      "shared_bytes": 32768,
+      "timing_windows_us": {
+        "cuda_inline_ptx": [
+          10.075561468549768,
+          10.084695803375041,
+          10.18364270075965
+        ],
+        "triton": [
+          10.081492099293902,
+          10.12139694293637,
+          10.33277941979788
+        ]
+      }
+    },
+    {
+      "bitwise_output_match": true,
+      "config": [
+        32,
+        64,
+        128,
+        1,
+        4,
+        2
+      ],
+      "k": 1024,
+      "m": 376,
+      "median_us": {
+        "cuda_inline_ptx": 8.17732877364225,
+        "triton": 8.454914110532258
+      },
+      "n": 1024,
+      "original_cubin_matches_reconstructed": false,
+      "original_ptx_lines": 1106,
+      "pointer_arguments": 9,
+      "scope": "synthetic resident prequantized dot + same finish kernel; CUDA-graph microbenchmark or check-only; no energy or full encoder measurement",
+      "shared_bytes": 20480,
+      "timing_windows_us": {
+        "cuda_inline_ptx": [
+          8.161563376585644,
+          8.17732877364225,
+          8.186927662596712
+        ],
+        "triton": [
+          8.17576935744597,
+          8.454914110532258,
+          8.491512677410734
+        ]
+      }
+    },
+    {
+      "bitwise_output_match": true,
+      "config": [
+        64,
+        64,
+        128,
+        1,
+        4,
+        2
+      ],
+      "k": 1024,
+      "m": 376,
+      "median_us": {
+        "cuda_inline_ptx": 16.55570174020434,
+        "triton": 16.88772670684322
+      },
+      "n": 3072,
+      "original_cubin_matches_reconstructed": false,
+      "original_ptx_lines": 1657,
+      "pointer_arguments": 9,
+      "scope": "synthetic resident prequantized dot + same finish kernel; CUDA-graph microbenchmark or check-only; no energy or full encoder measurement",
+      "shared_bytes": 32768,
+      "timing_windows_us": {
+        "cuda_inline_ptx": [
+          16.51176715971525,
+          16.602544212341307,
+          16.55570174020434
+        ],
+        "triton": [
+          15.461725173110855,
+          16.88772670684322,
+          16.895960038324755
+        ]
+      }
+    },
+    {
+      "bitwise_output_match": true,
+      "config": [
+        32,
+        128,
+        128,
+        1,
+        4,
+        2
+      ],
+      "k": 1024,
+      "m": 376,
+      "median_us": {
+        "cuda_inline_ptx": 22.176393508911133,
+        "triton": 22.402092445654215
+      },
+      "n": 4096,
+      "original_cubin_matches_reconstructed": false,
+      "original_ptx_lines": 1486,
+      "pointer_arguments": 9,
+      "scope": "synthetic resident prequantized dot + same finish kernel; CUDA-graph microbenchmark or check-only; no energy or full encoder measurement",
+      "shared_bytes": 28672,
+      "timing_windows_us": {
+        "cuda_inline_ptx": [
+          22.176037938141626,
+          22.176393508911133,
+          22.23954491498994
+        ],
+        "triton": [
+          20.892216063263778,
+          22.402092445654215,
+          22.438372895869122
+        ]
+      }
+    },
+    {
+      "bitwise_output_match": true,
+      "config": [
+        32,
+        64,
+        128,
+        1,
+        4,
+        2
+      ],
+      "k": 1024,
+      "m": 376,
+      "median_us": {
+        "cuda_inline_ptx": 13.86768561896601,
+        "triton": 14.035704760875516
+      },
+      "n": 2048,
+      "original_cubin_matches_reconstructed": false,
+      "original_ptx_lines": 1106,
+      "pointer_arguments": 9,
+      "scope": "synthetic resident prequantized dot + same finish kernel; CUDA-graph microbenchmark or check-only; no energy or full encoder measurement",
+      "shared_bytes": 20480,
+      "timing_windows_us": {
+        "cuda_inline_ptx": [
+          13.73579360189892,
+          13.916731662437565,
+          13.86768561896601
+        ],
+        "triton": [
+          13.302416384798809,
+          14.035704760875516,
+          14.040547325497583
+        ]
+      }
+    },
+    {
+      "bitwise_output_match": true,
+      "config": [
+        32,
+        128,
+        128,
+        8,
+        4,
+        2
+      ],
+      "k": 4096,
+      "m": 376,
+      "median_us": {
+        "cuda_inline_ptx": 24.77443099213875,
+        "triton": 25.400439323262965
+      },
+      "n": 1024,
+      "original_cubin_matches_reconstructed": false,
+      "original_ptx_lines": 1427,
+      "pointer_arguments": 9,
+      "scope": "synthetic resident prequantized dot + same finish kernel; CUDA-graph microbenchmark or check-only; no energy or full encoder measurement",
+      "shared_bytes": 28672,
+      "timing_windows_us": {
+        "cuda_inline_ptx": [
+          24.65612504030804,
+          24.77443099213875,
+          24.877868313943186
+        ],
+        "triton": [
+          23.96081498673967,
+          25.400439323262965,
+          25.44194884219412
+        ]
+      }
+    }
+  ],
+  "runtime": {
+    "torch": "2.11.0+cu128",
+    "triton": "3.6.0"
+  },
+  "sanitizer_log": {
+    "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/ptx-cuda-memcheck.log",
+    "sha256": "9dc10977cfa09f2bad6abdb36b52af78e561ba9ef7b03096ea0d32da855ca106"
+  },
+  "sanitizer_results": {
+    "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T124344-ptx-cuda/results.json",
+    "sha256": "82df095861273e0f53f68b939c3433f59a86d9d67579dcf630eac0d7afe2f7c2"
+  },
+  "scope": "prequantized dot + same epilogue; no activation quantization, energy, full encoder, decoder or real-utterance measurements",
+  "shape_count": 15,
+  "source_sha256": {
+    "__init__.py": "0e9296dd1db393ce8e54846dd3ae33f59f249d8e784abbfd345466488ab02767",
+    "__main__.py": "dfa15e99e006c08b34b5e9a65a0c7714350abe4e8404179634a24d9241d8d429",
+    "benchmark.py": "b017eca7d7cb07b89a1b947cb02cd983a61b1afc0eb0414a0b95163c2cee8785",
+    "benchmark2.py": "3f8d0faceea38a19592c87cdd6aeae7bf3d448fceda26d71f08979cbaaa70cf4",
+    "bitwise.py": "dacab7d29a3b71f80377b0f4bf873b5fd90845e2ec1a3880be0c6efed2f128f6",
+    "bitwise_benchmark.py": "2efd05dab67cfb911a1db4057da3ddf55af863101b0c529c62e15dc622d964d0",
+    "compare_v2.py": "7472814454d53e0f46e4d08af095b3bbff3e2a6d775339d7f7e7f576c33da179",
+    "compare_v2_components.py": "4da9252f81cf91b3ca417e10ddbf665f4a6fd3f733f492be3999fc168ead4622",
+    "compare_v2_report.py": "e09789521f8f2db1599ff94c19c7f33231df84e1a1e6397e15df4438e52a5cb9",
+    "cuda_cublas.py": "acfd3e0fffac55da2558733068c5ca5063abc9d55163594c75fa045cbe030b1e",
+    "cuda_experiments.py": "f162c52d603ff04d12ef978999409406a4a8b1f06fec6679e096df8cd204fb94",
+    "cuda_matmul.py": "1a7f2152dce80cbd4998ec75a0836fbc43f8e351d12c8a2e4291db8c11995337",
+    "decoder_kernels.py": "333d7330062157f0e04b2f2cab7d5c209f087691bffa732c4b7feb11fa063c58",
+    "encoder4.py": "924cfd2552744868247e375ae60082b7d82c2d87ff66d9fadc08fa833ffe93a3",
+    "experiments.py": "21395f1d467c36e1ce8fdd254f83913c46bc945f043c77cb056c6c26103591ae",
+    "fused_kernels.py": "755154fc5967a654a65eb1c95a316786634eb27f847dbd976a39cdeadedf84e5",
+    "graph_memory.py": "c36061eff855968c0e7fd284911638a38ad2af1603423c6345b49970d39a00a2",
+    "graphs.py": "a3eaef81b17c540e44e01d37b707e7fad962d679c65d30699ca551053e02e6dc",
+    "kernels.py": "7b8d0e0e2da37b56f6f6562ce287bea090bc3edcbd9aa46e2831c2557ea474e7",
+    "layer_fusions4.py": "e30f8d2035409333785bb9714c2bc53edd3222a1ace460d4cf91017fa5041b68",
+    "optimized.py": "8401e907ea22c2795f3b8e13cd9e7bfa05c42ecc62ec41b4863aa9867af0a29e",
+    "pipeline_probe.py": "92cd34b030846ddc903ed518ca23a01d2f856e54f5b32dcabc2710ab14ca046c",
+    "profile3.py": "5b226a2d357fc552261b6da690924ed0119af35b458817c90296ca4a1884ba9d",
+    "profile4.py": "b27f5e3bf01cde38c516d34933cd847e3fb7af04896c20fe8927bfb6161d6865",
+    "ptx_cuda.py": "29cec87a33b2467099d6235817535c0b53ed879848c18c6d191c9ad14d10e629",
+    "quality2.py": "3a5c7ca3c31b84d4000007b3f4b696ef79dbf69a6875687468ebf5216d988ef2",
+    "quality3.py": "dd27bc7416ffe5e14b2e24e643083eba8fdac0873beffba4b038adf52456f06a",
+    "quality4.py": "1baddb72b98ab8690b2ba8559f71a799175cedc43c658a2229777513cb1cc9e6",
+    "runtime.py": "f62de5bcc7aa850d8ca5920a8b187636859065e4d332edcff4851e16e70328da",
+    "sprint3.py": "8e4f5531ca13f16f004be4bdd8583bc9c329d1ae5b6283d54d290c6b19d29fa5",
+    "sprint4.py": "397335dd2416c4c705c70606fe60d33f2fd1d3280380364ae41b12f645e2da24",
+    "test_bitwise.py": "cfcd9bd5c6efd500de03d342d079382a7abee0741742ce8a84e77e25af9165d0",
+    "test_cuda_matmul.py": "960e4e085dc156212d16d5c6e06906e5cbd6be1fe2f4b4f72b73a8d40d3bf5f0",
+    "test_decoder.py": "e5eee466121f27093365b9ffab52718fd275c87cc8a40f6d0c12b300edd3acf8",
+    "test_encoder4.py": "f440e544900dfd8414358fad453f9a7caa3fab28b5c78a5c8c505d3706452923",
+    "test_experiments.py": "7bc6d92cc5c00e3819ac8c54fec718b308a56442b112fef2a2ebaea071c60aba",
+    "test_kernels.py": "683cedc8d3314036874c53a2aa3940a7e296872ddf589105631c13147717a997",
+    "test_model_graphs.py": "c82b605cb19642aca071170b20a46c5d16c7a091f3a5c11664b154d4989cdd8f",
+    "transforms.py": "be3ac9ddbcd3998526b9f9f1d0483e9f72ce2fb179eaed3e0edca99a6ca0690f",
+    "tune2.py": "2b04e5adb3330c4e309b260f89538ec9aee72da7751cc0e4aebd71629a3f999d",
+    "tune_expanded.py": "79407cfe242bc5b61919241b9c13d6cb666b4d8cc0b0b991ef25c31d1e504082",
+    "tune_integer.py": "e0db253ff76d6bd7b77a6cb3c2b7137821eabb7b6b0fcb96238b937ef4a491c7",
+    "weight_audit.py": "16d7b53ae9e7b06f89a0f3492779e0d7d84a9677a6112b1eb779c3c5c75b9f18"
+  },
+  "timing_change_percent_vs_triton": {
+    "max": 0.24293211042585305,
+    "median": -1.0074904265778395,
+    "min": -3.7946638828312618
+  },
+  "timing_interpretation": "near parity in a microbenchmark; no established full-model speedup or energy gain",
+  "validation": "15 shapes match bitwise, FP32 dense reference tolerance passes; memcheck 12.9.79 repeats all 15 with changed-input CUDA-graph replay and zero memory-access errors; API-error reporting disabled"
+}

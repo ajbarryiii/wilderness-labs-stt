@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Pinned interpreter for the noisy development-set copy. See plans/build.md.
+# The runtime of finetune/parakeet-binary/python (NeMo 3.0 / torch 2.11 cu128, numpy, scipy,
+# soundfile), with this directory first on PYTHONPATH, then parakeet-binary (binary_* modules:
+# decoder-mode pinning, binary exports) and parakeet-ternary (paths, data, evaluate, export).
+# The noisy-dev modules are named noisy_*.py, so `import paths` etc. resolve to parakeet-ternary.
+# Caches and temporary files live under the noisy-dev artifacts directory.
+#
+# Untrusted downloads (plans/build.md "Evaluation-pool sources"): the interpreter runs with -P
+# (no script directory or working directory on sys.path) and -s (no user site), so nothing in a
+# data directory can shadow a module; PYTHONPATH holds only repository and dependency
+# directories. (`python -I` would also drop PYTHONPATH, which the build needs.)
+#
+# No NVRTC on the library path, as in parakeet-binary/python: scoring decodes with NeMo's greedy
+# TDT decoder in CUDA-graph mode "no_while_loops" (M1's mode); with NVRTC NeMo's full-graph
+# decoder is chosen and crashes (binary smoke run, 2026-10-16). noisy_score pins and checks the
+# mode as well. Inherited LD_LIBRARY_PATH entries that hold libnvrtc* are dropped.
+set -euo pipefail
+mountpoint -q /mnt/hd || { echo '/mnt/hd is not mounted; refusing artifact writes.' >&2; exit 1; }
+here="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+repo="$(cd -- "$here/../.." && pwd)"
+binary="$repo/finetune/parakeet-binary"
+ternary="$repo/finetune/parakeet-ternary"
+art=/mnt/hd/wilderness-labs-stt/noisy-dev
+mkdir -p "$art/tmp" "$art/caches"
+# Only this fixed list of trusted, absolute directories: an inherited PYTHONPATH is discarded, so
+# a download directory or an empty or relative entry can never supply a module (review round 3).
+trusted=("$here" "$binary" "$ternary" /mnt/hd/wilderness-labs-stt/stt-distillation/deps "$repo/finetune/whisper-ternary")
+for dir in "${trusted[@]}"; do
+  [[ "$dir" == /* && -d "$dir" ]] || { echo "python: trusted path $dir is missing or not absolute" >&2; exit 1; }
+done
+PYTHONPATH="$(IFS=:; echo "${trusted[*]}")"
+export PYTHONPATH
+# Read-only reuse of the ternary project's Hugging Face caches (no downloads are expected).
+hf=/mnt/hd/wilderness-labs-stt/parakeet-ternary/caches
+export HF_HOME="$hf/hf" HF_HUB_CACHE="$hf/hf/hub" HF_DATASETS_CACHE="$hf/datasets" HF_HUB_OFFLINE=1
+export XDG_CACHE_HOME="$art/caches" TORCH_HOME="$art/caches/torch" NUMBA_CACHE_DIR="$art/caches/numba"
+export TORCHINDUCTOR_CACHE_DIR="$art/caches/inductor" TRITON_CACHE_DIR="$art/caches/triton"
+export TORCH_EXTENSIONS_DIR="$art/caches/extensions" CUDA_CACHE_PATH="$art/caches/cuda"
+export TMPDIR="$art/tmp"
+export HF_HUB_DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 WANDB_MODE=disabled TOKENIZERS_PARALLELISM=false
+# Single-threaded numerics by default (plans/build.md "Running alongside the GPU pilot").
+export PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}" OPENBLAS_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export TRITON_LIBCUDA_PATH=/run/opengl-driver/lib
+inherited=()
+IFS=: read -r -a entries <<< "${LD_LIBRARY_PATH:-}"
+for entry in "${entries[@]}"; do
+  [[ -n "$entry" ]] || continue
+  if compgen -G "$entry/libnvrtc*" > /dev/null; then
+    echo "python: dropping $entry from LD_LIBRARY_PATH (it holds NVRTC)" >&2
+    continue
+  fi
+  inherited+=("$entry")
+done
+inherited_path="$(IFS=:; echo "${inherited[*]}")"
+export LD_LIBRARY_PATH="/run/opengl-driver/lib:/nix/store/hngmi01i8wgi25a0byrxcn4ysz5j79mw-gcc-15.2.0-lib/lib:/nix/store/dbz6pb9g67kpgpl95k8d85kzpxm1c32p-zlib-1.3.2/lib${inherited_path:+:$inherited_path}"
+exec "$repo/custom/autoresearch/.training-runtime/bin/python3" -P -s "$@"

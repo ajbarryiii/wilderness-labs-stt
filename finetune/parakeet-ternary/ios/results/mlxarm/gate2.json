@@ -1,0 +1,33 @@
+{
+ "design_revision": 8,
+ "code_version": "wp6b-mlxarm-1",
+ "arm": "MLX",
+ "model": "mp2",
+ "variant": "multi",
+ "backend": "gpu-mlx",
+ "date": "2026-10-03 05:12",
+ "environment": {
+  "mlx": "0.32.3",
+  "device": "Device(gpu, 0)",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "python": "3.12.14",
+  "group_size": 64,
+  "bits": 2,
+  "encoder_py_sha256": "e0262e29af87c13c2dcae7b6fe6169235f5ba8b9d6721dfaa0581fc2903cdda6",
+  "gates_py_sha256": "8587f38766f3bc1b2a93ebba646cbe1bcdf430a3f247e3ba8878d1a1bc7a8e0a"
+ },
+ "gate": 2,
+ "pass": true,
+ "modules": 240,
+ "construction": "q = codes + 1 packed 16 per uint32 (LSB first); scales = FP16(s), biases = -FP16(s), repeated over every group of 64; mx.dequantize = q s - s",
+ "failures": {},
+ "per_module": {
+  "omitted_entries": 240,
+  "detail": "see full record"
+ },
+ "_evidence": {
+  "sha256": "77d0bcfe3ff2a9721b844efa24288834a9e59c83463bd95fc7a2610ca20f7060",
+  "bytes": 67330,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/mlxarm/gate2.json"
+ }
+}

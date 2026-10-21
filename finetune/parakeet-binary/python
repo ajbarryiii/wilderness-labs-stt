@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Pinned interpreter for the binary Parakeet pilot. See plans/pilot.md "Implementation seam".
+# The same runtime as finetune/parakeet-ternary/python (NeMo 3.0 / torch 2.11 cu128), with this
+# directory first on PYTHONPATH. The binary modules are named binary_*.py, so `import train`,
+# `quant`, `export`, `evaluate`, `stream`, `teacher` and `paths` resolve to parakeet-ternary.
+# The Hugging Face caches (stream file listings) are the ternary project's, read-only reuse;
+# temporary files and compiler caches live under the binary artifacts directory.
+set -euo pipefail
+mountpoint -q /mnt/hd || { echo '/mnt/hd is not mounted; refusing artifact writes.' >&2; exit 1; }
+here="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+repo="$(cd -- "$here/../.." && pwd)"
+ternary="$repo/finetune/parakeet-ternary"
+art=/mnt/hd/wilderness-labs-stt/parakeet-binary
+hf=/mnt/hd/wilderness-labs-stt/parakeet-ternary/caches
+mkdir -p "$art/tmp" "$art/caches"
+export PYTHONPATH="$here:$ternary:/mnt/hd/wilderness-labs-stt/stt-distillation/deps:$repo/finetune/whisper-ternary${PYTHONPATH:+:$PYTHONPATH}"
+export HF_HOME="$hf/hf" HF_HUB_CACHE="$hf/hf/hub" HF_DATASETS_CACHE="$hf/datasets"
+export XDG_CACHE_HOME="$art/caches" TORCH_HOME="$art/caches/torch" NUMBA_CACHE_DIR="$art/caches/numba"
+export TORCHINDUCTOR_CACHE_DIR="$art/caches/inductor" TRITON_CACHE_DIR="$art/caches/triton"
+export TORCH_EXTENSIONS_DIR="$art/caches/extensions" CUDA_CACHE_PATH="$art/caches/cuda"
+export TMPDIR="$art/tmp"
+export HF_TOKEN_PATH="${HF_TOKEN_PATH:-$HOME/.cache/huggingface/token}"
+export HF_HUB_DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 WANDB_MODE=disabled TOKENIZERS_PARALLELISM=false
+export PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS="${OMP_NUM_THREADS:-4}" OPENBLAS_NUM_THREADS=1
+export TRITON_LIBCUDA_PATH=/run/opengl-driver/lib
+# No NVRTC on the library path, unlike parakeet-ternary/python since 2026-10-05: M1 and the
+# ternary pilot trained without it, so NeMo decoded with native PyTorch CUDA graphs. With
+# NVRTC, NeMo's full CUDA-graph decoder hits an illegal memory access in the teacher's first
+# labeling after a dev evaluation (binary smoke run, 2026-10-16, reproduced on resume).
+# Inherited entries that hold libnvrtc* are dropped too; binary_train pins and checks the
+# decoder mode at run time as well (plans/pilot.md "Review round 1", finding 2).
+inherited=()
+IFS=: read -r -a entries <<< "${LD_LIBRARY_PATH:-}"
+for entry in "${entries[@]}"; do
+  [[ -n "$entry" ]] || continue
+  if compgen -G "$entry/libnvrtc*" > /dev/null; then
+    echo "python: dropping $entry from LD_LIBRARY_PATH (it holds NVRTC)" >&2
+    continue
+  fi
+  inherited+=("$entry")
+done
+inherited_path="$(IFS=:; echo "${inherited[*]}")"
+export LD_LIBRARY_PATH="/run/opengl-driver/lib:/nix/store/hngmi01i8wgi25a0byrxcn4ysz5j79mw-gcc-15.2.0-lib/lib:/nix/store/dbz6pb9g67kpgpl95k8d85kzpxm1c32p-zlib-1.3.2/lib${inherited_path:+:$inherited_path}"
+exec "$repo/custom/autoresearch/.training-runtime/bin/python3" "$@"

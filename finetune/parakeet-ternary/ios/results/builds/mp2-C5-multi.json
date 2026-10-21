@@ -1,0 +1,322 @@
+{
+ "schema": 1,
+ "model": "mp2",
+ "arm": "C5",
+ "variant": "multi",
+ "layers": 24,
+ "exact": false,
+ "exploratory": true,
+ "provenance": {
+  "name": "mp2",
+  "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/models/pilot-P2-lr5e-4-export",
+  "export_sha256": "38bdd0220790375075c5c705ed275de8370d659c98c8074114a13c1deafb86e6"
+ },
+ "opset": "iOS26",
+ "minimum_deployment_target": "iOS26",
+ "compute_precision": "FLOAT16 (graph authored in FP16; fp32/int32 I/O)",
+ "functions": {
+  "b2": {
+   "mel": [
+    1,
+    128,
+    201
+   ],
+   "encoder_frames": 26
+  },
+  "b4": {
+   "mel": [
+    1,
+    128,
+    401
+   ],
+   "encoder_frames": 51
+  },
+  "b8": {
+   "mel": [
+    1,
+    128,
+    801
+   ],
+   "encoder_frames": 101
+  },
+  "b15": {
+   "mel": [
+    1,
+    128,
+    1501
+   ],
+   "encoder_frames": 188
+  }
+ },
+ "default_function": "b15",
+ "encoding": {
+  "arm": "C5",
+  "chain": "C3 weights; quantize(int8, per-tensor) -> dequantize on the activation",
+  "modules": 240,
+  "constexpr_inputs_by_module": {
+   "feed_forward1.linear1": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       4096,
+       1024
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       4096,
+       1
+      ]
+     }
+    }
+   },
+   "feed_forward1.linear2": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       1024,
+       4096
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_q": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       1024,
+       1024
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_k": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       1024,
+       1024
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_v": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       1024,
+       1024
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1
+      ]
+     }
+    }
+   },
+   "self_attn.linear_out": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       1024,
+       1024
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1
+      ]
+     }
+    }
+   },
+   "conv.pointwise_conv1": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       2048,
+       1024,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       2048,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "conv.pointwise_conv2": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       1024,
+       1024,
+       1
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1,
+       1
+      ]
+     }
+    }
+   },
+   "feed_forward2.linear1": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       4096,
+       1024
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       4096,
+       1
+      ]
+     }
+    }
+   },
+   "feed_forward2.linear2": {
+    "count": 24,
+    "inputs": {
+     "data": {
+      "dtype": "int8",
+      "shape": [
+       1024,
+       4096
+      ]
+     },
+     "scale": {
+      "dtype": "float16",
+      "shape": [
+       1024,
+       1
+      ]
+     }
+    }
+   }
+  },
+  "encoded_bytes_by_const": {
+   "data": 578813952,
+   "scale": 835584
+  },
+  "encoded_bytes_total": 579649536,
+  "position_tables": {
+   "layers": 24,
+   "dtype": "float16",
+   "full_shape": [
+    1,
+    8,
+    128,
+    375
+   ],
+   "note": "linear_pos folded: pos_emb @ (codes x FP16(s))^T in FP32, cast to FP16; per bucket the middle 2T-1 columns"
+  },
+  "activation_quantization": {
+   "sites": 192,
+   "scheme": "per-tensor symmetric int8, zero point 0, scale = max|x| / 127 over the calibration clips"
+  }
+ },
+ "pass_pipeline": {
+  "name": "DEFAULT",
+  "excluded": [],
+  "passes": {
+   "omitted_entries": 95,
+   "detail": "see full record"
+  },
+  "multifunction": "frontend_milinternal + main + backend_mlprogram per function, then const_deduplication._deduplicate_const_across_functions, export with skip_all_passes"
+ },
+ "program": {
+  "omitted_entries": 4,
+  "detail": "see full record"
+ },
+ "sizes": {
+  "mlpackage_bytes": 628209489,
+  "weight_bin_bytes": 625270848
+ },
+ "timing_s": {
+  "build_graph": 4.6,
+  "convert": 37.8,
+  "save": 0.2
+ },
+ "peak_rss_mb_after_save": 1264.2,
+ "environment": {
+  "coremltools": "9.0",
+  "numpy": "2.2.6",
+  "python": "3.12.14",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "machine": "arm64"
+ },
+ "paths": {
+  "mlpackage": null,
+  "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/C5/multi.mlmodelc"
+ },
+ "compile": {
+  "compile_s": 1.27,
+  "mlmodelc": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/arms/mp2/C5/multi.mlmodelc",
+  "mlmodelc_bytes": 628357257
+ },
+ "peak_rss_mb_after_compile": 1264.2,
+ "compute_plan": {
+  "omitted_entries": 2,
+  "detail": "see full record"
+ },
+ "_evidence": {
+  "sha256": "705150821590085774c47e39bb1e2b7c0e0bdaebc0509b740c875c8bcb06b49c",
+  "bytes": 61116,
+  "archive": "504c07c0cdecde864a45e1d0612f59d24896f914/builds/mp2-C5-multi.json"
+ }
+}

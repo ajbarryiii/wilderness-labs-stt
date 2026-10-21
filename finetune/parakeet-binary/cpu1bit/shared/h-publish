@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# H's publish step for shared/ changes (coordinator request 2026-10-21): H edits a private dev copy
+#   DEV=/mnt/hd/wilderness-labs-stt/parakeet-binary/cpu1bit/h-dev/cpu1bit
+# and publishes into the live cpu1bit/ only after a Mac smoke check passes:
+#   1. stage DEV (shared/core, shared/bneon) and push it to the Mac's ws/H-smoke;
+#   2. `cargo check --release --locked --all-targets -p cpu1bit-shared -p bneon` on the Mac (job, shared lock);
+#   3. on success, copy DEV's root files and shared/ into the live tree (rsync, H's files only).
+#   cpu1bit/shared/h-publish            # check + publish
+#   cpu1bit/shared/h-publish --init     # (re)create DEV from the live tree
+set -euo pipefail
+here="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+live="$(cd -- "$here/.." && pwd)"
+bin="$(cd -- "$live/.." && pwd)"
+DEV=/mnt/hd/wilderness-labs-stt/parakeet-binary/cpu1bit/h-dev/cpu1bit
+mountpoint -q /mnt/hd
+files=(Cargo.toml Cargo.lock rust-toolchain.toml .cargo/config.toml)
+if [[ ${1:-} == --init ]]; then
+  mkdir -p "$DEV/.cargo"
+  for f in "${files[@]}"; do cp "$live/$f" "$DEV/$f"; done
+  rsync -a --delete --exclude target --exclude __pycache__ "$live/shared/" "$DEV/shared/"
+  echo "dev copy: $DEV"; exit 0
+fi
+"$bin/python" "$live/shared/push.py" code --agent H-smoke --root "$DEV" --members shared/core,shared/bneon
+name=cpu1bit-H-smoke-$(date +%H%M%S)
+ws="$("$here/mac-root")/ws/H-smoke"
+job start "$name" --host mac --cwd "$ws" --stall 20m --timeout 1h -- \
+  "$ws/shared/mac/cargo" check --release --locked --all-targets -p cpu1bit-shared -p bneon >/dev/null
+job wait "$name" --host mac --timeout 50m
+for f in "${files[@]}"; do cp "$DEV/$f" "$live/$f"; done
+rsync -a --exclude target --exclude __pycache__ "$DEV/shared/" "$live/shared/"
+echo "published $DEV -> $live (smoke job $name green)"
