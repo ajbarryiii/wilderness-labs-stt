@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Run a heavy job (GPU training/eval, tests that build the full model) in its own memory-capped
+# systemd user unit: finetune/parakeet-ternary/heavy with this directory's ./python, working
+# directory and log directory (/mnt/hd/wilderness-labs-stt/parakeet-binary/logs).
+#   ./heavy NAME [--mem-max 36G] [--mem-high 30G] [--runtime 45min] [--wait] -- CMD ARGS...
+# The unit is named parakeet-binary-NAME (train.py and sweep.py look for parakeet-*.service).
+# One heavy job at a time: check `systemctl --user list-units 'parakeet-*'` first.
+set -euo pipefail
+here="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+name="$1"; shift
+mem_max=36G; mem_high=infinity; runtime=""; wait=()
+while [[ $# -gt 0 && "$1" != "--" ]]; do
+  case "$1" in
+    --mem-max) mem_max="$2"; shift 2;;
+    --mem-high) mem_high="$2"; shift 2;;
+    --runtime) runtime="$2"; shift 2;;
+    --wait) wait=(--wait); shift;;
+    *) echo "unknown option $1" >&2; exit 2;;
+  esac
+done
+[[ "${1:-}" == "--" ]] && shift
+[[ $# -gt 0 ]] || { echo "usage: heavy NAME [opts] -- CMD ..." >&2; exit 2; }
+[[ "$name" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "bad unit name" >&2; exit 2; }
+mountpoint -q /mnt/hd || { echo '/mnt/hd is not mounted' >&2; exit 1; }
+log_dir=/mnt/hd/wilderness-labs-stt/parakeet-binary/logs; mkdir -p "$log_dir"
+if [[ "$1" == python ]]; then shift; set -- "$here/python" "$@";
+elif [[ "$1" == *.py ]]; then set -- "$here/python" "$@"; fi
+props=(-p MemoryHigh="$mem_high" -p MemoryMax="$mem_max" -p MemorySwapMax=0
+       -p OOMScoreAdjust=500 -p ManagedOOMMemoryPressure=kill
+       -p CPUQuota=1200% -p IOWeight=50 -p WorkingDirectory="$here"
+       -p StandardOutput=append:"$log_dir/$name.log" -p StandardError=append:"$log_dir/$name.log")
+[[ -n "$runtime" ]] && props+=(-p RuntimeMaxSec="$runtime")
+echo "[heavy] unit parakeet-binary-$name mem_max=$mem_max runtime=${runtime:-none} log=$log_dir/$name.log" >&2
+exec systemd-run --user --collect --same-dir "${wait[@]}" --unit="parakeet-binary-$name" "${props[@]}" "$@"
