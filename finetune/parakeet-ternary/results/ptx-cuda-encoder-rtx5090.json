@@ -1,0 +1,3108 @@
+{
+  "adapter_tests": {
+    "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/ptx-cuda-adapter-tests.log",
+    "result": "2 tests passed: optional-bias ABI, normalized/SiLU/conv inputs, changed-input graph replay and 128 MB allocator churn",
+    "sha256": "7faf3c06ee76a4f6b8f9c465978b7a2a50704fe81967ab90f8520342ac3d6b98"
+  },
+  "bitwise_encoder_output_matches": 24,
+  "by_target": {
+    "10": {
+      "median_metrics": {
+        "ptx_cuda": {
+          "average_watts": 361.28644089104637,
+          "joules_per_iteration": 1.0748263004014662,
+          "median_ms": 2.9637770021508913
+        },
+        "triton": {
+          "average_watts": 361.3740389729783,
+          "joules_per_iteration": 1.0782716047195549,
+          "median_ms": 2.9673520039068535
+        }
+      },
+      "relative_change_vs_triton": {
+        "average_watts": {
+          "max_change_percent": 3.271664154977416,
+          "median_change_percent": -0.14477806829156226,
+          "median_within_variant_three_window_range_percent": 2.6828470941641216,
+          "min_change_percent": -2.2182758284202575,
+          "utterances": 8,
+          "wins": 4
+        },
+        "joules_per_iteration": {
+          "max_change_percent": 3.0717560191974025,
+          "median_change_percent": -0.30137094098378614,
+          "median_within_variant_three_window_range_percent": 2.615091962158293,
+          "min_change_percent": -2.3750514050719707,
+          "utterances": 8,
+          "wins": 4
+        },
+        "median_ms": {
+          "max_change_percent": 0.019233156375442206,
+          "median_change_percent": -0.16318339073466692,
+          "median_within_variant_three_window_range_percent": 0.08565235756310838,
+          "min_change_percent": -0.262586846439794,
+          "utterances": 8,
+          "wins": 7
+        }
+      },
+      "utterances": 8
+    },
+    "3": {
+      "median_metrics": {
+        "ptx_cuda": {
+          "average_watts": 307.05896482050673,
+          "joules_per_iteration": 0.62420300105329,
+          "median_ms": 2.0286545041017234
+        },
+        "triton": {
+          "average_watts": 302.2887378761858,
+          "joules_per_iteration": 0.6159357385510975,
+          "median_ms": 2.029536000918597
+        }
+      },
+      "relative_change_vs_triton": {
+        "average_watts": {
+          "max_change_percent": 3.4051606267089696,
+          "median_change_percent": 0.8318324585068204,
+          "median_within_variant_three_window_range_percent": 3.794313239893321,
+          "min_change_percent": -2.2973344762339143,
+          "utterances": 8,
+          "wins": 3
+        },
+        "joules_per_iteration": {
+          "max_change_percent": 3.2168937364181582,
+          "median_change_percent": 0.7467773718649817,
+          "median_within_variant_three_window_range_percent": 3.8230619660763896,
+          "min_change_percent": -2.339354278214223,
+          "utterances": 8,
+          "wins": 3
+        },
+        "median_ms": {
+          "max_change_percent": 0.06619566808594435,
+          "median_change_percent": -0.1635164150121715,
+          "median_within_variant_three_window_range_percent": 0.14461608630734823,
+          "min_change_percent": -0.33894441799897645,
+          "utterances": 8,
+          "wins": 6
+        }
+      },
+      "utterances": 8
+    },
+    "30": {
+      "median_metrics": {
+        "ptx_cuda": {
+          "average_watts": 361.3071879235099,
+          "joules_per_iteration": 2.6538749662070833,
+          "median_ms": 7.350236002821475
+        },
+        "triton": {
+          "average_watts": 360.20092918580735,
+          "joules_per_iteration": 2.648323046371833,
+          "median_ms": 7.343464501900598
+        }
+      },
+      "relative_change_vs_triton": {
+        "average_watts": {
+          "max_change_percent": 0.631604392317997,
+          "median_change_percent": 0.2386750266871629,
+          "median_within_variant_three_window_range_percent": 2.6699088004726974,
+          "min_change_percent": -2.698472721299139,
+          "utterances": 8,
+          "wins": 3
+        },
+        "joules_per_iteration": {
+          "max_change_percent": 0.7100644153600122,
+          "median_change_percent": 0.3448890990161546,
+          "median_within_variant_three_window_range_percent": 2.7403549525066317,
+          "min_change_percent": -3.0423992480901663,
+          "utterances": 8,
+          "wins": 3
+        },
+        "median_ms": {
+          "max_change_percent": 0.1637356844476523,
+          "median_change_percent": 0.029732892809397615,
+          "median_within_variant_three_window_range_percent": 0.12420333427650421,
+          "min_change_percent": -0.10975416802199156,
+          "utterances": 8,
+          "wins": 2
+        }
+      },
+      "utterances": 8
+    }
+  },
+  "compute_sanitizer": {
+    "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/ptx-cuda-adapter-memcheck.log",
+    "result": "12.9.79 memcheck: 2 adapter tests passed, zero memory-access errors; CUDA API-error reporting disabled",
+    "sha256": "593eec1bf2bdd053807d59ca5890baeff07fb5a67d981cdc0ed244d84ad17754"
+  },
+  "date": "2026-10-07",
+  "generated_cuda_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T130514-cuda-encoder/ptx-cuda-kernels",
+  "generated_cuda_kernel_count": 65,
+  "hardware": {
+    "compute_capability": [
+      12,
+      0
+    ],
+    "default_power_limit_w": 600.0,
+    "driver_version": "595.71.05",
+    "energy_scope": "GPU board; excludes host energy",
+    "gpu_index": 0,
+    "graphics_clock_mhz": 210,
+    "memory_clock_mhz": 405,
+    "name": "NVIDIA GeForce RTX 5090",
+    "nvml_version": "13.595.71.05",
+    "power_limit_w": 400.0,
+    "sample_interval_s": 0.1,
+    "sm_clock_mhz": 210,
+    "temperature_c": 34,
+    "total_memory_bytes": 34190917632,
+    "uuid": "GPU-449284d2-8525-60e0-d4da-cd9de3df3634"
+  },
+  "interpretation": "Practical latency and energy parity; the aggregate differences are smaller than typical within-variant three-window ranges. No material encoder speedup or energy reduction established. Keep public Triton default.",
+  "max_abs_encoder_error": 0,
+  "method": {
+    "aggregation": "median of three windows per utterance; medians of paired per-utterance percent changes across utterances",
+    "audio_seconds_max": 30.2599375,
+    "audio_seconds_min": 3.0,
+    "audio_seconds_total": 318.949875,
+    "corpora": [
+      "ami",
+      "common_voice",
+      "earnings22",
+      "gigaspeech",
+      "librispeech_clean",
+      "librispeech_other",
+      "spgispeech",
+      "voxpopuli"
+    ],
+    "energy": "NVML total GPU-board energy counter divided by completed calls; no idle subtraction; host energy excluded",
+    "limits": "warm batch-one encoder only, not cold start, CPU-waveform-to-text, full WER evaluation or a complete corpus benchmark",
+    "minimum_window_seconds": 1,
+    "order": "reversed by (utterance index + repeat index) parity; first variant balanced over all 24 utterances",
+    "process_vram": "not compared: two encoder models resident",
+    "selection": "distinct utterance nearest each 3/10/30 s target from eight existing test corpora, without transcript-content selection",
+    "utterances": 24,
+    "warmup_seconds_per_window": 0.3,
+    "windows_per_variant_per_utterance": 3
+  },
+  "production_runtime_changed": false,
+  "raw_artifact": {
+    "path": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T130514-cuda-encoder/encoder.json",
+    "sha256": "f8c27a9a6dbce0fd37957804e36318510b0a700902ccd9da81bdc8a15b50bba7"
+  },
+  "raw_source_snapshot_dir": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/20261007T130514-cuda-encoder/source",
+  "relative_change_vs_triton": {
+    "average_watts": {
+      "max_change_percent": 3.4051606267089696,
+      "median_change_percent": 0.32586034272444886,
+      "median_within_variant_three_window_range_percent": 2.801702178882981,
+      "min_change_percent": -2.698472721299139,
+      "utterances": 24,
+      "wins": 10
+    },
+    "joules_per_iteration": {
+      "max_change_percent": 3.2168937364181582,
+      "median_change_percent": 0.18765899657952057,
+      "median_within_variant_three_window_range_percent": 2.6490549893058026,
+      "min_change_percent": -3.0423992480901663,
+      "utterances": 24,
+      "wins": 10
+    },
+    "median_ms": {
+      "max_change_percent": 0.1637356844476523,
+      "median_change_percent": -0.08536178303593656,
+      "median_within_variant_three_window_range_percent": 0.1125864928204107,
+      "min_change_percent": -0.33894441799897645,
+      "utterances": 24,
+      "wins": 15
+    }
+  },
+  "rows": [
+    {
+      "audio_seconds": 3.0,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "3575-170457-0052",
+      "source": "librispeech_clean",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 305.2458259374317,
+          "joules_per_iteration": 0.6217825203252032,
+          "median_ms": 2.0301930053392425
+        },
+        "triton": {
+          "average_watts": 302.7653720950625,
+          "joules_per_iteration": 0.6165609756097561,
+          "median_ms": 2.0288499945309013
+        }
+      },
+      "target_seconds": 3,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 302.39942350151483,
+            "elapsed_seconds": 1.002822678987286,
+            "energy_joules": 303.253,
+            "iterations": 493,
+            "joules_per_iteration": 0.6151176470588235,
+            "median_ms": 2.0301930053392425,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2931.734775319355,
+              "temperature_c": 52.57588447524813
+            }
+          },
+          {
+            "average_watts": 305.2458259374317,
+            "elapsed_seconds": 1.0021987984946463,
+            "energy_joules": 305.917,
+            "iterations": 492,
+            "joules_per_iteration": 0.6217825203252032,
+            "median_ms": 2.031389500189107,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2925.0,
+              "temperature_c": 54.332117541189206
+            }
+          },
+          {
+            "average_watts": 332.4683357943324,
+            "elapsed_seconds": 1.001319416493061,
+            "energy_joules": 332.907,
+            "iterations": 493,
+            "joules_per_iteration": 0.6752677484787017,
+            "median_ms": 2.026546004344709,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2932.0,
+              "temperature_c": 45.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 285.37395159685707,
+            "elapsed_seconds": 1.002705391991185,
+            "energy_joules": 286.146,
+            "iterations": 493,
+            "joules_per_iteration": 0.5804178498985801,
+            "median_ms": 2.0288499945309013,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2723.479991388049,
+              "temperature_c": 46.90713580811042
+            }
+          },
+          {
+            "average_watts": 302.7653720950625,
+            "elapsed_seconds": 1.0019243544957135,
+            "energy_joules": 303.348,
+            "iterations": 492,
+            "joules_per_iteration": 0.6165609756097561,
+            "median_ms": 2.030893498158548,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2921.76793582064,
+              "temperature_c": 51.70106648879367
+            }
+          },
+          {
+            "average_watts": 308.461576408412,
+            "elapsed_seconds": 1.0015347895096056,
+            "energy_joules": 308.935,
+            "iterations": 493,
+            "joules_per_iteration": 0.6266430020283976,
+            "median_ms": 2.026444999501109,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2932.0,
+              "temperature_c": 45.66820229263443
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 10.0,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "1320-122617-0010",
+      "source": "librispeech_clean",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 363.90379330293496,
+          "joules_per_iteration": 1.0726911764705882,
+          "median_ms": 2.9395649980870076
+        },
+        "triton": {
+          "average_watts": 352.37525828656436,
+          "joules_per_iteration": 1.0407227138643067,
+          "median_ms": 2.9466729902196676
+        }
+      },
+      "target_seconds": 10,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 368.31911206145594,
+            "elapsed_seconds": 1.0031762889848324,
+            "energy_joules": 369.489,
+            "iterations": 341,
+            "joules_per_iteration": 1.0835454545454544,
+            "median_ms": 2.936253004008904,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2899.3759510711398,
+              "temperature_c": 46.590203231028
+            }
+          },
+          {
+            "average_watts": 363.90379330293496,
+            "elapsed_seconds": 1.0022291790082818,
+            "energy_joules": 364.715,
+            "iterations": 340,
+            "joules_per_iteration": 1.0726911764705882,
+            "median_ms": 2.9410674978862517,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2847.346201942893,
+              "temperature_c": 48.0
+            }
+          },
+          {
+            "average_watts": 358.1787734524441,
+            "elapsed_seconds": 1.001765114502632,
+            "energy_joules": 358.811,
+            "iterations": 340,
+            "joules_per_iteration": 1.0553264705882353,
+            "median_ms": 2.9395649980870076,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2846.1158491011197,
+              "temperature_c": 48.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 357.4920819284157,
+            "elapsed_seconds": 1.0015494554972975,
+            "energy_joules": 358.046,
+            "iterations": 339,
+            "joules_per_iteration": 1.0561828908554571,
+            "median_ms": 2.9472440073732287,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2850.0,
+              "temperature_c": 48.0
+            }
+          },
+          {
+            "average_watts": 350.83349860457184,
+            "elapsed_seconds": 1.0011444214906078,
+            "energy_joules": 351.235,
+            "iterations": 339,
+            "joules_per_iteration": 1.0360914454277286,
+            "median_ms": 2.946602995507419,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2850.0,
+              "temperature_c": 48.0
+            }
+          },
+          {
+            "average_watts": 352.37525828656436,
+            "elapsed_seconds": 1.0012195570016047,
+            "energy_joules": 352.805,
+            "iterations": 339,
+            "joules_per_iteration": 1.0407227138643067,
+            "median_ms": 2.9466729902196676,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2849.589426008366,
+              "temperature_c": 48.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 30.04,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "121-123859-0002",
+      "source": "librispeech_clean",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 361.35404224252346,
+          "joules_per_iteration": 2.6463795620437955,
+          "median_ms": 7.3100070003420115
+        },
+        "triton": {
+          "average_watts": 359.74103107185596,
+          "joules_per_iteration": 2.6341313868613137,
+          "median_ms": 7.307352003408596
+        }
+      },
+      "target_seconds": 30,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 375.9652782086239,
+            "elapsed_seconds": 1.0030154959968058,
+            "energy_joules": 377.099,
+            "iterations": 137,
+            "joules_per_iteration": 2.7525474452554746,
+            "median_ms": 7.3100070003420115,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2658.2034714600472,
+              "temperature_c": 49.0
+            }
+          },
+          {
+            "average_watts": 361.35404224252346,
+            "elapsed_seconds": 1.00332072598394,
+            "energy_joules": 362.554,
+            "iterations": 137,
+            "joules_per_iteration": 2.6463795620437955,
+            "median_ms": 7.309917011298239,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2651.1152103022882,
+              "temperature_c": 49.0
+            }
+          },
+          {
+            "average_watts": 358.68586516953513,
+            "elapsed_seconds": 1.0035466544795781,
+            "energy_joules": 359.958,
+            "iterations": 137,
+            "joules_per_iteration": 2.627430656934307,
+            "median_ms": 7.310979010071605,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2651.1290296505103,
+              "temperature_c": 49.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 371.43634331292617,
+            "elapsed_seconds": 1.0020155719830655,
+            "energy_joules": 372.185,
+            "iterations": 137,
+            "joules_per_iteration": 2.7166788321167883,
+            "median_ms": 7.306409999728203,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2873.5245777013824,
+              "temperature_c": 47.74193817893237
+            }
+          },
+          {
+            "average_watts": 359.74103107185596,
+            "elapsed_seconds": 1.0031549610139336,
+            "energy_joules": 360.876,
+            "iterations": 137,
+            "joules_per_iteration": 2.6341313868613137,
+            "median_ms": 7.307352003408596,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2655.713066702402,
+              "temperature_c": 49.0
+            }
+          },
+          {
+            "average_watts": 356.3849181355334,
+            "elapsed_seconds": 1.004862949514063,
+            "energy_joules": 358.118,
+            "iterations": 137,
+            "joules_per_iteration": 2.614,
+            "median_ms": 7.318311996641569,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2655.1192695269924,
+              "temperature_c": 49.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 3.0,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "3528-168669-0026",
+      "source": "librispeech_other",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 299.52605854785423,
+          "joules_per_iteration": 0.6085557809330628,
+          "median_ms": 2.0271160028642043
+        },
+        "triton": {
+          "average_watts": 301.27137326411025,
+          "joules_per_iteration": 0.6115647773279352,
+          "median_ms": 2.0258940057829022
+        }
+      },
+      "target_seconds": 3,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 294.63581992229734,
+            "elapsed_seconds": 1.0014634340041084,
+            "energy_joules": 295.067,
+            "iterations": 494,
+            "joules_per_iteration": 0.5973016194331984,
+            "median_ms": 2.0212460003676824,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2864.733552379418,
+              "temperature_c": 46.0
+            }
+          },
+          {
+            "average_watts": 299.52605854785423,
+            "elapsed_seconds": 1.0016423995111836,
+            "energy_joules": 300.018,
+            "iterations": 493,
+            "joules_per_iteration": 0.6085557809330628,
+            "median_ms": 2.0271160028642043,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2932.0,
+              "temperature_c": 47.0
+            }
+          },
+          {
+            "average_watts": 308.1392711599881,
+            "elapsed_seconds": 1.00226432949421,
+            "energy_joules": 308.837,
+            "iterations": 493,
+            "joules_per_iteration": 0.6264442190669371,
+            "median_ms": 2.027127004112117,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2932.0,
+              "temperature_c": 47.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 301.27137326411025,
+            "elapsed_seconds": 1.0027935834950767,
+            "energy_joules": 302.113,
+            "iterations": 494,
+            "joules_per_iteration": 0.6115647773279352,
+            "median_ms": 2.0241460006218404,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2940.0,
+              "temperature_c": 46.03788320111423
+            }
+          },
+          {
+            "average_watts": 299.4347024542345,
+            "elapsed_seconds": 1.0010930514836218,
+            "energy_joules": 299.762,
+            "iterations": 493,
+            "joules_per_iteration": 0.6080365111561866,
+            "median_ms": 2.0258940057829022,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2940.0,
+              "temperature_c": 47.0
+            }
+          },
+          {
+            "average_watts": 335.0784914684414,
+            "elapsed_seconds": 1.0018727210117504,
+            "energy_joules": 335.706,
+            "iterations": 492,
+            "joules_per_iteration": 0.6823292682926829,
+            "median_ms": 2.030387506238185,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2932.0,
+              "temperature_c": 47.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 9.995,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "3080-5032-0002",
+      "source": "librispeech_other",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 361.754012899256,
+          "joules_per_iteration": 1.0769614243323442,
+          "median_ms": 2.9694160039070994
+        },
+        "triton": {
+          "average_watts": 358.58011401701464,
+          "joules_per_iteration": 1.0660326409495549,
+          "median_ms": 2.9688450013054535
+        }
+      },
+      "target_seconds": 10,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 356.19311857138456,
+            "elapsed_seconds": 1.0028829344955739,
+            "energy_joules": 357.22,
+            "iterations": 337,
+            "joules_per_iteration": 1.06,
+            "median_ms": 2.9694160039070994,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2850.0,
+              "temperature_c": 50.0
+            }
+          },
+          {
+            "average_watts": 365.168975390316,
+            "elapsed_seconds": 1.0026180334971286,
+            "energy_joules": 366.125,
+            "iterations": 337,
+            "joules_per_iteration": 1.0864243323442135,
+            "median_ms": 2.9681529995286837,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2850.0,
+              "temperature_c": 50.037449314431946
+            }
+          },
+          {
+            "average_watts": 361.754012899256,
+            "elapsed_seconds": 1.0032673779933248,
+            "energy_joules": 362.936,
+            "iterations": 337,
+            "joules_per_iteration": 1.0769614243323442,
+            "median_ms": 2.9710890084970742,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2853.6000813324736,
+              "temperature_c": 51.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 358.58011401701464,
+            "elapsed_seconds": 1.001876529000583,
+            "energy_joules": 359.253,
+            "iterations": 337,
+            "joules_per_iteration": 1.0660326409495549,
+            "median_ms": 2.9677419952349737,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2899.401869505901,
+              "temperature_c": 49.53856245995891
+            }
+          },
+          {
+            "average_watts": 349.94460079255066,
+            "elapsed_seconds": 1.0036560049920809,
+            "energy_joules": 351.224,
+            "iterations": 337,
+            "joules_per_iteration": 1.0422077151335312,
+            "median_ms": 2.971380003145896,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2850.0,
+              "temperature_c": 51.0
+            }
+          },
+          {
+            "average_watts": 363.2204580736377,
+            "elapsed_seconds": 1.0030712530133314,
+            "energy_joules": 364.336,
+            "iterations": 337,
+            "joules_per_iteration": 1.0811157270029674,
+            "median_ms": 2.9688450013054535,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2850.0,
+              "temperature_c": 51.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 29.6,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "5442-41168-0009",
+      "source": "librispeech_other",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 359.48850289841954,
+          "joules_per_iteration": 2.663213235294118,
+          "median_ms": 7.391660001303535
+        },
+        "triton": {
+          "average_watts": 361.02392129161643,
+          "joules_per_iteration": 2.669705882352941,
+          "median_ms": 7.379577000392601
+        }
+      },
+      "target_seconds": 30,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 371.86440695717295,
+            "elapsed_seconds": 1.004836690495722,
+            "energy_joules": 373.663,
+            "iterations": 136,
+            "joules_per_iteration": 2.7475220588235296,
+            "median_ms": 7.382593001239002,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2769.328975031524,
+              "temperature_c": 50.74262331138305
+            }
+          },
+          {
+            "average_watts": 353.3378783204885,
+            "elapsed_seconds": 1.006990820489591,
+            "energy_joules": 355.808,
+            "iterations": 136,
+            "joules_per_iteration": 2.616235294117647,
+            "median_ms": 7.391660001303535,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2640.7288691497993,
+              "temperature_c": 52.0
+            }
+          },
+          {
+            "average_watts": 359.48850289841954,
+            "elapsed_seconds": 1.007534307995229,
+            "energy_joules": 362.197,
+            "iterations": 136,
+            "joules_per_iteration": 2.663213235294118,
+            "median_ms": 7.393958498141728,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2646.641349806765,
+              "temperature_c": 52.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 362.4847809472131,
+            "elapsed_seconds": 1.005432556499727,
+            "energy_joules": 364.454,
+            "iterations": 136,
+            "joules_per_iteration": 2.6798088235294117,
+            "median_ms": 7.381114992313087,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2646.4501630701307,
+              "temperature_c": 51.96334420467539
+            }
+          },
+          {
+            "average_watts": 354.04520156443033,
+            "elapsed_seconds": 1.0054676590079907,
+            "energy_joules": 355.981,
+            "iterations": 136,
+            "joules_per_iteration": 2.6175073529411765,
+            "median_ms": 7.379577000392601,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2639.7408984057615,
+              "temperature_c": 51.51605989371744
+            }
+          },
+          {
+            "average_watts": 361.02392129161643,
+            "elapsed_seconds": 1.0056951315054903,
+            "energy_joules": 363.08,
+            "iterations": 136,
+            "joules_per_iteration": 2.669705882352941,
+            "median_ms": 7.378064496151637,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2637.3638944378204,
+              "temperature_c": 52.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 3.0,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "AMI_EN2002a_H01_FEO070_0170294_0170594",
+      "source": "ami",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 308.87210370358173,
+          "joules_per_iteration": 0.6269473684210526,
+          "median_ms": 2.022363005380612
+        },
+        "triton": {
+          "average_watts": 298.7008596394964,
+          "joules_per_iteration": 0.6074077079107505,
+          "median_ms": 2.0292410044930875
+        }
+      },
+      "target_seconds": 3,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 308.87210370358173,
+            "elapsed_seconds": 1.0027192364941584,
+            "energy_joules": 309.712,
+            "iterations": 494,
+            "joules_per_iteration": 0.6269473684210526,
+            "median_ms": 2.0218869976815768,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2940.0,
+              "temperature_c": 49.0
+            }
+          },
+          {
+            "average_watts": 311.80234618051907,
+            "elapsed_seconds": 1.002029021998169,
+            "energy_joules": 312.435,
+            "iterations": 494,
+            "joules_per_iteration": 0.6324595141700405,
+            "median_ms": 2.022363005380612,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2935.8884019767866,
+              "temperature_c": 49.0
+            }
+          },
+          {
+            "average_watts": 298.5547768084447,
+            "elapsed_seconds": 1.0020137785031693,
+            "energy_joules": 299.156,
+            "iterations": 493,
+            "joules_per_iteration": 0.6068073022312374,
+            "median_ms": 2.0278879965189844,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2932.0,
+              "temperature_c": 49.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 303.9335456814885,
+            "elapsed_seconds": 1.0023671435046708,
+            "energy_joules": 304.653,
+            "iterations": 494,
+            "joules_per_iteration": 0.6167064777327935,
+            "median_ms": 2.022623499215115,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2860.998254978065,
+              "temperature_c": 49.0
+            }
+          },
+          {
+            "average_watts": 298.7008596394964,
+            "elapsed_seconds": 1.0025146909902105,
+            "energy_joules": 299.452,
+            "iterations": 493,
+            "joules_per_iteration": 0.6074077079107505,
+            "median_ms": 2.0292410044930875,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2934.875235136113,
+              "temperature_c": 49.0
+            }
+          },
+          {
+            "average_watts": 295.4104212115192,
+            "elapsed_seconds": 1.0029199335112935,
+            "energy_joules": 296.273,
+            "iterations": 493,
+            "joules_per_iteration": 0.6009594320486816,
+            "median_ms": 2.0293910056352615,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2932.0,
+              "temperature_c": 49.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 10.0,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "AMI_ES2004c_H02_MEE014_0045596_0046596",
+      "source": "ami",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 355.2002191286847,
+          "joules_per_iteration": 1.0501386430678465,
+          "median_ms": 2.949608999188058
+        },
+        "triton": {
+          "average_watts": 359.9219330523289,
+          "joules_per_iteration": 1.066533923303835,
+          "median_ms": 2.9550189938163385
+        }
+      },
+      "target_seconds": 10,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 362.958820852288,
+            "elapsed_seconds": 1.0012375485093798,
+            "energy_joules": 363.408,
+            "iterations": 339,
+            "joules_per_iteration": 1.072,
+            "median_ms": 2.9488680011127144,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2901.8343296041003,
+              "temperature_c": 52.0
+            }
+          },
+          {
+            "average_watts": 352.9533259968691,
+            "elapsed_seconds": 1.0027161495090695,
+            "energy_joules": 353.912,
+            "iterations": 339,
+            "joules_per_iteration": 1.0439882005899703,
+            "median_ms": 2.9510820022551343,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2841.122940509466,
+              "temperature_c": 53.0
+            }
+          },
+          {
+            "average_watts": 355.2002191286847,
+            "elapsed_seconds": 1.002243188006105,
+            "energy_joules": 355.997,
+            "iterations": 339,
+            "joules_per_iteration": 1.0501386430678465,
+            "median_ms": 2.949608999188058,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2837.886046039689,
+              "temperature_c": 53.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 359.9219330523289,
+            "elapsed_seconds": 1.0045372809981927,
+            "energy_joules": 361.555,
+            "iterations": 339,
+            "joules_per_iteration": 1.066533923303835,
+            "median_ms": 2.9550189938163385,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2842.0,
+              "temperature_c": 52.0
+            }
+          },
+          {
+            "average_watts": 358.43021582461955,
+            "elapsed_seconds": 1.0032189924968407,
+            "energy_joules": 359.584,
+            "iterations": 339,
+            "joules_per_iteration": 1.0607197640117993,
+            "median_ms": 2.952934999484569,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2842.0,
+              "temperature_c": 51.74368592534365
+            }
+          },
+          {
+            "average_watts": 373.0159709150093,
+            "elapsed_seconds": 1.0015764179843245,
+            "energy_joules": 373.604,
+            "iterations": 338,
+            "joules_per_iteration": 1.1053372781065087,
+            "median_ms": 2.956732001621276,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2838.61116058522,
+              "temperature_c": 53.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 26.1699375,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "AMI_IS1009b_H03_FIO089_0023485_0026102",
+      "source": "ami",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 362.2480196835193,
+          "joules_per_iteration": 2.3768496732026145,
+          "median_ms": 6.547073004185222
+        },
+        "triton": {
+          "average_watts": 360.0137937310661,
+          "joules_per_iteration": 2.3600915032679737,
+          "median_ms": 6.5442479972261935
+        }
+      },
+      "target_seconds": 30,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 355.48610943563136,
+            "elapsed_seconds": 1.003234699004679,
+            "energy_joules": 356.636,
+            "iterations": 153,
+            "joules_per_iteration": 2.3309542483660133,
+            "median_ms": 6.546201999299228,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2652.95031940175,
+              "temperature_c": 53.485194588543905
+            }
+          },
+          {
+            "average_watts": 362.2480196835193,
+            "elapsed_seconds": 1.0038923064857954,
+            "energy_joules": 363.658,
+            "iterations": 153,
+            "joules_per_iteration": 2.3768496732026145,
+            "median_ms": 6.5487469983054325,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2646.737738667013,
+              "temperature_c": 54.0
+            }
+          },
+          {
+            "average_watts": 362.8191142198644,
+            "elapsed_seconds": 1.0035634445084725,
+            "energy_joules": 364.112,
+            "iterations": 153,
+            "joules_per_iteration": 2.3798169934640523,
+            "median_ms": 6.547073004185222,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2646.6403018635733,
+              "temperature_c": 54.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 362.6506488274524,
+            "elapsed_seconds": 1.006696116994135,
+            "energy_joules": 365.079,
+            "iterations": 154,
+            "joules_per_iteration": 2.3706428571428573,
+            "median_ms": 6.529490499815438,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2776.3226771225072,
+              "temperature_c": 52.5917112492803
+            }
+          },
+          {
+            "average_watts": 360.0137937310661,
+            "elapsed_seconds": 1.003000458003953,
+            "energy_joules": 361.094,
+            "iterations": 153,
+            "joules_per_iteration": 2.3600915032679737,
+            "median_ms": 6.5442479972261935,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2647.7211361653144,
+              "temperature_c": 54.0
+            }
+          },
+          {
+            "average_watts": 357.92635344453066,
+            "elapsed_seconds": 1.0032762230111985,
+            "energy_joules": 359.099,
+            "iterations": 153,
+            "joules_per_iteration": 2.3470522875816995,
+            "median_ms": 6.545399999595247,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2643.603268923382,
+              "temperature_c": 54.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 3.0000625,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "4479741/143.wav",
+      "source": "earnings22",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 308.9242734499411,
+          "joules_per_iteration": 0.6266234817813766,
+          "median_ms": 2.023735003604088
+        },
+        "triton": {
+          "average_watts": 302.9572694869917,
+          "joules_per_iteration": 0.6162332657200811,
+          "median_ms": 2.0298309973441064
+        }
+      },
+      "target_seconds": 3,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 308.9242734499411,
+            "elapsed_seconds": 1.0020319754839875,
+            "energy_joules": 309.552,
+            "iterations": 494,
+            "joules_per_iteration": 0.6266234817813766,
+            "median_ms": 2.022667998971883,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2924.605493735173,
+              "temperature_c": 51.102630041765515
+            }
+          },
+          {
+            "average_watts": 341.9839863841039,
+            "elapsed_seconds": 1.0025030809920281,
+            "energy_joules": 342.84,
+            "iterations": 494,
+            "joules_per_iteration": 0.6940080971659919,
+            "median_ms": 2.023735003604088,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2934.6657895288977,
+              "temperature_c": 51.0
+            }
+          },
+          {
+            "average_watts": 301.33636116012633,
+            "elapsed_seconds": 1.002879303501686,
+            "energy_joules": 302.204,
+            "iterations": 494,
+            "joules_per_iteration": 0.611748987854251,
+            "median_ms": 2.025057496211957,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2934.873714216596,
+              "temperature_c": 51.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 302.9572694869917,
+            "elapsed_seconds": 1.0027915834943997,
+            "energy_joules": 303.803,
+            "iterations": 493,
+            "joules_per_iteration": 0.6162332657200811,
+            "median_ms": 2.0298309973441064,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2934.0511001486716,
+              "temperature_c": 51.0
+            }
+          },
+          {
+            "average_watts": 309.2692783866599,
+            "elapsed_seconds": 1.0028962515061721,
+            "energy_joules": 310.165,
+            "iterations": 493,
+            "joules_per_iteration": 0.6291379310344828,
+            "median_ms": 2.0292210101615638,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2932.0,
+              "temperature_c": 51.0
+            }
+          },
+          {
+            "average_watts": 296.73570220969833,
+            "elapsed_seconds": 1.0013928145053796,
+            "energy_joules": 297.149,
+            "iterations": 492,
+            "joules_per_iteration": 0.6039613821138211,
+            "median_ms": 2.0305430007283576,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2932.0,
+              "temperature_c": 51.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 10.0000625,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "4483338/125.wav",
+      "source": "earnings22",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 355.46183753339096,
+          "joules_per_iteration": 1.0535118343195267,
+          "median_ms": 2.9567515084636398
+        },
+        "triton": {
+          "average_watts": 363.52584344867375,
+          "joules_per_iteration": 1.0791420118343196,
+          "median_ms": 2.964535990031436
+        }
+      },
+      "target_seconds": 10,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 352.6211002766132,
+            "elapsed_seconds": 1.0015736429922981,
+            "energy_joules": 353.176,
+            "iterations": 338,
+            "joules_per_iteration": 1.0448994082840237,
+            "median_ms": 2.9567515084636398,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2827.0,
+              "temperature_c": 54.0
+            }
+          },
+          {
+            "average_watts": 360.8402276506574,
+            "elapsed_seconds": 1.00120211749163,
+            "energy_joules": 361.274,
+            "iterations": 338,
+            "joules_per_iteration": 1.0688579881656806,
+            "median_ms": 2.956035503302701,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2831.120071124435,
+              "temperature_c": 54.0
+            }
+          },
+          {
+            "average_watts": 355.46183753339096,
+            "elapsed_seconds": 1.0017587330075912,
+            "energy_joules": 356.087,
+            "iterations": 338,
+            "joules_per_iteration": 1.0535118343195267,
+            "median_ms": 2.9577489985967986,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2831.518753141632,
+              "temperature_c": 54.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 363.52584344867375,
+            "elapsed_seconds": 1.0033674539881758,
+            "energy_joules": 364.75,
+            "iterations": 338,
+            "joules_per_iteration": 1.0791420118343196,
+            "median_ms": 2.9637499974342063,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2889.496711352213,
+              "temperature_c": 53.2309192291142
+            }
+          },
+          {
+            "average_watts": 364.57585087409905,
+            "elapsed_seconds": 1.0014431815070566,
+            "energy_joules": 365.102,
+            "iterations": 337,
+            "joules_per_iteration": 1.0833887240356082,
+            "median_ms": 2.965487990877591,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2827.0,
+              "temperature_c": 54.0
+            }
+          },
+          {
+            "average_watts": 356.58972272095343,
+            "elapsed_seconds": 1.0011477539956104,
+            "energy_joules": 356.999,
+            "iterations": 337,
+            "joules_per_iteration": 1.0593442136498517,
+            "median_ms": 2.964535990031436,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2831.2931391523425,
+              "temperature_c": 54.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 30.2599375,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "4450488/235.wav",
+      "source": "earnings22",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 356.38737162988787,
+          "joules_per_iteration": 2.6613703703703706,
+          "median_ms": 7.472145000065211
+        },
+        "triton": {
+          "average_watts": 366.2634391111561,
+          "joules_per_iteration": 2.7448805970149257,
+          "median_ms": 7.480355001462158
+        }
+      },
+      "target_seconds": 30,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 356.38737162988787,
+            "elapsed_seconds": 1.0081305584899383,
+            "energy_joules": 359.285,
+            "iterations": 135,
+            "joules_per_iteration": 2.6613703703703706,
+            "median_ms": 7.462341003702022,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2761.8280144650007,
+              "temperature_c": 55.0
+            }
+          },
+          {
+            "average_watts": 352.9099032120133,
+            "elapsed_seconds": 1.002777186979074,
+            "energy_joules": 353.89,
+            "iterations": 134,
+            "joules_per_iteration": 2.6409701492537314,
+            "median_ms": 7.472270495782141,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2623.210270921386,
+              "temperature_c": 55.0
+            }
+          },
+          {
+            "average_watts": 361.24159740885386,
+            "elapsed_seconds": 1.0037548349937424,
+            "energy_joules": 362.598,
+            "iterations": 134,
+            "joules_per_iteration": 2.705955223880597,
+            "median_ms": 7.472145000065211,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2623.1869621741985,
+              "temperature_c": 55.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 366.2634391111561,
+            "elapsed_seconds": 1.004233458006638,
+            "energy_joules": 367.814,
+            "iterations": 134,
+            "joules_per_iteration": 2.7448805970149257,
+            "median_ms": 7.483064990083221,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2628.598895403722,
+              "temperature_c": 55.0
+            }
+          },
+          {
+            "average_watts": 350.43439751317356,
+            "elapsed_seconds": 1.0038027159898775,
+            "energy_joules": 351.767,
+            "iterations": 134,
+            "joules_per_iteration": 2.6251268656716418,
+            "median_ms": 7.475771497411188,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2617.0,
+              "temperature_c": 55.0
+            }
+          },
+          {
+            "average_watts": 367.8578789506699,
+            "elapsed_seconds": 1.004162262484897,
+            "energy_joules": 369.389,
+            "iterations": 134,
+            "joules_per_iteration": 2.756634328358209,
+            "median_ms": 7.480355001462158,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2621.115709849304,
+              "temperature_c": 55.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 3.0,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "POD1000000021_S0000276",
+      "source": "gigaspeech",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 296.1389544749019,
+          "joules_per_iteration": 0.600668016194332,
+          "median_ms": 2.022833505179733
+        },
+        "triton": {
+          "average_watts": 300.3042252729722,
+          "joules_per_iteration": 0.6098985801217038,
+          "median_ms": 2.0271870016586035
+        }
+      },
+      "target_seconds": 3,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 296.1389544749019,
+            "elapsed_seconds": 1.0019958384946221,
+            "energy_joules": 296.73,
+            "iterations": 494,
+            "joules_per_iteration": 0.600668016194332,
+            "median_ms": 2.022833505179733,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2940.0,
+              "temperature_c": 52.43469247776513
+            }
+          },
+          {
+            "average_watts": 297.5869913550922,
+            "elapsed_seconds": 1.0018146244983654,
+            "energy_joules": 298.127,
+            "iterations": 494,
+            "joules_per_iteration": 0.6034959514170041,
+            "median_ms": 2.022126500378363,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2940.0,
+              "temperature_c": 52.743234646708395
+            }
+          },
+          {
+            "average_watts": 293.88534757613576,
+            "elapsed_seconds": 1.0026427054981468,
+            "energy_joules": 294.662,
+            "iterations": 494,
+            "joules_per_iteration": 0.5964817813765182,
+            "median_ms": 2.024506000452675,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2932.0,
+              "temperature_c": 53.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 300.3042252729722,
+            "elapsed_seconds": 1.0012513134861365,
+            "energy_joules": 300.68,
+            "iterations": 493,
+            "joules_per_iteration": 0.6098985801217038,
+            "median_ms": 2.0262649923097342,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2823.839509154036,
+              "temperature_c": 52.0
+            }
+          },
+          {
+            "average_watts": 302.72586020691216,
+            "elapsed_seconds": 1.0028479225147748,
+            "energy_joules": 303.588,
+            "iterations": 493,
+            "joules_per_iteration": 0.6157971602434078,
+            "median_ms": 2.0292700064601377,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2935.69435587674,
+              "temperature_c": 52.0
+            }
+          },
+          {
+            "average_watts": 299.17408289479266,
+            "elapsed_seconds": 1.0013233669887995,
+            "energy_joules": 299.57,
+            "iterations": 493,
+            "joules_per_iteration": 0.6076470588235294,
+            "median_ms": 2.0271870016586035,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2934.649123697125,
+              "temperature_c": 52.84600946025707
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 10.0,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "POD1000000040_S0000654",
+      "source": "gigaspeech",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 372.1252183255194,
+          "joules_per_iteration": 1.1038727810650888,
+          "median_ms": 2.960863996122498
+        },
+        "triton": {
+          "average_watts": 371.14658855065096,
+          "joules_per_iteration": 1.103379821958457,
+          "median_ms": 2.9658590065082535
+        }
+      },
+      "target_seconds": 10,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 372.1252183255194,
+            "elapsed_seconds": 1.0026436845073476,
+            "energy_joules": 373.109,
+            "iterations": 338,
+            "joules_per_iteration": 1.1038727810650888,
+            "median_ms": 2.960863996122498,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2880.1349568676496,
+              "temperature_c": 55.359380195147374
+            }
+          },
+          {
+            "average_watts": 412.97206376482455,
+            "elapsed_seconds": 1.0034673924965318,
+            "energy_joules": 414.404,
+            "iterations": 338,
+            "joules_per_iteration": 1.2260473372781064,
+            "median_ms": 2.962681988719851,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2826.738547295878,
+              "temperature_c": 55.0
+            }
+          },
+          {
+            "average_watts": 363.9341737350647,
+            "elapsed_seconds": 1.0029863264935557,
+            "energy_joules": 365.021,
+            "iterations": 338,
+            "joules_per_iteration": 1.0799437869822486,
+            "median_ms": 2.960853998956736,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2823.596763371194,
+              "temperature_c": 55.846015530639804
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 371.14658855065096,
+            "elapsed_seconds": 1.0018656010070117,
+            "energy_joules": 371.839,
+            "iterations": 337,
+            "joules_per_iteration": 1.103379821958457,
+            "median_ms": 2.9658590065082535,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2827.0,
+              "temperature_c": 55.0
+            }
+          },
+          {
+            "average_watts": 376.76825206083157,
+            "elapsed_seconds": 1.001857237002696,
+            "energy_joules": 377.468,
+            "iterations": 337,
+            "joules_per_iteration": 1.1200830860534126,
+            "median_ms": 2.9650569922523573,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2827.0,
+              "temperature_c": 55.0
+            }
+          },
+          {
+            "average_watts": 367.195823400098,
+            "elapsed_seconds": 1.0016508265107404,
+            "energy_joules": 367.802,
+            "iterations": 337,
+            "joules_per_iteration": 1.09140059347181,
+            "median_ms": 2.9662889864994213,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2831.132077980064,
+              "temperature_c": 56.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 22.025,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "POD1000000005_S0000339",
+      "source": "gigaspeech",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 363.15461583625483,
+          "joules_per_iteration": 2.001412087912088,
+          "median_ms": 5.502175496076234
+        },
+        "triton": {
+          "average_watts": 373.22601812412535,
+          "joules_per_iteration": 2.0568131868131867,
+          "median_ms": 5.5009029965731315
+        }
+      },
+      "target_seconds": 30,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 358.61027649409533,
+            "elapsed_seconds": 1.0041011750145117,
+            "energy_joules": 360.081,
+            "iterations": 182,
+            "joules_per_iteration": 1.978467032967033,
+            "median_ms": 5.5086129941628315,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2683.1625152784313,
+              "temperature_c": 56.0
+            }
+          },
+          {
+            "average_watts": 368.10839452147434,
+            "elapsed_seconds": 1.0036282939981902,
+            "energy_joules": 369.444,
+            "iterations": 182,
+            "joules_per_iteration": 2.029912087912088,
+            "median_ms": 5.502175496076234,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2681.302374982675,
+              "temperature_c": 56.0
+            }
+          },
+          {
+            "average_watts": 363.15461583625483,
+            "elapsed_seconds": 1.0030355780036189,
+            "energy_joules": 364.257,
+            "iterations": 182,
+            "joules_per_iteration": 2.001412087912088,
+            "median_ms": 5.5010384967317805,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2681.1045479306094,
+              "temperature_c": 56.513068491326194
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 356.78967879765264,
+            "elapsed_seconds": 1.0012621475034393,
+            "energy_joules": 357.24,
+            "iterations": 182,
+            "joules_per_iteration": 1.9628571428571429,
+            "median_ms": 5.495618504937738,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2787.668778494124,
+              "temperature_c": 54.609013451287616
+            }
+          },
+          {
+            "average_watts": 373.22601812412535,
+            "elapsed_seconds": 1.0029847379919374,
+            "energy_joules": 374.34,
+            "iterations": 182,
+            "joules_per_iteration": 2.0568131868131867,
+            "median_ms": 5.5009029965731315,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2688.6108555206642,
+              "temperature_c": 56.0
+            }
+          },
+          {
+            "average_watts": 377.6624984628585,
+            "elapsed_seconds": 1.003440907006734,
+            "energy_joules": 378.962,
+            "iterations": 182,
+            "joules_per_iteration": 2.082208791208791,
+            "median_ms": 5.503603497345466,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2681.136753713105,
+              "temperature_c": 56.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 5.0099375,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "403903eb119bfc1cec44d86ec907077a/123.wav",
+      "source": "spgispeech",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 350.940498364541,
+          "joules_per_iteration": 0.7764878587196469,
+          "median_ms": 2.2064320073695853
+        },
+        "triton": {
+          "average_watts": 347.1884853085683,
+          "joules_per_iteration": 0.7687174392935981,
+          "median_ms": 2.209277998190373
+        }
+      },
+      "target_seconds": 3,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 352.7181944328217,
+            "elapsed_seconds": 1.0029990104958415,
+            "energy_joules": 353.776,
+            "iterations": 454,
+            "joules_per_iteration": 0.7792422907488987,
+            "median_ms": 2.203587493568193,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2927.6202942723166,
+              "temperature_c": 54.53824807511666
+            }
+          },
+          {
+            "average_watts": 350.71133323690253,
+            "elapsed_seconds": 1.0027506004844327,
+            "energy_joules": 351.676,
+            "iterations": 453,
+            "joules_per_iteration": 0.7763267108167771,
+            "median_ms": 2.2064320073695853,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2917.0,
+              "temperature_c": 55.462665044539385
+            }
+          },
+          {
+            "average_watts": 350.940498364541,
+            "elapsed_seconds": 1.0023038140061544,
+            "energy_joules": 351.749,
+            "iterations": 453,
+            "joules_per_iteration": 0.7764878587196469,
+            "median_ms": 2.2071839921409264,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2917.0,
+              "temperature_c": 55.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 347.1884853085683,
+            "elapsed_seconds": 1.002996973504196,
+            "energy_joules": 348.229,
+            "iterations": 453,
+            "joules_per_iteration": 0.7687174392935981,
+            "median_ms": 2.209137994213961,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2917.0,
+              "temperature_c": 55.33080071477309
+            }
+          },
+          {
+            "average_watts": 346.58686175989794,
+            "elapsed_seconds": 1.0032319120073225,
+            "energy_joules": 347.707,
+            "iterations": 453,
+            "joules_per_iteration": 0.7675651214128035,
+            "median_ms": 2.209277998190373,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2917.0,
+              "temperature_c": 55.63989945152663
+            }
+          },
+          {
+            "average_watts": 348.72443299407064,
+            "elapsed_seconds": 1.0025881954934448,
+            "energy_joules": 349.627,
+            "iterations": 452,
+            "joules_per_iteration": 0.7735110619469027,
+            "median_ms": 2.212252999015618,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2917.0,
+              "temperature_c": 55.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 9.99,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "002d12258ff802d65f79ae2eef99e4ab/75.wav",
+      "source": "spgispeech",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 355.83884610190336,
+          "joules_per_iteration": 1.0659014925373134,
+          "median_ms": 2.988210995681584
+        },
+        "triton": {
+          "average_watts": 359.3283147331615,
+          "joules_per_iteration": 1.0774011976047904,
+          "median_ms": 2.9900340014137328
+        }
+      },
+      "target_seconds": 10,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 365.16366891992794,
+            "elapsed_seconds": 1.0037663414987037,
+            "energy_joules": 366.539,
+            "iterations": 335,
+            "joules_per_iteration": 1.0941462686567163,
+            "median_ms": 2.988210995681584,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2831.1048023146336,
+              "temperature_c": 56.0
+            }
+          },
+          {
+            "average_watts": 355.83884610190336,
+            "elapsed_seconds": 1.0034795355022652,
+            "energy_joules": 357.077,
+            "iterations": 335,
+            "joules_per_iteration": 1.0659014925373134,
+            "median_ms": 2.9881210066378117,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2831.1174068785476,
+              "temperature_c": 56.0
+            }
+          },
+          {
+            "average_watts": 354.84746618144703,
+            "elapsed_seconds": 1.0035945975105278,
+            "energy_joules": 356.123,
+            "iterations": 335,
+            "joules_per_iteration": 1.0630537313432835,
+            "median_ms": 2.9889819998061284,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2831.3062081668713,
+              "temperature_c": 56.872866130833124
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 359.2744078956631,
+            "elapsed_seconds": 1.0032526449940633,
+            "energy_joules": 360.443,
+            "iterations": 335,
+            "joules_per_iteration": 1.0759492537313433,
+            "median_ms": 2.9900340014137328,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2880.117347759907,
+              "temperature_c": 56.46228095940449
+            }
+          },
+          {
+            "average_watts": 359.3283147331615,
+            "elapsed_seconds": 1.0014574005035684,
+            "energy_joules": 359.852,
+            "iterations": 334,
+            "joules_per_iteration": 1.0774011976047904,
+            "median_ms": 2.9908609940321185,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2831.113727815022,
+              "temperature_c": 56.0
+            }
+          },
+          {
+            "average_watts": 364.6194647308404,
+            "elapsed_seconds": 1.0032624019950163,
+            "energy_joules": 365.809,
+            "iterations": 335,
+            "joules_per_iteration": 1.0919671641791047,
+            "median_ms": 2.9883310053264722,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2831.120634858551,
+              "temperature_c": 56.2284895716647
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 15.0,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "044da592acc01ff7baacb3dbf2a302a9/54.wav",
+      "source": "spgispeech",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 361.5886889344861,
+          "joules_per_iteration": 1.4961280991735537,
+          "median_ms": 4.128396001760848
+        },
+        "triton": {
+          "average_watts": 359.41750322440583,
+          "joules_per_iteration": 1.4869173553719008,
+          "median_ms": 4.128671498619951
+        }
+      },
+      "target_seconds": 30,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 368.69318430000413,
+            "elapsed_seconds": 1.003682779497467,
+            "energy_joules": 370.051,
+            "iterations": 243,
+            "joules_per_iteration": 1.522843621399177,
+            "median_ms": 4.125956998905167,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2833.560728253031,
+              "temperature_c": 55.25255084470104
+            }
+          },
+          {
+            "average_watts": 356.69030890510993,
+            "elapsed_seconds": 1.0015775340143591,
+            "energy_joules": 357.253,
+            "iterations": 242,
+            "joules_per_iteration": 1.4762520661157024,
+            "median_ms": 4.131847497774288,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2745.0,
+              "temperature_c": 57.0
+            }
+          },
+          {
+            "average_watts": 361.5886889344861,
+            "elapsed_seconds": 1.0013117419875925,
+            "energy_joules": 362.063,
+            "iterations": 242,
+            "joules_per_iteration": 1.4961280991735537,
+            "median_ms": 4.128396001760848,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2744.7154642714754,
+              "temperature_c": 57.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 366.43840492685104,
+            "elapsed_seconds": 1.0027824459975818,
+            "energy_joules": 367.458,
+            "iterations": 242,
+            "joules_per_iteration": 1.518421487603306,
+            "median_ms": 4.133260001253802,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2748.605535696921,
+              "temperature_c": 57.0
+            }
+          },
+          {
+            "average_watts": 359.41750322440583,
+            "elapsed_seconds": 1.0011588104971452,
+            "energy_joules": 359.834,
+            "iterations": 242,
+            "joules_per_iteration": 1.4869173553719008,
+            "median_ms": 4.128671498619951,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2748.597807573541,
+              "temperature_c": 57.0
+            }
+          },
+          {
+            "average_watts": 356.64654164081776,
+            "elapsed_seconds": 1.005087553494377,
+            "energy_joules": 358.461,
+            "iterations": 243,
+            "joules_per_iteration": 1.475148148148148,
+            "median_ms": 4.128209999180399,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2747.359080321019,
+              "temperature_c": 57.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 3.0,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "20110706-0900-PLENARY-10-en_20110706-17:24:55_2",
+      "source": "voxpopuli",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 310.600991408876,
+          "joules_per_iteration": 0.6322865853658536,
+          "median_ms": 2.0306470032664947
+        },
+        "triton": {
+          "average_watts": 308.000240801707,
+          "joules_per_iteration": 0.6282240325865581,
+          "median_ms": 2.034680001088418
+        }
+      },
+      "target_seconds": 3,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 310.600991408876,
+            "elapsed_seconds": 1.0015582969936077,
+            "energy_joules": 311.085,
+            "iterations": 492,
+            "joules_per_iteration": 0.6322865853658536,
+            "median_ms": 2.030607000051532,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2925.0,
+              "temperature_c": 55.0
+            }
+          },
+          {
+            "average_watts": 310.0512223432501,
+            "elapsed_seconds": 1.0015925680054352,
+            "energy_joules": 310.545,
+            "iterations": 492,
+            "joules_per_iteration": 0.6311890243902439,
+            "median_ms": 2.0306470032664947,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2925.0,
+              "temperature_c": 55.0
+            }
+          },
+          {
+            "average_watts": 344.90685288295913,
+            "elapsed_seconds": 1.0021430340129882,
+            "energy_joules": 345.646,
+            "iterations": 492,
+            "joules_per_iteration": 0.7025325203252033,
+            "median_ms": 2.0312990018283017,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2925.0,
+              "temperature_c": 55.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 306.54107615849625,
+            "elapsed_seconds": 1.002903114494984,
+            "energy_joules": 307.431,
+            "iterations": 492,
+            "joules_per_iteration": 0.624859756097561,
+            "median_ms": 2.032746000622865,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2878.6300903532074,
+              "temperature_c": 53.63820781715374
+            }
+          },
+          {
+            "average_watts": 308.000240801707,
+            "elapsed_seconds": 1.0014862300013192,
+            "energy_joules": 308.458,
+            "iterations": 491,
+            "joules_per_iteration": 0.6282240325865581,
+            "median_ms": 2.034680001088418,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2925.0,
+              "temperature_c": 54.25747732571735
+            }
+          },
+          {
+            "average_watts": 317.17185619543596,
+            "elapsed_seconds": 1.0019457710150164,
+            "energy_joules": 317.789,
+            "iterations": 491,
+            "joules_per_iteration": 0.6472281059063136,
+            "median_ms": 2.0347899990156293,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2925.0,
+              "temperature_c": 54.03759011126073
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 9.9999375,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "20181022-0900-PLENARY-en_20181022-19:42:13_4",
+      "source": "voxpopuli",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 360.8188688828367,
+          "joules_per_iteration": 1.0812,
+          "median_ms": 2.989252010593191
+        },
+        "triton": {
+          "average_watts": 362.82614489362777,
+          "joules_per_iteration": 1.088245508982036,
+          "median_ms": 2.9939809974166565
+        }
+      },
+      "target_seconds": 10,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 363.60530109202926,
+            "elapsed_seconds": 1.0030436819943134,
+            "energy_joules": 364.712,
+            "iterations": 335,
+            "joules_per_iteration": 1.0886925373134329,
+            "median_ms": 2.989252010593191,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2890.626762633306,
+              "temperature_c": 56.48671425708884
+            }
+          },
+          {
+            "average_watts": 360.8188688828367,
+            "elapsed_seconds": 1.0038333114935085,
+            "energy_joules": 362.202,
+            "iterations": 335,
+            "joules_per_iteration": 1.0812,
+            "median_ms": 2.990083987242542,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2827.0,
+              "temperature_c": 57.0
+            }
+          },
+          {
+            "average_watts": 356.26070956478435,
+            "elapsed_seconds": 1.0028666939906543,
+            "energy_joules": 357.282,
+            "iterations": 335,
+            "joules_per_iteration": 1.0665134328358208,
+            "median_ms": 2.9871690057916567,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2834.59026430492,
+              "temperature_c": 57.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 356.7664115487501,
+            "elapsed_seconds": 1.0024262049992103,
+            "energy_joules": 357.632,
+            "iterations": 334,
+            "joules_per_iteration": 1.070754491017964,
+            "median_ms": 2.9939809974166565,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2831.002430993807,
+              "temperature_c": 57.0
+            }
+          },
+          {
+            "average_watts": 362.82614489362777,
+            "elapsed_seconds": 1.001785579996067,
+            "energy_joules": 363.474,
+            "iterations": 334,
+            "joules_per_iteration": 1.088245508982036,
+            "median_ms": 2.992668996739667,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2833.76844940009,
+              "temperature_c": 57.0
+            }
+          },
+          {
+            "average_watts": 367.65647775194867,
+            "elapsed_seconds": 1.0025962340005208,
+            "energy_joules": 368.611,
+            "iterations": 334,
+            "joules_per_iteration": 1.1036257485029939,
+            "median_ms": 2.995278002345003,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2830.2863332180586,
+              "temperature_c": 57.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 30.02,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "20140716-0900-PLENARY-7-en_20140716-10:22:18_15",
+      "source": "voxpopuli",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 360.4924649118843,
+          "joules_per_iteration": 2.6685,
+          "median_ms": 7.390465005300939
+        },
+        "triton": {
+          "average_watts": 360.3880646405487,
+          "joules_per_iteration": 2.662514705882353,
+          "median_ms": 7.381559000350535
+        }
+      },
+      "target_seconds": 30,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 360.4924649118843,
+            "elapsed_seconds": 1.0066978794930037,
+            "energy_joules": 362.907,
+            "iterations": 136,
+            "joules_per_iteration": 2.6684338235294116,
+            "median_ms": 7.391011495201383,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2616.7460080060787,
+              "temperature_c": 58.0
+            }
+          },
+          {
+            "average_watts": 360.3825413682628,
+            "elapsed_seconds": 1.0070299149956554,
+            "energy_joules": 362.916,
+            "iterations": 136,
+            "joules_per_iteration": 2.6685,
+            "median_ms": 7.390465005300939,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2613.611951266377,
+              "temperature_c": 58.0
+            }
+          },
+          {
+            "average_watts": 368.31926130439587,
+            "elapsed_seconds": 1.0060918310045963,
+            "energy_joules": 370.563,
+            "iterations": 136,
+            "joules_per_iteration": 2.7247279411764707,
+            "median_ms": 7.384780001302715,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2612.888797786362,
+              "temperature_c": 58.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 360.3880646405487,
+            "elapsed_seconds": 1.0047558049991494,
+            "energy_joules": 362.102,
+            "iterations": 136,
+            "joules_per_iteration": 2.662514705882353,
+            "median_ms": 7.3788939989754,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2720.1767261937002,
+              "temperature_c": 58.0
+            }
+          },
+          {
+            "average_watts": 356.40422294643076,
+            "elapsed_seconds": 1.0055716990027577,
+            "energy_joules": 358.39,
+            "iterations": 136,
+            "joules_per_iteration": 2.635220588235294,
+            "median_ms": 7.381559000350535,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2613.6079107013666,
+              "temperature_c": 58.0
+            }
+          },
+          {
+            "average_watts": 360.67510366448323,
+            "elapsed_seconds": 1.006645582994679,
+            "energy_joules": 363.072,
+            "iterations": 136,
+            "joules_per_iteration": 2.6696470588235295,
+            "median_ms": 7.388201498542912,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2610.0,
+              "temperature_c": 58.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 3.0,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "02db6434275133df0c23a4adcd81f00a643887ff9355b49cab7da96b8bd3dfa0b84fc855c39d395a0f7f9c8a4a33b4ee10e0675a882b91201d606457ae7ae728#1",
+      "source": "common_voice",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 294.8784701465429,
+          "joules_per_iteration": 0.6012362525458248,
+          "median_ms": 2.0331624982645735
+        },
+        "triton": {
+          "average_watts": 301.8121036573091,
+          "joules_per_iteration": 0.6156382113821138,
+          "median_ms": 2.0331769992480986
+        }
+      },
+      "target_seconds": 3,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 294.276780975672,
+            "elapsed_seconds": 1.0024372260086238,
+            "energy_joules": 294.994,
+            "iterations": 492,
+            "joules_per_iteration": 0.5995813008130082,
+            "median_ms": 2.0314889916335233,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2844.1589729820425,
+              "temperature_c": 54.743361818990614
+            }
+          },
+          {
+            "average_watts": 294.8784701465429,
+            "elapsed_seconds": 1.001114119499107,
+            "energy_joules": 295.207,
+            "iterations": 491,
+            "joules_per_iteration": 0.6012362525458248,
+            "median_ms": 2.0335580047685653,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2925.0,
+              "temperature_c": 55.0
+            }
+          },
+          {
+            "average_watts": 299.89525130095666,
+            "elapsed_seconds": 1.002843488502549,
+            "energy_joules": 300.748,
+            "iterations": 492,
+            "joules_per_iteration": 0.6112764227642277,
+            "median_ms": 2.0331624982645735,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2925.0,
+              "temperature_c": 55.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 301.8121036573091,
+            "elapsed_seconds": 1.0035846685059369,
+            "energy_joules": 302.894,
+            "iterations": 492,
+            "joules_per_iteration": 0.6156382113821138,
+            "median_ms": 2.0326115045463666,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2925.0,
+              "temperature_c": 55.0
+            }
+          },
+          {
+            "average_watts": 300.73272404721297,
+            "elapsed_seconds": 1.0029038274951745,
+            "energy_joules": 301.606,
+            "iterations": 492,
+            "joules_per_iteration": 0.613020325203252,
+            "median_ms": 2.0331769992480986,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2925.0,
+              "temperature_c": 55.0
+            }
+          },
+          {
+            "average_watts": 305.8266831848336,
+            "elapsed_seconds": 1.0012108715018257,
+            "energy_joules": 306.197,
+            "iterations": 491,
+            "joules_per_iteration": 0.6236191446028513,
+            "median_ms": 2.0343200012575835,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2925.0,
+              "temperature_c": 55.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 10.008,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "08979b185cf9503b193715c289628acd417c344cb97033f9452bc82f2d5588792865e036093e25064532451f9ee57069ef591a9dd70f5fba4bd0ec0fad856124",
+      "source": "common_voice",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 366.7959465781993,
+          "joules_per_iteration": 1.0898575667655785,
+          "median_ms": 2.9666900081792846
+        },
+        "triton": {
+          "average_watts": 365.3781214100038,
+          "joules_per_iteration": 1.088219584569733,
+          "median_ms": 2.9703369946219027
+        }
+      },
+      "target_seconds": 10,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 368.33321236082463,
+            "elapsed_seconds": 1.001943315495737,
+            "energy_joules": 369.049,
+            "iterations": 337,
+            "joules_per_iteration": 1.095100890207715,
+            "median_ms": 2.9666900081792846,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2820.0,
+              "temperature_c": 58.0
+            }
+          },
+          {
+            "average_watts": 366.7959465781993,
+            "elapsed_seconds": 1.0013251330237836,
+            "energy_joules": 367.282,
+            "iterations": 337,
+            "joules_per_iteration": 1.0898575667655785,
+            "median_ms": 2.9644860042026266,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2823.6056875336503,
+              "temperature_c": 58.0
+            }
+          },
+          {
+            "average_watts": 363.27532951702943,
+            "elapsed_seconds": 1.0020140935084783,
+            "energy_joules": 364.007,
+            "iterations": 337,
+            "joules_per_iteration": 1.080139465875371,
+            "median_ms": 2.9678120044991374,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2820.0,
+              "temperature_c": 58.0
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 387.09709748650585,
+            "elapsed_seconds": 1.0021904129971517,
+            "energy_joules": 387.945,
+            "iterations": 337,
+            "joules_per_iteration": 1.1511721068249259,
+            "median_ms": 2.9694149998249486,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2881.4269472692513,
+              "temperature_c": 57.74330753924655
+            }
+          },
+          {
+            "average_watts": 365.3781214100038,
+            "elapsed_seconds": 1.0036999440053478,
+            "energy_joules": 366.73,
+            "iterations": 337,
+            "joules_per_iteration": 1.088219584569733,
+            "median_ms": 2.971990004880354,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2823.6046008813214,
+              "temperature_c": 58.0
+            }
+          },
+          {
+            "average_watts": 359.085273494293,
+            "elapsed_seconds": 1.0031210595043376,
+            "energy_joules": 360.206,
+            "iterations": 337,
+            "joules_per_iteration": 1.0688605341246291,
+            "median_ms": 2.9703369946219027,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2823.603655191238,
+              "temperature_c": 58.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "audio_seconds": 29.832,
+      "checks": {
+        "ptx_cuda": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        },
+        "triton": {
+          "bitwise_match": true,
+          "max_abs": 0.0
+        }
+      },
+      "id": "38acaf2488bf254930421515622c046d7d70aa64eee6f24ee402b20a6142af4a9b3ecaab517a05adeffa4999a1a01a750cb0b087144c9a7439df381ce926795c",
+      "source": "common_voice",
+      "summary": {
+        "ptx_cuda": {
+          "average_watts": 361.2603336044964,
+          "joules_per_iteration": 2.6945333333333332,
+          "median_ms": 7.4439659947529435
+        },
+        "triton": {
+          "average_watts": 358.9929185627435,
+          "joules_per_iteration": 2.678355555555555,
+          "median_ms": 7.443734997650608
+        }
+      },
+      "target_seconds": 30,
+      "windows": {
+        "ptx_cuda": [
+          {
+            "average_watts": 407.97723452003646,
+            "elapsed_seconds": 1.0050585309800226,
+            "energy_joules": 410.041,
+            "iterations": 135,
+            "joules_per_iteration": 3.0373407407407407,
+            "median_ms": 7.437553009367548,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2772.723670825532,
+              "temperature_c": 58.0
+            }
+          },
+          {
+            "average_watts": 353.50082436774613,
+            "elapsed_seconds": 1.0066200004948769,
+            "energy_joules": 355.841,
+            "iterations": 135,
+            "joules_per_iteration": 2.6358592592592593,
+            "median_ms": 7.4439659947529435,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2635.7515789784943,
+              "temperature_c": 58.43519134582225
+            }
+          },
+          {
+            "average_watts": 361.2603336044964,
+            "elapsed_seconds": 1.006924829998752,
+            "energy_joules": 363.762,
+            "iterations": 135,
+            "joules_per_iteration": 2.6945333333333332,
+            "median_ms": 7.445287992595695,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2628.5963503610883,
+              "temperature_c": 58.23012110670603
+            }
+          }
+        ],
+        "triton": [
+          {
+            "average_watts": 358.9929185627435,
+            "elapsed_seconds": 1.0072009259893093,
+            "energy_joules": 361.578,
+            "iterations": 135,
+            "joules_per_iteration": 2.678355555555555,
+            "median_ms": 7.447492011124268,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2637.3147450249676,
+              "temperature_c": 58.0
+            }
+          },
+          {
+            "average_watts": 356.17099928709825,
+            "elapsed_seconds": 1.0071314079978038,
+            "energy_joules": 358.711,
+            "iterations": 135,
+            "joules_per_iteration": 2.6571185185185184,
+            "median_ms": 7.443734997650608,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2628.5962333355483,
+              "temperature_c": 58.0
+            }
+          },
+          {
+            "average_watts": 362.09714856611987,
+            "elapsed_seconds": 1.0062244385044323,
+            "energy_joules": 364.351,
+            "iterations": 135,
+            "joules_per_iteration": 2.6988962962962963,
+            "median_ms": 7.439076012815349,
+            "method": "nvml_total_energy",
+            "telemetry_averages": {
+              "memory_clock_mhz": 13801.0,
+              "sm_clock_mhz": 2631.1262122346516,
+              "temperature_c": 58.124826823621206
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "runtime": {
+    "export": "/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/main-M1-P2-lr5e-4/export",
+    "export_sha256": "a287e97719c451b785be2cd01ecc861fcaa010ebaa4ff2841783ec78fcd61503",
+    "runtime_wrapper_sha256": "487bcfbc31c1558c3da349909ba9f03f31977b19b91deb45042164ec3c6cc9cb",
+    "torch": "2.11.0+cu128",
+    "triton": "3.6.0"
+  },
+  "scope": "GPU features -> encoder output; raw CUDA-graph replay; excludes frontend/decoder/first capture",
+  "source_sha256_at_benchmark": {
+    "__init__.py": "0e9296dd1db393ce8e54846dd3ae33f59f249d8e784abbfd345466488ab02767",
+    "__main__.py": "dfa15e99e006c08b34b5e9a65a0c7714350abe4e8404179634a24d9241d8d429",
+    "benchmark.py": "b017eca7d7cb07b89a1b947cb02cd983a61b1afc0eb0414a0b95163c2cee8785",
+    "benchmark2.py": "3f8d0faceea38a19592c87cdd6aeae7bf3d448fceda26d71f08979cbaaa70cf4",
+    "bitwise.py": "dacab7d29a3b71f80377b0f4bf873b5fd90845e2ec1a3880be0c6efed2f128f6",
+    "bitwise_benchmark.py": "2efd05dab67cfb911a1db4057da3ddf55af863101b0c529c62e15dc622d964d0",
+    "compare_v2.py": "7472814454d53e0f46e4d08af095b3bbff3e2a6d775339d7f7e7f576c33da179",
+    "compare_v2_components.py": "4da9252f81cf91b3ca417e10ddbf665f4a6fd3f733f492be3999fc168ead4622",
+    "compare_v2_report.py": "e09789521f8f2db1599ff94c19c7f33231df84e1a1e6397e15df4438e52a5cb9",
+    "cuda_cublas.py": "acfd3e0fffac55da2558733068c5ca5063abc9d55163594c75fa045cbe030b1e",
+    "cuda_experiments.py": "c3e63a38f042fd6245bb34b5cc0ac0425c6a88e437bc2307954369b91f362729",
+    "cuda_matmul.py": "1a7f2152dce80cbd4998ec75a0836fbc43f8e351d12c8a2e4291db8c11995337",
+    "decoder_kernels.py": "333d7330062157f0e04b2f2cab7d5c209f087691bffa732c4b7feb11fa063c58",
+    "encoder4.py": "924cfd2552744868247e375ae60082b7d82c2d87ff66d9fadc08fa833ffe93a3",
+    "experiments.py": "21395f1d467c36e1ce8fdd254f83913c46bc945f043c77cb056c6c26103591ae",
+    "fused_kernels.py": "755154fc5967a654a65eb1c95a316786634eb27f847dbd976a39cdeadedf84e5",
+    "graph_memory.py": "c36061eff855968c0e7fd284911638a38ad2af1603423c6345b49970d39a00a2",
+    "graphs.py": "a3eaef81b17c540e44e01d37b707e7fad962d679c65d30699ca551053e02e6dc",
+    "kernels.py": "7b8d0e0e2da37b56f6f6562ce287bea090bc3edcbd9aa46e2831c2557ea474e7",
+    "layer_fusions4.py": "e30f8d2035409333785bb9714c2bc53edd3222a1ace460d4cf91017fa5041b68",
+    "optimized.py": "8401e907ea22c2795f3b8e13cd9e7bfa05c42ecc62ec41b4863aa9867af0a29e",
+    "pipeline_probe.py": "92cd34b030846ddc903ed518ca23a01d2f856e54f5b32dcabc2710ab14ca046c",
+    "profile3.py": "5b226a2d357fc552261b6da690924ed0119af35b458817c90296ca4a1884ba9d",
+    "profile4.py": "b27f5e3bf01cde38c516d34933cd847e3fb7af04896c20fe8927bfb6161d6865",
+    "ptx_cuda.py": "8eb12d1120dbb48ee62c1bae50d0cc9dfcc4cfaa11d70d312e6e5450ae7b8ebd",
+    "quality2.py": "3a5c7ca3c31b84d4000007b3f4b696ef79dbf69a6875687468ebf5216d988ef2",
+    "quality3.py": "dd27bc7416ffe5e14b2e24e643083eba8fdac0873beffba4b038adf52456f06a",
+    "quality4.py": "1baddb72b98ab8690b2ba8559f71a799175cedc43c658a2229777513cb1cc9e6",
+    "runtime.py": "f62de5bcc7aa850d8ca5920a8b187636859065e4d332edcff4851e16e70328da",
+    "sprint3.py": "8e4f5531ca13f16f004be4bdd8583bc9c329d1ae5b6283d54d290c6b19d29fa5",
+    "sprint4.py": "397335dd2416c4c705c70606fe60d33f2fd1d3280380364ae41b12f645e2da24",
+    "test_bitwise.py": "cfcd9bd5c6efd500de03d342d079382a7abee0741742ce8a84e77e25af9165d0",
+    "test_cuda_matmul.py": "960e4e085dc156212d16d5c6e06906e5cbd6be1fe2f4b4f72b73a8d40d3bf5f0",
+    "test_decoder.py": "e5eee466121f27093365b9ffab52718fd275c87cc8a40f6d0c12b300edd3acf8",
+    "test_encoder4.py": "f440e544900dfd8414358fad453f9a7caa3fab28b5c78a5c8c505d3706452923",
+    "test_experiments.py": "7bc6d92cc5c00e3819ac8c54fec718b308a56442b112fef2a2ebaea071c60aba",
+    "test_kernels.py": "683cedc8d3314036874c53a2aa3940a7e296872ddf589105631c13147717a997",
+    "test_model_graphs.py": "c82b605cb19642aca071170b20a46c5d16c7a091f3a5c11664b154d4989cdd8f",
+    "transforms.py": "be3ac9ddbcd3998526b9f9f1d0483e9f72ce2fb179eaed3e0edca99a6ca0690f",
+    "tune2.py": "2b04e5adb3330c4e309b260f89538ec9aee72da7751cc0e4aebd71629a3f999d",
+    "tune_expanded.py": "79407cfe242bc5b61919241b9c13d6cb666b4d8cc0b0b991ef25c31d1e504082",
+    "tune_integer.py": "e0db253ff76d6bd7b77a6cb3c2b7137821eabb7b6b0fcb96238b937ef4a491c7",
+    "weight_audit.py": "16d7b53ae9e7b06f89a0f3492779e0d7d84a9677a6112b1eb779c3c5c75b9f18"
+  },
+  "variant": "CUDA functions containing the current Expanded Triton encoder matmul instruction bodies as inline PTX, compiled by NVRTC 12.9 for SM120a; quantization, weight storage, epilogue and other encoder kernels unchanged"
+}
