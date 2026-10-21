@@ -6,8 +6,8 @@ Low-bit, low-power speech-to-text. This repository contains:
 - a custom CUDA runtime for it whose expanded mode, on an RTX 5090, has lower
   latency, process VRAM and GPU energy than our own optimized BF16 build of the
   original for the clips we measured;
-- a binary-weight (1-bit) version of that Parakeet, 105.3 MB, within 0.6 WER
-  points of the original;
+- a binary-weight (1-bit) version of that Parakeet, 105.3 MB, about 0.6 WER
+  points behind the original;
 - a ternary Whisper tiny.en;
 - packed binary/ternary CPU and GPU kernels.
 
