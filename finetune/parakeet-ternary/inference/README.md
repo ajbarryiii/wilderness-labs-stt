@@ -1,209 +1,208 @@
-# Packed Parakeet inference on RTX 5090
+# CUDA runtime for ternary Parakeet-TDT-0.6B-v2
 
-This runtime executes the existing `parakeet-ternary-v1` export with packed
-2-bit weights for all 264 quantized encoder layers. It supports linear layers
-and kernel-1 convolutions, including NeMo's transposed input views. The base path
-uses existing NeMo code for decoder, frontend, attention and normalization.
-It requires the project's PyTorch 2.11 / Triton 3.6 runtime and SM120 GPU.
+This directory runs the published ternary checkpoint
+[rajb3/kea-t](https://huggingface.co/rajb3/kea-t)
+on NVIDIA SM120 GPUs (target: RTX 5090) directly from its packed weights. Unlike the `load_ternary.py` loader in the
+Hugging Face download, it does not rebuild a dense FP32 model, and it lives only in this
+repository (MIT). All numbers come from one RTX 5090 at its configured 400 W power limit,
+measuring warm batch-one transcription from a CPU waveform to CPU text. The evidence, including
+p95 latency, every window, the GPU clocks and the hashes of the runtime sources, is in
+[`results/rtx5090.json`](results/rtx5090.json).
 
-The optional optimized implementation adds residual INT8x3 encoder arithmetic,
-fused operations, and FP32 decoder kernels while retaining NeMo's model and
-greedy decoding algorithm. It now includes the third optimization pass;
-see [EXPERIMENTS3.md](EXPERIMENTS3.md) for its experiments and validation, and
-[COMPONENTS.md](COMPONENTS.md) for isolated encoder/decoder measurements.
-The earlier second-pass ledger is in [EXPERIMENTS.md](EXPERIMENTS.md).
-See [COMPARISON.md](COMPARISON.md) for isolated process VRAM, latency, energy,
-and quality measurements against original Parakeet v2 in NeMo and ONNX Runtime,
-including a graph-enhanced dense BF16 baseline.
-The third pass reduces warmed batch-one latency by **29–43%** and GPU energy
-by **19–27%** relative to the second pass on the tested 3/10/30-second clips.
-The 10-second result is **5.27 ms, 1.89 J, 1.27 GB process VRAM**. All **2,048**
-validation transcripts match the second-pass control exactly. These
-are measured workload results, not a cold-start or full-corpus quality guarantee.
-Decoder fusions also accelerate dense NVIDIA v2; they are not a ternary-only gain.
+## Results
 
-The fourth pass adds an optional expanded-weight encoder. It retains the trained
-ternary values but caches them as column-major INT8, using about 604 MB more
-weight storage for faster kernels. It also fuses convolution and residual
-operations. See [EXPERIMENTS4.md](EXPERIMENTS4.md) for the weight/sign audit,
-candidate screens, rejected experiments, and validation. The 400 W GPU power
-limit is retained throughout these experiments.
-On the tested 10-second clip, it reduces the encoder from 3.74 to 2.96 ms and
-full transcription from **5.27 to 4.46 ms**, using **1.57 J** and **1.89 GB
-process VRAM**. Across the three clips, end-to-end latency falls 13.5–15.3%
-and GPU energy 15.4–16.1%, with about 617–619 MB additional process VRAM.
-All 2,048 comparison transcripts, token sequences and timestamps match the
-third-pass compact runtime; the 12 regression tests pass.
+| Clip | Configuration | Latency (ms) | Process VRAM (GB) | GPU energy (J) | Avg GPU power (W) |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 3 s | Ternary expanded — optimized by Wilderness Labs | 2.73 | 1.74 | 0.76 | 279 |
+| 3 s | Ternary compact — optimized by Wilderness Labs | 3.16 | 1.12 | 0.91 | 288 |
+| 3 s | Original BF16 — optimized by Wilderness Labs | 4.25 | 2.11 | 1.15 | 271 |
+| 3 s | ONNX ASR / ORT CUDA — off the shelf | 7.87 | 4.13 | 1.97 | 249 |
+| 10 s | Ternary expanded — optimized by Wilderness Labs | 4.46 | 1.89 | 1.57 | 351 |
+| 10 s | Ternary compact — optimized by Wilderness Labs | 5.27 | 1.27 | 1.86 | 352 |
+| 10 s | Original BF16 — optimized by Wilderness Labs | 5.81 | 2.18 | 1.90 | 326 |
+| 10 s | ONNX ASR / ORT CUDA — off the shelf | 15.74 | 4.14 | 3.75 | 237 |
+| 30.04 s | Ternary expanded — optimized by Wilderness Labs | 10.56 | 2.23 | 3.99 | 376 |
+| 30.04 s | Ternary compact — optimized by Wilderness Labs | 12.21 | 1.62 | 4.74 | 386 |
+| 30.04 s | Original BF16 — optimized by Wilderness Labs | 11.56 | 2.35 | 4.48 | 386 |
+| 30.04 s | ONNX ASR / ORT CUDA — off the shelf | 36.38 | 4.19 | 9.00 | 248 |
 
-On our RTX 5090 at its 400 W cap, the opt-in hybrid CUDA/Triton ternary runtime (`--experimental-cuda`) had 3.43% lower median full-transcription latency and 3.01% lower GPU energy per transcription than the Expanded Triton runtime. Process VRAM was essentially unchanged. Text, token IDs and timestamps matched on 2,048 sampled utterances. [CUDA_IMPROVEMENTS.md](CUDA_IMPROVEMENTS.md) has the results and their limits. [CUDA_RESULTS.md](CUDA_RESULTS.md) covers the older hand-written CUDA and cuBLAS trials and the decoder token-cache ablation.
+Compared with our optimized BF16 build of the original:
 
-From the repository root:
+- **Expanded** is lower on latency, process VRAM and GPU energy at all three lengths. At 10 s it
+  has 23.2% lower latency, 13.5% lower process VRAM and 17.1% less GPU energy.
+- **Compact** has the lowest process VRAM of the four configurations at every length (41.8% less
+  than BF16 at 10 s), and 9.3% lower latency at 10 s. Its 10 s energy is 2% lower, which is too
+  small a difference to count as a gain. At 30.04 s it has 5.6% higher latency and uses 5.8% more
+  energy than BF16.
+- **Expanded vs compact** at 10 s: 15.3% lower latency and 15.4% less energy, at the cost of
+  about 617 MB more process VRAM.
 
-```sh
-P=finetune/parakeet-ternary
-EXPORT=/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/main-M1-P2-lr5e-4/export
-$P/python -m inference --export "$EXPORT" clip.wav
-# Faster path for repeated audio shapes:
-$P/python -m inference --export "$EXPORT" --optimized clip.wav
-# Trade additional VRAM for the fourth-pass encoder:
-$P/python -m inference --export "$EXPORT" --optimized --encoder-storage expanded clip.wav
-```
+Expanded had the lowest latency and GPU energy of the four configurations at every length.
 
-Audio must be 16 kHz. The export contains the tokenizer and configuration; the
-runtime needs no model download or original `.nemo` file. Load once and reuse:
+Compared with the off-the-shelf ONNX row at 10 s, expanded has 71.6% lower latency, 54.4% lower
+process VRAM and 58.0% less GPU energy. Compact is 66.5%, 69.3% and 50.4% lower. Our BF16 build
+of the original also has 63.1% lower latency than that row; the configurations differ in
+precision and runtime.
 
-```python
-from inference import load_packed, enable_optimizations
-from hf.load_ternary import transcribe
+## Two modes, one checkpoint
 
-model = load_packed("/mnt/hd/wilderness-labs-stt/parakeet-ternary/runs/main-M1-P2-lr5e-4/export")
-# Fused encoder/decoder plus exact-shape frontend/encoder graph cache.
-enable_optimizations(model, max_graphs=4)
-print(transcribe(model, ["clip.wav"], batch_size=1))
-```
+Both modes load the same trained export. In both, the 264 ternary encoder matrices run on INT8
+Tensor Cores: activations enter those multiplies as three residual INT8 components, with int32
+accumulation and FP32 outputs. This is not ordinary single-INT8 activation quantization. The
+modes differ in how the weights are held:
 
-Use the `python` wrapper: it verifies `/mnt/hd` is mounted and places all
-model/compiler caches and temporary files on that disk. The first encounter
-with a new shape compiles kernels. Warm up the intended shapes before measuring
-latency or energy. No weights are trained or requantized by this runtime.
+- **Compact** (`--optimized`) keeps the matrices on the GPU as 2-bit codes (four per byte) with
+  per-row FP32 scales, and unpacks the codes inside the kernels.
+- **Expanded** (`--optimized --encoder-storage expanded`) also caches an exact INT8 copy of the
+  same codes (603,979,776 bytes, about 604 MB), which the kernels read directly.
 
-The wrapper now exposes the existing NVRTC 12.9 wheel to CUDA-Python. This lets
-NeMo use its full conditional GPU graph decoder instead of falling back to
-host-controlled loops. No dependency is downloaded. Outside this wrapper,
-ensure CUDA-Python can find NVRTC; otherwise NeMo may use the slower fallback.
+In both modes the non-ternary tensors stay in floating point (stored as FP16 in the export and
+rebuilt as FP32), and encoder operations are fused. The prediction and joint networks run in FP32
+through a fused decoder, and NeMo's greedy TDT loop runs as conditional CUDA graphs. Graphs are
+cached per input shape, with a graph allocation fix.
 
-The optional graph cache stores the first four exact shape/stream combinations;
-additional shapes run eagerly. It copies current features and lengths on every
-call and returns owned output tensors. No audio bucketing or padding is added.
-Capture needs an initial warm-up, so it benefits repeated shapes rather than
-single cold calls. CLI equivalent: `--encoder-graphs`. Enable it after moving
-the model to its final device; call `disable_encoder_graphs(model)` before
-changing weights or device. Serialize calls per model across host threads;
-concurrent calls on the same model are unsupported. Graph pools consume
-additional activation memory.
+## The comparison rows
 
-`enable_optimizations` uses a graph around preprocessing plus the encoder;
-`enable_encoder_graphs` remains available for the original encoder-only cache.
-These caches are mutually exclusive. The optimized path requires offline FP32
-inference without autocast, with frontend `dither=0` and `pad_to=0` for graph
-reuse (`transcribe` sets these). Other frontend settings run eagerly. Streaming
-encoder calls are unsupported by the optimized transforms. Pass `max_graphs=0`
-to use the fusions eagerly. Call `disable_optimizations(model)` before changing
-weights/device, saving a state dict, or training; it restores the original
-modules and releases graphs. Load the normal export before re-enabling.
+**Original BF16 — optimized by Wilderness Labs** is NVIDIA's original checkpoint (revision
+`ae9ad07059c7c739ffaf932226a8fe64ae2620b0`) with a BF16 encoder, plus our CUDA graphs, fused
+FP32 decoder and graph allocation fix. It is not stock NeMo; we built it so that the ternary rows
+are compared against an optimized original. The checkpoints still differ: the original's
+non-encoder weights are FP32, while the ternary export stores its float tensors as FP16, and the
+two emit different transcripts and therefore do different amounts of decoder work. This row
+compares complete runtimes; it does not isolate ternarization or the encoder.
 
-The optimized arithmetic keeps the two-bit weights and represents each input
-as three scaled INT8 residual vectors. Integer products accumulate in INT32,
-then combine with FP32 scales and outputs. Fused normalization, packed Q/K/V,
-SiLU, relative attention, BatchNorm folding and fixed positional projections
-reduce work and launches. This is a high-accuracy approximation of the original
-floating activations, not ordinary single-pass INT8 inference. The code remains
-inference-only and targets finite speech-model activations.
+**ONNX ASR / ORT CUDA — off the shelf** is the unmodified
+[onnx-asr](https://github.com/istupakov/onnx-asr) 0.12.0 package with onnxruntime-gpu 1.24.4.
+It runs the published FP32 export
+[istupakov/parakeet-tdt-0.6b-v2-onnx](https://huggingface.co/istupakov/parakeet-tdt-0.6b-v2-onnx)
+at revision `0bbb45a3365852604aef28b538a8f066f4ccaa85` on the CUDA execution provider, with the
+normal CPU fallback, default provider and allocator options, 4 intra-op CPU threads and 1
+inter-op thread. It uses neither NeMo nor our kernels, and ran on the same GPU, at the same power
+limit, with the same protocol and clips. Its weights are FP32, and ONNX Runtime's defaults leave
+CUDA graphs off. It is one common way to run the model, and this is not a survey of optimized
+engines: we did not benchmark
+[sherpa-onnx](https://k2-fsa.github.io/sherpa/onnx/pretrained_models/offline-transducer/index.html),
+which also supports this model, or other ONNX Runtime settings. These results do not establish
+the best achievable off-the-shelf performance.
 
-Pass `encoder_storage="expanded"` to `enable_optimizations` for the faster
-column-major path. Expansion is exact and happens once during warmup. The cache
-remains owned by the optimized model until disable; it is not an exported model
-format or a further quantization step. The original packed weights remain
-available for restoration. Tile tuning targets this 5090 and the tested speech
-lengths; other workloads can have different tradeoffs.
+## Method
 
-The optimized decoder keeps FP32 weights, with a precomputed first-layer token
-projection and fused recurrent/joint operations. Batch-one control kernels fuse
-argmax, time advancement and hypothesis storage inside NeMo's conditional graph.
-Larger batches and unsupported recording modes use the original control stages.
-Conditional-body memory pools are retained for graph safety and released on
-disable. `decoder=False, position_dot=False` selects second-pass arithmetic
-while keeping the allocation-lifetime correction.
+- **Timed path:** a CPU FP32 16 kHz waveform in, CPU text out, at batch one. Timing includes
+  host-device transfers and feature extraction, and excludes file I/O, model loading,
+  compilation and the first graph capture.
+- **Workloads:** one real LibriSpeech test-clean clip per length: 3.0, 10.0 and 30.04 s (record
+  IDs are in the JSON).
+- **Runs:** each configuration ran in its own fresh process, one after another, never
+  concurrently. Each length got three 5 s timed windows, each after a 2 s warm-up; reported
+  values are medians. One process runs the lengths in order (3, 10, 30.04 s) and its graph cache
+  holds up to four shapes, so process VRAM at the longer lengths includes graphs already
+  captured for the shorter ones.
+- **Process VRAM:** the highest sampled GPU memory of the warm process, in decimal GB. It
+  includes the CUDA context, weights, graphs and workspace, so it is neither the weight-file size
+  nor allocator statistics alone.
+- **GPU energy:** NVML's GPU-board energy counter per transcription. It excludes CPU, host and
+  wall-outlet energy.
+- **Power:** the configured 400 W limit (board default 600 W) was not changed for any row. At
+  10 s the ternary rows draw as much power as BF16 or more (expanded 351 W, compact 352 W, BF16
+  326 W, ONNX 237 W). They use less energy because they finish sooner; this is not a
+  lower-wattage result.
 
-## Kernel design
+## Quality validation
 
-At load time, four export bytes become an int32 word and the packed matrix is
-transposed to `[ceil(K/16), N]`. This is a layout change, with exactly the same
-`00=0`, `01=+1`, `10=-1` codes. There is one resident packed orientation. Each
-kernel in the default packed path decodes only its active tile; no dense weight matrix is allocated on the
-GPU. Scales and optional biases remain FP32.
+- **Compact vs expanded:** text, tokens and timestamps were identical on 2,048 of 2,048
+  utterances (256 from each of eight test sets, 3.9 h), with encoders at batch sizes up to 8 and
+  the decoder at batch one. In a further 256 of 256 utterances run in fresh batch-one
+  processes, the transcripts matched. The floating-point outputs are not bit-identical: the
+  largest absolute encoder difference was 1.34e-6.
+- **What this does not show:** agreement between the two modes is not timestamp accuracy, and it
+  does not show that accuracy is unchanged from NVIDIA's model. Full-corpus accuracy for this
+  checkpoint is in [`../results/TEST.md`](../results/TEST.md): the mean over seven leaderboard
+  sets is 6.84%, against 6.45% for the FP32 original, and Common Voice is 12.56% against 8.50%.
+- **Benchmark subset:** on the benchmark's 256-utterance quality subset (32 per set, 4,721
+  reference words), both ternary modes made 263 word edits and the off-the-shelf ONNX original
+  made 245. These are subset counts, not leaderboard WER.
 
-- For 1–4 input rows, a SIMT reduction multiplies FP32 activations by exact
-  ternary coefficients. Long reductions split across GPU blocks.
-- Larger inputs use tiled Tensor Core multiplication. The default decomposes
-  each FP32 activation into three BF16 components **in registers**, then computes
-  their products with the exact ternary coefficients. High and residual sums
-  accumulate separately in FP32, avoiding the loss of small contributions when
-  repeatedly adding them to a large accumulator. Output scaling happens once.
-- Shape-dependent tiles and split-K counts were selected offline on this 5090.
-  Split-K uses an FP32 workspace and deterministic reduction, without atomics.
-  There is no inference-time autotuning or CPU synchronization in the kernels.
-- Pointwise convolutions read `[B,C,T]` strides and write that layout directly,
-  avoiding im2col or transpose copies. Linear inputs with more than three
-  dimensions may require a reshape copy if their layout cannot be flattened.
+## Usage
 
-`mode="tf32x3"` supplies an alternative high-accuracy Tensor Core path for
-comparison. The normal module/loader interface uses FP32 inputs and outputs;
-`matmul(..., mode="fp16")` is an explicit low-level option requiring FP16 inputs.
-It keeps FP32 row scales, so its reference is the FP32-weight result rounded to
-FP16, not a matmul with weights independently rounded to FP16.
-
-These operations approximate the FP32 computation; they are not bit-identical
-to cuBLAS. Reduction order and moving the common row scale outside the sum also
-change rounding. This is not ordinary BF16 activation inference: the residual
-components are retained. The supported numerical domain is finite speech-model
-activations; NaN, infinity, and preservation of subnormal values are not promised.
-
-`PackedLinear` and `PackedPointwiseConv1d` hold buffers rather than trainable
-weights. Use `torch.inference_mode()`. Calling `.half()` on the model is not
-supported: scales must stay FP32. Gradients through the kernels are unsupported
-and gradient-bearing inputs are rejected. CPU model execution is unsupported.
-
-## Validation and reproduction
+Run from the repository root. The input is 16 kHz mono audio.
 
 ```sh
 P=finetune/parakeet-ternary
-$P/python -m unittest inference.test_kernels -v
-$P/python -m unittest inference.test_experiments inference.test_bitwise -v
-PARAKEET_KERNEL_EXPORT="$EXPORT" $P/python -m unittest inference.test_decoder -v
-$P/python -m inference.benchmark micro
-$P/python -m inference.benchmark tune --rows 16 64 128 384
-$P/python -m inference.benchmark model
-$P/python -m inference.benchmark2
-$P/python -m inference.quality2 --variants baseline optimized --utterances-per-set 256
-$P/python -m inference.quality3 --position-dot --utterances-per-set 256
+EXPORT=/mnt/hd/wilderness-labs-stt/parakeet-ternary/exports/parakeet-v2
+mountpoint -q /mnt/hd || exit 1       # the project disk must be mounted
+export HF_HOME=/mnt/hd/wilderness-labs-stt/parakeet-ternary/caches/huggingface   # any cache on the mounted disk
+export HF_HUB_CACHE="$HF_HOME/hub"
+hf download rajb3/kea-t --local-dir "$EXPORT"
+
+$P/python -m inference --export "$EXPORT" --optimized clip.wav                              # compact
+$P/python -m inference --export "$EXPORT" --optimized --encoder-storage expanded clip.wav   # expanded
 ```
 
-The numerical suite covers zero rows, cancellation, wide activation ranges,
-ragged dimensions, biases, convolution and linear strides, empty inputs, output
-reuse, inference-only enforcement, alternate streams, and CUDA graph replay
-with changed inputs. The model benchmark compares the same exported weights
-against `export.load_export`, using strict FP32 cuBLAS/cuDNN settings for that
-control. It samples 64 utterances evenly from each of eight test sets.
+`$P/python` is a wrapper pinned to this machine's NixOS runtime
+(`custom/autoresearch/.training-runtime`). It finds the project's dependencies and caches on
+`/mnt/hd` and locates the NVRTC library that the full conditional graphs need. To use another
+prepared interpreter, set `PARAKEET_PYTHON=/path/to/python`; it must already have NeMo 3.0,
+PyTorch 2.11 (cu128), Triton 3.6, cuda-python bindings (`cuda-bindings` 13.4.1), NVRTC 12.9 and the Hugging Face
+dependencies. The versions behind the published results are recorded in the results JSON. There
+is no installer.
 
-The benchmark writes source hashes, export hash, configuration, raw results,
-transcripts, and telemetry to a new directory under
-`/mnt/hd/wilderness-labs-stt/parakeet-ternary/kernel-runs/`. It takes the project's
-GPU job lock and uses the existing `custom/inference-efficiency/energy.py` meter
-to reject competing compute processes. Energy measurement requires
-`nvidia-ml-py`; on this machine the benchmark reuses that dependency from the
-existing inference-efficiency installation on `/mnt/hd`.
+From Python, `enable_optimizations(model, encoder_storage="packed")` (compact) or
+`encoder_storage="expanded"` switches a loaded model to the optimized runtime in place.
 
-Microbenchmarks repeatedly use a single weight matrix, which can stay in L2;
-they establish kernel latency, not model energy. The model benchmark separately
-measures CUDA-graph encoder inference (mel features already on the GPU) and
-eager preprocessing + encoder + greedy TDT decoding (audio already on the GPU).
-It also measures full transcription with the encoder graph cache enabled for
-**both** variants. Full transcription includes text construction. None includes loading, compilation,
-audio disk I/O, or host energy. The shared desktop remains active. Three
-alternating 10-second windows per variant follow a two-second warm-up each.
-NVML cumulative board-energy counters provide joules per completed inference.
-No power limits or clocks are changed.
+- Disable the optimizations before editing weights, moving the model to another device or
+  training it.
+- Calls on one model are serialized. Autocast is not supported, and transcription is offline
+  (whole utterances) only.
+- Up to four input shapes are cached as CUDA graphs. The first call at a new eligible shape
+  captures a graph, so warm up the lengths you need. No cold-start latency is claimed.
 
-These comparisons are against the repository's existing strict-FP32 runtime.
-They do not establish a win over TensorRT, an FP16/BF16 deployment, or every
-possible optimized dense implementation. Subset transcript agreement does not
-replace full-corpus accuracy evaluation or field validation.
+## Reproducing the benchmark and tests
 
-See [MEASUREMENTS.md](MEASUREMENTS.md) for the measured results and iteration record.
+```sh
+OUT=/mnt/hd/wilderness-labs-stt/parakeet-ternary/comparison/new-run
+for variant in packed_optimized packed_expanded nemo_bf16_graphs_fused_decoder onnx_cuda; do
+    $P/python -m inference.compare_v2 --variant "$variant" --out "$OUT/$variant" --quality-per-set 32
+done
 
-The isolated `bitwise.py` / `bitwise_benchmark.py` experiments compare FP32
-lookup and SIMT paths without BF16 or activation quantization. They are not
-selected by model inference: the tested encoder lookup path was slower and
-used more energy than packed Tensor Core arithmetic. Fully quantized activation
-popcount inference has not been accuracy-validated for this Parakeet model.
+PARAKEET_KERNEL_EXPORT="$EXPORT" $P/python -m unittest discover \
+    -s finetune/parakeet-ternary/inference -t finetune/parakeet-ternary -p 'test_*.py'
+```
+
+`inference.compare_v2` runs one variant per invocation, so the loop runs the four published
+configurations one after another, each in its own process: `packed_optimized` (compact),
+`packed_expanded`, `nemo_bf16_graphs_fused_decoder` and `onnx_cuda`. It does not read `$EXPORT`; it uses fixed
+paths under `/mnt/hd/wilderness-labs-stt/parakeet-ternary/`, which a fresh checkout must
+prepare:
+
+- the trained export at `runs/main-M1-P2-lr5e-4/export`;
+- the hash-locked local copy of NVIDIA's checkpoint, for the BF16 row;
+- the test-set manifests and audio from `../testsets.py`, for the clips and the quality subset;
+- `comparison/deps` (the separately installed ONNX packages) and `comparison/onnx-v2` (the ONNX
+  export at the pinned revision).
+
+Run one GPU job at a time; the benchmark checks for the 400 W limit before it starts.
+
+## Experimental hybrid CUDA/Triton path
+
+`--experimental-cuda` (batch size 1 only) runs an RTX 5090 CUDA encoder with expanded
+weights and fused row kernels (`cuda_pipeline.experimental_pipeline(model,
+"ptx_row_best")`). It is opt-in; the published results above do not use it. On our RTX 5090
+at its 400 W cap it had 3.43% lower median full-transcription latency and 3.01% lower GPU
+energy per transcription than the expanded runtime, with process VRAM essentially unchanged.
+Text, token IDs and timestamps matched on 2,048 sampled utterances.
+[CUDA_IMPROVEMENTS.md](CUDA_IMPROVEMENTS.md) has the results and their limits;
+[CUDA_RESULTS.md](CUDA_RESULTS.md) covers the older hand-written CUDA and cuBLAS trials and
+the decoder token-cache ablation.
+
+The development ledgers behind the published runtime are
+[EXPERIMENTS.md](EXPERIMENTS.md) (second pass), [EXPERIMENTS3.md](EXPERIMENTS3.md) (third
+pass), [EXPERIMENTS4.md](EXPERIMENTS4.md) (expanded encoder),
+[COMPONENTS.md](COMPONENTS.md) (isolated encoder and decoder measurements),
+[COMPARISON.md](COMPARISON.md) (the comparison against NeMo and ONNX Runtime) and the
+first kernel measurements in [MEASUREMENTS.md](MEASUREMENTS.md).
+
+## Limitations
+
+- Measured on one RTX 5090, warm, at batch one, with one clip per length up to 30.04 s. Other
+  GPUs, larger batches, cold starts, longer inputs, streaming and host energy were not measured.
+- The environment is specific to this machine, as described under Usage.

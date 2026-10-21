@@ -1,14 +1,6 @@
 # Ternary-weight QAT of Parakeet-TDT-0.6B-v2
 
-Packed RTX 5090 inference: [`inference/README.md`](inference/README.md) provides
-2-bit GPU kernels, a NeMo loader, residual INT8x3 encoder fusions (`--optimized`),
-CUDA graphs, and reproducible speed/energy benchmarks. The complete optimization
-ledger is in [`inference/EXPERIMENTS.md`](inference/EXPERIMENTS.md). The original
-FP32 export loader remains the accuracy reference.
-Deployment loader with a selectable activation part count (INT8x2 / INT8x3, plans/x2-default.md):
-`gpu1bit.runtime_m1.load_ternary_packed` in [`../parakeet-binary/gpu1bit/runtime_m1.py`](../parakeet-binary/gpu1bit/runtime_m1.py).
-
-**Published:** [rajb3/parakeet-tdt-0.6b-v2-ternary](https://huggingface.co/rajb3/parakeet-tdt-0.6b-v2-ternary)
+**Published:** [rajb3/kea-t](https://huggingface.co/rajb3/kea-t)
 (CC-BY-4.0). Test results: [`results/TEST.md`](results/TEST.md). The upload folder is built
 by `hf/stage.py` (52 required checks, including identical tensors and transcripts between the
 standalone `hf/load_ternary.py` and this repository's loader) and was verified on a private
@@ -16,6 +8,43 @@ repository, including a download-and-transcribe round trip, before being made pu
 
 Design: [DESIGN.md](DESIGN.md). Run every script with `./python` (pinned NeMo 3.0 /
 torch 2.11 runtime; all caches and artifacts on `/mnt/hd/wilderness-labs-stt/parakeet-ternary/`).
+
+## CUDA runtime
+
+[`inference/`](inference/) runs this checkpoint on the GPU from its packed ternary
+weights, using CUDA graphs and a fused decoder. The table shows warm batch-one
+transcription of a 10 s clip on one RTX 5090 at a 400 W power limit:
+
+| Configuration | Latency | Process VRAM | GPU energy |
+| --- | ---: | ---: | ---: |
+| Ternary expanded — optimized by Wilderness Labs | **4.46 ms** | 1.89 GB | **1.57 J** |
+| Ternary compact — optimized by Wilderness Labs | 5.27 ms | **1.27 GB** | 1.86 J |
+| Original BF16 — optimized by Wilderness Labs | 5.81 ms | 2.18 GB | 1.90 J |
+| ONNX ASR / ORT CUDA — off the shelf | 15.74 ms | 4.14 GB | 3.75 J |
+
+Both ternary modes use the same trained export:
+
+- Compact (`--optimized`) keeps the ternary matrices as packed 2-bit codes with per-row
+  FP32 scales, unpacked inside the kernels, and has the lowest VRAM.
+- Expanded (`--optimized --encoder-storage expanded`) also caches an exact INT8 copy of
+  the codes (about 604 MB) and has the lowest latency and energy.
+
+Both run the ternary matrices on INT8 Tensor Cores and keep the non-ternary tensors in
+floating point.
+
+The two modes produce identical text, tokens and timestamps on 2,048 validation
+utterances. The BF16 row is NVIDIA's original checkpoint with our own CUDA graphs and
+fused FP32 decoder, not stock NeMo. The ONNX row is the unmodified onnx-asr package.
+
+Results for 3, 10 and 30.04 s clips, the method, usage and tests are in
+[`inference/README.md`](inference/README.md), with evidence in
+[`inference/results/rtx5090.json`](inference/results/rtx5090.json). Accuracy for this
+checkpoint is the full-corpus WER in [`results/TEST.md`](results/TEST.md).
+The complete optimization ledger is in [`inference/EXPERIMENTS.md`](inference/EXPERIMENTS.md).
+
+Deployment loader with a selectable activation part count (INT8x2 / INT8x3,
+[`../parakeet-binary/plans/x2-default.md`](../parakeet-binary/plans/x2-default.md)):
+`gpu1bit.runtime_m1.load_ternary_packed` in [`../parakeet-binary/gpu1bit/runtime_m1.py`](../parakeet-binary/gpu1bit/runtime_m1.py).
 
 ## Model and evaluation
 

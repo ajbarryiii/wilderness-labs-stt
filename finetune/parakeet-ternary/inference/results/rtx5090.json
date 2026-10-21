@@ -1,0 +1,1009 @@
+{
+  "hardware": "NVIDIA RTX 5090",
+  "power_limit_w": 400,
+  "units": {
+    "latency": "ms",
+    "energy": "GPU-board joules/transcription",
+    "process_vram": "decimal GB"
+  },
+  "scope": "Warm batch one, CPU waveform to CPU text; includes preprocessing and transfers, excludes file I/O/loading/compilation/first capture. One LibriSpeech-clean clip per duration; fresh process per runtime; sequential workers; three five-second windows after two-second warmups; max four graph shapes accumulated in 3/10/30.04 s order. Process VRAM is sampled warm process peak. GPU energy excludes host power.",
+  "variants": {
+    "packed_expanded": {
+      "label": "Ternary expanded \u2014 optimized by Wilderness Labs",
+      "source_run": "run4",
+      "raw_sha256": "10c3786026aabfb2ddbb0979923c60004fd9aa07697bd9db4e12898bc087a150",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "nemo_toolkit": "3.0.0"
+      },
+      "gpu": {
+        "gpu_index": 0,
+        "name": "NVIDIA GeForce RTX 5090",
+        "driver_version": "595.71.05",
+        "nvml_version": "13.595.71.05",
+        "compute_capability": [
+          12,
+          0
+        ],
+        "total_memory_bytes": 34190917632,
+        "power_limit_w": 400.0,
+        "default_power_limit_w": 600.0,
+        "temperature_c": 39,
+        "graphics_clock_mhz": 2565,
+        "sm_clock_mhz": 2565,
+        "memory_clock_mhz": 14001,
+        "sample_interval_s": 0.1,
+        "energy_scope": "GPU board; excludes host energy"
+      },
+      "source_sha256": {
+        "__init__.py": "0e9296dd1db393ce8e54846dd3ae33f59f249d8e784abbfd345466488ab02767",
+        "benchmark.py": "b017eca7d7cb07b89a1b947cb02cd983a61b1afc0eb0414a0b95163c2cee8785",
+        "layer_fusions4.py": "e30f8d2035409333785bb9714c2bc53edd3222a1ace460d4cf91017fa5041b68",
+        "pipeline_probe.py": "92cd34b030846ddc903ed518ca23a01d2f856e54f5b32dcabc2710ab14ca046c",
+        "__main__.py": "dfa15e99e006c08b34b5e9a65a0c7714350abe4e8404179634a24d9241d8d429",
+        "test_kernels.py": "683cedc8d3314036874c53a2aa3940a7e296872ddf589105631c13147717a997",
+        "sprint4.py": "397335dd2416c4c705c70606fe60d33f2fd1d3280380364ae41b12f645e2da24",
+        "quality4.py": "1baddb72b98ab8690b2ba8559f71a799175cedc43c658a2229777513cb1cc9e6",
+        "test_experiments.py": "7bc6d92cc5c00e3819ac8c54fec718b308a56442b112fef2a2ebaea071c60aba",
+        "test_decoder.py": "e5eee466121f27093365b9ffab52718fd275c87cc8a40f6d0c12b300edd3acf8",
+        "compare_v2_report.py": "e09789521f8f2db1599ff94c19c7f33231df84e1a1e6397e15df4438e52a5cb9",
+        "optimized.py": "8401e907ea22c2795f3b8e13cd9e7bfa05c42ecc62ec41b4863aa9867af0a29e",
+        "test_model_graphs.py": "c82b605cb19642aca071170b20a46c5d16c7a091f3a5c11664b154d4989cdd8f",
+        "benchmark2.py": "3f8d0faceea38a19592c87cdd6aeae7bf3d448fceda26d71f08979cbaaa70cf4",
+        "quality3.py": "dd27bc7416ffe5e14b2e24e643083eba8fdac0873beffba4b038adf52456f06a",
+        "runtime.py": "f62de5bcc7aa850d8ca5920a8b187636859065e4d332edcff4851e16e70328da",
+        "profile4.py": "b27f5e3bf01cde38c516d34933cd847e3fb7af04896c20fe8927bfb6161d6865",
+        "graphs.py": "a3eaef81b17c540e44e01d37b707e7fad962d679c65d30699ca551053e02e6dc",
+        "test_bitwise.py": "cfcd9bd5c6efd500de03d342d079382a7abee0741742ce8a84e77e25af9165d0",
+        "tune_expanded.py": "79407cfe242bc5b61919241b9c13d6cb666b4d8cc0b0b991ef25c31d1e504082",
+        "profile3.py": "5b226a2d357fc552261b6da690924ed0119af35b458817c90296ca4a1884ba9d",
+        "graph_memory.py": "c36061eff855968c0e7fd284911638a38ad2af1603423c6345b49970d39a00a2",
+        "sprint3.py": "8e4f5531ca13f16f004be4bdd8583bc9c329d1ae5b6283d54d290c6b19d29fa5",
+        "test_encoder4.py": "f440e544900dfd8414358fad453f9a7caa3fab28b5c78a5c8c505d3706452923",
+        "weight_audit.py": "16d7b53ae9e7b06f89a0f3492779e0d7d84a9677a6112b1eb779c3c5c75b9f18",
+        "decoder_kernels.py": "333d7330062157f0e04b2f2cab7d5c209f087691bffa732c4b7feb11fa063c58",
+        "tune_integer.py": "e0db253ff76d6bd7b77a6cb3c2b7137821eabb7b6b0fcb96238b937ef4a491c7",
+        "encoder4.py": "924cfd2552744868247e375ae60082b7d82c2d87ff66d9fadc08fa833ffe93a3",
+        "transforms.py": "be3ac9ddbcd3998526b9f9f1d0483e9f72ce2fb179eaed3e0edca99a6ca0690f",
+        "experiments.py": "21395f1d467c36e1ce8fdd254f83913c46bc945f043c77cb056c6c26103591ae",
+        "tune2.py": "2b04e5adb3330c4e309b260f89538ec9aee72da7751cc0e4aebd71629a3f999d",
+        "fused_kernels.py": "755154fc5967a654a65eb1c95a316786634eb27f847dbd976a39cdeadedf84e5",
+        "bitwise.py": "dacab7d29a3b71f80377b0f4bf873b5fd90845e2ec1a3880be0c6efed2f128f6",
+        "compare_v2_components.py": "4da9252f81cf91b3ca417e10ddbf665f4a6fd3f733f492be3999fc168ead4622",
+        "compare_v2.py": "7472814454d53e0f46e4d08af095b3bbff3e2a6d775339d7f7e7f576c33da179",
+        "kernels.py": "7b8d0e0e2da37b56f6f6562ce287bea090bc3edcbd9aa46e2831c2557ea474e7",
+        "quality2.py": "3a5c7ca3c31b84d4000007b3f4b696ef79dbf69a6875687468ebf5216d988ef2",
+        "bitwise_benchmark.py": "2efd05dab67cfb911a1db4057da3ddf55af863101b0c529c62e15dc622d964d0"
+      },
+      "workloads": [
+        {
+          "record_id": "3575-170457-0052",
+          "audio_seconds": 3.0,
+          "median_ms": 2.7341620007064193,
+          "p95_ms": 2.76238500373438,
+          "joules_per_iteration": 0.7647019178082192,
+          "average_watts": 278.80710772079743,
+          "process_vram_gb": 1.74063616,
+          "windows": [
+            {
+              "median_ms": 2.7339819935150445,
+              "p95_ms": 2.76238500373438,
+              "joules_per_iteration": 0.7642093150684932,
+              "average_watts": 278.80710772079743,
+              "process_sampled_peak_bytes": 1740636160,
+              "iterations": 1825,
+              "elapsed_seconds": 5.002318668994121,
+              "energy_joules": 1394.682,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 2.7341620007064193,
+              "p95_ms": 2.7993940166197717,
+              "joules_per_iteration": 0.7649270032930845,
+              "average_watts": 278.5430618472636,
+              "process_sampled_peak_bytes": 1740636160,
+              "iterations": 1822,
+              "elapsed_seconds": 5.003524377010763,
+              "energy_joules": 1393.697,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 2.7350150048732758,
+              "p95_ms": 2.759249007795006,
+              "joules_per_iteration": 0.7647019178082192,
+              "average_watts": 278.8856941960356,
+              "process_sampled_peak_bytes": 1740636160,
+              "iterations": 1825,
+              "elapsed_seconds": 5.004132621514145,
+              "energy_joules": 1395.581,
+              "method": "nvml_total_energy"
+            }
+          ]
+        },
+        {
+          "record_id": "1320-122617-0010",
+          "audio_seconds": 10.0,
+          "median_ms": 4.462168522877619,
+          "p95_ms": 4.505079006776214,
+          "joules_per_iteration": 1.5716967799642219,
+          "average_watts": 351.22926804925834,
+          "process_vram_gb": 1.8874368,
+          "windows": [
+            {
+              "median_ms": 4.4607860036194324,
+              "p95_ms": 4.496462002862245,
+              "joules_per_iteration": 1.566824686940966,
+              "average_watts": 350.2408545801122,
+              "process_sampled_peak_bytes": 1887436800,
+              "iterations": 1118,
+              "elapsed_seconds": 5.001443940913305,
+              "energy_joules": 1751.71,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 4.462168522877619,
+              "p95_ms": 4.505079006776214,
+              "joules_per_iteration": 1.5716967799642219,
+              "average_watts": 351.22926804925834,
+              "process_sampled_peak_bytes": 1887436800,
+              "iterations": 1118,
+              "elapsed_seconds": 5.002877492981497,
+              "energy_joules": 1757.157,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 4.46260001626797,
+              "p95_ms": 4.506763012614101,
+              "joules_per_iteration": 1.574179785330948,
+              "average_watts": 351.7811833941162,
+              "process_sampled_peak_bytes": 1887436800,
+              "iterations": 1118,
+              "elapsed_seconds": 5.002919664490037,
+              "energy_joules": 1759.933,
+              "method": "nvml_total_energy"
+            }
+          ]
+        },
+        {
+          "record_id": "121-123859-0002",
+          "audio_seconds": 30.04,
+          "median_ms": 10.563639982137829,
+          "p95_ms": 10.697562946006656,
+          "joules_per_iteration": 3.9892093023255812,
+          "average_watts": 376.21212468757574,
+          "process_vram_gb": 2.23346688,
+          "windows": [
+            {
+              "median_ms": 10.563639982137829,
+              "p95_ms": 10.647446033544838,
+              "joules_per_iteration": 3.976355179704017,
+              "average_watts": 375.71689754523624,
+              "process_sampled_peak_bytes": 2233466880,
+              "iterations": 473,
+              "elapsed_seconds": 5.00593934499193,
+              "energy_joules": 1880.816,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 10.593526996672153,
+              "p95_ms": 10.730552952736616,
+              "joules_per_iteration": 3.995447983014862,
+              "average_watts": 376.21212468757574,
+              "process_sampled_peak_bytes": 2233466880,
+              "iterations": 471,
+              "elapsed_seconds": 5.002114170463756,
+              "energy_joules": 1881.856,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 10.552261024713516,
+              "p95_ms": 10.697562946006656,
+              "joules_per_iteration": 3.9892093023255812,
+              "average_watts": 376.68445907828,
+              "process_sampled_peak_bytes": 2233466880,
+              "iterations": 473,
+              "elapsed_seconds": 5.009221789019648,
+              "energy_joules": 1886.896,
+              "method": "nvml_total_energy"
+            }
+          ]
+        }
+      ],
+      "quality_subset": {
+        "utterances": 256,
+        "words": 4721,
+        "edits": 263
+      }
+    },
+    "packed_optimized": {
+      "label": "Ternary compact \u2014 optimized by Wilderness Labs",
+      "source_run": "run4",
+      "raw_sha256": "dc4d9cc8161802ad3d43391710c8262efb30cf55aef68d5f870d6e6ab74fe702",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "nemo_toolkit": "3.0.0"
+      },
+      "gpu": {
+        "gpu_index": 0,
+        "name": "NVIDIA GeForce RTX 5090",
+        "driver_version": "595.71.05",
+        "nvml_version": "13.595.71.05",
+        "compute_capability": [
+          12,
+          0
+        ],
+        "total_memory_bytes": 34190917632,
+        "power_limit_w": 400.0,
+        "default_power_limit_w": 600.0,
+        "temperature_c": 42,
+        "graphics_clock_mhz": 2812,
+        "sm_clock_mhz": 2812,
+        "memory_clock_mhz": 14001,
+        "sample_interval_s": 0.1,
+        "energy_scope": "GPU board; excludes host energy"
+      },
+      "source_sha256": {
+        "__init__.py": "0e9296dd1db393ce8e54846dd3ae33f59f249d8e784abbfd345466488ab02767",
+        "benchmark.py": "b017eca7d7cb07b89a1b947cb02cd983a61b1afc0eb0414a0b95163c2cee8785",
+        "layer_fusions4.py": "e30f8d2035409333785bb9714c2bc53edd3222a1ace460d4cf91017fa5041b68",
+        "pipeline_probe.py": "92cd34b030846ddc903ed518ca23a01d2f856e54f5b32dcabc2710ab14ca046c",
+        "__main__.py": "dfa15e99e006c08b34b5e9a65a0c7714350abe4e8404179634a24d9241d8d429",
+        "test_kernels.py": "683cedc8d3314036874c53a2aa3940a7e296872ddf589105631c13147717a997",
+        "sprint4.py": "397335dd2416c4c705c70606fe60d33f2fd1d3280380364ae41b12f645e2da24",
+        "quality4.py": "1baddb72b98ab8690b2ba8559f71a799175cedc43c658a2229777513cb1cc9e6",
+        "test_experiments.py": "7bc6d92cc5c00e3819ac8c54fec718b308a56442b112fef2a2ebaea071c60aba",
+        "test_decoder.py": "e5eee466121f27093365b9ffab52718fd275c87cc8a40f6d0c12b300edd3acf8",
+        "compare_v2_report.py": "e09789521f8f2db1599ff94c19c7f33231df84e1a1e6397e15df4438e52a5cb9",
+        "optimized.py": "8401e907ea22c2795f3b8e13cd9e7bfa05c42ecc62ec41b4863aa9867af0a29e",
+        "test_model_graphs.py": "c82b605cb19642aca071170b20a46c5d16c7a091f3a5c11664b154d4989cdd8f",
+        "benchmark2.py": "3f8d0faceea38a19592c87cdd6aeae7bf3d448fceda26d71f08979cbaaa70cf4",
+        "quality3.py": "dd27bc7416ffe5e14b2e24e643083eba8fdac0873beffba4b038adf52456f06a",
+        "runtime.py": "f62de5bcc7aa850d8ca5920a8b187636859065e4d332edcff4851e16e70328da",
+        "profile4.py": "b27f5e3bf01cde38c516d34933cd847e3fb7af04896c20fe8927bfb6161d6865",
+        "graphs.py": "a3eaef81b17c540e44e01d37b707e7fad962d679c65d30699ca551053e02e6dc",
+        "test_bitwise.py": "cfcd9bd5c6efd500de03d342d079382a7abee0741742ce8a84e77e25af9165d0",
+        "tune_expanded.py": "79407cfe242bc5b61919241b9c13d6cb666b4d8cc0b0b991ef25c31d1e504082",
+        "profile3.py": "5b226a2d357fc552261b6da690924ed0119af35b458817c90296ca4a1884ba9d",
+        "graph_memory.py": "c36061eff855968c0e7fd284911638a38ad2af1603423c6345b49970d39a00a2",
+        "sprint3.py": "8e4f5531ca13f16f004be4bdd8583bc9c329d1ae5b6283d54d290c6b19d29fa5",
+        "test_encoder4.py": "f440e544900dfd8414358fad453f9a7caa3fab28b5c78a5c8c505d3706452923",
+        "weight_audit.py": "16d7b53ae9e7b06f89a0f3492779e0d7d84a9677a6112b1eb779c3c5c75b9f18",
+        "decoder_kernels.py": "333d7330062157f0e04b2f2cab7d5c209f087691bffa732c4b7feb11fa063c58",
+        "tune_integer.py": "e0db253ff76d6bd7b77a6cb3c2b7137821eabb7b6b0fcb96238b937ef4a491c7",
+        "encoder4.py": "924cfd2552744868247e375ae60082b7d82c2d87ff66d9fadc08fa833ffe93a3",
+        "transforms.py": "be3ac9ddbcd3998526b9f9f1d0483e9f72ce2fb179eaed3e0edca99a6ca0690f",
+        "experiments.py": "21395f1d467c36e1ce8fdd254f83913c46bc945f043c77cb056c6c26103591ae",
+        "tune2.py": "2b04e5adb3330c4e309b260f89538ec9aee72da7751cc0e4aebd71629a3f999d",
+        "fused_kernels.py": "755154fc5967a654a65eb1c95a316786634eb27f847dbd976a39cdeadedf84e5",
+        "bitwise.py": "dacab7d29a3b71f80377b0f4bf873b5fd90845e2ec1a3880be0c6efed2f128f6",
+        "compare_v2_components.py": "4da9252f81cf91b3ca417e10ddbf665f4a6fd3f733f492be3999fc168ead4622",
+        "compare_v2.py": "7472814454d53e0f46e4d08af095b3bbff3e2a6d775339d7f7e7f576c33da179",
+        "kernels.py": "7b8d0e0e2da37b56f6f6562ce287bea090bc3edcbd9aa46e2831c2557ea474e7",
+        "quality2.py": "3a5c7ca3c31b84d4000007b3f4b696ef79dbf69a6875687468ebf5216d988ef2",
+        "bitwise_benchmark.py": "2efd05dab67cfb911a1db4057da3ddf55af863101b0c529c62e15dc622d964d0"
+      },
+      "workloads": [
+        {
+          "record_id": "3575-170457-0052",
+          "audio_seconds": 3.0,
+          "median_ms": 3.1591010047122836,
+          "p95_ms": 3.184538974892348,
+          "joules_per_iteration": 0.9119158760278305,
+          "average_watts": 288.2391134479123,
+          "process_vram_gb": 1.12197632,
+          "windows": [
+            {
+              "median_ms": 3.166039503412321,
+              "p95_ms": 3.2027229899540544,
+              "joules_per_iteration": 0.9418940355329949,
+              "average_watts": 296.67161887786506,
+              "process_sampled_peak_bytes": 1121976320,
+              "iterations": 1576,
+              "elapsed_seconds": 5.003596251015551,
+              "energy_joules": 1484.425,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 3.1591010047122836,
+              "p95_ms": 3.184538974892348,
+              "joules_per_iteration": 0.9119158760278305,
+              "average_watts": 288.15516170866204,
+              "process_sampled_peak_bytes": 1121976320,
+              "iterations": 1581,
+              "elapsed_seconds": 5.003342613927089,
+              "energy_joules": 1441.739,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 3.1535709858871996,
+              "p95_ms": 3.1819940195418894,
+              "joules_per_iteration": 0.910973468098547,
+              "average_watts": 288.2391134479123,
+              "process_sampled_peak_bytes": 1121976320,
+              "iterations": 1583,
+              "elapsed_seconds": 5.003037175454665,
+              "energy_joules": 1442.071,
+              "method": "nvml_total_energy"
+            }
+          ]
+        },
+        {
+          "record_id": "1320-122617-0010",
+          "audio_seconds": 10.0,
+          "median_ms": 5.269293033052236,
+          "p95_ms": 5.314186972100288,
+          "joules_per_iteration": 1.8578734177215188,
+          "average_watts": 352.08253021060347,
+          "process_vram_gb": 1.270874112,
+          "windows": [
+            {
+              "median_ms": 5.269293033052236,
+              "p95_ms": 5.31723303720355,
+              "joules_per_iteration": 1.852542194092827,
+              "average_watts": 350.87328530100183,
+              "process_sampled_peak_bytes": 1270874112,
+              "iterations": 948,
+              "elapsed_seconds": 5.005254242976662,
+              "energy_joules": 1756.21,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 5.266452499199659,
+              "p95_ms": 5.311601969879121,
+              "joules_per_iteration": 1.8578734177215188,
+              "average_watts": 352.08253021060347,
+              "process_sampled_peak_bytes": 1270874112,
+              "iterations": 948,
+              "elapsed_seconds": 5.002418038027827,
+              "energy_joules": 1761.264,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 5.271486996207386,
+              "p95_ms": 5.314186972100288,
+              "joules_per_iteration": 1.8682175290390708,
+              "average_watts": 353.73391657902073,
+              "process_sampled_peak_bytes": 1270874112,
+              "iterations": 947,
+              "elapsed_seconds": 5.0015051344526,
+              "energy_joules": 1769.202,
+              "method": "nvml_total_energy"
+            }
+          ]
+        },
+        {
+          "record_id": "121-123859-0002",
+          "audio_seconds": 30.04,
+          "median_ms": 12.20960303908214,
+          "p95_ms": 12.395953002851456,
+          "joules_per_iteration": 4.739644607843138,
+          "average_watts": 386.42879400954956,
+          "process_vram_gb": 1.616904192,
+          "windows": [
+            {
+              "median_ms": 12.235425994731486,
+              "p95_ms": 12.483998027164489,
+              "joules_per_iteration": 4.739644607843138,
+              "average_watts": 386.42879400954956,
+              "process_sampled_peak_bytes": 1616904192,
+              "iterations": 408,
+              "elapsed_seconds": 5.00422077748226,
+              "energy_joules": 1933.775,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 12.183770013507456,
+              "p95_ms": 12.273983971681446,
+              "joules_per_iteration": 4.798470731707317,
+              "average_watts": 393.1871588377515,
+              "process_sampled_peak_bytes": 1616904192,
+              "iterations": 410,
+              "elapsed_seconds": 5.003655271488242,
+              "energy_joules": 1967.373,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 12.20960303908214,
+              "p95_ms": 12.395953002851456,
+              "joules_per_iteration": 4.6954572127139365,
+              "average_watts": 383.16194877420435,
+              "process_sampled_peak_bytes": 1616904192,
+              "iterations": 409,
+              "elapsed_seconds": 5.012089551542886,
+              "energy_joules": 1920.442,
+              "method": "nvml_total_energy"
+            }
+          ]
+        }
+      ],
+      "quality_subset": {
+        "utterances": 256,
+        "words": 4721,
+        "edits": 263
+      }
+    },
+    "nemo_bf16_graphs_fused_decoder": {
+      "label": "Original BF16 \u2014 optimized by Wilderness Labs",
+      "source_run": "run4",
+      "raw_sha256": "38b1a5568396f6d4a5c7bde88c51b9d663302ea820bb5d5681865ab45801d6a5",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "nemo_toolkit": "3.0.0"
+      },
+      "gpu": {
+        "gpu_index": 0,
+        "name": "NVIDIA GeForce RTX 5090",
+        "driver_version": "595.71.05",
+        "nvml_version": "13.595.71.05",
+        "compute_capability": [
+          12,
+          0
+        ],
+        "total_memory_bytes": 34190917632,
+        "power_limit_w": 400.0,
+        "default_power_limit_w": 600.0,
+        "temperature_c": 40,
+        "graphics_clock_mhz": 2557,
+        "sm_clock_mhz": 2557,
+        "memory_clock_mhz": 14001,
+        "sample_interval_s": 0.1,
+        "energy_scope": "GPU board; excludes host energy"
+      },
+      "source_sha256": {
+        "__init__.py": "0e9296dd1db393ce8e54846dd3ae33f59f249d8e784abbfd345466488ab02767",
+        "benchmark.py": "b017eca7d7cb07b89a1b947cb02cd983a61b1afc0eb0414a0b95163c2cee8785",
+        "layer_fusions4.py": "e30f8d2035409333785bb9714c2bc53edd3222a1ace460d4cf91017fa5041b68",
+        "pipeline_probe.py": "92cd34b030846ddc903ed518ca23a01d2f856e54f5b32dcabc2710ab14ca046c",
+        "__main__.py": "dfa15e99e006c08b34b5e9a65a0c7714350abe4e8404179634a24d9241d8d429",
+        "test_kernels.py": "683cedc8d3314036874c53a2aa3940a7e296872ddf589105631c13147717a997",
+        "sprint4.py": "397335dd2416c4c705c70606fe60d33f2fd1d3280380364ae41b12f645e2da24",
+        "quality4.py": "1baddb72b98ab8690b2ba8559f71a799175cedc43c658a2229777513cb1cc9e6",
+        "test_experiments.py": "7bc6d92cc5c00e3819ac8c54fec718b308a56442b112fef2a2ebaea071c60aba",
+        "test_decoder.py": "e5eee466121f27093365b9ffab52718fd275c87cc8a40f6d0c12b300edd3acf8",
+        "compare_v2_report.py": "e09789521f8f2db1599ff94c19c7f33231df84e1a1e6397e15df4438e52a5cb9",
+        "optimized.py": "8401e907ea22c2795f3b8e13cd9e7bfa05c42ecc62ec41b4863aa9867af0a29e",
+        "test_model_graphs.py": "c82b605cb19642aca071170b20a46c5d16c7a091f3a5c11664b154d4989cdd8f",
+        "benchmark2.py": "3f8d0faceea38a19592c87cdd6aeae7bf3d448fceda26d71f08979cbaaa70cf4",
+        "quality3.py": "dd27bc7416ffe5e14b2e24e643083eba8fdac0873beffba4b038adf52456f06a",
+        "runtime.py": "f62de5bcc7aa850d8ca5920a8b187636859065e4d332edcff4851e16e70328da",
+        "profile4.py": "b27f5e3bf01cde38c516d34933cd847e3fb7af04896c20fe8927bfb6161d6865",
+        "graphs.py": "a3eaef81b17c540e44e01d37b707e7fad962d679c65d30699ca551053e02e6dc",
+        "test_bitwise.py": "cfcd9bd5c6efd500de03d342d079382a7abee0741742ce8a84e77e25af9165d0",
+        "tune_expanded.py": "79407cfe242bc5b61919241b9c13d6cb666b4d8cc0b0b991ef25c31d1e504082",
+        "profile3.py": "5b226a2d357fc552261b6da690924ed0119af35b458817c90296ca4a1884ba9d",
+        "graph_memory.py": "c36061eff855968c0e7fd284911638a38ad2af1603423c6345b49970d39a00a2",
+        "sprint3.py": "8e4f5531ca13f16f004be4bdd8583bc9c329d1ae5b6283d54d290c6b19d29fa5",
+        "test_encoder4.py": "f440e544900dfd8414358fad453f9a7caa3fab28b5c78a5c8c505d3706452923",
+        "weight_audit.py": "16d7b53ae9e7b06f89a0f3492779e0d7d84a9677a6112b1eb779c3c5c75b9f18",
+        "decoder_kernels.py": "333d7330062157f0e04b2f2cab7d5c209f087691bffa732c4b7feb11fa063c58",
+        "tune_integer.py": "e0db253ff76d6bd7b77a6cb3c2b7137821eabb7b6b0fcb96238b937ef4a491c7",
+        "encoder4.py": "924cfd2552744868247e375ae60082b7d82c2d87ff66d9fadc08fa833ffe93a3",
+        "transforms.py": "be3ac9ddbcd3998526b9f9f1d0483e9f72ce2fb179eaed3e0edca99a6ca0690f",
+        "experiments.py": "21395f1d467c36e1ce8fdd254f83913c46bc945f043c77cb056c6c26103591ae",
+        "tune2.py": "2b04e5adb3330c4e309b260f89538ec9aee72da7751cc0e4aebd71629a3f999d",
+        "fused_kernels.py": "755154fc5967a654a65eb1c95a316786634eb27f847dbd976a39cdeadedf84e5",
+        "bitwise.py": "dacab7d29a3b71f80377b0f4bf873b5fd90845e2ec1a3880be0c6efed2f128f6",
+        "compare_v2_components.py": "4da9252f81cf91b3ca417e10ddbf665f4a6fd3f733f492be3999fc168ead4622",
+        "compare_v2.py": "7472814454d53e0f46e4d08af095b3bbff3e2a6d775339d7f7e7f576c33da179",
+        "kernels.py": "7b8d0e0e2da37b56f6f6562ce287bea090bc3edcbd9aa46e2831c2557ea474e7",
+        "quality2.py": "3a5c7ca3c31b84d4000007b3f4b696ef79dbf69a6875687468ebf5216d988ef2",
+        "bitwise_benchmark.py": "2efd05dab67cfb911a1db4057da3ddf55af863101b0c529c62e15dc622d964d0"
+      },
+      "workloads": [
+        {
+          "record_id": "3575-170457-0052",
+          "audio_seconds": 3.0,
+          "median_ms": 4.253644990967587,
+          "p95_ms": 4.279760003555566,
+          "joules_per_iteration": 1.154208688245315,
+          "average_watts": 270.8817329868982,
+          "process_vram_gb": 2.109734912,
+          "windows": [
+            {
+              "median_ms": 4.256987012922764,
+              "p95_ms": 4.288244002964348,
+              "joules_per_iteration": 1.1532753623188405,
+              "average_watts": 270.382763710266,
+              "process_sampled_peak_bytes": 2109734912,
+              "iterations": 1173,
+              "elapsed_seconds": 5.0032479194924235,
+              "energy_joules": 1352.792,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 4.253644990967587,
+              "p95_ms": 4.274439997971058,
+              "joules_per_iteration": 1.154208688245315,
+              "average_watts": 270.8817329868982,
+              "process_sampled_peak_bytes": 2109734912,
+              "iterations": 1174,
+              "elapsed_seconds": 5.002334358461667,
+              "energy_joules": 1355.041,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 4.252593964338303,
+              "p95_ms": 4.279760003555566,
+              "joules_per_iteration": 1.1557512776831347,
+              "average_watts": 271.2963055596787,
+              "process_sampled_peak_bytes": 2109734912,
+              "iterations": 1174,
+              "elapsed_seconds": 5.001365563017316,
+              "energy_joules": 1356.852,
+              "method": "nvml_total_energy"
+            }
+          ]
+        },
+        {
+          "record_id": "1320-122617-0010",
+          "audio_seconds": 10.0,
+          "median_ms": 5.810150993056595,
+          "p95_ms": 5.854163027834147,
+          "joules_per_iteration": 1.8950104651162791,
+          "average_watts": 325.505970874864,
+          "process_vram_gb": 2.183135232,
+          "windows": [
+            {
+              "median_ms": 5.809153488371521,
+              "p95_ms": 5.846539046615362,
+              "joules_per_iteration": 1.8882081395348835,
+              "average_watts": 324.4806019249563,
+              "process_sampled_peak_bytes": 2183135232,
+              "iterations": 860,
+              "elapsed_seconds": 5.0044871415011585,
+              "energy_joules": 1623.859,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 5.810150993056595,
+              "p95_ms": 5.8626990066841245,
+              "joules_per_iteration": 1.8950104651162791,
+              "average_watts": 325.505970874864,
+              "process_sampled_peak_bytes": 2183135232,
+              "iterations": 860,
+              "elapsed_seconds": 5.006694641022477,
+              "energy_joules": 1629.709,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 5.811102979350835,
+              "p95_ms": 5.854163027834147,
+              "joules_per_iteration": 1.9012153667054714,
+              "average_watts": 326.5140264695033,
+              "process_sampled_peak_bytes": 2183135232,
+              "iterations": 859,
+              "elapsed_seconds": 5.001757558959071,
+              "energy_joules": 1633.144,
+              "method": "nvml_total_energy"
+            }
+          ]
+        },
+        {
+          "record_id": "121-123859-0002",
+          "audio_seconds": 30.04,
+          "median_ms": 11.558220023289323,
+          "p95_ms": 11.830269999336451,
+          "joules_per_iteration": 4.481795823665894,
+          "average_watts": 386.2069802906081,
+          "process_vram_gb": 2.34881024,
+          "windows": [
+            {
+              "median_ms": 11.555788485566154,
+              "p95_ms": 11.798026040196419,
+              "joules_per_iteration": 4.478048611111111,
+              "average_watts": 386.2069802906081,
+              "process_sampled_peak_bytes": 2348810240,
+              "iterations": 432,
+              "elapsed_seconds": 5.009016146068461,
+              "energy_joules": 1934.517,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 11.558220023289323,
+              "p95_ms": 11.832231015432626,
+              "joules_per_iteration": 4.484183294663573,
+              "average_watts": 386.2597363197763,
+              "process_sampled_peak_bytes": 2348810240,
+              "iterations": 431,
+              "elapsed_seconds": 5.003583905519918,
+              "energy_joules": 1932.683,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 11.581364029552788,
+              "p95_ms": 11.830269999336451,
+              "joules_per_iteration": 4.481795823665894,
+              "average_watts": 385.6076845587762,
+              "process_sampled_peak_bytes": 2348810240,
+              "iterations": 431,
+              "elapsed_seconds": 5.0093763100449,
+              "energy_joules": 1931.654,
+              "method": "nvml_total_energy"
+            }
+          ]
+        }
+      ]
+    },
+    "onnx_cuda": {
+      "label": "ONNX ASR / ONNX Runtime CUDA \u2014 off the shelf",
+      "source_run": "publication",
+      "raw_sha256": "57bdc36a8b3f6fdd10036242f72c9b4d08b2ab10a87f237bcce6d18f360de473",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "nemo_toolkit": "3.0.0",
+        "onnx-asr": "0.12.0",
+        "onnxruntime-gpu": "1.24.4"
+      },
+      "gpu": {
+        "gpu_index": 0,
+        "name": "NVIDIA GeForce RTX 5090",
+        "driver_version": "595.71.05",
+        "nvml_version": "13.595.71.05",
+        "compute_capability": [
+          12,
+          0
+        ],
+        "total_memory_bytes": 34190917632,
+        "power_limit_w": 400.0,
+        "default_power_limit_w": 600.0,
+        "temperature_c": 35,
+        "graphics_clock_mhz": 225,
+        "sm_clock_mhz": 225,
+        "memory_clock_mhz": 405,
+        "sample_interval_s": 0.1,
+        "energy_scope": "GPU board; excludes host energy"
+      },
+      "source_sha256": {
+        "__init__.py": "0e9296dd1db393ce8e54846dd3ae33f59f249d8e784abbfd345466488ab02767",
+        "benchmark.py": "b017eca7d7cb07b89a1b947cb02cd983a61b1afc0eb0414a0b95163c2cee8785",
+        "layer_fusions4.py": "e30f8d2035409333785bb9714c2bc53edd3222a1ace460d4cf91017fa5041b68",
+        "pipeline_probe.py": "92cd34b030846ddc903ed518ca23a01d2f856e54f5b32dcabc2710ab14ca046c",
+        "__main__.py": "dfa15e99e006c08b34b5e9a65a0c7714350abe4e8404179634a24d9241d8d429",
+        "test_kernels.py": "683cedc8d3314036874c53a2aa3940a7e296872ddf589105631c13147717a997",
+        "sprint4.py": "397335dd2416c4c705c70606fe60d33f2fd1d3280380364ae41b12f645e2da24",
+        "quality4.py": "1baddb72b98ab8690b2ba8559f71a799175cedc43c658a2229777513cb1cc9e6",
+        "test_experiments.py": "7bc6d92cc5c00e3819ac8c54fec718b308a56442b112fef2a2ebaea071c60aba",
+        "test_decoder.py": "e5eee466121f27093365b9ffab52718fd275c87cc8a40f6d0c12b300edd3acf8",
+        "compare_v2_report.py": "e09789521f8f2db1599ff94c19c7f33231df84e1a1e6397e15df4438e52a5cb9",
+        "optimized.py": "8401e907ea22c2795f3b8e13cd9e7bfa05c42ecc62ec41b4863aa9867af0a29e",
+        "test_model_graphs.py": "c82b605cb19642aca071170b20a46c5d16c7a091f3a5c11664b154d4989cdd8f",
+        "benchmark2.py": "3f8d0faceea38a19592c87cdd6aeae7bf3d448fceda26d71f08979cbaaa70cf4",
+        "quality3.py": "dd27bc7416ffe5e14b2e24e643083eba8fdac0873beffba4b038adf52456f06a",
+        "runtime.py": "f62de5bcc7aa850d8ca5920a8b187636859065e4d332edcff4851e16e70328da",
+        "profile4.py": "b27f5e3bf01cde38c516d34933cd847e3fb7af04896c20fe8927bfb6161d6865",
+        "graphs.py": "a3eaef81b17c540e44e01d37b707e7fad962d679c65d30699ca551053e02e6dc",
+        "test_bitwise.py": "cfcd9bd5c6efd500de03d342d079382a7abee0741742ce8a84e77e25af9165d0",
+        "tune_expanded.py": "79407cfe242bc5b61919241b9c13d6cb666b4d8cc0b0b991ef25c31d1e504082",
+        "profile3.py": "5b226a2d357fc552261b6da690924ed0119af35b458817c90296ca4a1884ba9d",
+        "graph_memory.py": "c36061eff855968c0e7fd284911638a38ad2af1603423c6345b49970d39a00a2",
+        "sprint3.py": "8e4f5531ca13f16f004be4bdd8583bc9c329d1ae5b6283d54d290c6b19d29fa5",
+        "test_encoder4.py": "f440e544900dfd8414358fad453f9a7caa3fab28b5c78a5c8c505d3706452923",
+        "weight_audit.py": "16d7b53ae9e7b06f89a0f3492779e0d7d84a9677a6112b1eb779c3c5c75b9f18",
+        "decoder_kernels.py": "333d7330062157f0e04b2f2cab7d5c209f087691bffa732c4b7feb11fa063c58",
+        "tune_integer.py": "e0db253ff76d6bd7b77a6cb3c2b7137821eabb7b6b0fcb96238b937ef4a491c7",
+        "encoder4.py": "924cfd2552744868247e375ae60082b7d82c2d87ff66d9fadc08fa833ffe93a3",
+        "transforms.py": "be3ac9ddbcd3998526b9f9f1d0483e9f72ce2fb179eaed3e0edca99a6ca0690f",
+        "experiments.py": "21395f1d467c36e1ce8fdd254f83913c46bc945f043c77cb056c6c26103591ae",
+        "tune2.py": "2b04e5adb3330c4e309b260f89538ec9aee72da7751cc0e4aebd71629a3f999d",
+        "fused_kernels.py": "755154fc5967a654a65eb1c95a316786634eb27f847dbd976a39cdeadedf84e5",
+        "bitwise.py": "dacab7d29a3b71f80377b0f4bf873b5fd90845e2ec1a3880be0c6efed2f128f6",
+        "compare_v2_components.py": "4da9252f81cf91b3ca417e10ddbf665f4a6fd3f733f492be3999fc168ead4622",
+        "compare_v2.py": "7472814454d53e0f46e4d08af095b3bbff3e2a6d775339d7f7e7f576c33da179",
+        "kernels.py": "7b8d0e0e2da37b56f6f6562ce287bea090bc3edcbd9aa46e2831c2557ea474e7",
+        "quality2.py": "3a5c7ca3c31b84d4000007b3f4b696ef79dbf69a6875687468ebf5216d988ef2",
+        "bitwise_benchmark.py": "2efd05dab67cfb911a1db4057da3ddf55af863101b0c529c62e15dc622d964d0"
+      },
+      "workloads": [
+        {
+          "record_id": "3575-170457-0052",
+          "audio_seconds": 3.0,
+          "median_ms": 7.865532010328025,
+          "p95_ms": 8.130690024700016,
+          "joules_per_iteration": 1.9740775316455696,
+          "average_watts": 249.254155334858,
+          "process_vram_gb": 4.129292288,
+          "windows": [
+            {
+              "median_ms": 7.874249015003443,
+              "p95_ms": 8.130690024700016,
+              "joules_per_iteration": 1.9643412322274882,
+              "average_watts": 248.250855975887,
+              "process_sampled_peak_bytes": 4129292288,
+              "iterations": 633,
+              "elapsed_seconds": 5.008756143506616,
+              "energy_joules": 1243.428,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 7.865532010328025,
+              "p95_ms": 8.2621059846133,
+              "joules_per_iteration": 1.9740775316455696,
+              "average_watts": 249.254155334858,
+              "process_sampled_peak_bytes": 4129292288,
+              "iterations": 632,
+              "elapsed_seconds": 5.005401006550528,
+              "energy_joules": 1247.617,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 7.864871033234522,
+              "p95_ms": 8.110853028483689,
+              "joules_per_iteration": 1.987173501577287,
+              "average_watts": 251.52830999847075,
+              "process_sampled_peak_bytes": 4129292288,
+              "iterations": 634,
+              "elapsed_seconds": 5.0088516875403,
+              "energy_joules": 1259.868,
+              "method": "nvml_total_energy"
+            }
+          ]
+        },
+        {
+          "record_id": "1320-122617-0010",
+          "audio_seconds": 10.0,
+          "median_ms": 15.735232038423419,
+          "p95_ms": 16.58585900440812,
+          "joules_per_iteration": 3.7465949367088607,
+          "average_watts": 236.7234119015182,
+          "process_vram_gb": 4.137680896,
+          "windows": [
+            {
+              "median_ms": 15.72975199087523,
+              "p95_ms": 16.588954022154212,
+              "joules_per_iteration": 3.7465949367088607,
+              "average_watts": 236.72898297601762,
+              "process_sampled_peak_bytes": 4137680896,
+              "iterations": 316,
+              "elapsed_seconds": 5.001178922480904,
+              "energy_joules": 1183.924,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 15.735232038423419,
+              "p95_ms": 16.372037993278354,
+              "joules_per_iteration": 3.744709779179811,
+              "average_watts": 236.7234119015182,
+              "process_sampled_peak_bytes": 4137680896,
+              "iterations": 317,
+              "elapsed_seconds": 5.014599065063521,
+              "energy_joules": 1187.073,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 16.04427251731977,
+              "p95_ms": 16.58585900440812,
+              "joules_per_iteration": 3.7835865384615386,
+              "average_watts": 235.31963470909074,
+              "process_sampled_peak_bytes": 4137680896,
+              "iterations": 312,
+              "elapsed_seconds": 5.016491723945364,
+              "energy_joules": 1180.479,
+              "method": "nvml_total_energy"
+            }
+          ]
+        },
+        {
+          "record_id": "121-123859-0002",
+          "audio_seconds": 30.04,
+          "median_ms": 36.384541483130306,
+          "p95_ms": 37.1146869729273,
+          "joules_per_iteration": 9.000057553956834,
+          "average_watts": 248.05687643473863,
+          "process_vram_gb": 4.188012544,
+          "windows": [
+            {
+              "median_ms": 35.974336962681264,
+              "p95_ms": 36.87191102653742,
+              "joules_per_iteration": 9.000057553956834,
+              "average_watts": 249.55968549841614,
+              "process_sampled_peak_bytes": 4188012544,
+              "iterations": 139,
+              "elapsed_seconds": 5.012860941467807,
+              "energy_joules": 1251.008,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 36.384541483130306,
+              "p95_ms": 37.1146869729273,
+              "joules_per_iteration": 8.990369565217392,
+              "average_watts": 246.58836079438476,
+              "process_sampled_peak_bytes": 4188012544,
+              "iterations": 138,
+              "elapsed_seconds": 5.031344529008493,
+              "energy_joules": 1240.671,
+              "method": "nvml_total_energy"
+            },
+            {
+              "median_ms": 36.43943998031318,
+              "p95_ms": 37.51368500525132,
+              "joules_per_iteration": 9.066270072992701,
+              "average_watts": 248.05687643473863,
+              "process_sampled_peak_bytes": 4188012544,
+              "iterations": 137,
+              "elapsed_seconds": 5.007234702992719,
+              "energy_joules": 1242.079,
+              "method": "nvml_total_energy"
+            }
+          ]
+        }
+      ],
+      "quality_subset": {
+        "utterances": 256,
+        "words": 4721,
+        "edits": 245
+      },
+      "active_providers": {
+        "_encoder": [
+          "CUDAExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "_decoder_joint": [
+          "CUDAExecutionProvider",
+          "CPUExecutionProvider"
+        ]
+      },
+      "provider_options": {
+        "_encoder": {
+          "CPUExecutionProvider": {},
+          "CUDAExecutionProvider": {
+            "sdpa_kernel": "0",
+            "use_tf32": "1",
+            "fuse_conv_bias": "0",
+            "prefer_nhwc": "0",
+            "tunable_op_max_tuning_duration_ms": "0",
+            "enable_skip_layer_norm_strict_mode": "0",
+            "tunable_op_tuning_enable": "0",
+            "tunable_op_enable": "0",
+            "use_ep_level_unified_stream": "0",
+            "device_id": "0",
+            "has_user_compute_stream": "0",
+            "gpu_external_empty_cache": "0",
+            "cudnn_conv_algo_search": "EXHAUSTIVE",
+            "cudnn_conv1d_pad_to_nc1d": "0",
+            "gpu_mem_limit": "18446744073709551615",
+            "gpu_external_alloc": "0",
+            "gpu_external_free": "0",
+            "arena_extend_strategy": "kNextPowerOfTwo",
+            "do_copy_in_default_stream": "1",
+            "enable_cuda_graph": "0",
+            "user_compute_stream": "0",
+            "cudnn_conv_use_max_workspace": "1"
+          }
+        },
+        "_decoder_joint": {
+          "CPUExecutionProvider": {},
+          "CUDAExecutionProvider": {
+            "sdpa_kernel": "0",
+            "use_tf32": "1",
+            "fuse_conv_bias": "0",
+            "prefer_nhwc": "0",
+            "tunable_op_max_tuning_duration_ms": "0",
+            "enable_skip_layer_norm_strict_mode": "0",
+            "tunable_op_tuning_enable": "0",
+            "tunable_op_enable": "0",
+            "use_ep_level_unified_stream": "0",
+            "device_id": "0",
+            "has_user_compute_stream": "0",
+            "gpu_external_empty_cache": "0",
+            "cudnn_conv_algo_search": "EXHAUSTIVE",
+            "cudnn_conv1d_pad_to_nc1d": "0",
+            "gpu_mem_limit": "18446744073709551615",
+            "gpu_external_alloc": "0",
+            "gpu_external_free": "0",
+            "arena_extend_strategy": "kNextPowerOfTwo",
+            "do_copy_in_default_stream": "1",
+            "enable_cuda_graph": "0",
+            "user_compute_stream": "0",
+            "cudnn_conv_use_max_workspace": "1"
+          }
+        }
+      },
+      "onnx_revision": "0bbb45a3365852604aef28b538a8f066f4ccaa85"
+    }
+  },
+  "model_provenance": {
+    "ternary_export_sha256": "a287e97719c451b785be2cd01ecc861fcaa010ebaa4ff2841783ec78fcd61503",
+    "nvidia_revision": "ae9ad07059c7c739ffaf932226a8fe64ae2620b0",
+    "onnx_revision": "0bbb45a3365852604aef28b538a8f066f4ccaa85",
+    "onnx_package": "onnx-asr==0.12.0",
+    "onnx_runtime": "onnxruntime-gpu==1.24.4",
+    "onnx_model": "istupakov/parakeet-tdt-0.6b-v2-onnx",
+    "onnx_options": "Published FP32 export; CUDA EP with normal CPU fallback, default provider/allocator options; intra-op CPU threads 4, inter-op 1."
+  },
+  "runtime_validation": {
+    "text": 2048,
+    "tokens": 2048,
+    "timestamps": 2048,
+    "utterances": 2048,
+    "audio_seconds": 14156.2476875,
+    "max_score_difference": 0.00146484375,
+    "per_set": {
+      "baseline": {
+        "earnings22": {
+          "words": 4290,
+          "edits": 435
+        },
+        "voxpopuli": {
+          "words": 6201,
+          "edits": 376
+        },
+        "librispeech_clean": {
+          "words": 5519,
+          "edits": 136
+        },
+        "librispeech_other": {
+          "words": 4657,
+          "edits": 217
+        },
+        "ami": {
+          "words": 1881,
+          "edits": 180
+        },
+        "common_voice": {
+          "words": 2515,
+          "edits": 300
+        },
+        "spgispeech": {
+          "words": 6338,
+          "edits": 189
+        },
+        "gigaspeech": {
+          "words": 5298,
+          "edits": 614
+        }
+      },
+      "candidate": {
+        "earnings22": {
+          "words": 4290,
+          "edits": 435
+        },
+        "voxpopuli": {
+          "words": 6201,
+          "edits": 376
+        },
+        "librispeech_clean": {
+          "words": 5519,
+          "edits": 136
+        },
+        "librispeech_other": {
+          "words": 4657,
+          "edits": 217
+        },
+        "ami": {
+          "words": 1881,
+          "edits": 180
+        },
+        "common_voice": {
+          "words": 2515,
+          "edits": 300
+        },
+        "spgispeech": {
+          "words": 6338,
+          "edits": 189
+        },
+        "gigaspeech": {
+          "words": 5298,
+          "edits": 614
+        }
+      }
+    },
+    "encoder_max_abs": 1.341104507446289e-06
+  },
+  "publication_validation": {
+    "inference_unittests": {
+      "passed": 22,
+      "elapsed_seconds": 18.202,
+      "log_sha256": "b53e17a7339ab5f49f11e06fff94e9333ef8975d101280ff59ddc18ea2655564"
+    },
+    "expanded_cli_transcript_matches_benchmark": true,
+    "environment": {
+      "torch": "2.11.0+cu128",
+      "triton": "3.6.0",
+      "nemo_toolkit": "3.0.0",
+      "cuda-bindings": "13.4.1",
+      "cuda-pathfinder": "1.8.1",
+      "huggingface-hub": "1.30.0",
+      "nvidia-cuda-nvrtc-cu12 (NVRTC dependency directory)": "12.9.86"
+    }
+  }
+}
