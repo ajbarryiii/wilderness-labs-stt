@@ -1,0 +1,1487 @@
+{
+ "check": "B1P FP16 headroom: FP32 reference of MB1 on public LibriSpeech dev-clean clips; per arm-encoded projection, max |x . c| before the row scale (B1P's FP16 matmul output) vs max |x . (c s)| (the scaled output every pre-scaled arm produces); FP16 max 65504",
+ "clips": [
+  "n02-1272-141231-0016",
+  "n02-174-50561-0014",
+  "n04-1462-170142-0035",
+  "n04-174-50561-0017",
+  "n08-1272-141231-0019",
+  "n08-1462-170142-0020",
+  "n15-1272-141231-0025",
+  "n15-1462-170142-0001",
+  "n15-1673-143396-0001"
+ ],
+ "probe_clip": "n15-1673-143396-0001",
+ "modules": 240,
+ "worst_pre_scale": {
+  "module": "encoder.layers.0.feed_forward1.linear2",
+  "max_abs_x": 31.052398681640625,
+  "max_abs_pre_scale": 3731.246936236064,
+  "max_abs_out": 1648.8176158660342,
+  "max_l1_x": 8553.009997648884
+ },
+ "worst_scaled_output": {
+  "module": "encoder.layers.0.feed_forward1.linear2",
+  "max_abs_x": 31.052398681640625,
+  "max_abs_pre_scale": 3731.246936236064,
+  "max_abs_out": 1648.8176158660342,
+  "max_l1_x": 8553.009997648884
+ },
+ "pre_scale_over_output_ratio": {
+  "min": 0.3291932477000755,
+  "median": 5.40543896435518,
+  "max": 9.531122745782431
+ },
+ "modules_overflowing_fp16": {
+  "max_abs_pre_scale_x1": 0,
+  "max_abs_pre_scale_x8": 0,
+  "max_abs_pre_scale_x64": 2,
+  "max_abs_out_x1": 0,
+  "max_abs_out_x8": 0,
+  "max_abs_out_x64": 1
+ },
+ "modules_overflowing_fp16_list_pre_scale_x8": [],
+ "per_module": {
+  "encoder.layers.0.conv.pointwise_conv1": {
+   "max_abs_x": 2.101,
+   "max_abs_pre_scale": 97.54,
+   "max_abs_out": 15.905,
+   "max_l1_x": 196.83
+  },
+  "encoder.layers.0.conv.pointwise_conv2": {
+   "max_abs_x": 40.502,
+   "max_abs_pre_scale": 980.472,
+   "max_abs_out": 391.337,
+   "max_l1_x": 1790.285
+  },
+  "encoder.layers.0.feed_forward1.linear1": {
+   "max_abs_x": 2.827,
+   "max_abs_pre_scale": 166.853,
+   "max_abs_out": 31.045,
+   "max_l1_x": 532.812
+  },
+  "encoder.layers.0.feed_forward1.linear2": {
+   "max_abs_x": 31.052,
+   "max_abs_pre_scale": 3731.247,
+   "max_abs_out": 1648.818,
+   "max_l1_x": 8553.01
+  },
+  "encoder.layers.0.feed_forward2.linear1": {
+   "max_abs_x": 7.745,
+   "max_abs_pre_scale": 273.462,
+   "max_abs_out": 47.161,
+   "max_l1_x": 631.837
+  },
+  "encoder.layers.0.feed_forward2.linear2": {
+   "max_abs_x": 34.541,
+   "max_abs_pre_scale": 1827.21,
+   "max_abs_out": 653.531,
+   "max_l1_x": 3849.01
+  },
+  "encoder.layers.0.self_attn.linear_k": {
+   "max_abs_x": 1.216,
+   "max_abs_pre_scale": 46.876,
+   "max_abs_out": 13.55,
+   "max_l1_x": 110.147
+  },
+  "encoder.layers.0.self_attn.linear_out": {
+   "max_abs_x": 5.38,
+   "max_abs_pre_scale": 388.316,
+   "max_abs_out": 119.216,
+   "max_l1_x": 968.149
+  },
+  "encoder.layers.0.self_attn.linear_q": {
+   "max_abs_x": 1.216,
+   "max_abs_pre_scale": 39.585,
+   "max_abs_out": 4.528,
+   "max_l1_x": 110.147
+  },
+  "encoder.layers.0.self_attn.linear_v": {
+   "max_abs_x": 1.216,
+   "max_abs_pre_scale": 50.824,
+   "max_abs_out": 10.932,
+   "max_l1_x": 110.147
+  },
+  "encoder.layers.1.conv.pointwise_conv1": {
+   "max_abs_x": 1.84,
+   "max_abs_pre_scale": 73.978,
+   "max_abs_out": 16.472,
+   "max_l1_x": 196.599
+  },
+  "encoder.layers.1.conv.pointwise_conv2": {
+   "max_abs_x": 6.741,
+   "max_abs_pre_scale": 86.634,
+   "max_abs_out": 34.032,
+   "max_l1_x": 261.469
+  },
+  "encoder.layers.1.feed_forward1.linear1": {
+   "max_abs_x": 3.975,
+   "max_abs_pre_scale": 132.433,
+   "max_abs_out": 19.312,
+   "max_l1_x": 205.159
+  },
+  "encoder.layers.1.feed_forward1.linear2": {
+   "max_abs_x": 9.078,
+   "max_abs_pre_scale": 221.323,
+   "max_abs_out": 111.958,
+   "max_l1_x": 724.399
+  },
+  "encoder.layers.1.feed_forward2.linear1": {
+   "max_abs_x": 2.329,
+   "max_abs_pre_scale": 174.191,
+   "max_abs_out": 22.139,
+   "max_l1_x": 250.265
+  },
+  "encoder.layers.1.feed_forward2.linear2": {
+   "max_abs_x": 11.686,
+   "max_abs_pre_scale": 268.609,
+   "max_abs_out": 211.687,
+   "max_l1_x": 575.088
+  },
+  "encoder.layers.1.self_attn.linear_k": {
+   "max_abs_x": 0.732,
+   "max_abs_pre_scale": 28.352,
+   "max_abs_out": 11.141,
+   "max_l1_x": 90.045
+  },
+  "encoder.layers.1.self_attn.linear_out": {
+   "max_abs_x": 2.393,
+   "max_abs_pre_scale": 62.743,
+   "max_abs_out": 19.882,
+   "max_l1_x": 259.104
+  },
+  "encoder.layers.1.self_attn.linear_q": {
+   "max_abs_x": 0.732,
+   "max_abs_pre_scale": 24.397,
+   "max_abs_out": 3.318,
+   "max_l1_x": 90.045
+  },
+  "encoder.layers.1.self_attn.linear_v": {
+   "max_abs_x": 0.732,
+   "max_abs_pre_scale": 24.234,
+   "max_abs_out": 4.784,
+   "max_l1_x": 90.045
+  },
+  "encoder.layers.10.conv.pointwise_conv1": {
+   "max_abs_x": 2.403,
+   "max_abs_pre_scale": 77.221,
+   "max_abs_out": 13.541,
+   "max_l1_x": 281.788
+  },
+  "encoder.layers.10.conv.pointwise_conv2": {
+   "max_abs_x": 15.104,
+   "max_abs_pre_scale": 94.565,
+   "max_abs_out": 17.743,
+   "max_l1_x": 361.357
+  },
+  "encoder.layers.10.feed_forward1.linear1": {
+   "max_abs_x": 4.197,
+   "max_abs_pre_scale": 291.066,
+   "max_abs_out": 35.448,
+   "max_l1_x": 545.465
+  },
+  "encoder.layers.10.feed_forward1.linear2": {
+   "max_abs_x": 21.769,
+   "max_abs_pre_scale": 123.518,
+   "max_abs_out": 24.215,
+   "max_l1_x": 403.143
+  },
+  "encoder.layers.10.feed_forward2.linear1": {
+   "max_abs_x": 3.392,
+   "max_abs_pre_scale": 225.781,
+   "max_abs_out": 34.328,
+   "max_l1_x": 492.678
+  },
+  "encoder.layers.10.feed_forward2.linear2": {
+   "max_abs_x": 22.193,
+   "max_abs_pre_scale": 183.25,
+   "max_abs_out": 39.482,
+   "max_l1_x": 688.932
+  },
+  "encoder.layers.10.self_attn.linear_k": {
+   "max_abs_x": 1.292,
+   "max_abs_pre_scale": 38.096,
+   "max_abs_out": 13.852,
+   "max_l1_x": 123.448
+  },
+  "encoder.layers.10.self_attn.linear_out": {
+   "max_abs_x": 3.58,
+   "max_abs_pre_scale": 86.01,
+   "max_abs_out": 11.329,
+   "max_l1_x": 330.34
+  },
+  "encoder.layers.10.self_attn.linear_q": {
+   "max_abs_x": 1.292,
+   "max_abs_pre_scale": 30.137,
+   "max_abs_out": 3.234,
+   "max_l1_x": 123.448
+  },
+  "encoder.layers.10.self_attn.linear_v": {
+   "max_abs_x": 1.292,
+   "max_abs_pre_scale": 35.12,
+   "max_abs_out": 5.582,
+   "max_l1_x": 123.448
+  },
+  "encoder.layers.11.conv.pointwise_conv1": {
+   "max_abs_x": 2.172,
+   "max_abs_pre_scale": 73.371,
+   "max_abs_out": 13.094,
+   "max_l1_x": 291.812
+  },
+  "encoder.layers.11.conv.pointwise_conv2": {
+   "max_abs_x": 15.736,
+   "max_abs_pre_scale": 89.781,
+   "max_abs_out": 20.131,
+   "max_l1_x": 289.773
+  },
+  "encoder.layers.11.feed_forward1.linear1": {
+   "max_abs_x": 4.062,
+   "max_abs_pre_scale": 264.819,
+   "max_abs_out": 36.424,
+   "max_l1_x": 558.187
+  },
+  "encoder.layers.11.feed_forward1.linear2": {
+   "max_abs_x": 24.07,
+   "max_abs_pre_scale": 166.067,
+   "max_abs_out": 29.962,
+   "max_l1_x": 441.572
+  },
+  "encoder.layers.11.feed_forward2.linear1": {
+   "max_abs_x": 2.787,
+   "max_abs_pre_scale": 213.098,
+   "max_abs_out": 35.121,
+   "max_l1_x": 500.96
+  },
+  "encoder.layers.11.feed_forward2.linear2": {
+   "max_abs_x": 19.232,
+   "max_abs_pre_scale": 226.492,
+   "max_abs_out": 48.956,
+   "max_l1_x": 667.115
+  },
+  "encoder.layers.11.self_attn.linear_k": {
+   "max_abs_x": 1.197,
+   "max_abs_pre_scale": 39.237,
+   "max_abs_out": 11.7,
+   "max_l1_x": 134.365
+  },
+  "encoder.layers.11.self_attn.linear_out": {
+   "max_abs_x": 4.625,
+   "max_abs_pre_scale": 85.565,
+   "max_abs_out": 13.369,
+   "max_l1_x": 448.046
+  },
+  "encoder.layers.11.self_attn.linear_q": {
+   "max_abs_x": 1.197,
+   "max_abs_pre_scale": 24.359,
+   "max_abs_out": 2.964,
+   "max_l1_x": 134.365
+  },
+  "encoder.layers.11.self_attn.linear_v": {
+   "max_abs_x": 1.197,
+   "max_abs_pre_scale": 31.13,
+   "max_abs_out": 5.156,
+   "max_l1_x": 134.365
+  },
+  "encoder.layers.12.conv.pointwise_conv1": {
+   "max_abs_x": 2.106,
+   "max_abs_pre_scale": 79.735,
+   "max_abs_out": 13.189,
+   "max_l1_x": 285.507
+  },
+  "encoder.layers.12.conv.pointwise_conv2": {
+   "max_abs_x": 16.949,
+   "max_abs_pre_scale": 78.528,
+   "max_abs_out": 28.374,
+   "max_l1_x": 222.749
+  },
+  "encoder.layers.12.feed_forward1.linear1": {
+   "max_abs_x": 4.449,
+   "max_abs_pre_scale": 299.935,
+   "max_abs_out": 34.547,
+   "max_l1_x": 594.729
+  },
+  "encoder.layers.12.feed_forward1.linear2": {
+   "max_abs_x": 22.289,
+   "max_abs_pre_scale": 131.862,
+   "max_abs_out": 25.718,
+   "max_l1_x": 486.854
+  },
+  "encoder.layers.12.feed_forward2.linear1": {
+   "max_abs_x": 3.194,
+   "max_abs_pre_scale": 196.075,
+   "max_abs_out": 30.115,
+   "max_l1_x": 455.313
+  },
+  "encoder.layers.12.feed_forward2.linear2": {
+   "max_abs_x": 17.553,
+   "max_abs_pre_scale": 180.053,
+   "max_abs_out": 38.903,
+   "max_l1_x": 765.766
+  },
+  "encoder.layers.12.self_attn.linear_k": {
+   "max_abs_x": 0.986,
+   "max_abs_pre_scale": 35.635,
+   "max_abs_out": 11.762,
+   "max_l1_x": 142.657
+  },
+  "encoder.layers.12.self_attn.linear_out": {
+   "max_abs_x": 3.806,
+   "max_abs_pre_scale": 109.592,
+   "max_abs_out": 18.033,
+   "max_l1_x": 445.836
+  },
+  "encoder.layers.12.self_attn.linear_q": {
+   "max_abs_x": 0.986,
+   "max_abs_pre_scale": 33.499,
+   "max_abs_out": 3.515,
+   "max_l1_x": 142.657
+  },
+  "encoder.layers.12.self_attn.linear_v": {
+   "max_abs_x": 0.986,
+   "max_abs_pre_scale": 28.952,
+   "max_abs_out": 4.619,
+   "max_l1_x": 142.657
+  },
+  "encoder.layers.13.conv.pointwise_conv1": {
+   "max_abs_x": 2.199,
+   "max_abs_pre_scale": 61.468,
+   "max_abs_out": 11.36,
+   "max_l1_x": 276.677
+  },
+  "encoder.layers.13.conv.pointwise_conv2": {
+   "max_abs_x": 24.801,
+   "max_abs_pre_scale": 79.136,
+   "max_abs_out": 24.314,
+   "max_l1_x": 279.802
+  },
+  "encoder.layers.13.feed_forward1.linear1": {
+   "max_abs_x": 4.789,
+   "max_abs_pre_scale": 268.8,
+   "max_abs_out": 33.277,
+   "max_l1_x": 601.235
+  },
+  "encoder.layers.13.feed_forward1.linear2": {
+   "max_abs_x": 24.317,
+   "max_abs_pre_scale": 179.601,
+   "max_abs_out": 35.341,
+   "max_l1_x": 437.55
+  },
+  "encoder.layers.13.feed_forward2.linear1": {
+   "max_abs_x": 2.503,
+   "max_abs_pre_scale": 202.843,
+   "max_abs_out": 28.971,
+   "max_l1_x": 457.68
+  },
+  "encoder.layers.13.feed_forward2.linear2": {
+   "max_abs_x": 19.78,
+   "max_abs_pre_scale": 144.134,
+   "max_abs_out": 31.248,
+   "max_l1_x": 783.331
+  },
+  "encoder.layers.13.self_attn.linear_k": {
+   "max_abs_x": 1.079,
+   "max_abs_pre_scale": 40.15,
+   "max_abs_out": 13.204,
+   "max_l1_x": 168.111
+  },
+  "encoder.layers.13.self_attn.linear_out": {
+   "max_abs_x": 4.303,
+   "max_abs_pre_scale": 78.635,
+   "max_abs_out": 11.787,
+   "max_l1_x": 439.652
+  },
+  "encoder.layers.13.self_attn.linear_q": {
+   "max_abs_x": 1.079,
+   "max_abs_pre_scale": 30.352,
+   "max_abs_out": 3.557,
+   "max_l1_x": 168.111
+  },
+  "encoder.layers.13.self_attn.linear_v": {
+   "max_abs_x": 1.079,
+   "max_abs_pre_scale": 31.71,
+   "max_abs_out": 5.605,
+   "max_l1_x": 168.111
+  },
+  "encoder.layers.14.conv.pointwise_conv1": {
+   "max_abs_x": 2.677,
+   "max_abs_pre_scale": 62.634,
+   "max_abs_out": 11.56,
+   "max_l1_x": 269.667
+  },
+  "encoder.layers.14.conv.pointwise_conv2": {
+   "max_abs_x": 22.823,
+   "max_abs_pre_scale": 76.076,
+   "max_abs_out": 22.132,
+   "max_l1_x": 241.134
+  },
+  "encoder.layers.14.feed_forward1.linear1": {
+   "max_abs_x": 3.56,
+   "max_abs_pre_scale": 269.228,
+   "max_abs_out": 34.003,
+   "max_l1_x": 615.025
+  },
+  "encoder.layers.14.feed_forward1.linear2": {
+   "max_abs_x": 21.415,
+   "max_abs_pre_scale": 129.177,
+   "max_abs_out": 26.886,
+   "max_l1_x": 304.03
+  },
+  "encoder.layers.14.feed_forward2.linear1": {
+   "max_abs_x": 2.567,
+   "max_abs_pre_scale": 198.543,
+   "max_abs_out": 29.597,
+   "max_l1_x": 442.726
+  },
+  "encoder.layers.14.feed_forward2.linear2": {
+   "max_abs_x": 18.936,
+   "max_abs_pre_scale": 115.933,
+   "max_abs_out": 23.544,
+   "max_l1_x": 727.269
+  },
+  "encoder.layers.14.self_attn.linear_k": {
+   "max_abs_x": 0.816,
+   "max_abs_pre_scale": 32.254,
+   "max_abs_out": 10.916,
+   "max_l1_x": 169.008
+  },
+  "encoder.layers.14.self_attn.linear_out": {
+   "max_abs_x": 3.849,
+   "max_abs_pre_scale": 75.583,
+   "max_abs_out": 10.229,
+   "max_l1_x": 414.518
+  },
+  "encoder.layers.14.self_attn.linear_q": {
+   "max_abs_x": 0.816,
+   "max_abs_pre_scale": 30.984,
+   "max_abs_out": 4.08,
+   "max_l1_x": 169.008
+  },
+  "encoder.layers.14.self_attn.linear_v": {
+   "max_abs_x": 0.816,
+   "max_abs_pre_scale": 30.148,
+   "max_abs_out": 5.241,
+   "max_l1_x": 169.008
+  },
+  "encoder.layers.15.conv.pointwise_conv1": {
+   "max_abs_x": 2.148,
+   "max_abs_pre_scale": 63.407,
+   "max_abs_out": 12.146,
+   "max_l1_x": 251.363
+  },
+  "encoder.layers.15.conv.pointwise_conv2": {
+   "max_abs_x": 19.66,
+   "max_abs_pre_scale": 79.6,
+   "max_abs_out": 21.96,
+   "max_l1_x": 302.003
+  },
+  "encoder.layers.15.feed_forward1.linear1": {
+   "max_abs_x": 2.876,
+   "max_abs_pre_scale": 236.882,
+   "max_abs_out": 30.959,
+   "max_l1_x": 525.126
+  },
+  "encoder.layers.15.feed_forward1.linear2": {
+   "max_abs_x": 26.12,
+   "max_abs_pre_scale": 101.083,
+   "max_abs_out": 26.838,
+   "max_l1_x": 444.791
+  },
+  "encoder.layers.15.feed_forward2.linear1": {
+   "max_abs_x": 2.229,
+   "max_abs_pre_scale": 166.605,
+   "max_abs_out": 25.307,
+   "max_l1_x": 422.628
+  },
+  "encoder.layers.15.feed_forward2.linear2": {
+   "max_abs_x": 21.507,
+   "max_abs_pre_scale": 211.911,
+   "max_abs_out": 51.891,
+   "max_l1_x": 651.377
+  },
+  "encoder.layers.15.self_attn.linear_k": {
+   "max_abs_x": 0.635,
+   "max_abs_pre_scale": 26.847,
+   "max_abs_out": 9.917,
+   "max_l1_x": 132.759
+  },
+  "encoder.layers.15.self_attn.linear_out": {
+   "max_abs_x": 3.243,
+   "max_abs_pre_scale": 63.159,
+   "max_abs_out": 8.751,
+   "max_l1_x": 354.794
+  },
+  "encoder.layers.15.self_attn.linear_q": {
+   "max_abs_x": 0.635,
+   "max_abs_pre_scale": 22.085,
+   "max_abs_out": 3.157,
+   "max_l1_x": 132.759
+  },
+  "encoder.layers.15.self_attn.linear_v": {
+   "max_abs_x": 0.635,
+   "max_abs_pre_scale": 29.276,
+   "max_abs_out": 4.539,
+   "max_l1_x": 132.759
+  },
+  "encoder.layers.16.conv.pointwise_conv1": {
+   "max_abs_x": 2.257,
+   "max_abs_pre_scale": 85.783,
+   "max_abs_out": 17.843,
+   "max_l1_x": 258.861
+  },
+  "encoder.layers.16.conv.pointwise_conv2": {
+   "max_abs_x": 20.448,
+   "max_abs_pre_scale": 90.003,
+   "max_abs_out": 27.664,
+   "max_l1_x": 334.989
+  },
+  "encoder.layers.16.feed_forward1.linear1": {
+   "max_abs_x": 2.791,
+   "max_abs_pre_scale": 197.407,
+   "max_abs_out": 29.097,
+   "max_l1_x": 456.804
+  },
+  "encoder.layers.16.feed_forward1.linear2": {
+   "max_abs_x": 23.305,
+   "max_abs_pre_scale": 142.307,
+   "max_abs_out": 30.351,
+   "max_l1_x": 531.224
+  },
+  "encoder.layers.16.feed_forward2.linear1": {
+   "max_abs_x": 2.568,
+   "max_abs_pre_scale": 120.168,
+   "max_abs_out": 19.781,
+   "max_l1_x": 331.27
+  },
+  "encoder.layers.16.feed_forward2.linear2": {
+   "max_abs_x": 19.783,
+   "max_abs_pre_scale": 249.093,
+   "max_abs_out": 72.125,
+   "max_l1_x": 996.698
+  },
+  "encoder.layers.16.self_attn.linear_k": {
+   "max_abs_x": 0.871,
+   "max_abs_pre_scale": 32.324,
+   "max_abs_out": 11.206,
+   "max_l1_x": 159.783
+  },
+  "encoder.layers.16.self_attn.linear_out": {
+   "max_abs_x": 6.018,
+   "max_abs_pre_scale": 103.016,
+   "max_abs_out": 22.132,
+   "max_l1_x": 399.591
+  },
+  "encoder.layers.16.self_attn.linear_q": {
+   "max_abs_x": 0.871,
+   "max_abs_pre_scale": 25.63,
+   "max_abs_out": 3.464,
+   "max_l1_x": 159.783
+  },
+  "encoder.layers.16.self_attn.linear_v": {
+   "max_abs_x": 0.871,
+   "max_abs_pre_scale": 38.868,
+   "max_abs_out": 7.198,
+   "max_l1_x": 159.783
+  },
+  "encoder.layers.17.conv.pointwise_conv1": {
+   "max_abs_x": 2.003,
+   "max_abs_pre_scale": 61.732,
+   "max_abs_out": 12.292,
+   "max_l1_x": 222.469
+  },
+  "encoder.layers.17.conv.pointwise_conv2": {
+   "max_abs_x": 9.421,
+   "max_abs_pre_scale": 111.312,
+   "max_abs_out": 26.768,
+   "max_l1_x": 397.983
+  },
+  "encoder.layers.17.feed_forward1.linear1": {
+   "max_abs_x": 2.851,
+   "max_abs_pre_scale": 131.213,
+   "max_abs_out": 19.435,
+   "max_l1_x": 311.83
+  },
+  "encoder.layers.17.feed_forward1.linear2": {
+   "max_abs_x": 15.635,
+   "max_abs_pre_scale": 165.744,
+   "max_abs_out": 31.842,
+   "max_l1_x": 860.37
+  },
+  "encoder.layers.17.feed_forward2.linear1": {
+   "max_abs_x": 2.358,
+   "max_abs_pre_scale": 124.201,
+   "max_abs_out": 18.844,
+   "max_l1_x": 299.079
+  },
+  "encoder.layers.17.feed_forward2.linear2": {
+   "max_abs_x": 13.76,
+   "max_abs_pre_scale": 271.077,
+   "max_abs_out": 71.277,
+   "max_l1_x": 864.906
+  },
+  "encoder.layers.17.self_attn.linear_k": {
+   "max_abs_x": 1.45,
+   "max_abs_pre_scale": 26.811,
+   "max_abs_out": 10.421,
+   "max_l1_x": 93.779
+  },
+  "encoder.layers.17.self_attn.linear_out": {
+   "max_abs_x": 2.53,
+   "max_abs_pre_scale": 77.947,
+   "max_abs_out": 21.694,
+   "max_l1_x": 363.449
+  },
+  "encoder.layers.17.self_attn.linear_q": {
+   "max_abs_x": 1.45,
+   "max_abs_pre_scale": 21.836,
+   "max_abs_out": 2.887,
+   "max_l1_x": 93.779
+  },
+  "encoder.layers.17.self_attn.linear_v": {
+   "max_abs_x": 1.45,
+   "max_abs_pre_scale": 21.992,
+   "max_abs_out": 3.094,
+   "max_l1_x": 93.779
+  },
+  "encoder.layers.18.conv.pointwise_conv1": {
+   "max_abs_x": 1.75,
+   "max_abs_pre_scale": 70.678,
+   "max_abs_out": 13.902,
+   "max_l1_x": 219.749
+  },
+  "encoder.layers.18.conv.pointwise_conv2": {
+   "max_abs_x": 20.747,
+   "max_abs_pre_scale": 104.533,
+   "max_abs_out": 26.448,
+   "max_l1_x": 385.886
+  },
+  "encoder.layers.18.feed_forward1.linear1": {
+   "max_abs_x": 2.2,
+   "max_abs_pre_scale": 103.578,
+   "max_abs_out": 18.573,
+   "max_l1_x": 287.564
+  },
+  "encoder.layers.18.feed_forward1.linear2": {
+   "max_abs_x": 12.69,
+   "max_abs_pre_scale": 142.959,
+   "max_abs_out": 31.431,
+   "max_l1_x": 757.407
+  },
+  "encoder.layers.18.feed_forward2.linear1": {
+   "max_abs_x": 2.899,
+   "max_abs_pre_scale": 126.587,
+   "max_abs_out": 18.565,
+   "max_l1_x": 314.309
+  },
+  "encoder.layers.18.feed_forward2.linear2": {
+   "max_abs_x": 15.774,
+   "max_abs_pre_scale": 188.908,
+   "max_abs_out": 65.076,
+   "max_l1_x": 956.477
+  },
+  "encoder.layers.18.self_attn.linear_k": {
+   "max_abs_x": 0.761,
+   "max_abs_pre_scale": 29.022,
+   "max_abs_out": 8.864,
+   "max_l1_x": 103.345
+  },
+  "encoder.layers.18.self_attn.linear_out": {
+   "max_abs_x": 3.416,
+   "max_abs_pre_scale": 106.138,
+   "max_abs_out": 18.907,
+   "max_l1_x": 451.618
+  },
+  "encoder.layers.18.self_attn.linear_q": {
+   "max_abs_x": 0.761,
+   "max_abs_pre_scale": 23.486,
+   "max_abs_out": 3.407,
+   "max_l1_x": 103.345
+  },
+  "encoder.layers.18.self_attn.linear_v": {
+   "max_abs_x": 0.761,
+   "max_abs_pre_scale": 24.066,
+   "max_abs_out": 3.752,
+   "max_l1_x": 103.345
+  },
+  "encoder.layers.19.conv.pointwise_conv1": {
+   "max_abs_x": 1.573,
+   "max_abs_pre_scale": 65.514,
+   "max_abs_out": 13.164,
+   "max_l1_x": 223.91
+  },
+  "encoder.layers.19.conv.pointwise_conv2": {
+   "max_abs_x": 13.383,
+   "max_abs_pre_scale": 87.303,
+   "max_abs_out": 25.21,
+   "max_l1_x": 372.396
+  },
+  "encoder.layers.19.feed_forward1.linear1": {
+   "max_abs_x": 2.377,
+   "max_abs_pre_scale": 116.549,
+   "max_abs_out": 18.965,
+   "max_l1_x": 313.838
+  },
+  "encoder.layers.19.feed_forward1.linear2": {
+   "max_abs_x": 16.757,
+   "max_abs_pre_scale": 184.816,
+   "max_abs_out": 29.291,
+   "max_l1_x": 810.519
+  },
+  "encoder.layers.19.feed_forward2.linear1": {
+   "max_abs_x": 2.788,
+   "max_abs_pre_scale": 84.438,
+   "max_abs_out": 18.975,
+   "max_l1_x": 334.544
+  },
+  "encoder.layers.19.feed_forward2.linear2": {
+   "max_abs_x": 17.898,
+   "max_abs_pre_scale": 173.788,
+   "max_abs_out": 41.325,
+   "max_l1_x": 857.111
+  },
+  "encoder.layers.19.self_attn.linear_k": {
+   "max_abs_x": 0.707,
+   "max_abs_pre_scale": 25.933,
+   "max_abs_out": 6.622,
+   "max_l1_x": 101.994
+  },
+  "encoder.layers.19.self_attn.linear_out": {
+   "max_abs_x": 3.112,
+   "max_abs_pre_scale": 88.151,
+   "max_abs_out": 14.78,
+   "max_l1_x": 488.566
+  },
+  "encoder.layers.19.self_attn.linear_q": {
+   "max_abs_x": 0.707,
+   "max_abs_pre_scale": 22.526,
+   "max_abs_out": 2.67,
+   "max_l1_x": 101.994
+  },
+  "encoder.layers.19.self_attn.linear_v": {
+   "max_abs_x": 0.707,
+   "max_abs_pre_scale": 27.505,
+   "max_abs_out": 4.049,
+   "max_l1_x": 101.994
+  },
+  "encoder.layers.2.conv.pointwise_conv1": {
+   "max_abs_x": 2.225,
+   "max_abs_pre_scale": 67.046,
+   "max_abs_out": 12.546,
+   "max_l1_x": 212.156
+  },
+  "encoder.layers.2.conv.pointwise_conv2": {
+   "max_abs_x": 9.019,
+   "max_abs_pre_scale": 84.984,
+   "max_abs_out": 19.933,
+   "max_l1_x": 316.388
+  },
+  "encoder.layers.2.feed_forward1.linear1": {
+   "max_abs_x": 2.534,
+   "max_abs_pre_scale": 121.174,
+   "max_abs_out": 17.736,
+   "max_l1_x": 206.914
+  },
+  "encoder.layers.2.feed_forward1.linear2": {
+   "max_abs_x": 11.08,
+   "max_abs_pre_scale": 149.479,
+   "max_abs_out": 21.86,
+   "max_l1_x": 879.918
+  },
+  "encoder.layers.2.feed_forward2.linear1": {
+   "max_abs_x": 2.387,
+   "max_abs_pre_scale": 175.556,
+   "max_abs_out": 22.392,
+   "max_l1_x": 255.229
+  },
+  "encoder.layers.2.feed_forward2.linear2": {
+   "max_abs_x": 10.6,
+   "max_abs_pre_scale": 193.519,
+   "max_abs_out": 46.136,
+   "max_l1_x": 612.264
+  },
+  "encoder.layers.2.self_attn.linear_k": {
+   "max_abs_x": 0.86,
+   "max_abs_pre_scale": 32.033,
+   "max_abs_out": 12.036,
+   "max_l1_x": 99.548
+  },
+  "encoder.layers.2.self_attn.linear_out": {
+   "max_abs_x": 2.165,
+   "max_abs_pre_scale": 63.238,
+   "max_abs_out": 8.996,
+   "max_l1_x": 284.101
+  },
+  "encoder.layers.2.self_attn.linear_q": {
+   "max_abs_x": 0.86,
+   "max_abs_pre_scale": 22.825,
+   "max_abs_out": 3.179,
+   "max_l1_x": 99.548
+  },
+  "encoder.layers.2.self_attn.linear_v": {
+   "max_abs_x": 0.86,
+   "max_abs_pre_scale": 29.698,
+   "max_abs_out": 4.947,
+   "max_l1_x": 99.548
+  },
+  "encoder.layers.20.conv.pointwise_conv1": {
+   "max_abs_x": 1.513,
+   "max_abs_pre_scale": 59.14,
+   "max_abs_out": 12.899,
+   "max_l1_x": 212.998
+  },
+  "encoder.layers.20.conv.pointwise_conv2": {
+   "max_abs_x": 15.266,
+   "max_abs_pre_scale": 74.839,
+   "max_abs_out": 49.163,
+   "max_l1_x": 324.746
+  },
+  "encoder.layers.20.feed_forward1.linear1": {
+   "max_abs_x": 2.646,
+   "max_abs_pre_scale": 117.312,
+   "max_abs_out": 18.745,
+   "max_l1_x": 314.725
+  },
+  "encoder.layers.20.feed_forward1.linear2": {
+   "max_abs_x": 15.613,
+   "max_abs_pre_scale": 158.954,
+   "max_abs_out": 33.188,
+   "max_l1_x": 786.548
+  },
+  "encoder.layers.20.feed_forward2.linear1": {
+   "max_abs_x": 3.446,
+   "max_abs_pre_scale": 79.339,
+   "max_abs_out": 18.02,
+   "max_l1_x": 309.506
+  },
+  "encoder.layers.20.feed_forward2.linear2": {
+   "max_abs_x": 15.354,
+   "max_abs_pre_scale": 175.431,
+   "max_abs_out": 81.553,
+   "max_l1_x": 847.327
+  },
+  "encoder.layers.20.self_attn.linear_k": {
+   "max_abs_x": 0.739,
+   "max_abs_pre_scale": 28.902,
+   "max_abs_out": 9.392,
+   "max_l1_x": 102.837
+  },
+  "encoder.layers.20.self_attn.linear_out": {
+   "max_abs_x": 2.714,
+   "max_abs_pre_scale": 73.539,
+   "max_abs_out": 16.511,
+   "max_l1_x": 410.057
+  },
+  "encoder.layers.20.self_attn.linear_q": {
+   "max_abs_x": 0.739,
+   "max_abs_pre_scale": 21.88,
+   "max_abs_out": 2.598,
+   "max_l1_x": 102.837
+  },
+  "encoder.layers.20.self_attn.linear_v": {
+   "max_abs_x": 0.739,
+   "max_abs_pre_scale": 19.696,
+   "max_abs_out": 3.102,
+   "max_l1_x": 102.837
+  },
+  "encoder.layers.21.conv.pointwise_conv1": {
+   "max_abs_x": 1.401,
+   "max_abs_pre_scale": 59.897,
+   "max_abs_out": 13.059,
+   "max_l1_x": 198.345
+  },
+  "encoder.layers.21.conv.pointwise_conv2": {
+   "max_abs_x": 10.833,
+   "max_abs_pre_scale": 75.93,
+   "max_abs_out": 70.969,
+   "max_l1_x": 329.785
+  },
+  "encoder.layers.21.feed_forward1.linear1": {
+   "max_abs_x": 2.882,
+   "max_abs_pre_scale": 72.921,
+   "max_abs_out": 16.038,
+   "max_l1_x": 288.256
+  },
+  "encoder.layers.21.feed_forward1.linear2": {
+   "max_abs_x": 14.035,
+   "max_abs_pre_scale": 153.795,
+   "max_abs_out": 64.633,
+   "max_l1_x": 760.885
+  },
+  "encoder.layers.21.feed_forward2.linear1": {
+   "max_abs_x": 2.554,
+   "max_abs_pre_scale": 96.896,
+   "max_abs_out": 22.414,
+   "max_l1_x": 263.8
+  },
+  "encoder.layers.21.feed_forward2.linear2": {
+   "max_abs_x": 19.791,
+   "max_abs_pre_scale": 349.315,
+   "max_abs_out": 295.148,
+   "max_l1_x": 1097.759
+  },
+  "encoder.layers.21.self_attn.linear_k": {
+   "max_abs_x": 0.81,
+   "max_abs_pre_scale": 24.048,
+   "max_abs_out": 10.322,
+   "max_l1_x": 99.243
+  },
+  "encoder.layers.21.self_attn.linear_out": {
+   "max_abs_x": 2.883,
+   "max_abs_pre_scale": 92.048,
+   "max_abs_out": 31.62,
+   "max_l1_x": 409.029
+  },
+  "encoder.layers.21.self_attn.linear_q": {
+   "max_abs_x": 0.81,
+   "max_abs_pre_scale": 22.513,
+   "max_abs_out": 2.875,
+   "max_l1_x": 99.243
+  },
+  "encoder.layers.21.self_attn.linear_v": {
+   "max_abs_x": 0.81,
+   "max_abs_pre_scale": 20.495,
+   "max_abs_out": 3.6,
+   "max_l1_x": 99.243
+  },
+  "encoder.layers.22.conv.pointwise_conv1": {
+   "max_abs_x": 1.364,
+   "max_abs_pre_scale": 57.637,
+   "max_abs_out": 13.539,
+   "max_l1_x": 188.636
+  },
+  "encoder.layers.22.conv.pointwise_conv2": {
+   "max_abs_x": 7.536,
+   "max_abs_pre_scale": 78.781,
+   "max_abs_out": 80.782,
+   "max_l1_x": 231.748
+  },
+  "encoder.layers.22.feed_forward1.linear1": {
+   "max_abs_x": 1.809,
+   "max_abs_pre_scale": 73.102,
+   "max_abs_out": 37.093,
+   "max_l1_x": 246.699
+  },
+  "encoder.layers.22.feed_forward1.linear2": {
+   "max_abs_x": 15.382,
+   "max_abs_pre_scale": 393.04,
+   "max_abs_out": 280.578,
+   "max_l1_x": 838.419
+  },
+  "encoder.layers.22.feed_forward2.linear1": {
+   "max_abs_x": 2.689,
+   "max_abs_pre_scale": 66.574,
+   "max_abs_out": 25.287,
+   "max_l1_x": 210.326
+  },
+  "encoder.layers.22.feed_forward2.linear2": {
+   "max_abs_x": 13.391,
+   "max_abs_pre_scale": 175.038,
+   "max_abs_out": 177.238,
+   "max_l1_x": 595.577
+  },
+  "encoder.layers.22.self_attn.linear_k": {
+   "max_abs_x": 0.559,
+   "max_abs_pre_scale": 24.507,
+   "max_abs_out": 7.039,
+   "max_l1_x": 95.712
+  },
+  "encoder.layers.22.self_attn.linear_out": {
+   "max_abs_x": 2.997,
+   "max_abs_pre_scale": 71.752,
+   "max_abs_out": 53.429,
+   "max_l1_x": 387.401
+  },
+  "encoder.layers.22.self_attn.linear_q": {
+   "max_abs_x": 0.559,
+   "max_abs_pre_scale": 20.174,
+   "max_abs_out": 2.513,
+   "max_l1_x": 95.712
+  },
+  "encoder.layers.22.self_attn.linear_v": {
+   "max_abs_x": 0.559,
+   "max_abs_pre_scale": 19.697,
+   "max_abs_out": 3.861,
+   "max_l1_x": 95.712
+  },
+  "encoder.layers.23.conv.pointwise_conv1": {
+   "max_abs_x": 1.384,
+   "max_abs_pre_scale": 70.033,
+   "max_abs_out": 17.072,
+   "max_l1_x": 261.739
+  },
+  "encoder.layers.23.conv.pointwise_conv2": {
+   "max_abs_x": 5.246,
+   "max_abs_pre_scale": 86.156,
+   "max_abs_out": 261.72,
+   "max_l1_x": 170.435
+  },
+  "encoder.layers.23.feed_forward1.linear1": {
+   "max_abs_x": 1.841,
+   "max_abs_pre_scale": 73.008,
+   "max_abs_out": 16.03,
+   "max_l1_x": 197.612
+  },
+  "encoder.layers.23.feed_forward1.linear2": {
+   "max_abs_x": 15.915,
+   "max_abs_pre_scale": 489.442,
+   "max_abs_out": 782.965,
+   "max_l1_x": 733.122
+  },
+  "encoder.layers.23.feed_forward2.linear1": {
+   "max_abs_x": 1.625,
+   "max_abs_pre_scale": 80.032,
+   "max_abs_out": 19.504,
+   "max_l1_x": 246.636
+  },
+  "encoder.layers.23.feed_forward2.linear2": {
+   "max_abs_x": 18.003,
+   "max_abs_pre_scale": 330.676,
+   "max_abs_out": 369.75,
+   "max_l1_x": 1037.434
+  },
+  "encoder.layers.23.self_attn.linear_k": {
+   "max_abs_x": 0.419,
+   "max_abs_pre_scale": 19.769,
+   "max_abs_out": 6.231,
+   "max_l1_x": 74.515
+  },
+  "encoder.layers.23.self_attn.linear_out": {
+   "max_abs_x": 2.08,
+   "max_abs_pre_scale": 55.242,
+   "max_abs_out": 118.006,
+   "max_l1_x": 263.913
+  },
+  "encoder.layers.23.self_attn.linear_q": {
+   "max_abs_x": 0.419,
+   "max_abs_pre_scale": 16.551,
+   "max_abs_out": 2.133,
+   "max_l1_x": 74.515
+  },
+  "encoder.layers.23.self_attn.linear_v": {
+   "max_abs_x": 0.419,
+   "max_abs_pre_scale": 13.345,
+   "max_abs_out": 2.745,
+   "max_l1_x": 74.515
+  },
+  "encoder.layers.3.conv.pointwise_conv1": {
+   "max_abs_x": 2.223,
+   "max_abs_pre_scale": 65.766,
+   "max_abs_out": 12.852,
+   "max_l1_x": 215.623
+  },
+  "encoder.layers.3.conv.pointwise_conv2": {
+   "max_abs_x": 8.084,
+   "max_abs_pre_scale": 121.605,
+   "max_abs_out": 23.068,
+   "max_l1_x": 309.655
+  },
+  "encoder.layers.3.feed_forward1.linear1": {
+   "max_abs_x": 3.203,
+   "max_abs_pre_scale": 159.743,
+   "max_abs_out": 21.412,
+   "max_l1_x": 245.437
+  },
+  "encoder.layers.3.feed_forward1.linear2": {
+   "max_abs_x": 11.756,
+   "max_abs_pre_scale": 120.42,
+   "max_abs_out": 20.446,
+   "max_l1_x": 681.683
+  },
+  "encoder.layers.3.feed_forward2.linear1": {
+   "max_abs_x": 3.245,
+   "max_abs_pre_scale": 197.838,
+   "max_abs_out": 24.23,
+   "max_l1_x": 288.533
+  },
+  "encoder.layers.3.feed_forward2.linear2": {
+   "max_abs_x": 11.433,
+   "max_abs_pre_scale": 169.714,
+   "max_abs_out": 36.566,
+   "max_l1_x": 575.818
+  },
+  "encoder.layers.3.self_attn.linear_k": {
+   "max_abs_x": 1.002,
+   "max_abs_pre_scale": 31.691,
+   "max_abs_out": 11.968,
+   "max_l1_x": 106.47
+  },
+  "encoder.layers.3.self_attn.linear_out": {
+   "max_abs_x": 3.355,
+   "max_abs_pre_scale": 71.61,
+   "max_abs_out": 9.674,
+   "max_l1_x": 334.96
+  },
+  "encoder.layers.3.self_attn.linear_q": {
+   "max_abs_x": 1.002,
+   "max_abs_pre_scale": 24.403,
+   "max_abs_out": 3.208,
+   "max_l1_x": 106.47
+  },
+  "encoder.layers.3.self_attn.linear_v": {
+   "max_abs_x": 1.002,
+   "max_abs_pre_scale": 32.017,
+   "max_abs_out": 5.96,
+   "max_l1_x": 106.47
+  },
+  "encoder.layers.4.conv.pointwise_conv1": {
+   "max_abs_x": 2.562,
+   "max_abs_pre_scale": 65.813,
+   "max_abs_out": 14.254,
+   "max_l1_x": 213.826
+  },
+  "encoder.layers.4.conv.pointwise_conv2": {
+   "max_abs_x": 14.64,
+   "max_abs_pre_scale": 124.265,
+   "max_abs_out": 21.176,
+   "max_l1_x": 292.765
+  },
+  "encoder.layers.4.feed_forward1.linear1": {
+   "max_abs_x": 2.763,
+   "max_abs_pre_scale": 165.455,
+   "max_abs_out": 22.43,
+   "max_l1_x": 256.905
+  },
+  "encoder.layers.4.feed_forward1.linear2": {
+   "max_abs_x": 10.624,
+   "max_abs_pre_scale": 116.633,
+   "max_abs_out": 18.21,
+   "max_l1_x": 650.564
+  },
+  "encoder.layers.4.feed_forward2.linear1": {
+   "max_abs_x": 2.835,
+   "max_abs_pre_scale": 210.896,
+   "max_abs_out": 23.967,
+   "max_l1_x": 302.762
+  },
+  "encoder.layers.4.feed_forward2.linear2": {
+   "max_abs_x": 12.147,
+   "max_abs_pre_scale": 146.849,
+   "max_abs_out": 29.578,
+   "max_l1_x": 569.676
+  },
+  "encoder.layers.4.self_attn.linear_k": {
+   "max_abs_x": 0.956,
+   "max_abs_pre_scale": 31.503,
+   "max_abs_out": 10.56,
+   "max_l1_x": 111.105
+  },
+  "encoder.layers.4.self_attn.linear_out": {
+   "max_abs_x": 3.206,
+   "max_abs_pre_scale": 70.181,
+   "max_abs_out": 8.64,
+   "max_l1_x": 278.927
+  },
+  "encoder.layers.4.self_attn.linear_q": {
+   "max_abs_x": 0.956,
+   "max_abs_pre_scale": 25.471,
+   "max_abs_out": 3.469,
+   "max_l1_x": 111.105
+  },
+  "encoder.layers.4.self_attn.linear_v": {
+   "max_abs_x": 0.956,
+   "max_abs_pre_scale": 27.016,
+   "max_abs_out": 5.631,
+   "max_l1_x": 111.105
+  },
+  "encoder.layers.5.conv.pointwise_conv1": {
+   "max_abs_x": 1.981,
+   "max_abs_pre_scale": 65.719,
+   "max_abs_out": 13.184,
+   "max_l1_x": 227.29
+  },
+  "encoder.layers.5.conv.pointwise_conv2": {
+   "max_abs_x": 18.793,
+   "max_abs_pre_scale": 144.092,
+   "max_abs_out": 25.335,
+   "max_l1_x": 302.686
+  },
+  "encoder.layers.5.feed_forward1.linear1": {
+   "max_abs_x": 2.468,
+   "max_abs_pre_scale": 177.452,
+   "max_abs_out": 23.563,
+   "max_l1_x": 272.565
+  },
+  "encoder.layers.5.feed_forward1.linear2": {
+   "max_abs_x": 14.573,
+   "max_abs_pre_scale": 126.868,
+   "max_abs_out": 21.668,
+   "max_l1_x": 661.485
+  },
+  "encoder.layers.5.feed_forward2.linear1": {
+   "max_abs_x": 2.847,
+   "max_abs_pre_scale": 220.958,
+   "max_abs_out": 24.678,
+   "max_l1_x": 311.483
+  },
+  "encoder.layers.5.feed_forward2.linear2": {
+   "max_abs_x": 14.388,
+   "max_abs_pre_scale": 190.0,
+   "max_abs_out": 38.269,
+   "max_l1_x": 616.36
+  },
+  "encoder.layers.5.self_attn.linear_k": {
+   "max_abs_x": 1.128,
+   "max_abs_pre_scale": 31.004,
+   "max_abs_out": 10.1,
+   "max_l1_x": 117.53
+  },
+  "encoder.layers.5.self_attn.linear_out": {
+   "max_abs_x": 3.58,
+   "max_abs_pre_scale": 91.31,
+   "max_abs_out": 11.481,
+   "max_l1_x": 395.68
+  },
+  "encoder.layers.5.self_attn.linear_q": {
+   "max_abs_x": 1.128,
+   "max_abs_pre_scale": 24.761,
+   "max_abs_out": 3.258,
+   "max_l1_x": 117.53
+  },
+  "encoder.layers.5.self_attn.linear_v": {
+   "max_abs_x": 1.128,
+   "max_abs_pre_scale": 28.671,
+   "max_abs_out": 4.2,
+   "max_l1_x": 117.53
+  },
+  "encoder.layers.6.conv.pointwise_conv1": {
+   "max_abs_x": 2.206,
+   "max_abs_pre_scale": 72.749,
+   "max_abs_out": 13.105,
+   "max_l1_x": 229.437
+  },
+  "encoder.layers.6.conv.pointwise_conv2": {
+   "max_abs_x": 15.853,
+   "max_abs_pre_scale": 151.275,
+   "max_abs_out": 27.493,
+   "max_l1_x": 340.005
+  },
+  "encoder.layers.6.feed_forward1.linear1": {
+   "max_abs_x": 2.035,
+   "max_abs_pre_scale": 232.722,
+   "max_abs_out": 26.556,
+   "max_l1_x": 320.465
+  },
+  "encoder.layers.6.feed_forward1.linear2": {
+   "max_abs_x": 17.834,
+   "max_abs_pre_scale": 155.8,
+   "max_abs_out": 24.496,
+   "max_l1_x": 599.712
+  },
+  "encoder.layers.6.feed_forward2.linear1": {
+   "max_abs_x": 2.252,
+   "max_abs_pre_scale": 208.312,
+   "max_abs_out": 25.307,
+   "max_l1_x": 306.392
+  },
+  "encoder.layers.6.feed_forward2.linear2": {
+   "max_abs_x": 13.97,
+   "max_abs_pre_scale": 150.027,
+   "max_abs_out": 30.219,
+   "max_l1_x": 678.091
+  },
+  "encoder.layers.6.self_attn.linear_k": {
+   "max_abs_x": 1.078,
+   "max_abs_pre_scale": 36.732,
+   "max_abs_out": 10.459,
+   "max_l1_x": 123.276
+  },
+  "encoder.layers.6.self_attn.linear_out": {
+   "max_abs_x": 3.17,
+   "max_abs_pre_scale": 89.569,
+   "max_abs_out": 11.754,
+   "max_l1_x": 324.106
+  },
+  "encoder.layers.6.self_attn.linear_q": {
+   "max_abs_x": 1.078,
+   "max_abs_pre_scale": 27.928,
+   "max_abs_out": 4.077,
+   "max_l1_x": 123.276
+  },
+  "encoder.layers.6.self_attn.linear_v": {
+   "max_abs_x": 1.078,
+   "max_abs_pre_scale": 33.171,
+   "max_abs_out": 5.171,
+   "max_l1_x": 123.276
+  },
+  "encoder.layers.7.conv.pointwise_conv1": {
+   "max_abs_x": 2.392,
+   "max_abs_pre_scale": 68.805,
+   "max_abs_out": 12.573,
+   "max_l1_x": 222.02
+  },
+  "encoder.layers.7.conv.pointwise_conv2": {
+   "max_abs_x": 11.929,
+   "max_abs_pre_scale": 128.105,
+   "max_abs_out": 25.802,
+   "max_l1_x": 323.801
+  },
+  "encoder.layers.7.feed_forward1.linear1": {
+   "max_abs_x": 2.262,
+   "max_abs_pre_scale": 235.501,
+   "max_abs_out": 26.592,
+   "max_l1_x": 326.064
+  },
+  "encoder.layers.7.feed_forward1.linear2": {
+   "max_abs_x": 13.267,
+   "max_abs_pre_scale": 124.345,
+   "max_abs_out": 20.036,
+   "max_l1_x": 627.971
+  },
+  "encoder.layers.7.feed_forward2.linear1": {
+   "max_abs_x": 2.684,
+   "max_abs_pre_scale": 221.337,
+   "max_abs_out": 25.416,
+   "max_l1_x": 321.708
+  },
+  "encoder.layers.7.feed_forward2.linear2": {
+   "max_abs_x": 14.28,
+   "max_abs_pre_scale": 138.946,
+   "max_abs_out": 30.53,
+   "max_l1_x": 607.083
+  },
+  "encoder.layers.7.self_attn.linear_k": {
+   "max_abs_x": 0.886,
+   "max_abs_pre_scale": 31.382,
+   "max_abs_out": 11.267,
+   "max_l1_x": 102.987
+  },
+  "encoder.layers.7.self_attn.linear_out": {
+   "max_abs_x": 2.042,
+   "max_abs_pre_scale": 55.604,
+   "max_abs_out": 8.208,
+   "max_l1_x": 264.453
+  },
+  "encoder.layers.7.self_attn.linear_q": {
+   "max_abs_x": 0.886,
+   "max_abs_pre_scale": 29.459,
+   "max_abs_out": 3.564,
+   "max_l1_x": 102.987
+  },
+  "encoder.layers.7.self_attn.linear_v": {
+   "max_abs_x": 0.886,
+   "max_abs_pre_scale": 29.342,
+   "max_abs_out": 4.542,
+   "max_l1_x": 102.987
+  },
+  "encoder.layers.8.conv.pointwise_conv1": {
+   "max_abs_x": 2.384,
+   "max_abs_pre_scale": 76.614,
+   "max_abs_out": 13.916,
+   "max_l1_x": 227.171
+  },
+  "encoder.layers.8.conv.pointwise_conv2": {
+   "max_abs_x": 14.138,
+   "max_abs_pre_scale": 117.757,
+   "max_abs_out": 22.813,
+   "max_l1_x": 316.82
+  },
+  "encoder.layers.8.feed_forward1.linear1": {
+   "max_abs_x": 2.413,
+   "max_abs_pre_scale": 223.237,
+   "max_abs_out": 25.165,
+   "max_l1_x": 310.319
+  },
+  "encoder.layers.8.feed_forward1.linear2": {
+   "max_abs_x": 13.47,
+   "max_abs_pre_scale": 110.996,
+   "max_abs_out": 18.567,
+   "max_l1_x": 573.492
+  },
+  "encoder.layers.8.feed_forward2.linear1": {
+   "max_abs_x": 3.479,
+   "max_abs_pre_scale": 233.937,
+   "max_abs_out": 29.418,
+   "max_l1_x": 349.884
+  },
+  "encoder.layers.8.feed_forward2.linear2": {
+   "max_abs_x": 19.781,
+   "max_abs_pre_scale": 180.833,
+   "max_abs_out": 41.014,
+   "max_l1_x": 705.21
+  },
+  "encoder.layers.8.self_attn.linear_k": {
+   "max_abs_x": 1.103,
+   "max_abs_pre_scale": 34.241,
+   "max_abs_out": 13.986,
+   "max_l1_x": 110.96
+  },
+  "encoder.layers.8.self_attn.linear_out": {
+   "max_abs_x": 2.89,
+   "max_abs_pre_scale": 70.544,
+   "max_abs_out": 10.695,
+   "max_l1_x": 332.19
+  },
+  "encoder.layers.8.self_attn.linear_q": {
+   "max_abs_x": 1.103,
+   "max_abs_pre_scale": 29.121,
+   "max_abs_out": 3.857,
+   "max_l1_x": 110.96
+  },
+  "encoder.layers.8.self_attn.linear_v": {
+   "max_abs_x": 1.103,
+   "max_abs_pre_scale": 25.116,
+   "max_abs_out": 4.572,
+   "max_l1_x": 110.96
+  },
+  "encoder.layers.9.conv.pointwise_conv1": {
+   "max_abs_x": 2.292,
+   "max_abs_pre_scale": 86.795,
+   "max_abs_out": 15.829,
+   "max_l1_x": 263.353
+  },
+  "encoder.layers.9.conv.pointwise_conv2": {
+   "max_abs_x": 19.969,
+   "max_abs_pre_scale": 87.588,
+   "max_abs_out": 16.177,
+   "max_l1_x": 350.252
+  },
+  "encoder.layers.9.feed_forward1.linear1": {
+   "max_abs_x": 3.004,
+   "max_abs_pre_scale": 270.567,
+   "max_abs_out": 29.65,
+   "max_l1_x": 375.323
+  },
+  "encoder.layers.9.feed_forward1.linear2": {
+   "max_abs_x": 17.233,
+   "max_abs_pre_scale": 119.076,
+   "max_abs_out": 20.844,
+   "max_l1_x": 558.368
+  },
+  "encoder.layers.9.feed_forward2.linear1": {
+   "max_abs_x": 2.516,
+   "max_abs_pre_scale": 251.313,
+   "max_abs_out": 31.26,
+   "max_l1_x": 460.923
+  },
+  "encoder.layers.9.feed_forward2.linear2": {
+   "max_abs_x": 17.973,
+   "max_abs_pre_scale": 224.827,
+   "max_abs_out": 48.069,
+   "max_l1_x": 724.373
+  },
+  "encoder.layers.9.self_attn.linear_k": {
+   "max_abs_x": 1.246,
+   "max_abs_pre_scale": 52.787,
+   "max_abs_out": 18.829,
+   "max_l1_x": 119.287
+  },
+  "encoder.layers.9.self_attn.linear_out": {
+   "max_abs_x": 5.58,
+   "max_abs_pre_scale": 68.094,
+   "max_abs_out": 9.0,
+   "max_l1_x": 319.32
+  },
+  "encoder.layers.9.self_attn.linear_q": {
+   "max_abs_x": 1.246,
+   "max_abs_pre_scale": 36.846,
+   "max_abs_out": 4.178,
+   "max_l1_x": 119.287
+  },
+  "encoder.layers.9.self_attn.linear_v": {
+   "max_abs_x": 1.246,
+   "max_abs_pre_scale": 34.942,
+   "max_abs_out": 5.916,
+   "max_l1_x": 119.287
+  }
+ },
+ "seconds": 23.9
+}

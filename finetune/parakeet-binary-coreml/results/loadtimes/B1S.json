@@ -1,0 +1,41 @@
+{
+ "arm": "B1S",
+ "path": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/kea-b1/B1S/bundle/Encoder.mlmodelc",
+ "loads": {
+  "cpuAndNeuralEngine": {
+   "b4": {
+    "first_load_s": 23.8,
+    "second_load_s": 0.32,
+    "cache_mb_after_first_load": 0.1,
+    "median_ms": 17.74,
+    "calls": 5,
+    "output_finite": true
+   },
+   "b8": {
+    "first_load_s": 27.2,
+    "second_load_s": 0.31,
+    "cache_mb_after_first_load": 0.1,
+    "median_ms": 22.16,
+    "calls": 5,
+    "output_finite": true
+   },
+   "b15": {
+    "first_load_s": 26.7,
+    "second_load_s": 0.31,
+    "cache_mb_after_first_load": 0.1,
+    "median_ms": 43.7,
+    "calls": 5,
+    "output_finite": true
+   },
+   "b30": {
+    "first_load_s": 28.8,
+    "second_load_s": 0.32,
+    "cache_mb_after_first_load": 0.1,
+    "median_ms": 127.52,
+    "calls": 5,
+    "output_finite": true
+   }
+  }
+ },
+ "note": "informational: shared Mac; synthetic mel input; Python predict"
+}

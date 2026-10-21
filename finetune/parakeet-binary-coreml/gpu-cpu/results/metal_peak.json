@@ -1,0 +1,11 @@
+{
+  "device" : {
+    "maxThreadgroupMemory" : 32768,
+    "name" : "Apple M1 Pro",
+    "recommendedMaxWorkingSet" : 12713115648
+  },
+  "mode" : "peak",
+  "peak_fma_tflops" : 1.9030067008707356,
+  "peak_mma_h_tflops" : 4.6574213870426826,
+  "peak_mma_tflops" : 4.317849606092766
+}

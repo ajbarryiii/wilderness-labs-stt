@@ -1,0 +1,2295 @@
+{
+ "check": "WP3's stress probe on MB1: one matmul per arm with adversarial +-1 rows (all +1, all -1, runs of 256,\n    halves), inputs = the probe clip's activation x1, x8, x64 and |x| x64, per compute unit. Rule (as WP3's,\n    with B1S as the C4 analogue): an arm fails if it is non-finite where B1S stays finite, or at x1.",
+ "units": [
+  "cpuAndNeuralEngine",
+  "cpuAndGPU",
+  "cpuOnly"
+ ],
+ "modules": [
+  "encoder.layers.0.feed_forward1.linear1",
+  "encoder.layers.0.feed_forward1.linear2",
+  "encoder.layers.23.feed_forward2.linear2"
+ ],
+ "verdict": {
+  "B1S": {
+   "cpuAndNeuralEngine": {
+    "pass": true,
+    "nonfinite_where_B1S_finite": [],
+    "nonfinite_at_x1": [],
+    "nonfinite_cases": 4
+   },
+   "cpuAndGPU": {
+    "pass": true,
+    "nonfinite_where_B1S_finite": [],
+    "nonfinite_at_x1": [],
+    "nonfinite_cases": 2
+   },
+   "cpuOnly": {
+    "pass": true,
+    "nonfinite_where_B1S_finite": [],
+    "nonfinite_at_x1": [],
+    "nonfinite_cases": 2
+   }
+  },
+  "B1P": {
+   "cpuAndNeuralEngine": {
+    "pass": true,
+    "nonfinite_where_B1S_finite": [],
+    "nonfinite_at_x1": [],
+    "nonfinite_cases": 4
+   },
+   "cpuAndGPU": {
+    "pass": true,
+    "nonfinite_where_B1S_finite": [],
+    "nonfinite_at_x1": [],
+    "nonfinite_cases": 2
+   },
+   "cpuOnly": {
+    "pass": true,
+    "nonfinite_where_B1S_finite": [],
+    "nonfinite_at_x1": [],
+    "nonfinite_cases": 2
+   }
+  },
+  "B1L": {
+   "cpuAndNeuralEngine": {
+    "pass": true,
+    "nonfinite_where_B1S_finite": [],
+    "nonfinite_at_x1": [],
+    "nonfinite_cases": 2
+   },
+   "cpuAndGPU": {
+    "pass": true,
+    "nonfinite_where_B1S_finite": [],
+    "nonfinite_at_x1": [],
+    "nonfinite_cases": 2
+   },
+   "cpuOnly": {
+    "pass": true,
+    "nonfinite_where_B1S_finite": [],
+    "nonfinite_at_x1": [],
+    "nonfinite_cases": 2
+   }
+  },
+  "B1Q": {
+   "cpuAndNeuralEngine": {
+    "pass": true,
+    "nonfinite_where_B1S_finite": [],
+    "nonfinite_at_x1": [],
+    "nonfinite_cases": 2
+   },
+   "cpuAndGPU": {
+    "pass": true,
+    "nonfinite_where_B1S_finite": [],
+    "nonfinite_at_x1": [],
+    "nonfinite_cases": 2
+   },
+   "cpuOnly": {
+    "pass": true,
+    "nonfinite_where_B1S_finite": [],
+    "nonfinite_at_x1": [],
+    "nonfinite_cases": 2
+   }
+  },
+  "Bg2": {
+   "cpuAndNeuralEngine": {
+    "pass": true,
+    "nonfinite_where_B1S_finite": [],
+    "nonfinite_at_x1": [],
+    "nonfinite_cases": 2
+   },
+   "cpuAndGPU": {
+    "pass": true,
+    "nonfinite_where_B1S_finite": [],
+    "nonfinite_at_x1": [],
+    "nonfinite_cases": 2
+   },
+   "cpuOnly": {
+    "pass": true,
+    "nonfinite_where_B1S_finite": [],
+    "nonfinite_at_x1": [],
+    "nonfinite_cases": 2
+   }
+  }
+ },
+ "results": {
+  "encoder.layers.0.feed_forward1.linear1": {
+   "B1S": {
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 29.03125
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 29.02134089284118,
+      "reference_max_abs_pre_scale": 133.0292737080017
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 232.25
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 232.17072714272945,
+      "reference_max_abs_pre_scale": 1064.2341896640137
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 1858.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1857.3658171418356,
+      "reference_max_abs_pre_scale": 8513.87351731211
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3180.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3179.1359876162214,
+      "reference_max_abs_pre_scale": 28447.276909396052
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 29.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 29.02134089284118,
+      "reference_max_abs_pre_scale": 133.0292737080017
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 232.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 232.17072714272945,
+      "reference_max_abs_pre_scale": 1064.2341896640137
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 1856.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1857.3658171418356,
+      "reference_max_abs_pre_scale": 8513.87351731211
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3176.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3179.1359876162214,
+      "reference_max_abs_pre_scale": 28447.276909396052
+     }
+    },
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 29.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 29.02134089284118,
+      "reference_max_abs_pre_scale": 133.0292737080017
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 232.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 232.17072714272945,
+      "reference_max_abs_pre_scale": 1064.2341896640137
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 1856.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1857.3658171418356,
+      "reference_max_abs_pre_scale": 8513.87351731211
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3176.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3179.1359876162214,
+      "reference_max_abs_pre_scale": 28447.276909396052
+     }
+    }
+   },
+   "B1P": {
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 29.03125,
+       "raw": 133.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 29.02134089284118,
+      "reference_max_abs_pre_scale": 133.0292737080017
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 232.25,
+       "raw": 1064.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 232.17072714272945,
+      "reference_max_abs_pre_scale": 1064.2341896640137
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 1858.0,
+       "raw": 8512.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 1857.3658171418356,
+      "reference_max_abs_pre_scale": 8513.87351731211
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3180.0,
+       "raw": 28448.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 3179.1359876162214,
+      "reference_max_abs_pre_scale": 28447.276909396052
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 29.078125,
+       "raw": 132.875
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 29.02134089284118,
+      "reference_max_abs_pre_scale": 133.0292737080017
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 232.625,
+       "raw": 1063.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 232.17072714272945,
+      "reference_max_abs_pre_scale": 1064.2341896640137
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 1861.0,
+       "raw": 8504.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 1857.3658171418356,
+      "reference_max_abs_pre_scale": 8513.87351731211
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3180.0,
+       "raw": 28448.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 3179.1359876162214,
+      "reference_max_abs_pre_scale": 28447.276909396052
+     }
+    },
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 29.078125,
+       "raw": 132.875
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 29.02134089284118,
+      "reference_max_abs_pre_scale": 133.0292737080017
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 232.625,
+       "raw": 1063.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 232.17072714272945,
+      "reference_max_abs_pre_scale": 1064.2341896640137
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 1861.0,
+       "raw": 8504.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 1857.3658171418356,
+      "reference_max_abs_pre_scale": 8513.87351731211
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3180.0,
+       "raw": 28448.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 3179.1359876162214,
+      "reference_max_abs_pre_scale": 28447.276909396052
+     }
+    }
+   },
+   "B1L": {
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 29.015625
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 29.02134089284118,
+      "reference_max_abs_pre_scale": 133.0292737080017
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 232.125
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 232.17072714272945,
+      "reference_max_abs_pre_scale": 1064.2341896640137
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 1857.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1857.3658171418356,
+      "reference_max_abs_pre_scale": 8513.87351731211
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3180.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3179.1359876162214,
+      "reference_max_abs_pre_scale": 28447.276909396052
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 29.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 29.02134089284118,
+      "reference_max_abs_pre_scale": 133.0292737080017
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 232.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 232.17072714272945,
+      "reference_max_abs_pre_scale": 1064.2341896640137
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 1856.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1857.3658171418356,
+      "reference_max_abs_pre_scale": 8513.87351731211
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3176.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3179.1359876162214,
+      "reference_max_abs_pre_scale": 28447.276909396052
+     }
+    },
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 29.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 29.02134089284118,
+      "reference_max_abs_pre_scale": 133.0292737080017
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 232.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 232.17072714272945,
+      "reference_max_abs_pre_scale": 1064.2341896640137
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 1856.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1857.3658171418356,
+      "reference_max_abs_pre_scale": 8513.87351731211
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3176.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3179.1359876162214,
+      "reference_max_abs_pre_scale": 28447.276909396052
+     }
+    }
+   },
+   "B1Q": {
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 29.03125
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 29.02134089284118,
+      "reference_max_abs_pre_scale": 133.0292737080017
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 232.25
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 232.17072714272945,
+      "reference_max_abs_pre_scale": 1064.2341896640137
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 1858.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1857.3658171418356,
+      "reference_max_abs_pre_scale": 8513.87351731211
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3180.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3179.1359876162214,
+      "reference_max_abs_pre_scale": 28447.276909396052
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 29.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 29.02134089284118,
+      "reference_max_abs_pre_scale": 133.0292737080017
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 232.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 232.17072714272945,
+      "reference_max_abs_pre_scale": 1064.2341896640137
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 1856.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1857.3658171418356,
+      "reference_max_abs_pre_scale": 8513.87351731211
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3176.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3179.1359876162214,
+      "reference_max_abs_pre_scale": 28447.276909396052
+     }
+    },
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 29.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 29.02134089284118,
+      "reference_max_abs_pre_scale": 133.0292737080017
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 232.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 232.17072714272945,
+      "reference_max_abs_pre_scale": 1064.2341896640137
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 1856.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1857.3658171418356,
+      "reference_max_abs_pre_scale": 8513.87351731211
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3176.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3179.1359876162214,
+      "reference_max_abs_pre_scale": 28447.276909396052
+     }
+    }
+   },
+   "Bg2": {
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 29.015625
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 29.02134089284118,
+      "reference_max_abs_pre_scale": 133.0292737080017
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 232.125
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 232.17072714272945,
+      "reference_max_abs_pre_scale": 1064.2341896640137
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 1857.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1857.3658171418356,
+      "reference_max_abs_pre_scale": 8513.87351731211
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3180.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3179.1359876162214,
+      "reference_max_abs_pre_scale": 28447.276909396052
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 29.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 29.02134089284118,
+      "reference_max_abs_pre_scale": 133.0292737080017
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 232.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 232.17072714272945,
+      "reference_max_abs_pre_scale": 1064.2341896640137
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 1856.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1857.3658171418356,
+      "reference_max_abs_pre_scale": 8513.87351731211
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3176.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3179.1359876162214,
+      "reference_max_abs_pre_scale": 28447.276909396052
+     }
+    },
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 29.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 29.02134089284118,
+      "reference_max_abs_pre_scale": 133.0292737080017
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 232.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 232.17072714272945,
+      "reference_max_abs_pre_scale": 1064.2341896640137
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 1856.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1857.3658171418356,
+      "reference_max_abs_pre_scale": 8513.87351731211
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 3176.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 3179.1359876162214,
+      "reference_max_abs_pre_scale": 28447.276909396052
+     }
+    }
+   }
+  },
+  "encoder.layers.0.feed_forward1.linear2": {
+   "B1S": {
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 1200.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1199.876405981909,
+      "reference_max_abs_pre_scale": 7939.731436028923
+     },
+     "x8": {
+      "finite": false,
+      "max_abs": {
+       "out": 5500.0
+      },
+      "nonfinite": {
+       "out": 352
+      },
+      "reference_max_abs_out": 9599.011247855273,
+      "reference_max_abs_pre_scale": 63517.85148823138
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 14256.0
+      },
+      "nonfinite": {
+       "out": 39506
+      },
+      "reference_max_abs_out": 76792.08998284218,
+      "reference_max_abs_pre_scale": 508142.81190585106
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 14424.0
+      },
+      "nonfinite": {
+       "out": 35417
+      },
+      "reference_max_abs_out": 81675.95832545357,
+      "reference_max_abs_pre_scale": 540459.9762537279
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 1214.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1199.876405981909,
+      "reference_max_abs_pre_scale": 7939.731436028923
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 9712.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 9599.011247855273,
+      "reference_max_abs_pre_scale": 63517.85148823138
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 65472.0
+      },
+      "nonfinite": {
+       "out": 115
+      },
+      "reference_max_abs_out": 76792.08998284218,
+      "reference_max_abs_pre_scale": 508142.81190585106
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 65472.0
+      },
+      "nonfinite": {
+       "out": 149
+      },
+      "reference_max_abs_out": 81675.95832545357,
+      "reference_max_abs_pre_scale": 540459.9762537279
+     }
+    },
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 1214.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1199.876405981909,
+      "reference_max_abs_pre_scale": 7939.731436028923
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 9712.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 9599.011247855273,
+      "reference_max_abs_pre_scale": 63517.85148823138
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 65472.0
+      },
+      "nonfinite": {
+       "out": 115
+      },
+      "reference_max_abs_out": 76792.08998284218,
+      "reference_max_abs_pre_scale": 508142.81190585106
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 65472.0
+      },
+      "nonfinite": {
+       "out": 149
+      },
+      "reference_max_abs_out": 81675.95832545357,
+      "reference_max_abs_pre_scale": 540459.9762537279
+     }
+    }
+   },
+   "B1P": {
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 1200.0,
+       "raw": 7940.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 1199.876405981909,
+      "reference_max_abs_pre_scale": 7939.731436028923
+     },
+     "x8": {
+      "finite": false,
+      "max_abs": {
+       "out": 9904.0,
+       "raw": 23072.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 352
+      },
+      "reference_max_abs_out": 9599.011247855273,
+      "reference_max_abs_pre_scale": 63517.85148823138
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 28960.0,
+       "raw": 32768.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 39506
+      },
+      "reference_max_abs_out": 76792.08998284218,
+      "reference_max_abs_pre_scale": 508142.81190585106
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 28960.0,
+       "raw": 32768.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 35417
+      },
+      "reference_max_abs_out": 81675.95832545357,
+      "reference_max_abs_pre_scale": 540459.9762537279
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 1225.0,
+       "raw": 8104.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 1199.876405981909,
+      "reference_max_abs_pre_scale": 7939.731436028923
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 9800.0,
+       "raw": 64832.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 9599.011247855273,
+      "reference_max_abs_pre_scale": 63517.85148823138
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 24512.0,
+       "raw": 65504.0
+      },
+      "nonfinite": {
+       "out": 3567,
+       "raw": 3567
+      },
+      "reference_max_abs_out": 76792.08998284218,
+      "reference_max_abs_pre_scale": 508142.81190585106
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 23008.0,
+       "raw": 65504.0
+      },
+      "nonfinite": {
+       "out": 2947,
+       "raw": 2947
+      },
+      "reference_max_abs_out": 81675.95832545357,
+      "reference_max_abs_pre_scale": 540459.9762537279
+     }
+    },
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 1225.0,
+       "raw": 8104.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 1199.876405981909,
+      "reference_max_abs_pre_scale": 7939.731436028923
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 9800.0,
+       "raw": 64832.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 9599.011247855273,
+      "reference_max_abs_pre_scale": 63517.85148823138
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 24512.0,
+       "raw": 65504.0
+      },
+      "nonfinite": {
+       "out": 3567,
+       "raw": 3567
+      },
+      "reference_max_abs_out": 76792.08998284218,
+      "reference_max_abs_pre_scale": 508142.81190585106
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 23008.0,
+       "raw": 65504.0
+      },
+      "nonfinite": {
+       "out": 2947,
+       "raw": 2947
+      },
+      "reference_max_abs_out": 81675.95832545357,
+      "reference_max_abs_pre_scale": 540459.9762537279
+     }
+    }
+   },
+   "B1L": {
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 1200.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1199.876405981909,
+      "reference_max_abs_pre_scale": 7939.731436028923
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 9600.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 9599.011247855273,
+      "reference_max_abs_pre_scale": 63517.85148823138
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 32608.0
+      },
+      "nonfinite": {
+       "out": 410
+      },
+      "reference_max_abs_out": 76792.08998284218,
+      "reference_max_abs_pre_scale": 508142.81190585106
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 32656.0
+      },
+      "nonfinite": {
+       "out": 462
+      },
+      "reference_max_abs_out": 81675.95832545357,
+      "reference_max_abs_pre_scale": 540459.9762537279
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 1214.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1199.876405981909,
+      "reference_max_abs_pre_scale": 7939.731436028923
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 9712.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 9599.011247855273,
+      "reference_max_abs_pre_scale": 63517.85148823138
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 65472.0
+      },
+      "nonfinite": {
+       "out": 115
+      },
+      "reference_max_abs_out": 76792.08998284218,
+      "reference_max_abs_pre_scale": 508142.81190585106
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 65472.0
+      },
+      "nonfinite": {
+       "out": 149
+      },
+      "reference_max_abs_out": 81675.95832545357,
+      "reference_max_abs_pre_scale": 540459.9762537279
+     }
+    },
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 1214.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1199.876405981909,
+      "reference_max_abs_pre_scale": 7939.731436028923
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 9712.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 9599.011247855273,
+      "reference_max_abs_pre_scale": 63517.85148823138
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 65472.0
+      },
+      "nonfinite": {
+       "out": 115
+      },
+      "reference_max_abs_out": 76792.08998284218,
+      "reference_max_abs_pre_scale": 508142.81190585106
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 65472.0
+      },
+      "nonfinite": {
+       "out": 149
+      },
+      "reference_max_abs_out": 81675.95832545357,
+      "reference_max_abs_pre_scale": 540459.9762537279
+     }
+    }
+   },
+   "B1Q": {
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 1200.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1199.876405981909,
+      "reference_max_abs_pre_scale": 7939.731436028923
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 9600.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 9599.011247855273,
+      "reference_max_abs_pre_scale": 63517.85148823138
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 65408.0
+      },
+      "nonfinite": {
+       "out": 83
+      },
+      "reference_max_abs_out": 76792.08998284218,
+      "reference_max_abs_pre_scale": 508142.81190585106
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 65472.0
+      },
+      "nonfinite": {
+       "out": 207
+      },
+      "reference_max_abs_out": 81675.95832545357,
+      "reference_max_abs_pre_scale": 540459.9762537279
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 1214.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1199.876405981909,
+      "reference_max_abs_pre_scale": 7939.731436028923
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 9712.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 9599.011247855273,
+      "reference_max_abs_pre_scale": 63517.85148823138
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 65472.0
+      },
+      "nonfinite": {
+       "out": 115
+      },
+      "reference_max_abs_out": 76792.08998284218,
+      "reference_max_abs_pre_scale": 508142.81190585106
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 65472.0
+      },
+      "nonfinite": {
+       "out": 149
+      },
+      "reference_max_abs_out": 81675.95832545357,
+      "reference_max_abs_pre_scale": 540459.9762537279
+     }
+    },
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 1214.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1199.876405981909,
+      "reference_max_abs_pre_scale": 7939.731436028923
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 9712.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 9599.011247855273,
+      "reference_max_abs_pre_scale": 63517.85148823138
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 65472.0
+      },
+      "nonfinite": {
+       "out": 115
+      },
+      "reference_max_abs_out": 76792.08998284218,
+      "reference_max_abs_pre_scale": 508142.81190585106
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 65472.0
+      },
+      "nonfinite": {
+       "out": 149
+      },
+      "reference_max_abs_out": 81675.95832545357,
+      "reference_max_abs_pre_scale": 540459.9762537279
+     }
+    }
+   },
+   "Bg2": {
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 1200.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1199.876405981909,
+      "reference_max_abs_pre_scale": 7939.731436028923
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 9600.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 9599.011247855273,
+      "reference_max_abs_pre_scale": 63517.85148823138
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 32608.0
+      },
+      "nonfinite": {
+       "out": 410
+      },
+      "reference_max_abs_out": 76792.08998284218,
+      "reference_max_abs_pre_scale": 508142.81190585106
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 32656.0
+      },
+      "nonfinite": {
+       "out": 462
+      },
+      "reference_max_abs_out": 81675.95832545357,
+      "reference_max_abs_pre_scale": 540459.9762537279
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 1214.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1199.876405981909,
+      "reference_max_abs_pre_scale": 7939.731436028923
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 9712.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 9599.011247855273,
+      "reference_max_abs_pre_scale": 63517.85148823138
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 65472.0
+      },
+      "nonfinite": {
+       "out": 115
+      },
+      "reference_max_abs_out": 76792.08998284218,
+      "reference_max_abs_pre_scale": 508142.81190585106
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 65472.0
+      },
+      "nonfinite": {
+       "out": 149
+      },
+      "reference_max_abs_out": 81675.95832545357,
+      "reference_max_abs_pre_scale": 540459.9762537279
+     }
+    },
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 1214.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 1199.876405981909,
+      "reference_max_abs_pre_scale": 7939.731436028923
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 9712.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 9599.011247855273,
+      "reference_max_abs_pre_scale": 63517.85148823138
+     },
+     "x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 65472.0
+      },
+      "nonfinite": {
+       "out": 115
+      },
+      "reference_max_abs_out": 76792.08998284218,
+      "reference_max_abs_pre_scale": 508142.81190585106
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 65472.0
+      },
+      "nonfinite": {
+       "out": 149
+      },
+      "reference_max_abs_out": 81675.95832545357,
+      "reference_max_abs_pre_scale": 540459.9762537279
+     }
+    }
+   }
+  },
+  "encoder.layers.23.feed_forward2.linear2": {
+   "B1S": {
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 286.5
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 286.4896255559613,
+      "reference_max_abs_pre_scale": 298.36121581670886
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 2292.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 2291.9170044476905,
+      "reference_max_abs_pre_scale": 2386.889726533671
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 18336.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 18335.336035581524,
+      "reference_max_abs_pre_scale": 19095.117812269367
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 16944.0
+      },
+      "nonfinite": {
+       "out": 352
+      },
+      "reference_max_abs_out": 16946.522026016984,
+      "reference_max_abs_pre_scale": 61930.84722324414
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 286.5
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 286.4896255559613,
+      "reference_max_abs_pre_scale": 298.36121581670886
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 2292.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 2291.9170044476905,
+      "reference_max_abs_pre_scale": 2386.889726533671
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 18336.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 18335.336035581524,
+      "reference_max_abs_pre_scale": 19095.117812269367
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 16928.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 16946.522026016984,
+      "reference_max_abs_pre_scale": 61930.84722324414
+     }
+    },
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 286.5
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 286.4896255559613,
+      "reference_max_abs_pre_scale": 298.36121581670886
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 2292.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 2291.9170044476905,
+      "reference_max_abs_pre_scale": 2386.889726533671
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 18336.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 18335.336035581524,
+      "reference_max_abs_pre_scale": 19095.117812269367
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 16928.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 16946.522026016984,
+      "reference_max_abs_pre_scale": 61930.84722324414
+     }
+    }
+   },
+   "B1P": {
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 286.5,
+       "raw": 298.25
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 286.4896255559613,
+      "reference_max_abs_pre_scale": 298.36121581670886
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 2292.0,
+       "raw": 2386.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 2291.9170044476905,
+      "reference_max_abs_pre_scale": 2386.889726533671
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 18336.0,
+       "raw": 19088.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 18335.336035581524,
+      "reference_max_abs_pre_scale": 19095.117812269367
+     },
+     "abs_x64": {
+      "finite": false,
+      "max_abs": {
+       "out": 16944.0,
+       "raw": 17728.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 352
+      },
+      "reference_max_abs_out": 16946.522026016984,
+      "reference_max_abs_pre_scale": 61930.84722324414
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 284.25,
+       "raw": 293.5
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 286.4896255559613,
+      "reference_max_abs_pre_scale": 298.36121581670886
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 2274.0,
+       "raw": 2348.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 2291.9170044476905,
+      "reference_max_abs_pre_scale": 2386.889726533671
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 18192.0,
+       "raw": 18784.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 18335.336035581524,
+      "reference_max_abs_pre_scale": 19095.117812269367
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 16896.0,
+       "raw": 61184.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 16946.522026016984,
+      "reference_max_abs_pre_scale": 61930.84722324414
+     }
+    },
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 284.25,
+       "raw": 293.5
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 286.4896255559613,
+      "reference_max_abs_pre_scale": 298.36121581670886
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 2274.0,
+       "raw": 2348.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 2291.9170044476905,
+      "reference_max_abs_pre_scale": 2386.889726533671
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 18192.0,
+       "raw": 18784.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 18335.336035581524,
+      "reference_max_abs_pre_scale": 19095.117812269367
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 16896.0,
+       "raw": 61184.0
+      },
+      "nonfinite": {
+       "out": 0,
+       "raw": 0
+      },
+      "reference_max_abs_out": 16946.522026016984,
+      "reference_max_abs_pre_scale": 61930.84722324414
+     }
+    }
+   },
+   "B1L": {
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 286.5
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 286.4896255559613,
+      "reference_max_abs_pre_scale": 298.36121581670886
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 2292.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 2291.9170044476905,
+      "reference_max_abs_pre_scale": 2386.889726533671
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 18336.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 18335.336035581524,
+      "reference_max_abs_pre_scale": 19095.117812269367
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 16944.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 16946.522026016984,
+      "reference_max_abs_pre_scale": 61930.84722324414
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 286.5
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 286.4896255559613,
+      "reference_max_abs_pre_scale": 298.36121581670886
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 2292.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 2291.9170044476905,
+      "reference_max_abs_pre_scale": 2386.889726533671
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 18336.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 18335.336035581524,
+      "reference_max_abs_pre_scale": 19095.117812269367
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 16928.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 16946.522026016984,
+      "reference_max_abs_pre_scale": 61930.84722324414
+     }
+    },
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 286.5
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 286.4896255559613,
+      "reference_max_abs_pre_scale": 298.36121581670886
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 2292.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 2291.9170044476905,
+      "reference_max_abs_pre_scale": 2386.889726533671
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 18336.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 18335.336035581524,
+      "reference_max_abs_pre_scale": 19095.117812269367
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 16928.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 16946.522026016984,
+      "reference_max_abs_pre_scale": 61930.84722324414
+     }
+    }
+   },
+   "B1Q": {
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 286.5
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 286.4896255559613,
+      "reference_max_abs_pre_scale": 298.36121581670886
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 2292.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 2291.9170044476905,
+      "reference_max_abs_pre_scale": 2386.889726533671
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 18336.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 18335.336035581524,
+      "reference_max_abs_pre_scale": 19095.117812269367
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 16944.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 16946.522026016984,
+      "reference_max_abs_pre_scale": 61930.84722324414
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 286.5
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 286.4896255559613,
+      "reference_max_abs_pre_scale": 298.36121581670886
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 2292.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 2291.9170044476905,
+      "reference_max_abs_pre_scale": 2386.889726533671
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 18336.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 18335.336035581524,
+      "reference_max_abs_pre_scale": 19095.117812269367
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 16928.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 16946.522026016984,
+      "reference_max_abs_pre_scale": 61930.84722324414
+     }
+    },
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 286.5
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 286.4896255559613,
+      "reference_max_abs_pre_scale": 298.36121581670886
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 2292.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 2291.9170044476905,
+      "reference_max_abs_pre_scale": 2386.889726533671
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 18336.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 18335.336035581524,
+      "reference_max_abs_pre_scale": 19095.117812269367
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 16928.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 16946.522026016984,
+      "reference_max_abs_pre_scale": 61930.84722324414
+     }
+    }
+   },
+   "Bg2": {
+    "cpuAndNeuralEngine": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 286.5
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 286.4896255559613,
+      "reference_max_abs_pre_scale": 298.36121581670886
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 2292.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 2291.9170044476905,
+      "reference_max_abs_pre_scale": 2386.889726533671
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 18336.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 18335.336035581524,
+      "reference_max_abs_pre_scale": 19095.117812269367
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 16944.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 16946.522026016984,
+      "reference_max_abs_pre_scale": 61930.84722324414
+     }
+    },
+    "cpuAndGPU": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 286.5
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 286.4896255559613,
+      "reference_max_abs_pre_scale": 298.36121581670886
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 2292.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 2291.9170044476905,
+      "reference_max_abs_pre_scale": 2386.889726533671
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 18336.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 18335.336035581524,
+      "reference_max_abs_pre_scale": 19095.117812269367
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 16928.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 16946.522026016984,
+      "reference_max_abs_pre_scale": 61930.84722324414
+     }
+    },
+    "cpuOnly": {
+     "x1": {
+      "finite": true,
+      "max_abs": {
+       "out": 286.5
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 286.4896255559613,
+      "reference_max_abs_pre_scale": 298.36121581670886
+     },
+     "x8": {
+      "finite": true,
+      "max_abs": {
+       "out": 2292.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 2291.9170044476905,
+      "reference_max_abs_pre_scale": 2386.889726533671
+     },
+     "x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 18336.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 18335.336035581524,
+      "reference_max_abs_pre_scale": 19095.117812269367
+     },
+     "abs_x64": {
+      "finite": true,
+      "max_abs": {
+       "out": 16928.0
+      },
+      "nonfinite": {
+       "out": 0
+      },
+      "reference_max_abs_out": 16946.522026016984,
+      "reference_max_abs_pre_scale": 61930.84722324414
+     }
+    }
+   }
+  }
+ }
+}

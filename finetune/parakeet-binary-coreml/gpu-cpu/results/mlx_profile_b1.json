@@ -1,0 +1,34 @@
+{
+ "command": "profile",
+ "encoding": "b1",
+ "buckets": {
+  "4": {
+   "frames": 51,
+   "projections_ms": 21.78,
+   "full_ms": 31.62,
+   "rest_ms": 9.85,
+   "projection_tflops": 2.71
+  },
+  "8": {
+   "frames": 101,
+   "projections_ms": 34.64,
+   "full_ms": 52.92,
+   "rest_ms": 18.27,
+   "projection_tflops": 3.38
+  },
+  "15": {
+   "frames": 188,
+   "projections_ms": 65.8,
+   "full_ms": 89.84,
+   "rest_ms": 24.05,
+   "projection_tflops": 3.31
+  },
+  "30": {
+   "frames": 376,
+   "projections_ms": 124.44,
+   "full_ms": 161.74,
+   "rest_ms": 37.3,
+   "projection_tflops": 3.5
+  }
+ }
+}

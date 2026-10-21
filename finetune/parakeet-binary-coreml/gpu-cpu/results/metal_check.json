@@ -1,0 +1,1380 @@
+{
+  "cases" : [
+    {
+      "K" : 1024,
+      "M" : 7,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_1_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 7,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 7,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 7,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 7,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 7,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 7,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_2_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 7,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_8_2_1"
+    },
+    {
+      "K" : 1024,
+      "M" : 7,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_8_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 7,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_8_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 7,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 7,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 7,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_8_1_1"
+    },
+    {
+      "K" : 1024,
+      "M" : 7,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_16_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 7,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_4_8_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 7,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_8_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 7,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_8_2_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 7,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_16_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 7,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_4_2_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_1_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_2_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_8_2_1"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_8_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_8_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_8_1_1"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_16_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_4_8_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_8_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_8_2_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_16_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_4_2_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 2048,
+      "variant" : "mma_1_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 2048,
+      "variant" : "mma_2_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 2048,
+      "variant" : "mma_2_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 2048,
+      "variant" : "mma_2_4_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 2048,
+      "variant" : "mma_4_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 2048,
+      "variant" : "mma_4_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 2048,
+      "variant" : "mma_4_2_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 2048,
+      "variant" : "mma_2_8_2_1"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 2048,
+      "variant" : "mma_4_8_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 2048,
+      "variant" : "mma_8_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 2048,
+      "variant" : "simt_8_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 2048,
+      "variant" : "simt_8_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 2048,
+      "variant" : "simt_8_8_1_1"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 2048,
+      "variant" : "simt_16_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 2048,
+      "variant" : "simt_4_8_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 2048,
+      "variant" : "lut_8_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 2048,
+      "variant" : "lut_8_2_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 2048,
+      "variant" : "lut_16_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 2048,
+      "variant" : "lut_4_2_4"
+    },
+    {
+      "K" : 4096,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_1_4_2_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_1_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_2_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_1_4"
+    },
+    {
+      "K" : 4096,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_4_1_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_4_2_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_2_2_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_8_2_1"
+    },
+    {
+      "K" : 4096,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_8_1_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_8_4_1_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_4_1_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_4_2_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_8_1_1"
+    },
+    {
+      "K" : 4096,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_16_4_1_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_4_8_2_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_8_1_4"
+    },
+    {
+      "K" : 4096,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_8_2_4"
+    },
+    {
+      "K" : 4096,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_16_1_4"
+    },
+    {
+      "K" : 4096,
+      "M" : 51,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_4_2_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 101,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_1_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 101,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 101,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 101,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 101,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 101,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 101,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_2_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 101,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_8_2_1"
+    },
+    {
+      "K" : 1024,
+      "M" : 101,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_8_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 101,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_8_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 101,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 101,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 101,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_8_1_1"
+    },
+    {
+      "K" : 1024,
+      "M" : 101,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_16_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 101,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_4_8_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 101,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_8_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 101,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_8_2_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 101,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_16_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 101,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_4_2_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 188,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_1_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 188,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 188,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 188,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 188,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 188,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 188,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_2_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 188,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_8_2_1"
+    },
+    {
+      "K" : 1024,
+      "M" : 188,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_8_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 188,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_8_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 188,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 188,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 188,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_8_1_1"
+    },
+    {
+      "K" : 1024,
+      "M" : 188,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_16_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 188,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_4_8_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 188,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_8_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 188,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_8_2_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 188,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_16_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 188,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_4_2_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 376,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_1_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 376,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 376,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 376,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 376,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 376,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 376,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_2_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 376,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_8_2_1"
+    },
+    {
+      "K" : 1024,
+      "M" : 376,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_8_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 376,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_8_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 376,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 376,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 376,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_8_1_1"
+    },
+    {
+      "K" : 1024,
+      "M" : 376,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_16_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 376,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_4_8_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 376,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_8_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 376,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_8_2_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 376,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_16_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 376,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_4_2_4"
+    },
+    {
+      "K" : 4096,
+      "M" : 9,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_1_4_2_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 9,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_1_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 9,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_2_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 9,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_4_1_4"
+    },
+    {
+      "K" : 4096,
+      "M" : 9,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_4_1_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 9,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_4_2_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 9,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_2_2_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 9,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_2_8_2_1"
+    },
+    {
+      "K" : 4096,
+      "M" : 9,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_4_8_1_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 9,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "mma_8_4_1_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 9,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_4_1_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 9,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_4_2_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 9,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_8_8_1_1"
+    },
+    {
+      "K" : 4096,
+      "M" : 9,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_16_4_1_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 9,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "simt_4_8_2_2"
+    },
+    {
+      "K" : 4096,
+      "M" : 9,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_8_1_4"
+    },
+    {
+      "K" : 4096,
+      "M" : 9,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_8_2_4"
+    },
+    {
+      "K" : 4096,
+      "M" : 9,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_16_1_4"
+    },
+    {
+      "K" : 4096,
+      "M" : 9,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 1024,
+      "variant" : "lut_4_2_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 40,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 4096,
+      "variant" : "mma_1_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 40,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 4096,
+      "variant" : "mma_2_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 40,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 4096,
+      "variant" : "mma_2_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 40,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 4096,
+      "variant" : "mma_2_4_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 40,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 4096,
+      "variant" : "mma_4_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 40,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 4096,
+      "variant" : "mma_4_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 40,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 4096,
+      "variant" : "mma_4_2_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 40,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 4096,
+      "variant" : "mma_2_8_2_1"
+    },
+    {
+      "K" : 1024,
+      "M" : 40,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 4096,
+      "variant" : "mma_4_8_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 40,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 4096,
+      "variant" : "mma_8_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 40,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 4096,
+      "variant" : "simt_8_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 40,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 4096,
+      "variant" : "simt_8_4_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 40,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 4096,
+      "variant" : "simt_8_8_1_1"
+    },
+    {
+      "K" : 1024,
+      "M" : 40,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 4096,
+      "variant" : "simt_16_4_1_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 40,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 4096,
+      "variant" : "simt_4_8_2_2"
+    },
+    {
+      "K" : 1024,
+      "M" : 40,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 4096,
+      "variant" : "lut_8_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 40,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 4096,
+      "variant" : "lut_8_2_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 40,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 4096,
+      "variant" : "lut_16_1_4"
+    },
+    {
+      "K" : 1024,
+      "M" : 40,
+      "mismatch_f16" : 0,
+      "mismatch_f32" : 0,
+      "N" : 4096,
+      "variant" : "lut_4_2_4"
+    }
+  ],
+  "device" : {
+    "maxThreadgroupMemory" : 32768,
+    "name" : "Apple M1 Pro",
+    "recommendedMaxWorkingSet" : 12713115648
+  },
+  "inputs" : "integer activations in [-3, 3] (sums exact in FP32), random bits, FP16 scales in [0.005, 0.055]",
+  "mode" : "check",
+  "pass" : true
+}

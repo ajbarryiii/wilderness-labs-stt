@@ -121,7 +121,7 @@ def gate2(package: Path, model: str, arm: str) -> dict:
         fam = encodings.family(arm)
         children = op.outputs[0].child_ops
         post = None
-        if fam == "C7":
+        if fam in ("C7", "B1P"):  # post-matmul per-row scale
             mul = next(c for c in children if c.op_type == "mul")
             s = (mul.y if mul.x is op.outputs[0] else mul.x).val.reshape(-1).astype(np.float16)
             eff = (w.astype(np.float32) * s.astype(np.float32)[:, None]).astype(np.float16)
@@ -380,7 +380,7 @@ def _stress_program(arm: str, codes, scale, t: int, act_scale: float | None = No
         axis = 1 if ane else -1
         post = None if enc.post_scale is None else (enc.post_scale.reshape(1, -1, 1, 1) if ane else enc.post_scale)
         outs = []
-        if base == "C7":
+        if base in ("C7", "B1P"):
             outs.append(mb.cast(x=tok(y, "raw_t"), dtype="fp32", name="raw"))
             y = mb.mul(x=y, y=post, name="scaled")
         elif base == "C8":

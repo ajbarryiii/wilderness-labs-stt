@@ -1,0 +1,29 @@
+{
+  "model": "localflow",
+  "display_name": "LocalFlow",
+  "base_model": "kea-b",
+  "training_step": 250000,
+  "export_sha256": "9873d2f1a53127c673d0201db98cd3ba859ba432f334fef55e9e24fd057b9651",
+  "encoder": "B1Q",
+  "layout": "plain",
+  "compute_units": "cpuAndNeuralEngine",
+  "decoder": "native-fp32",
+  "buckets_seconds": [
+    4,
+    8,
+    15,
+    30
+  ],
+  "sample_rate": 16000,
+  "files": {
+    "frontend.json": "a6390e43959b2079d5e2eb6f6bdef22faf787eda42f6e87c8b63f2358ad3b442",
+    "frontend.f32bin": "efe8a64a770fa51eeafaca31c1f7f744c900e11f5f19ed1aa39716da8d4f20d3",
+    "decoder_joint.json": "7d1c405590c93b15bb1c11253f7a6c344cf7fe2c8518184aa623ccf9d0f276f4",
+    "decoder_joint.f32bin": "e7db077a4f2b2db2bdd3ab887e9ecc0baade7b914379d4a2ba7e8653136eee71",
+    "vocabulary.json": "3d82170a55676ca273f71d695297a2db95fb071453406e25c1005c0d44e64b5d",
+    "Encoder.mlmodelc/analytics/coremldata.bin": "58154e71692ab8226a7db9144b7b94fb2aab386f770982cd0424cac22974e203",
+    "Encoder.mlmodelc/coremldata.bin": "b86fe9de1aff81934411b103c50df1cf4562ff907b41624031943d8404236c24",
+    "Encoder.mlmodelc/model.mil": "e60e61a175141fdfc535497bede5eae73b5b5e3cefaeee10163ffaf1a3a30573",
+    "Encoder.mlmodelc/weights/weight.bin": "e30034255818aa6eb7aa3f41181e253cc3a2052aa84ac987099cca06ccd93fce"
+  }
+}

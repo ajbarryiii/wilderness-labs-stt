@@ -1,0 +1,54 @@
+{
+ "command": "time",
+ "encoding": "dense",
+ "precision": "fp16",
+ "mlx": "0.32.3",
+ "load_s": 4.86,
+ "active_after_load_bytes": 1238501376,
+ "weight_bytes": {
+  "projections": 1157627904,
+  "other": 9750528,
+  "position_tables_all_buckets": 70189056,
+  "total": 1237567488
+ },
+ "b1_tiles": null,
+ "warmup": 5,
+ "runs": 30,
+ "rounds": 2,
+ "buckets": {
+  "4": {
+   "frames": 51,
+   "median_ms": 34.47,
+   "p10_ms": 33.73,
+   "p90_ms": 36.63,
+   "min_ms": 33.25,
+   "n": 60
+  },
+  "8": {
+   "frames": 101,
+   "median_ms": 57.49,
+   "p10_ms": 56.75,
+   "p90_ms": 63.24,
+   "min_ms": 56.18,
+   "n": 60
+  },
+  "15": {
+   "frames": 188,
+   "median_ms": 84.47,
+   "p10_ms": 83.4,
+   "p90_ms": 90.2,
+   "min_ms": 81.2,
+   "n": 60
+  },
+  "30": {
+   "frames": 376,
+   "median_ms": 173.9,
+   "p10_ms": 162.47,
+   "p90_ms": 185.79,
+   "min_ms": 159.17,
+   "n": 60
+  }
+ },
+ "peak_mlx_bytes": 1933896541,
+ "max_rss_bytes": 1576189952
+}

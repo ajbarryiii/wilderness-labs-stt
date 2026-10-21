@@ -1,0 +1,4 @@
+kea-b1 bench validate-20261021: baseline kea-t@ane, reference kea-b@ane, ternary kea-t@ane
+kea-t@ane: enc b4 14.6 b8 18.8 b15 39.1 b30 128.0 ms mem 1598.7 MB (1.000 of ternary) WER 3.10% exact=ref 64.0%
+kea-b@ane: enc b4 16.8 b8 20.8 b15 43.3 b30 132.7 ms e2e x1.067 [1.051, 1.101] mem 1953.2 MB (1.222 of ternary) WER 3.59% exact=ref 100.0%
+kea-b@gpu: FAILED in load: step failed (exit 124): /Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/kea-b1/bench/validate-20261021/bin/kb1
