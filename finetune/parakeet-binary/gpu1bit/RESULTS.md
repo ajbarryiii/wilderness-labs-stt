@@ -1,29 +1,338 @@
-# Native 1-bit GPU kernels for MB1 on the RTX 5090: results (DRAFT)
+# Native 1-bit GPU kernels for MB1 on the RTX 5090: results
 
-**Status 2026-10-21: DRAFT.**
-- Done:
-  - the fresh selection session sel-20261020b. Its winner is **B-hybrid** under the anchored tie-set
-    implementation of A14 (Codex GPU code review c2, 2026-10-21); the earlier top-two implementation
-    had picked B-hybrid-b01;
-  - the integration: runtime.py deploys B-hybrid through selected.json;
-  - activation precision: recognition and timing, with Codex actprec review c4 CLEAN;
-  - **Codex GPU code review round 4 is CLEAN** (`review/gpu-kernel/c4.md`, no fresh findings), on the
-    tree with the c3 fixes.
-- **The x3-only recorded benchmark is superseded.** The user made INT8x2 the deployment default
-  (2026-10-21). The recorded benchmark is now plans/x2-default.md's six-arm benchmark (b1 to b6), after
-  its dev gates (g0 to g5) and its own Codex code review. M1's historical test workloads run within it.
-- **x2 code review c1 NOT CLEAN** (`review/x2-default/c1.md`, 8 majors in H's files), fixed contract-first:
+**Status 2026-10-22: final.** gpu1bit is a research runtime: the code that produced these
+measurements, published for reference and not packaged for use outside the original machine. How the
+measurements were run, and the portability limits: [README.md](README.md).
+- **Deployed:** MB1 runs on B-hybrid with INT8x2 activations (`MB1-B-hybrid-x2`), and M1 runs on its
+  expanded runtime at x2 (`M1-x2`).
+  - Promoted 2026-10-22: `shared/selected.json` is now byte-identical to `shared/selected-x2.json`
+    (SHA-256 de3c18c4…).
+  - x3 is selected per call with `parts=3`, as the b2 and b5 arms were.
+- **Kernel selection, at x3:** session sel-20261020b. Its winner is **B-hybrid** under the anchored
+  tie-set implementation of A14 (plan amendment A15, Codex GPU code review c2). The earlier top-two
+  implementation had picked B-hybrid-b01. Details: "Summary (selection, dev workloads)" below.
+- **Reviews:**
+  - Codex GPU code review round 4 is CLEAN (`review/gpu-kernel/c4.md`);
+  - the activation-precision code review round 4 is CLEAN;
+  - the x2-default plan is CLEAN at round 4;
+  - the x2 code reviews ran c1 to c5, and c5 is CLEAN. c1, c3 and c4 were NOT CLEAN and their findings
+    were fixed contract-first. All five reviews came before the gate run and the benchmark freeze.
+- **x2 default:** the dev gates g0 to g5 pass (run `x2g-20261021b`), and the recorded six-arm benchmark
+  `x2b-20261021` is written. See "INT8x2 deployment default" below. **Test WER was not re-scored for
+  x2, by decision.**
+- **Workloads:** every number comes from dev workloads (A13), except the historical test workloads.
+  Those are labelled, were run after the freeze, and were used for no decision.
+
+Plans: [plans/gpu-kernel.md](../plans/gpu-kernel.md) (amendments A1–A15 are final) and
+[plans/x2-default.md](../plans/x2-default.md) (the INT8x2 default; CLEAN at plan review round 4).
+
+## INT8x2 deployment default (plans/x2-default.md)
+
+The user made INT8x2 the deployment default on 2026-10-21, after the activation-precision results
+below. The order was:
+1. dev gates;
+2. a freeze;
+3. a recorded six-arm benchmark;
+4. promotion on 2026-10-22.
+
+### Arms
+
+| Arm | Model | Stack | Activation parts |
+|---|---|---|---|
+| b1 `MB1-B-hybrid-x2` | MB1 | B-hybrid: `int8_mma:x2` layers, `hybrid_x2.HybridProjectionX2`, `exact_hybrid_pipeline_x2` | 2 (**new MB1 default**) |
+| b2 `MB1-B-hybrid-x3` | MB1 | B-hybrid: `int8_mma` layers, `hybrid_exact` | 3 (previous MB1 default) |
+| b3 `R-expanded` | MB1, derived ternary layout | M1's expanded runtime (the selection baseline) | 3 |
+| b4 `M1-x2` | M1 | M1's expanded runtime, `PartCount(provider, 2)` | 2 (**new M1 default**) |
+| b5 `M1-x3` | M1 | M1's expanded runtime | 3 |
+| b6 `M1-R-hybrid-x3` | M1 | M1's hybrid runtime (`ptx_row_best`) | 3 (M1's previously deployed runtime) |
+
+b1 and b2 are built by the deployed loader, `gpu1bit.runtime.load_binary_packed(..., parts=2|3)`. b4
+and b5 are built by `gpu1bit.runtime_m1.build_stack` (through `gpu1bit.actprec.parts.build`); the deployment
+loader `gpu1bit.runtime_m1.load_ternary_packed` wraps this same builder.
+
+### Dev gates g0–g5 (run `x2g-20261021b`, full dev, 22,418 utterances, batch 1)
+
+All gates pass under the frozen bounds:
+- mean WER within 0.02 points;
+- every set within 0.10 points;
+- token mismatches at most 0.5% pooled and 1.0% per set;
+- the 512-utterance encoder check within 1e-3 relative Frobenius;
+- R5 structural validity.
+
+Record: `H/x2/gates-x2g-20261021b.json`.
+
+| Gate arm | Dev mean WER | Clean / other / AMI / VoxPopuli / YODAS |
+|---|---|---|
+| g0 MB1-int8_mma-x3 (R2 reference) | 6.3120% | 2.155 / 4.687 / 11.953 / 6.064 / 6.701 |
+| g2 MB1-int8_mma-x2 (reference of g1) | 6.3124% | 2.155 / 4.687 / 11.955 / 6.064 / 6.701 |
+| **g1 MB1-B-hybrid-x2** | **6.3122%** | 2.155 / 4.687 / 11.954 / 6.064 / 6.701 |
+| g3 MB1-B-hybrid-x3 | 6.3120% | 2.155 / 4.687 / 11.953 / 6.064 / 6.701 |
+| g5 M1-x3 (R2 reference) | 6.0856% | 1.987 / 4.198 / 11.713 / 6.018 / 6.512 |
+| **g4 M1-x2** | **6.0853%** | 1.987 / 4.198 / 11.714 / 6.016 / 6.512 |
+
+- **MB1 (g1 against g2):**
+  - mean −0.0002 points;
+  - 5 token mismatches pooled (0.022%), all in AMI;
+  - encoder max relative Frobenius 1.8e-4;
+  - encoder lengths equal to g3's.
+- **M1 (g4 against g5):** mean −0.0002 points, 4 token mismatches (0.018%), encoder max 2.3e-4. It reads
+  **recognition-equivalent**.
+- **Empty hypotheses** are unchanged by x2: MB1 33 and M1 24.
+- **Test WER was not re-scored for x2, by decision.** The test means stand: MB1 7.05% and M1 6.84%.
+  They were scored on the FP32 NeMo reconstructions of the exports (`../results/TEST.md`). Dev shows x2 is
+  recognition-equivalent to x3 for both models.
+
+### Recorded benchmark `x2b-20261021`
+
+**How it was run.**
+- One agent-jobs run, `h-x2-bench`, with an exclusive GPU, `--quiet-host`, `--full-machine` and
+  `--priority normal`, on 2026-10-22.
+- The orchestrator is `gpu1bit/rerun_timing.py` with the roster `H/x2/bench/x2b-20261021/roster.json`.
+- The harness, the 400 W power limit and the locks are the selection session's.
+- Before it ran, the source tree was frozen in `freeze-x2b-20261021.sha256` (195 files).
+- **Acceptance:** the 25 dev steps were all accepted. 5 attempts were dropped, either because load1
+  rose above 2 or because a run was incomplete, and their steps were retried. The 24 historical-test
+  steps were then all accepted.
+- Records: `H/x2/bench/x2b-20261021/report-{dev,test}.json` and the clip records
+  `H/bench/x2b-20261021-test-clips{1,2}/`.
+
+**Reading rule (plans/x2-default.md Y4).** The six pairs below are descriptive only.
+- Each reports the median paired energy change and the median paired latency change separately,
+  with counts, and has no automatic consequence.
+- Each cell is the median of the per-utterance changes of the first arm against the second over the
+  24-utterance set (8 each at about 3, 10 and 30 s). In parentheses: the utterances where the first arm
+  was lower.
+- **Dev** is dev_24.
+- **Test** is M1's historical 24-utterance multi-corpus test set (A13), run after the freeze and the
+  dev results, for comparability with M1's recorded numbers only.
+
+**Full transcription** (CPU waveform to CPU text):
+
+| Pair | What it compares | Dev energy | Dev latency | Test energy | Test latency |
+|---|---|---|---|---|---|
+| b1−b2 | MB1, same stack, part count only | −11.36% (24/24) | −6.79% (24/24) | −11.91% (24/24) | −7.11% (24/24) |
+| b4−b5 | M1, same stack, part count only | −10.14% (24/24) | −3.03% (24/24) | −10.14% (24/24) | −3.39% (24/24) |
+| b1−b6 | the MB1 default against M1's previously deployed runtime | −16.58% (24/24) | −10.48% (24/24) | −16.13% (24/24) | −10.29% (24/24) |
+| b4−b6 | M1's new default against its previously deployed runtime | −6.74% (24/24) | **+0.79% (8/24)** | −6.72% (23/24) | **+0.16% (11/24)** |
+| b1−b4 | both new defaults | −10.33% (24/24) | −10.47% (24/24) | −9.92% (24/24) | −10.79% (24/24) |
+| b1−b3 | the MB1 default against the selection baseline | −20.05% (24/24) | −13.54% (24/24) | −19.99% (24/24) | −13.51% (24/24) |
+
+**Encoder only** (GPU features to encoder output, raw graph replay):
+
+| Pair | What it compares | Dev energy | Dev latency | Test energy | Test latency |
+|---|---|---|---|---|---|
+| b1−b2 | MB1, same stack, part count only | −11.93% (24/24) | −10.96% (24/24) | −12.16% (24/24) | −10.91% (24/24) |
+| b4−b5 | M1, same stack, part count only | −9.66% (24/24) | −6.95% (24/24) | −9.83% (24/24) | −6.91% (24/24) |
+| b1−b6 | the MB1 default against M1's previously deployed runtime | −18.34% (24/24) | −16.50% (24/24) | −18.36% (24/24) | −16.43% (24/24) |
+| b4−b6 | M1's new default against its previously deployed runtime | −6.21% (24/24) | −2.04% (16/24) | −6.31% (24/24) | −1.99% (16/24) |
+| b1−b4 | both new defaults | −14.45% (24/24) | −14.73% (24/24) | −14.74% (24/24) | −14.72% (24/24) |
+| b1−b3 | the MB1 default against the selection baseline | −21.09% (24/24) | −20.69% (24/24) | −21.03% (24/24) | −20.62% (24/24) |
+
+- **M1's new default is not faster than its old runtime on short utterances.** b4 (M1-x2 on the
+  expanded runtime) uses less energy than b6 (M1's hybrid runtime at x3). In full-transcription latency, b4
+  is slower at 3 s on 8 of 8 utterances (dev +4.57%, test +5.07%). It is about even at 10 s (dev +0.79%,
+  faster on 0/8; test +0.16%, faster on 3/8) and faster at 30 s (dev −4.43%, test −4.85%, 8/8).
+  - The report records this as a statement: "b4 (M1's new default) has higher latency than b6 (M1's
+    previously deployed runtime)".
+  - M1's hybrid runtime (`ptx_row_best`) supports x3 only, so no M1 hybrid-x2 was built. This also
+    applies wherever M1-x2 is compared with B-hybrid-x2 (b1−b4).
+- **Every other pair is lower on 24/24 in both energy and latency**, at both scopes and on both
+  workload sets.
+- **Dev and test agree closely.** The largest difference between a pair's dev and test medians is:
+  - over the MB1 pairs, 0.55 points (b1−b2, full energy);
+  - over the M1 pairs, 0.64 points (b4−b6, full latency), or 0.37 for b4−b5 alone.
+
+**Absolute medians** (ms / J per pass / average W):
+
+| Arm | Dev full | Dev encoder | Test full | Test encoder |
+|---|---|---|---|---|
+| b1 MB1 B-hybrid x2 | 3.958 ms / 1.199 J / 304 W | 2.345 ms / 0.869 J / 366 W | 3.902 ms / 1.195 J / 304 W | 2.351 ms / 0.866 J / 366 W |
+| b2 MB1 B-hybrid x3 | 4.226 ms / 1.356 J / 323 W | 2.635 ms / 0.972 J / 365 W | 4.173 ms / 1.359 J / 325 W | 2.640 ms / 0.980 J / 364 W |
+| b3 MB1 R-expanded x3 | 4.548 ms / 1.517 J / 334 W | 2.961 ms / 1.098 J / 367 W | 4.509 ms / 1.504 J / 333 W | 2.973 ms / 1.104 J / 366 W |
+| b4 M1 R-expanded x2 | 4.422 ms / 1.341 J / 304 W | 2.751 ms / 1.022 J / 367 W | 4.356 ms / 1.346 J / 305 W | 2.759 ms / 1.028 J / 368 W |
+| b5 M1 R-expanded x3 | 4.557 ms / 1.511 J / 335 W | 2.959 ms / 1.092 J / 366 W | 4.516 ms / 1.499 J / 331 W | 2.969 ms / 1.093 J / 367 W |
+| b6 M1 R-hybrid x3 | 4.374 ms / 1.484 J / 341 W | 2.808 ms / 1.042 J / 367 W | 4.330 ms / 1.496 J / 338 W | 2.818 ms / 1.040 J / 368 W |
+
+### Historical test clips: 3.0 / 10.0 / 30.04 s (LibriSpeech test-clean)
+
+These are M1's historical clips 3575-170457-0052, 1320-122617-0010 and 121-123859-0002, run after the
+freeze, for comparability only.
+- **Method:**
+  - a fresh process per arm, with the clips in that order and an accumulating graph cache;
+  - 2 s warm-up, then three 5 s windows per clip;
+  - two complete passes, `test-clips1` and `test-clips2`.
+- **Columns:**
+  - ms is the median of the six window medians;
+  - J per pass is the median of the six windows' NVML energy divided by iterations;
+  - GB is warm process VRAM: the highest `windows[].process_sampled_peak_bytes`, in decimal GB.
+- **Transcripts:** x2 and x3 give identical text and tokens on all three clips, for both models.
+
+| Arm | 3.0 s | 10.0 s | 30.04 s |
+|---|---|---|---|
+| **b1 MB1 B-hybrid x2** | **2.29 ms / 0.578 J / 1.01 GB** | **3.88 ms / 1.204 J / 1.16 GB** | **9.29 ms / 3.241 J / 1.51 GB** |
+| b2 MB1 B-hybrid x3 | 2.46 ms / 0.673 J / 1.01 GB | 4.13 ms / 1.366 J / 1.16 GB | 10.05 ms / 3.584 J / 1.51 GB |
+| b3 MB1 R-expanded x3 | 2.73 ms / 0.736 J / 1.74 GB | 4.46 ms / 1.516 J / 1.89 GB | 10.59 ms / 3.828 J / 2.23 GB |
+| **b4 M1 R-expanded x2** | **2.67 ms / 0.660 J / 1.74 GB** | **4.30 ms / 1.335 J / 1.89 GB** | **9.88 ms / 3.498 J / 2.24 GB** |
+| b5 M1 R-expanded x3 | 2.72 ms / 0.734 J / 1.74 GB | 4.46 ms / 1.510 J / 1.89 GB | 10.51 ms / 3.809 J / 2.23 GB |
+| b6 M1 R-hybrid x3 | 2.55 ms / 0.697 J / 1.74 GB | 4.27 ms / 1.470 J / 1.88 GB | 10.44 ms / 3.751 J / 2.23 GB |
+
+The fresh-process peak, which includes load and first capture (`p_memory` in report-test.json), is higher
+for MB1:
+- b1: 1.12 / 1.16 / 1.51 GB;
+- b4: 1.74 / 1.89 / 2.24 GB.
+
+### Cross-session comparison with the original Parakeet (NOT one session; read with the caveats)
+
+Same three clips, same RTX 5090, driver 595.71.05, 400 W limit, NVML energy and the compare_v2 window
+protocol (three 5 s windows). The NeMo arms come from **different sessions**, on 2026-10-05:
+- **NeMo FP32:** `parakeet-ternary/comparison/run1/nemo_fp32.json`, the unmodified
+  nvidia/parakeet-tdt-0.6b-v2 at FP32.
+- **NeMo BF16:** `.../run4/nemo_bf16_graphs_fused_decoder.json`, our optimized NeMo build of the
+  original model, with BF16, CUDA graphs and the fused decoder.
+
+Per clip:
+- ms is the median of the window medians of `iteration_seconds`;
+- J is the median over windows of `energy_joules / iterations`;
+- GB is the highest window `process_sampled_peak_bytes`.
+
+| Arm | 3.0 s | 10.0 s | 30.04 s |
+|---|---|---|---|
+| NeMo FP32, original weights (2026-10-05) | 10.37 ms / 2.976 J / 3.41 GB | 18.74 ms / 5.748 J / 3.49 GB | 36.30 ms / 13.165 J / 3.67 GB |
+| NeMo BF16 + graphs + fused decoder, original weights (2026-10-05) | 4.25 ms / 1.154 J / 2.11 GB | 5.81 ms / 1.895 J / 2.18 GB | 11.56 ms / 4.482 J / 2.35 GB |
+| **MB1-x2, gpu1bit.runtime (2026-10-22)** | 2.29 ms / 0.578 J / 1.01 GB | 3.88 ms / 1.204 J / 1.16 GB | 9.29 ms / 3.241 J / 1.51 GB |
+| **M1-x2, gpu1bit.runtime_m1 (2026-10-22)** | 2.67 ms / 0.660 J / 1.74 GB | 4.30 ms / 1.335 J / 1.89 GB | 9.88 ms / 3.498 J / 2.24 GB |
+
+- **MB1-x2 against NeMo FP32:**
+  - latency −78% / −79% / −74%;
+  - energy −81% / −79% / −75%;
+  - warm VRAM −70% / −67% / −59%.
+- **MB1-x2 against NeMo BF16:**
+  - latency −46% / −33% / −20%;
+  - energy −50% / −36% / −28%;
+  - warm VRAM −52% / −47% / −36%.
+- **M1-x2 against NeMo BF16:**
+  - latency −37% / −26% / −15%;
+  - energy −43% / −30% / −22%;
+  - warm VRAM −17% / −13% / −5%.
+- **Label (plans/x2-default.md X8):** the runtime − NeMo difference is the whole deployment path,
+  not the effect of any one part. It combines:
+  - the 1-bit or ternary weights and their kernels;
+  - INT8x2 activations;
+  - the integer and fused arithmetic;
+  - CUDA-graph pipelines;
+  - the runtime's decoder execution.
+
+  It is not an x2-versus-x3 comparison; the pairs above are.
+- **Drift caveat.** Today's M1 R-hybrid x3 (b6) matches M1's recorded 2026-10-07 `packed_cuda_best` run
+  on the same clips:
+  - latency within 1% (−0.75% / −0.63% / +0.95%);
+  - energy within 0–8% (−2.65% / −0.11% / +7.80%).
+
+  The cross-session differences above are much larger than that drift. A same-session NeMo arm was
+  not run.
+- **Transcripts:** all arms give the same text on the 3 s and 10 s clips. On the 30.04 s clip, both NeMo
+  arms agree with each other. MB1 differs from them in two words: "intense" for "intents", and an
+  added comma. M1 differs in five: "million" for "million'd", "intense", "Divert", and "tyranny,
+  might" for "tyranny? Might".
+
+### Transcript agreement with MB1's FP32 NeMo reconstruction (plans/gpu-kernel.md hard constraint)
+
+- **Recorded comparison.** Fulldev run `xcheck` (2026-10-20),
+  `H/fulldev/xcheck/compare/MB1-int8_mma-x3--vs--MB1-fp32@sample.json`.
+  - It compares MB1 on the provider stack (`int8_mma`, x3) with `binary_export.load_export`: FP32 NeMo
+    rebuilt from the same export, batch 1, NeMo's own forward and decoding.
+  - On the 512-utterance dev quality sample there were 0 token mismatches, 0 text mismatches and no
+    encoder-length differences.
+- **No recorded run compares the deployed B-hybrid arms with MB1-fp32 directly.**
+  - The gates compare g1 with g2 and g3.
+  - A12 compared B-hybrid with MB1 on R-expanded.
+  - R2 compares the x3 arms' dev WER with the pinned FP32-NeMo scores, at the score level, not the
+    transcript level.
+  - The Z4 records compare g2 and g4 with their recorded `ap-20261020r4` arms.
+  - The Z6 runtime records compare the deployed loader with g2 (recognition) and with b1 and b3
+    (memory).
+  - The fulldev identity binds the export and the code, not a reference transcript.
+- **Read-only check from the recorded rows** (2026-10-22, no new run). Restricted to the 512 sample
+  ids, the full-dev rows of these arms all equal the `xcheck` MB1-fp32 rows, 512/512, in token IDs,
+  text, frame timestamps and encoder lengths:
+  - `x2g-20261021b`: MB1-B-hybrid-x2 (g1, the deployed arm), MB1-B-hybrid-x3, MB1-int8_mma-x2 and
+    MB1-int8_mma-x3;
+  - `ap-20261020r4`: MB1-int8_mma-x2 and MB1-int8_mma-x3.
+
+  g1's 5 full-dev token mismatches against g2 are all outside the sample.
+- **Scope.** This covers the 512-utterance sample only, because MB1-fp32 was not run over full dev.
+  - Over full dev, agreement with FP32 NeMo is shown only through R2's WER cross-check.
+  - The fp32 rows were recorded under the 2026-10-20 code identity. Their path,
+    `binary_export.load_export`, is outside gpu1bit.
+
+### What changed in the code for x2
+
+- **New code:**
+  - B's `hybrid_x2` / `row_exact_x2` / `kernels_exact_x2` / `deferred_x2` (NOTES "B 2026-10-21 08:45");
+  - `fulldev.PartCount` attribute-write forwarding;
+  - `gpu1bit/runtime_m1.py`;
+  - the `parts` map, `default_parts` and `m1_default_parts` of the selection document
+    (`shared/seldoc.py`);
+  - `gpu1bit/x2/` (gates, preflight, benchmark patch and session, historical workloads, test scoring
+    and its qualification).
+- **Part-count kernel files:** the loader `gpu1bit/actprec/parts.py` executes B's `kernels_parts.py`,
+  `layer_parts.py` and `parts_run.py` from `B/wip/parts/` on /mnt/hd. It checks them against the
+  SHA-256s pinned in its `PINNED` (B's 14:55 manifest; `parts.py` itself is in the freeze).
+  - **Reference copy:** `gpu1bit/measured-x2-parts/` holds all nine files of `B/wip/parts/` plus
+    `parts-sha256.txt`. These are the exact bytes the measured MB1-x2 runs loaded. To verify, run
+    `sha256sum -c parts-sha256.txt` in that directory.
+  - Reference copies are included, but the runtime loader still reads the pinned `/mnt/hd` files. The
+    directory is outside every fingerprint and identity file set.
+  - See README.md, "Portability limits".
+- **Explicit x3 callers stay x3:** a call that names a kernel, or only a hybrid spec, gets that kernel's
+  own part count (`runtime.resolve_load`).
+- **Fixes from x2 code review c1** (`review/x2-default/c1.md`, 8 majors in H's files), made
+  contract-first:
   - test scoring requires its qualification: per-attempt pins of a complete, accepted benchmark, the
     gates, the preflights and the Z6/Z8 runtime records;
   - Y3 retry evidence is opened record by record;
-  - torn JSONL tails are repaired under the attempt lock; retries reach every failed utterance;
+  - torn JSONL tails are repaired under the attempt lock, and retries reach every failed utterance;
   - benchmark reports and the historical authorization use only accepted measurements;
   - the memory contract requires all three clips in every recording;
   - explicit-kernel and historical x3 callers stay x3 after promotion;
   - a promotion contract runs the whole suite in a promoted scratch copy.
-- Every number below comes from dev workloads only (A13).
-Plan: [plans/gpu-kernel.md](../plans/gpu-kernel.md) (amendments A1–A15 are final) and
-[plans/x2-default.md](../plans/x2-default.md) (the INT8x2 default; CLEAN at plan review round 4).
+- **Fixes from c3 and c4:** the test-scoring time budget. Its throughput now comes only from
+  identity-matched timed coverage of at least 50% of dev, under the candidate selection. This feeds only
+  test scoring, which was not run for x2.
+
+### Changes after the recorded runs
+
+- **`finetune/parakeet-ternary/python` changed after the gates, the benchmark and the freeze
+  `x2b-20261021`.** It is in the gpu1bit code fingerprint (`shared/fingerprint.py`).
+  - Old SHA-256: 487bcfbc31c1558c3da349909ba9f03f31977b19b91deb45042164ec3c6cc9cb.
+  - New SHA-256: 18ea70d6bcd533d8c7fc829190158b90617c2a26184c9e67e64e8313e39942f5.
+- **The change restores an opt-in interpreter override:** `exec "${PARAKEET_PYTHON:-<default>}"`.
+  With `PARAKEET_PYTHON` unset, the interpreter and behaviour are identical; both wrappers resolve to
+  the same python3.
+- **Identities computed now differ from the recorded ones.** Fingerprint-based identities hash this
+  file. The freeze manifest `freeze-x2b-20261021.sha256` stays as recorded, as evidence of what ran.
+  Every other file in it still matches the working tree (checked 2026-10-22).
+- **No GPU runs or re-scoring followed** (the user's decision).
+- **Promotion:** `shared/selected.json` was replaced by a byte-identical copy of `selected-x2.json`.
+  - That file is not in the freeze. Identities hash the content of the selection document in use, and
+    the gates and benchmark ran under `selected-x2.json` explicitly, so promotion leaves them unchanged.
+  - The previous x3 document (SHA-256 103d96f4…) is in git history and in
+    `/mnt/hd/.../gpu1bit/selected-x3-backup-20261022.json`.
+
+### Known stale text, left unchanged
+
+Both items below are hash- or fingerprint-bound, so they were left as they are:
+- **`shared/selected.json` (= `selected-x2.json`):** its `about` and `selection.status` fields still
+  describe the pre-promotion state ("CANDIDATE selection", "candidate (not promoted; gates
+  pending)"). Identities hash the document's content.
+- **The docstrings of `gpu1bit/runtime.py` and `gpu1bit/runtime_m1.py`** still describe the
+  pre-promotion state:
+  - in `runtime.py`, the selected kernel is "now int8_mma", and selected.json is "the x3 document
+    until promotion";
+  - in `runtime_m1.py`, "Before promotion … unqualified callers get x3".
+
+  Both files are in the code fingerprint and the arm identities. The code's behaviour is as described
+  in this section and in README.md.
 
 ## Summary (selection, dev workloads)
 
@@ -658,7 +967,10 @@ Sources: B `B/bench/20261020T103100-kernel.json` (baselines from that run), A
 
 ## Integration (phase 3 step 2): `gpu1bit/runtime.py`
 
-`load_binary_packed(export_dir, *, runtime="hybrid"|"provider", kernel=<registry name>)`:
+`load_binary_packed(export_dir, *, runtime="hybrid"|"provider", kernel=<registry name>, parts=2|3, selection=PATH)`.
+This section describes the x3 integration of 2026-10-20/21. Since the x2 promotion (2026-10-22), a call
+without `parts` or `kernel` builds the selection document's 2-part entry; see "INT8x2 deployment
+default" above and README.md. The loader:
 - validates the export: `parakeet-binary-v1` format (also in the safetensors metadata); every file's SHA-256 against the manifest; exactly the 264 layers; every layer through `api.validate_weights` (dtype, width, tail bits, finite scales);
 - refuses 2-bit exports;
 - builds NeMo from the manifest config and the export's own tokenizer. No .nemo and no derived export is touched, and strace proves it;
@@ -671,14 +983,22 @@ Sources: B `B/bench/20261020T103100-kernel.json` (baselines from that run), A
   It is imported, not copied. The frozen FP32-deferred `hybrid.py` is no longer the deployed path.
 
 `transcribe(model, items)` is M1's `hf.load_ternary.transcribe` at batch 1 under `inference_mode`.
-The CLI, `gpu1bit/shared/python -m gpu1bit.runtime --export DIR [--runtime] [--kernel] [--tokens] clip.wav`,
+The CLI, `gpu1bit/shared/python -m gpu1bit.runtime --export DIR [--parts {2,3}] [--selection PATH] [--runtime] [--kernel] [--tokens] clip.wav`,
 takes the GPU lock for its whole life and exits inside it.
 
 **Swapping the kernel.** A candidate kernel replaces the selected one by changing `"kernel"` (and its
 registering `"imports"`) in `selected.json`, after it wins under the same rules. `runtime.py` is not
 edited.
-- **Current deployment:** `selected.json` names kernel `int8_mma`, the hybrid_exact stack, and selection
-  `sel-20261020b` / `B-hybrid` (`report-corrected.json`).
+- **Current deployment (since 2026-10-22):** `selected.json` is the x2 document, byte-identical to
+  `selected-x2.json`. Its `parts` map names:
+  - at 2 parts, kernel `int8_mma:x2` with `hybrid_x2.HybridProjectionX2` and
+    `exact_hybrid_pipeline_x2`;
+  - at 3 parts, kernel `int8_mma` with the hybrid_exact stack and the `row_exact` routing.
+
+  `default_parts` and `m1_default_parts` are 2. The top-level `kernel` / `hybrid` keys keep the x3
+  entry, and the selection record keeps `sel-20261020b` / `B-hybrid` (`report-corrected.json`).
+- **x3 deployment, 2026-10-21 04:16 to 2026-10-22:** kernel `int8_mma` with the hybrid_exact stack.
+  The document is in git history (SHA-256 103d96f4…).
 - **Earlier states:** B-hybrid-b01 (top-two decision) is kept in
   `H/selection/sel-20261020b/selected-before-c2-switch.json`, and the original frozen-hybrid
   `int8_mma` file in `selected-before-switch.json`.
@@ -850,7 +1170,7 @@ so `parts.build(n=3)` equals fulldev's original x3 build on all of dev.
 - Summary: `H/actprec/timing-ap-20261020r4.json` (`actprec_report.py timing`). It reads only accepted
   artifacts that are still bound.
 - **The timing runs every arm through the provider/expanded stack** (R-expanded's transforms), not the
-  deployed hybrid runtime, so the comparison is controlled. B-hybrid at x2/x1 is out of scope; the plan
+  deployed hybrid runtime, so the comparison is controlled. B-hybrid at x2/x1 is out of scope; that plan
   leaves it out.
 
 **Full transcription, dev_24, paired** (median of per-utterance changes; in parentheses, utterances
@@ -911,8 +1231,9 @@ Dev clips of 3 / 10 / 30 s:
 - **x1 is a trade-off.** It saves 21–25% energy, at a dev-mean WER cost of +0.02 points and about 5%
   token churn.
 - **MB1 stays 8–10% below M1** in energy at every part count.
-- The x2/x1 timing uses the provider stack. The deployed winner B-hybrid has no x2 path; the plan
-  leaves that out of scope.
+- The x2/x1 timing uses the provider stack. At the time, B-hybrid had no x2 path, and this plan left it
+  out of scope. plans/x2-default.md then added B-hybrid-x2, which is now the deployed MB1 default; see
+  "INT8x2 deployment default" above.
 
 Records: `/mnt/hd/wilderness-labs-stt/parakeet-binary/gpu1bit/H/fulldev/ap-20261020r4/` (per-arm identity,
 rows, chunks, summary; `compare/`) and `.../H/actprec/` (`report-ap-20261020r4.json`,
@@ -921,13 +1242,13 @@ records (`ap-20261020`, `ap-20261020r2`, `ap-20261020r3`) are kept for the repro
 
 ## Recorded benchmark (SUPERSEDED by plans/x2-default.md; the checklist below is kept for the record)
 
-The x3-only recorded run below is not run. plans/x2-default.md replaces it with a recorded benchmark
-of six arms:
+The x3-only recorded run below was never run. plans/x2-default.md replaced it with a recorded benchmark
+of six arms, which ran as `x2b-20261021` (results in "INT8x2 deployment default" above):
 - b1 MB1 B-hybrid x2, b2 MB1 B-hybrid x3, b3 MB1 (derived layout) R-expanded x3;
 - b4 M1 R-expanded x2, b5 M1 R-expanded x3, b6 M1 R-hybrid x3.
 
-It runs after the dev gates g0 to g5 and a Codex code review of the x2 code, with M1's historical test
-workloads within it.
+It ran after the dev gates g0 to g5 and the Codex code reviews of the x2 code, with M1's historical
+test workloads within it. The unchecked items below belong to the superseded x3 plan and stay unchecked.
 
 - [ ] Codex (gpt-6-astra xhigh) code review of gpu1bit/ (shared/, tests/, runtime.py, int8_mma/ as
       frozen), iterated until CLEAN, covering review items 1 and 2 above.
@@ -945,7 +1266,8 @@ workloads within it.
         M1's recorded EXPERIMENTS4 / CUDA_IMPROVEMENTS numbers).*
 - [ ] End-to-end transcript agreement on the dev quality sample against MB1 on R-expanded (done in
       A12: 512/512) **and against MB1's FP32 NeMo reconstruction** (`binary_export.load_export`),
-      a hard constraint of the plan not yet run. *TBD; mismatches listed, not hidden.*
+      a hard constraint of the plan not yet run. *TBD; mismatches listed, not hidden.* (Since covered on the
+      512-utterance sample: see "Transcript agreement with MB1's FP32 NeMo reconstruction" in the x2 section.)
 - [ ] Weight bytes resident, disk sizes (MB1 export 105,299,804 B vs M1 180,797,564 B) and the
       final summary. *TBD.*
 
@@ -956,7 +1278,10 @@ There are two separate source states:
   `H/selection/sel-20261020b/frozen-sources-sel-20261020b.tar.gz` (sha256 d49fe9af…) and listed in
   `/mnt/hd/wilderness-labs-stt/parakeet-binary/gpu1bit/freeze-sel-20261020b.sha256`. The working tree
   has changed since then, so that session reproduces only from the archive.
-- **The recorded benchmark** (still to run) gets its own new freeze file and source snapshot (A10).
+- **The recorded x2 benchmark `x2b-20261021`** ran under its own freeze,
+  `/mnt/hd/wilderness-labs-stt/parakeet-binary/gpu1bit/freeze-x2b-20261021.sha256` (195 files). All of
+  them still match the working tree except `finetune/parakeet-ternary/python`; see "Changes after the
+  recorded runs".
 
 **sel-20261020b from the archived sources.** Tested 2026-10-21: the commands below reproduce
 `report.json` byte for byte (`cmp` identical).
@@ -1014,14 +1339,15 @@ CUDA_VISIBLE_DEVICES= gpu1bit/shared/python -m gpu1bit.shared.selection regenera
 - The fingerprinted files are shared/, runtime.py, the candidate directories, M1's modules and
   `plans/gpu-kernel.md`.
 
-**The deployed runtime** (current tree):
+**The deployed runtime** (current tree; development machine only, see README.md "Portability limits"):
 
 ```sh
 cd $REPO/finetune/parakeet-binary
 gpu1bit/shared/python -m gpu1bit.tests.run --label H:runtime gpu1bit.tests.test_runtime          # shared lease
 gpu1bit/shared/python -m gpu1bit.tests.run --label H:routing gpu1bit.tests.test_finish_residual_routing
 gpu1bit/shared/python -m gpu1bit.tests.run --cpu gpu1bit.tests.test_runtime_fresh                 # exclusive lease
-gpu1bit/shared/python -m gpu1bit.runtime --export /mnt/hd/wilderness-labs-stt/parakeet-binary/runs/main-binB-m1-lr2e-4/export clip.wav
+gpu1bit/shared/python -m gpu1bit.runtime --export /mnt/hd/wilderness-labs-stt/parakeet-binary/runs/main-binB-m1-lr2e-4/export clip.wav            # x2
+gpu1bit/shared/python -m gpu1bit.runtime --export /mnt/hd/wilderness-labs-stt/parakeet-binary/runs/main-binB-m1-lr2e-4/export --parts 3 clip.wav  # x3
 ```
 (Run each as `job start ... --needs gpu:shared --vram 8G`, or `--needs gpu` for test_runtime_fresh,
 whose children use the EnergyMeter guard.)

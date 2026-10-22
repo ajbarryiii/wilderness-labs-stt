@@ -729,3 +729,30 @@ Files final for the session (B/exact-source-sha256.txt):
 - **Benchmark patch:** `gpu1bit.x2.bench_patch` refuses a roster variant unless the selection in use has
   `selected-x2.json`'s content (set `GPU1BIT_SELECTION`). It builds B-hybrid-x2/-x3 through
   `runtime.load_binary_packed`, so `session_patch_x2` is not needed for the roster.
+
+## H 2026-10-21 15:05
+**H: how the test-scoring job gets its timeout and lease (Codex x2 c3 minor).**
+- `preflight --arm A --budget-from-gate-run G` writes H/x2/budget-G-A.json once.
+  - The timeout is twice the predicted duration. Throughput is taken only over the dev utterances and audio seconds that the gate run's recorded chunk timings cover. Coverage must be at least 50% of dev, under the arm's identity.
+- `testscore pin` binds the record's SHA-256, next to the preflight's.
+- `testscore job-args --arm A --attempt N` prints the `job start ... --needs gpu:shared --vram <preflight lease> --timeout <budget>s -- ... score --arm A` command.
+  - It reads only the pinned records and refuses if either changed since pinning.
+  - Scoring is launched with exactly that command.
+
+## coordinator 2026-10-22
+**coordinator → all: x2 is promoted. `shared/selected.json` is now byte-identical to `selected-x2.json` (SHA-256 de3c18c4…), so unqualified callers of `gpu1bit.runtime` and `gpu1bit.runtime_m1` get x2. Earlier notes that call selected.json "the x3 document" or "candidate" describe the state before promotion.**
+- **Records:** gates `x2g-20261021b` (all pass) and the recorded benchmark `x2b-20261021`. Results are in RESULTS.md, "INT8x2 deployment default"; usage is in README.md.
+- **Test WER was not re-scored for x2** (the user's decision).
+- **Changes after the recorded runs:**
+  - `finetune/parakeet-ternary/python` is in the gpu1bit code fingerprint (`shared/fingerprint.py`). It changed after the gates, the benchmark and the freeze `x2b-20261021`.
+    - Old SHA-256: 487bcfbc31c1558c3da349909ba9f03f31977b19b91deb45042164ec3c6cc9cb.
+    - New SHA-256: 18ea70d6bcd533d8c7fc829190158b90617c2a26184c9e67e64e8313e39942f5.
+  - The change restores an opt-in interpreter override: `exec "${PARAKEET_PYTHON:-<default>}"`. With `PARAKEET_PYTHON` unset, the interpreter and behaviour are identical; both wrappers resolve to the same python3.
+  - As a result, fingerprint-based identities computed now differ from the recorded ones. The freeze manifest `freeze-x2b-20261021.sha256` stays as recorded, as evidence of what ran. Every other file in it still matches.
+  - No GPU runs or re-scoring followed (the user's decision).
+- **Part-count files:** B's part-count files (`kernels_parts.py`, `layer_parts.py`, `parts_run.py`) still load from `B/wip/parts/` on /mnt/hd.
+  - A byte-identical reference copy of all nine files plus `parts-sha256.txt` is in `gpu1bit/measured-x2-parts/`. Reference copies are included, but the runtime loader still reads the pinned `/mnt/hd` files.
+  - gpu1bit is published as a research runtime, not packaged (README.md, "Portability limits").
+- **Known stale text, left unchanged (hash- or fingerprint-bound):**
+  - the `about` and `selection.status` fields of selected.json;
+  - the pre-promotion wording in the docstrings of runtime.py and runtime_m1.py.

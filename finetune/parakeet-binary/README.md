@@ -66,7 +66,7 @@ All pilot arms ran 12k steps; results are full-dev means.
 | `binary_main.py`, `binary_main_paths.py` | MB1 entry point (stream seed, provenance) |
 | `binary_test.py`, `binary_report_test.py` | one-time test scoring with precheck, dev gate, attempt ledger |
 | `hf/` | Hugging Face release: `stage.py` builds and checks the upload folder, `load_binary.py` is the standalone loader (MIT), `verify_download.py` checks a fresh download; model card, LICENSE, NOTICE |
-| `gpu1bit/` | native 1-bit RTX 5090 kernels, in progress ([plans/gpu-kernel.md](plans/gpu-kernel.md)) |
+| `gpu1bit/` | native 1-bit RTX 5090 research runtime for MB1 (INT8x2 activations by default) and the M1 x2 loader: the code behind the recorded measurements, published for reference, not packaged for use elsewhere ([gpu1bit/README.md](gpu1bit/README.md); results in [gpu1bit/RESULTS.md](gpu1bit/RESULTS.md); plans [gpu-kernel.md](plans/gpu-kernel.md), [x2-default.md](plans/x2-default.md)) |
 | `diagnostics/` | pre-pilot latent analysis |
 
 Run everything with `./python`, which uses the parakeet-ternary runtime with
