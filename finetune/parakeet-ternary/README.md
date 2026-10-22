@@ -5,6 +5,10 @@
 by `hf/stage.py` (52 required checks, including identical tensors and transcripts between the
 standalone `hf/load_ternary.py` and this repository's loader) and was verified on a private
 repository, including a download-and-transcribe round trip, before being made public.
+The card is split into `hf/MODEL_CARD.md` (README.md on the Hub) and the detail documents
+`hf/RUNTIME.md`, `hf/EVALUATION.md` and `hf/TRAINING.md`; that docs-only update is staged by
+`hf/stage_card.py` and was merged on the Hub through pull request #1 on 2026-10-22
+([plans/card-update.md](plans/card-update.md)).
 
 Design: [DESIGN.md](DESIGN.md). Run every script with `./python` (pinned NeMo 3.0 /
 torch 2.11 runtime; all caches and artifacts on `/mnt/hd/wilderness-labs-stt/parakeet-ternary/`).
