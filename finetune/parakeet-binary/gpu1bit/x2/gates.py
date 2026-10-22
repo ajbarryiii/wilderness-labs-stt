@@ -303,6 +303,9 @@ def main() -> None:
     s = sub.add_parser("recorded", help="Z4 descriptive comparisons with ap-20261020r4 (never gates)")
     s.add_argument("--run", required=True)
     args = p.parse_args()
+    from gpu1bit.shared import seldoc
+    if args.action != "drive":
+        seldoc.use_candidate()        # every gate action is under the candidate, also with the pointer at x3 (c4)
     if args.action == "drive":
         print(json.dumps({k: v for k, v in drive(args.run, args.selection).items() if k in ("pass",)}))
     elif args.action == "encoder":

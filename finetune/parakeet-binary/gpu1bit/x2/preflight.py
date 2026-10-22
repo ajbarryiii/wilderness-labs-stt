@@ -12,15 +12,20 @@ Inputs are dev audio (dev_24 utterances concatenated, cut to the exact sample co
 
     gpu1bit/shared/python -m gpu1bit.x2.preflight --arm MB1-B-hybrid-x2   (job --needs gpu:shared --vram <measured>)
     gpu1bit/shared/python -m gpu1bit.x2.preflight --arm MB1-B-hybrid-x2 --budget-from-gate-run G   (CPU, after the gates)
-Duration budget (X7): compute_budget extrapolates the gate run's measured batch-1 full-dev work time of the arm
-to the test sets (per audio second and per utterance, the larger kept), adds a cold start-up and capture per
-chunk, and sets the scoring job's timeout to twice that.
+Duration budget (X7; Codex x2 c3): compute_budget takes the gate run's measured batch-1 throughput of the arm
+only over the utterances and audio seconds its recorded chunk timings cover (at least half of dev, the arm's
+identity), extrapolates it to the test sets (per audio second and per utterance, the larger kept), adds a cold
+start-up and capture per chunk, and sets the scoring job's timeout to twice that. The record
+(H/x2/budget-<gate run>-<arm>.json) is written once, pinned by testscore's qualification, and the scoring job
+command takes its timeout from it (`testscore job-args`).
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
+from pathlib import Path
 
 from gpu1bit.shared import env
 
@@ -41,40 +46,87 @@ def time_ok(startup_s: float, capture_s: float, longest_s: float) -> dict:
             "capture_2x_longest_s": work, "hold_cap_s": HOLD_CAP_S, "work_budget_s": WORK_BUDGET_S}
 
 
-def compute_budget(work_s: list[float], dev_utterances: int, dev_audio_s: float, test_utterances: int,
+MIN_COVERAGE = 0.5
+
+
+def compute_budget(chunks: list[dict], identity: str, dev_utterances: int, dev_audio_s: float, test_utterances: int,
                    test_audio_s: float, startup_s: float, capture_s: float) -> dict:
-    """X7's job duration budget (pure): the gate run's full-dev work time of the arm (its worker chunks'
-    work_s, batch 1) per audio second and per utterance, each extrapolated to the test sets and the larger
-    kept; plus a cold start-up and capture (this preflight) for each chunk the work budget implies. The job
-    timeout is twice that."""
+    """X7's job duration budget (pure; Codex x2 c3). Throughput is taken only over what recorded chunk timings
+    cover: the chunks of `identity` that ended without an error, their rows and their processed audio seconds
+    (fulldev chunk records "rows" and "audio_s"). A killed worker keeps its rows but writes no chunk, so its
+    share is excluded, never divided over. The covered share must be at least MIN_COVERAGE of dev in
+    utterances and in audio seconds, or ValueError. Per audio second and per utterance, each extrapolated to
+    the test sets, the larger kept; plus a cold start-up and capture per chunk the work budget implies; the
+    job timeout is twice that."""
     import math
-    if not work_s or dev_utterances <= 0 or dev_audio_s <= 0 or test_utterances <= 0 or test_audio_s <= 0:
-        raise ValueError("the duration budget needs the gate run's chunk work times and the dev and test totals")
-    work = float(sum(work_s))
-    per_s, per_utt = work / dev_audio_s, work / dev_utterances
+    if dev_utterances <= 0 or dev_audio_s <= 0 or test_utterances <= 0 or test_audio_s <= 0:
+        raise ValueError("the duration budget needs the dev and test totals")
+    other = [c.get("identity") for c in chunks if c.get("identity") != identity]
+    if other:
+        raise ValueError(f"chunk timings of another identity {str(other[0])[:12]} (expected {identity[:12]})")
+    timed = [c for c in chunks if not c.get("error") and c.get("work_s") is not None]
+    if any("audio_s" not in c for c in timed):
+        raise ValueError("a chunk record has no audio_s: its covered audio is unknown")
+    rows = sum(sum(c["rows"].values()) for c in timed)
+    audio = sum(sum(c["audio_s"].values()) for c in timed)
+    if rows < MIN_COVERAGE * dev_utterances or audio < MIN_COVERAGE * dev_audio_s:
+        raise ValueError(f"timing coverage {rows}/{dev_utterances} utterances, {audio:.0f}/{dev_audio_s:.0f} s is below "
+                         f"{MIN_COVERAGE:.0%} of dev; no budget")
+    work = float(sum(c["work_s"] for c in timed))
+    per_s, per_utt = work / audio, work / rows
     predicted_work = max(per_s * test_audio_s, per_utt * test_utterances)
-    chunks = math.ceil(predicted_work / WORK_BUDGET_S)
-    predicted = predicted_work + chunks * (startup_s + capture_s)
-    return {"dev_work_s": work, "dev_utterances": dev_utterances, "dev_audio_s": dev_audio_s,
+    n_chunks = math.ceil(predicted_work / WORK_BUDGET_S)
+    predicted = predicted_work + n_chunks * (startup_s + capture_s)
+    return {"identity": identity, "timed_chunks": len(timed), "covered_utterances": rows, "covered_audio_s": audio,
+            "dev_utterances": dev_utterances, "dev_audio_s": dev_audio_s, "covered_work_s": work,
             "per_audio_second_s": per_s, "per_utterance_s": per_utt, "test_utterances": test_utterances,
-            "test_audio_s": test_audio_s, "predicted_work_s": predicted_work, "chunks": chunks,
+            "test_audio_s": test_audio_s, "predicted_work_s": predicted_work, "chunks": n_chunks,
             "startup_capture_s": startup_s + capture_s, "predicted_s": predicted, "timeout_s": int(2 * predicted)}
 
 
+def budget_path(gate_run: str, arm: str) -> Path:
+    return env.ARTIFACTS / "x2" / f"budget-{gate_run}-{arm}.json"
+
+
+def preflight_path(arm: str) -> Path:
+    return env.ARTIFACTS / "x2" / f"preflight-{arm}.json"
+
+
+def write_once(path: Path, doc: dict) -> dict:
+    """A record written once: the same content again is kept; different content is refused (Codex x2 c3)."""
+    text = json.dumps(doc, indent=1, sort_keys=True) + "\n"
+    if path.exists():
+        if path.read_text() != text:
+            raise SystemExit(f"{path} is written once; a different budget is refused (delete nothing, ask)")
+        return doc
+    env.require_mount()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f"{path.name}.tmp{os.getpid()}")
+    tmp.write_text(text)
+    os.replace(tmp, path)
+    return doc
+
+
 def budget(arm: str, gate_run: str) -> dict:
-    """compute_budget from the gate run's chunks of `arm` (the g1 / g4 build), the full dev and test
-    manifests' utterance counts and durations, and this arm's preflight record; written next to it."""
-    from gpu1bit.shared import fulldev
+    """compute_budget from the gate run's chunks of `arm` (the g1 / g4 build; their identity is the gate run's
+    frozen identity and must equal the preflight's), the full dev and test manifests' utterance counts and
+    durations, and the arm's preflight record; written once per gate run and arm (budget_path)."""
+    from gpu1bit.actprec import parts
+    from gpu1bit.shared import fulldev, seldoc
     from gpu1bit.x2 import testscore
-    pf = json.loads((env.artifacts("x2") / f"preflight-{arm}.json").read_text())
+    seldoc.use_candidate()                                 # the gate run's arms are candidate arms (c4)
+    parts.install()
+    pf = json.loads(preflight_path(arm).read_text())
+    frozen = fulldev.check_identity(gate_run, arm, "full")["hash"]
+    if frozen != pf["identity"]:
+        raise SystemExit(f"the gate run's {arm} identity {frozen[:12]} is not the preflight's {pf['identity'][:12]}")
     chunks = [json.loads(l) for l in fulldev.chunks_path(gate_run, arm, "full").read_text().splitlines() if l.strip()]
     dev = [r for n in fulldev.DEV_SETS for _, r in fulldev.subset_records(n, "full")]
     test = [r for n in testscore.test_sets(None) for r in testscore.records(n, None)]
-    out = compute_budget([c["work_s"] for c in chunks], len(dev), sum(r["duration"] for r in dev), len(test),
+    out = compute_budget(chunks, frozen, len(dev), sum(r["duration"] for r in dev), len(test),
                          sum(r["duration"] for r in test), pf["startup_s"], pf["capture_s"])
     out.update(arm=arm, gate_run=gate_run, preflight_identity=pf["identity"], lease_bytes=pf["lease_bytes"])
-    (env.artifacts("x2") / f"budget-{arm}.json").write_text(json.dumps(out, indent=1) + "\n")
-    return out
+    return write_once(budget_path(gate_run, arm), out)
 
 
 def fifth_route(cache, call) -> dict:
@@ -125,8 +177,7 @@ def run(arm: str) -> dict:
     from gpu1bit.x2 import testscore
     logging.setLevel(logging.ERROR)
     env.require_shared_wrapper()
-    import os
-    os.environ.setdefault("GPU1BIT_SELECTION", str(seldoc.CANDIDATE))
+    seldoc.use_candidate()                                 # the test arms are candidate arms (c4)
     with env.gpu_lock(f"H:x2 preflight {arm}") as lock:
         t0 = time.monotonic()
         parts.install()
@@ -166,7 +217,8 @@ def run(arm: str) -> dict:
            "lengths_ok": all(r["enc_len"] == r["expected_len"] and r["finite"] for r in rows), "lock_held_s": held,
            "selection_sha256": seldoc.load()["sha256"], "identity": parts.identity(arm, "full")["hash"]}
     out["pass"] = timing["ok"] and out["lengths_ok"]
-    (env.artifacts("x2") / f"preflight-{arm}.json").write_text(json.dumps(out, indent=1) + "\n")
+    env.artifacts("x2")
+    preflight_path(arm).write_text(json.dumps(out, indent=1) + "\n")
     return out
 
 
@@ -176,6 +228,8 @@ def main() -> None:
     p.add_argument("--budget-from-gate-run", default=None,
                    help="CPU: the job duration budget from this gate run's chunks and the preflight record")
     args = p.parse_args()
+    from gpu1bit.shared import seldoc
+    seldoc.use_candidate()
     if args.budget_from_gate_run:
         out = budget(args.arm, args.budget_from_gate_run)
         print(json.dumps({k: out[k] for k in ("arm", "predicted_s", "chunks", "timeout_s", "lease_bytes")}))
