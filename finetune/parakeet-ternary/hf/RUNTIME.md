@@ -58,9 +58,10 @@ a 400 W power limit:
 
 Both ternary modes use the weights in this repository and keep the non-ternary
 tensors in floating point. Both run the ternary matrices on INT8 Tensor Cores, with
-each activation split into three residual INT8 components, int32 accumulation and
+each activation split into three residual INT8 components ("x3"), int32 accumulation and
 FP32 outputs, and both run a fused FP32 prediction/joint decoder, with NeMo's greedy
-TDT loop in conditional CUDA graphs.
+TDT loop in conditional CUDA graphs. Our research runtime uses two components ("x2"); see
+[below](#research-runtime-with-int8x2-activations).
 
 ## Method
 
@@ -94,8 +95,81 @@ has usage and reproduction steps, and
 [rtx5090.json](https://github.com/ajbarryiii/wilderness-labs-stt/blob/main/finetune/parakeet-ternary/inference/results/rtx5090.json)
 has the evidence, including p95 latency, every window and the GPU clocks.
 
+## Research runtime with INT8x2 activations
+
+Our [research runtime](https://github.com/ajbarryiii/wilderness-labs-stt/blob/main/finetune/parakeet-binary/gpu1bit/README.md)
+runs the expanded mode above with each activation split into two residual INT8 components
+instead of three, with the same weights. Speed measured with our research runtime on an RTX 5090;
+the runtime code is published for reference and is not packaged for general use.
+
+Warm batch-one transcription of the same clips on one RTX 5090 at a 400 W power limit. The Kea-T
+rows were measured side by side in one session; the original's rows are the earlier session's
+(see [Method and comparing across sessions](#method-and-comparing-across-sessions)):
+
+| Clip | Configuration | Latency (ms) | Process VRAM (GB) | GPU energy (J) | Avg GPU power (W) |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 3 s | Original FP32 — NeMo | 10.37 | 3.41 | 2.98 | 283 |
+| 3 s | Original BF16 — optimized by Wilderness Labs | 4.25 | 2.11 | 1.15 | 271 |
+| 3 s | Kea-T expanded, x3 activations | 2.72 | 1.74 | 0.73 | 268 |
+| 3 s | **Kea-T expanded, x2 activations (research runtime)** | 2.67 | 1.74 | 0.66 | 247 |
+| 10 s | Original FP32 — NeMo | 18.74 | 3.49 | 5.75 | 304 |
+| 10 s | Original BF16 — optimized by Wilderness Labs | 5.81 | 2.18 | 1.90 | 326 |
+| 10 s | Kea-T expanded, x3 activations | 4.46 | 1.89 | 1.51 | 338 |
+| 10 s | **Kea-T expanded, x2 activations (research runtime)** | 4.30 | 1.89 | 1.33 | 310 |
+| 30.04 s | Original FP32 — NeMo | 36.30 | 3.67 | 13.17 | 362 |
+| 30.04 s | Original BF16 — optimized by Wilderness Labs | 11.56 | 2.35 | 4.48 | 386 |
+| 30.04 s | Kea-T expanded, x3 activations | 10.51 | 2.23 | 3.81 | 362 |
+| 30.04 s | **Kea-T expanded, x2 activations (research runtime)** | 9.88 | 2.24 | 3.50 | 354 |
+
+At 10 s, against our BF16 build, x2 has 25.9% lower latency, 13.4% lower process VRAM and uses
+about 30% less GPU energy. Its latency saving is roughly constant per transcription (1.6, 1.5 and
+1.7 ms at 3, 10 and 30.04 s), while the energy saving grows with clip length (about 0.49, 0.56
+and 0.98 J). **Original FP32 — NeMo** is NVIDIA's checkpoint run by NeMo in strict FP32, with
+NeMo's full CUDA-graph decoder.
+
+### x2 against x3, side by side
+
+The two expanded runtimes differ only in the number of activation components; x3 is the
+expanded configuration of the results above. They were measured in the same session on 24
+development utterances (8 each with target lengths of 3, 10 and 30 s). Each value is the median
+of the per-utterance changes; in parentheses, the utterances where x2 was lower:
+
+| Scope | GPU energy | Latency |
+| --- | ---: | ---: |
+| Full transcription | 10.1% less (24 of 24) | 3.0% lower (24 of 24) |
+| Encoder only | 9.7% less (24 of 24) | 7.0% lower (24 of 24) |
+
+x2 makes two INT8 passes per matrix instead of three, and the average power during full
+transcription fell from 335 W to 304 W. The same comparisons on 24 test utterances agree within
+0.4 points.
+
+### Recognition with x2
+
+On the full development sets (22,418 utterances, batch one), the runtime's mean WER is 6.0853%
+with x2 and 6.0856% with x3; FP32 decoding of this export gives 6.0856%. The test sets were not
+re-scored with the runtime, so the card's test WERs are from FP32 decoding.
+
+### Method and comparing across sessions
+
+Each Kea-T configuration ran in two fresh processes, in opposite configuration orders; the table
+shows their mean. The two processes agreed exactly on process VRAM. Otherwise the method is the
+one above.
+
+The original's rows were measured with the same clips, protocol, GPU and driver in the earlier
+session, not side by side with x2. Kea-T's x3 runtimes, remeasured on the same clips against
+their earlier records, show how well the numbers carry over: they agreed within 1% on latency but
+only within 8% on energy, and the expanded runtime's process VRAM was identical. The latency and
+memory comparisons are therefore solid, and the energy comparison is approximate.
+
+### Requirements of the research runtime
+
+It runs on SM120 GPUs (RTX 5090) only and was measured with torch 2.11.0+cu128, triton 3.6.0,
+nemo_toolkit 3.0.0 and Python 3.13.
+[RESULTS.md](https://github.com/ajbarryiii/wilderness-labs-stt/blob/main/finetune/parakeet-binary/gpu1bit/RESULTS.md)
+has the evidence.
+
 ## Limitations
 
-The runtime results apply only to the custom CUDA runtime on GitHub. They were
+The runtime results apply only to our runtimes on GitHub. They were
 measured on one RTX 5090 at a 400 W limit, warm, at batch one, with one clip per
 length. Other GPUs, batch sizes, cold starts and host energy were not measured.

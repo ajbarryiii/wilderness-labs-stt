@@ -171,12 +171,14 @@ quantization-aware training (QAT) with distillation from the original model. Its
 
 The original's size is NVIDIA's `.nemo` file, and its WER is the FP32 model as we scored it.
 The speed rows are warm batch-one transcription on one RTX 5090 at a 400 W power limit, Kea-T
-in expanded mode against our own optimized BF16 build of the original (not stock NeMo). That
-speed needs our
-[custom CUDA runtime](https://github.com/ajbarryiii/wilderness-labs-stt/tree/main/finetune/parakeet-ternary/inference)
-on GitHub, not `load_ternary.py`. The runtime's compact
-mode uses 1.27 GB of process VRAM, 41.8% less than that build. All configurations, the 3 s and
-30.04 s clips and the method are in [RUNTIME.md](RUNTIME.md).
+in expanded mode against our own optimized BF16 build of the original (not stock NeMo). That speed
+needs our [custom CUDA runtime](https://github.com/ajbarryiii/wilderness-labs-stt/tree/main/finetune/parakeet-ternary/inference)
+on GitHub, not `load_ternary.py`. The runtime's compact mode uses 1.27 GB of process VRAM, 41.8%
+less than that build. All configurations, the 3 s and 30.04 s clips and the method are in
+[RUNTIME.md](RUNTIME.md). Our research runtime with two-part INT8 activations is faster still: at
+10 s, 4.30 ms (25.9% lower than the BF16 build) and about 1.33 J (about 30% less), measured in a
+later session, so the energy comparison is approximate
+([details](RUNTIME.md#research-runtime-with-int8x2-activations)).
 
 ## Results
 
@@ -192,8 +194,9 @@ test bundle. TED-LIUM isn't in that bundle, so the mean covers the other seven s
 Voice is shown on its own. Decoding is greedy in strict FP32, and both the references and the
 outputs go through the Whisper English text normalizer. Our scoring of the FP32 original
 reproduces NVIDIA's published numbers within 0.09 points per set. Kea-T was scored once, on the
-model rebuilt from this exact `export.safetensors`. NVIDIA's published row, the difference and
-ratio rows and the scoring details are in [EVALUATION.md](EVALUATION.md).
+model rebuilt from this exact `export.safetensors`; on our development sets, both GPU runtimes give
+the same mean WER as FP32 decoding (6.09%). NVIDIA's published row, the difference and ratio rows
+and the scoring details are in [EVALUATION.md](EVALUATION.md).
 
 ## How it was trained
 
