@@ -28,4 +28,4 @@ nvrtc_lib=/mnt/hd/wilderness-labs-stt/inference-efficiency/deps/nvidia/cuda_nvrt
 if [[ -f "$nvrtc_lib/libnvrtc.so.12" ]]; then
   export LD_LIBRARY_PATH="$nvrtc_lib:$LD_LIBRARY_PATH"
 fi
-exec "$repo/custom/autoresearch/.training-runtime/bin/python3" "$@"
+exec "${PARAKEET_PYTHON:-$repo/custom/autoresearch/.training-runtime/bin/python3}" "$@"
