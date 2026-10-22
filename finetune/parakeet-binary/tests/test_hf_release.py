@@ -254,9 +254,21 @@ SOURCES = {"seed": 20261017, "filters": {"duration_seconds": [1.0, 30.0]}, "sour
 REPO_ID = "rajb3/kea-b"
 
 
+# The card as released on 2026-10-21 (Hub commit 5e7c298). hf/MODEL_CARD.md has since been updated by the
+# docs-only card update (plans/card-update-x2.md), whose contract is tests/test_kea_b_card.py; these tests
+# keep checking the released card that hf/stage.py staged.
+RELEASE_CARD_COMMIT = "ca4bc02a7f8d11b2710b309336433548082ea3de"
+
+
+def release_card_template() -> str:
+    return subprocess.run(["git", "-C", str(paths.REPO), "show",
+                           f"{RELEASE_CARD_COMMIT}:finetune/parakeet-binary/hf/MODEL_CARD.md"],
+                          check=True, capture_output=True, text=True).stdout
+
+
 class CardTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.template = (HF / "MODEL_CARD.md").read_text()
+        self.template = release_card_template()
         self.test = json.loads((PKG / "results" / "test.json").read_text())
         self.test_md = (PKG / "results" / "TEST.md").read_text()
         self.facts = stage.card_facts(self.test, SUMMARY, MANIFEST, SOURCES)
