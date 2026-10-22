@@ -7,6 +7,7 @@ import sys
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))   # test_e2e's fakes (python3 -I drops the script dir)
 import macstate as M  # noqa: E402
 
 BATT_AC = "Now drawing from 'AC Power'\n -InternalBattery-0 (id=27656291)\t100%; charged; 0:00 remaining present: true\n"
@@ -223,8 +224,9 @@ class LiveMac(unittest.TestCase):
         active = []
         s = M.Sampler(lambda: [os.getpid()] + list(active), interval_s=0.5).start()
         time.sleep(0.6)
+        # Burns a fixed ~0.6 s of CPU (not of wall time: a background job on a loaded Mac gets little CPU).
         child = subprocess.Popen([sys.executable, "-I", "-c",
-                                  "import time\nend=time.monotonic()+1.2\nwhile time.monotonic()<end: pass"])
+                                  "import time\nwhile time.process_time() < 0.6: pass"])
         active.append(child.pid)
         child.wait()
         active.remove(child.pid)
@@ -240,6 +242,32 @@ class LiveMac(unittest.TestCase):
                         [g.__dict__ for g in got])
         self.assertLess(own_s, 3.0, [g.__dict__ for g in got])      # the c2 bug would add the lifetime again
         self.assertGreater(own_s, 0.15, [g.__dict__ for g in got])   # the child's CPU is attributed to us
+
+
+class SamplerSchedule(unittest.TestCase):
+    """The c4 plumbing run on the Mac (background priority) showed the sampler, after a stall, catching up
+    with back-to-back samples ~0.2 s apart, whose tick margin (ncpu / (STATHZ x dt)) then fails the
+    foreign-CPU gate by itself. After a late sample the next one must come at least half an interval
+    later (portable: fake probes)."""
+
+    def test_no_back_to_back_catch_up_after_a_stall(self):
+        import time
+        from test_e2e import FakeNative, fake_text
+        calls = {"n": 0}
+
+        def slow_text(cmd, timeout=5.0):
+            if cmd[:3] == ["pmset", "-g", "batt"]:
+                calls["n"] += 1
+                if calls["n"] == 2:
+                    time.sleep(1.2)                     # a stalled probe: three intervals late
+            return fake_text(cmd, timeout)
+        s = M.Sampler(lambda: [os.getpid()], interval_s=0.4, native=FakeNative(), text=slow_text).start()
+        time.sleep(3.5)
+        s.stop()
+        ts = [x.t_ns for x in s.snapshot()]
+        gaps = [(b - a) / 1e9 for a, b in zip(ts, ts[1:])]
+        self.assertGreaterEqual(len(gaps), 4, gaps)
+        self.assertGreaterEqual(min(gaps), 0.4 * 0.5 - 0.05, gaps)
 
 
 if __name__ == "__main__":

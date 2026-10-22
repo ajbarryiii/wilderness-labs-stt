@@ -486,10 +486,14 @@ def run_block(sess: dict, argv: list[str], stem: str, log, plumbing: bool = Fals
                 time.sleep(0.1)
         finally:
             if reader is not None:
-                rec["powermetrics"] = reader.stop()
-            phases["span1"] = now_ns()                       # the capture has ended
+                rec["powermetrics"] = reader.stop(reap=False)   # the capture ends; powermetrics NOT reaped yet
+            phases["span1"] = now_ns()
             rec["state_after_end"] = sampler.wait_after(phases["span1"], STATE_WAIT_S)
             sampler.stop()
+            # Only now, with state collection over, reap powermetrics: its lifetime CPU enters RUSAGE_CHILDREN
+            # here and can never be charged to an own-CPU interval (Codex c5 major; it is foreign load).
+            if reader is not None:
+                rec["powermetrics"].update(reader.reap())
             caff.terminate()
             caff.wait(timeout=10)
     phases["stream"] = rec["powermetrics"].get("stream")

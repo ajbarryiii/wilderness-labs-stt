@@ -256,5 +256,49 @@ class BoundTests(unittest.TestCase):
         self.assertAlmostEqual(w.e_upper_j, sum(x.cpu_energy_mj + 1 for x in s[10:41]) / 1000.0)
 
 
+class ReaderLifecycle(unittest.TestCase):
+    """Codex c5 major: Reader.stop(reap=False) ends the capture (closes the pipe, joins the reader, gives the
+    stream verdict) WITHOUT reaping the producer, so its lifetime CPU cannot enter RUSAGE_CHILDREN while the
+    state sampler still runs; reap() collects it afterwards. stop() (reap=True) does both, as before."""
+
+    def setUp(self):
+        import tempfile
+        self.tmp = tempfile.mkdtemp()
+        self.saved = pm.COMMAND
+        log = os.path.join(self.tmp, "work.log")
+        open(log, "w").close()
+        pm.COMMAND = [sys.executable, "-I", os.path.join(HERE, "fakes", "fake_powermetrics.py"), log]
+
+    def tearDown(self):
+        import shutil
+        pm.COMMAND = self.saved
+        shutil.rmtree(self.tmp)
+
+    def test_stop_without_reap_then_reap(self):
+        import resource
+        r = pm.Reader(os.path.join(self.tmp, "raw.plist0"))
+        self.assertTrue(r.wait_for(10, 20))
+        ch0 = resource.getrusage(resource.RUSAGE_CHILDREN)
+        info = r.stop(reap=False)
+        ch1 = resource.getrusage(resource.RUSAGE_CHILDREN)
+        self.assertTrue(info["stopped_by_runner"])
+        self.assertFalse(info["eof_before_stop"])
+        self.assertTrue(info["stream"]["ok"], info["stream"])
+        self.assertIsNone(r.proc.returncode)                       # not reaped yet
+        self.assertEqual(ch0.ru_utime + ch0.ru_stime, ch1.ru_utime + ch1.ru_stime)
+        done = r.reap()
+        self.assertIsNotNone(done["returncode"])
+        self.assertIsNotNone(r.proc.returncode)
+        ch2 = resource.getrusage(resource.RUSAGE_CHILDREN)
+        self.assertGreater(ch2.ru_utime + ch2.ru_stime, ch1.ru_utime + ch1.ru_stime)   # its CPU arrives at the reap
+
+    def test_stop_reaps_by_default(self):
+        r = pm.Reader(os.path.join(self.tmp, "raw2.plist0"))
+        self.assertTrue(r.wait_for(5, 20))
+        info = r.stop()
+        self.assertIsNotNone(info["returncode"])
+        self.assertTrue(info["stream"]["ok"], info["stream"])
+
+
 if __name__ == "__main__":
     unittest.main()

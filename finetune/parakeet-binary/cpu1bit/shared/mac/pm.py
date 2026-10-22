@@ -371,30 +371,38 @@ class Reader:
             reasons.append(f"stream: {len(recs)} records in the raw stream, {len(self.samples)} parsed by the reader")
         return {"ok": ok and not reasons, "reasons": reasons, "records": len(recs)}
 
-    def stop(self) -> dict:
+    def stop(self, reap: bool = True) -> dict:
+        """Ends the capture: marks the stop as the runner's, closes the pipe (powermetrics ends at its next
+        write), joins the reader thread and returns the framing verdict. With reap=False the producer is
+        NOT waited for (Codex c5 major): its lifetime CPU must not enter RUSAGE_CHILDREN while the state
+        sampler still runs, so the runner calls reap() only after state collection has ended. No poll()
+        here either: poll() reaps. An end of the stream before the stop is detected by the reader thread."""
         with self.lock:
-            if self.proc.poll() is not None:     # powermetrics already ended on its own
-                self.eof_before_stop = True
-                self.read_error = self.read_error or "EOF"
             self.stopped_by_runner = True
         try:
             self.proc.stdout.close()
         except (OSError, ValueError):
             pass
+        self.thread.join(timeout=5)
+        out = {"samples": len(self.samples), "spawn_ns": self.spawn_ns, "started_ns": self.started_ns,
+               "stopped_by_runner": self.stopped_by_runner, "eof_before_stop": self.eof_before_stop,
+               "stream": self._stream_verdict(), "returncode": None, "stderr_tail": ""}
+        if reap:
+            out.update(self.reap())
+        return out
+
+    def reap(self) -> dict:
+        """Waits for the producer (after stop()); returns its exit status and stderr tail."""
         try:
             self.proc.wait(timeout=10)
         except subprocess.TimeoutExpired:
             # Never signal a root process; closing the pipe ends it at its next write (SIGPIPE).
             self.proc.wait(timeout=30)
-        self.thread.join(timeout=5)
         err = ""
         if self.proc.stderr:
             err = self.proc.stderr.read().decode(errors="replace")[-2000:]
             self.proc.stderr.close()
-        return {"returncode": self.proc.returncode, "stderr_tail": err, "samples": len(self.samples),
-                "spawn_ns": self.spawn_ns, "started_ns": self.started_ns, "stopped_by_runner": self.stopped_by_runner,
-                "eof_before_stop": self.eof_before_stop, "stream": self._stream_verdict()}
-
+        return {"returncode": self.proc.returncode, "stderr_tail": err}
 
 def read_raw(path: str, arrivals: list[int] | None = None) -> list[Sample]:
     """Re-parse a kept raw stream (arrival times must come from the run's record)."""

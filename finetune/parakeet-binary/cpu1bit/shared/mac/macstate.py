@@ -347,10 +347,12 @@ class Sampler:
     def _run(self):
         next_t = time.monotonic() + self.interval_s
         while not self.stop_event.wait(max(0.0, next_t - time.monotonic())):
-            next_t += self.interval_s
             s = self.sample_once()
             with self.lock:
                 self.samples.append(s)
+            # On schedule: one interval on. After a stall: at least half an interval from now, never a
+            # back-to-back catch-up (its tiny dt would make the tick margin fail the foreign-CPU gate).
+            next_t = max(next_t + self.interval_s, time.monotonic() + 0.5 * self.interval_s)
 
     def wait_after(self, t_ns: int, timeout_s: float = 10.0) -> bool:
         """Blocks until a completed sample stamped at or after t_ns exists (True), or the timeout."""
