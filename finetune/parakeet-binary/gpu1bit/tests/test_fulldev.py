@@ -368,7 +368,7 @@ class Workers(unittest.TestCase):
         child = subprocess.Popen(cmd, env=self._env(), cwd=str(env.BINARY_DIR), stdout=subprocess.DEVNULL,
                                  stderr=subprocess.DEVNULL, start_new_session=True)
         seen = None
-        deadline = time.time() + 400
+        deadline = time.time() + 580          # within the worker's own `timeout 600`, lock wait included (busy shared GPU)
         while time.time() < deadline and child.poll() is None:
             text = paths.GPU_LOCK.read_text() if paths.GPU_LOCK.exists() else ""
             if "H:fulldev" in text:
@@ -387,9 +387,14 @@ class Workers(unittest.TestCase):
         self.assertEqual(rc.returncode, 0, rc.stdout[-2000:] + rc.stderr[-2000:])
         budget = fulldev.chunks(run, arm, subset)[-1]
         self.assertTrue(budget["stopped_by_budget"])
-        # 3. resume to completion
-        rc = subprocess.run(cmd, env=self._env(), cwd=str(env.BINARY_DIR), capture_output=True, text=True)
-        self.assertEqual(rc.returncode, 0, rc.stdout[-2000:] + rc.stderr[-2000:])
+        # 3. resume to completion: fresh workers until done (R3). On a busy shared GPU one worker's work budget
+        # may end before the last utterance; every such worker must have stopped by its budget, not failed.
+        for _ in range(6):
+            rc = subprocess.run(cmd, env=self._env(), cwd=str(env.BINARY_DIR), capture_output=True, text=True)
+            self.assertEqual(rc.returncode, 0, rc.stdout[-2000:] + rc.stderr[-2000:])
+            if len(fulldev.load_rows(work)) >= 120:
+                break
+            self.assertTrue(fulldev.chunks(run, arm, subset)[-1]["stopped_by_budget"], "an incomplete resume stopped by budget")
         last = fulldev.chunks(run, arm, subset)[-1]
         rows = fulldev.load_rows(work)
         self.assertEqual([r["i"] for r in rows], list(range(120)))
@@ -397,8 +402,12 @@ class Workers(unittest.TestCase):
         self.assertTrue(all(r["identity"] == last["identity"] for r in rows))
         self.assertTrue(all(r["finite"] and r["decode_error"] is None for r in rows))
         done = fulldev.chunks(run, arm, subset)
-        self.assertEqual(len(done), 2)                        # the killed worker wrote no chunk record
+        self.assertGreaterEqual(len(done), 2)                 # the killed worker wrote no chunk record:
+        self.assertTrue(done[0]["stopped_by_budget"])         # the budget worker first, then the resume worker(s)
+        self.assertTrue(all(c["stopped_by_budget"] for c in done[1:-1]))
         for c in done:
+            self.assertEqual(set(c["audio_s"]), set(c["rows"]))           # timed coverage per set (X7 budget, c3)
+            self.assertTrue(all(v > 0 for v in c["audio_s"].values()))
             self.assertTrue(c["lock_before_cuda"])
             self.assertEqual(c["locks_taken"], 1)
             self.assertLess(c["held_s"], 600)

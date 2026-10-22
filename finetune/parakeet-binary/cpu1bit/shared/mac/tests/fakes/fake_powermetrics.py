@@ -3,7 +3,8 @@
 intervals of 100-110 ms on a fixed schedule from its own start (after the spawn: A2), `elapsed_ns`,
 an integer-mJ `cpu_energy` from a power model, the 1 s wall-clock `timestamp`, and cluster residency.
 Power: IDLE_W, plus WORK_W while the fake block process reports work in WORKLOG ("S <t_ns>" / "E <t_ns>"
-lines on the same clock). It exits when the reader closes the pipe.
+lines on the same clock). It burns about 10% of a core itself (the producer's CPU, which the runner
+counts as foreign and must never charge to its own ledger). It exits when the reader closes the pipe.
 
     python3 -I fake_powermetrics.py WORKLOG [SEED]
 """
@@ -17,6 +18,7 @@ CLK = getattr(time, "CLOCK_UPTIME_RAW", None)
 if CLK is None:
     CLK = time.CLOCK_MONOTONIC_RAW
 IDLE_W, WORK_W = 0.4, 6.0
+BURN_NS = 10_000_000             # CPU burnt per record (~100 ms): an untracked producer's own load
 
 
 def now():
@@ -84,6 +86,9 @@ def main():
             out.flush()
         except (BrokenPipeError, OSError, ValueError):
             return
+        t_burn = now()                      # ~10% of a core, like a real producer's own CPU (c5 major)
+        while now() - t_burn < BURN_NS:
+            pass
         a = b
 
 

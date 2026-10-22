@@ -93,9 +93,11 @@ class _Fake(unittest.TestCase):
         docs = {f"bench-{bench}.json": {"complete": True, "problems": [], "identities": {a: ident for a in self.T.ARMS}},
                 f"gates-{gates}.json": {"pass": True, "identities": {"g1": ident, "g4": ident},
                                         "selection": {"sha256": env.sha256_file(seldoc.CANDIDATE)}},
-                **{f"preflight-{a}.json": {"pass": True, "identity": ident} for a in self.T.ARMS},
+                **{f"preflight-{a}.json": {"pass": True, "identity": ident, "lease_bytes": 9 * 2**30} for a in self.T.ARMS},
                 f"runtime-recognition-{gates}.json": {"ok": True, "identity": ident, "gate_run": gates},
-                f"runtime-fresh-compare-{bench}.json": {"ok": True, "identity": ident, "bench_run": bench}}
+                f"runtime-fresh-compare-{bench}.json": {"ok": True, "identity": ident, "bench_run": bench},
+                **{f"budget-{gates}-{a}.json": {"arm": a, "gate_run": gates, "preflight_identity": ident, "timeout_s": 4321,
+                                                "lease_bytes": 7 * 2**30} for a in self.T.ARMS}}
         if edit:
             edit(docs)
         for f, d in docs.items():
@@ -428,9 +430,11 @@ class Precheck(unittest.TestCase):
                             "preflight:MB1-B-hybrid-x2": {"pass": True, "identity": "i1"},
                             "preflight:M1-x2": {"pass": True, "identity": "i4"},
                             "recognition": {"ok": True, "identity": "i1", "gate_run": "G"},
-                            "memory": {"ok": True, "identity": "i1", "bench_run": "R"}},
+                            "memory": {"ok": True, "identity": "i1", "bench_run": "R"},
+                            "budget:MB1-B-hybrid-x2": {"gate_run": "G", "preflight_identity": "i1", "timeout_s": 100},
+                            "budget:M1-x2": {"gate_run": "G", "preflight_identity": "i4", "timeout_s": 100}},
                    "unchanged": {"gates": True, "preflight:MB1-B-hybrid-x2": True, "preflight:M1-x2": True,
-                                 "recognition": True, "memory": True},
+                                 "recognition": True, "memory": True, "budget:MB1-B-hybrid-x2": True, "budget:M1-x2": True},
                    "scorer_now": {"evaluate.py": "s1"}, "pointer": "x3"}
 
     def checks(self, **over):
@@ -470,6 +474,11 @@ class Precheck(unittest.TestCase):
             "Z8 memory of another identity": doc("memory", identity="i9"),
             "Z8 memory of another benchmark": doc("memory", bench_run="R9"),
             "a record changed since pinned": lambda kw: kw["unchanged"].update({"memory": False}),
+            "duration budget missing": lambda kw: kw["docs"].update({"budget:M1-x2": None}),
+            "duration budget of another identity": doc("budget:M1-x2", preflight_identity="i9"),
+            "duration budget of another gate run": doc("budget:M1-x2", gate_run="G9"),
+            "duration budget without a timeout": doc("budget:M1-x2", timeout_s=0),
+            "duration budget changed since pinned": lambda kw: kw["unchanged"].update({"budget:M1-x2": False}),
             "pins of another arm": lambda kw: kw["pins"].update({"arm": "MB1-B-hybrid-x2"}),
         }
         for name, over in cases.items():
@@ -520,6 +529,46 @@ class Qualification(_Fake):
         self.assertFalse((self.root / ARM / "pins-1.json").exists())
         self.assertEqual(self.qualify().returncode, 0)
         self.assertNotEqual(self.qualify().returncode, 0, "pins are written once per attempt")
+
+    def test_job_arguments_come_from_the_pinned_records(self):
+        """Codex x2 c3 minor: the scoring job's timeout is the pinned duration budget's and its lease the pinned
+        preflight's; a budget changed after pinning is refused."""
+        p = self.cmd("job-args", "--arm", ARM, "--attempt", "1")
+        got = json.loads(p.stdout.strip().splitlines()[-1])
+        self.assertEqual(got["timeout_s"], 4321)
+        self.assertIn("--timeout 4321s", got["command"])
+        self.assertIn("--needs gpu:shared", got["command"])
+        self.assertIn("--vram 9G", got["command"], "the lease is the pinned preflight's, not the budget's copy (c4)")
+        self.assertTrue(got["command"].endswith(f"score --arm {ARM}"))
+        b = self.T.base_dir(self.name) / f"budget-G1-{ARM}.json"
+        b.write_text(json.dumps({**json.loads(b.read_text()), "timeout_s": 99}))
+        q = self.cmd("job-args", "--arm", ARM, "--attempt", "1", check=False)
+        self.assertNotEqual(q.returncode, 0)
+        self.assertIn("changed", q.stdout + q.stderr)
+
+    def test_job_arguments_for_an_exceptional_retry_and_a_resume(self):
+        """c4 minor and c5 minor: the helper forwards --new-attempt <evidence> whenever it is supplied and never
+        requires it; score() decides from the ledger. A new attempt after a stop needs the evidence, while an
+        open attempt is resumed without it, and score refuses evidence for an open attempt."""
+        self.assertEqual(self.qualify(ident="id-A", bench="R2", gates="G2", attempt=2).returncode, 0)
+        p = self.cmd("job-args", "--arm", ARM, "--attempt", "2", "--new-attempt", "/x/evidence.json")
+        got = json.loads(p.stdout.strip().splitlines()[-1])
+        self.assertTrue(got["command"].endswith(f"score --arm {ARM} --new-attempt /x/evidence.json"))
+        p = self.cmd("job-args", "--arm", ARM, "--attempt", "2")                 # resuming an open attempt 2
+        got = json.loads(p.stdout.strip().splitlines()[-1])
+        self.assertTrue(got["command"].endswith(f"score --arm {ARM}"))
+
+    def test_open_attempt_resumes_without_evidence(self):
+        """The resume path the helper's plain command runs: an interrupted open attempt resumes with
+        `score --arm A` and completes; `--new-attempt` evidence for an open attempt is refused by score()."""
+        p = self.cmd("score", "--arm", ARM, extra={"GPU1BIT_TESTSCORE_KILL": "between-sets"}, check=False)
+        self.assertNotEqual(p.returncode, 0)
+        q = self.cmd("score", "--arm", ARM, "--new-attempt", "/x/evidence.json", check=False)
+        self.assertNotEqual(q.returncode, 0)
+        self.assertIn("resume it", q.stdout + q.stderr)
+        self.score()
+        self.assertEqual(self.ledger()[-1]["event"], "complete")
+        self.assertEqual(max(e["attempt"] for e in self.ledger()), 1)
 
     def test_real_benchmark_qualification_reads_the_session(self):
         q = self.T.bench_qualification(f"no-such-run-{os.getpid()}", None)
@@ -592,7 +641,9 @@ class PrecheckWiring(unittest.TestCase):
                 "preflight-MB1-B-hybrid-x2.json": {"pass": True, "identity": "i1"},
                 "preflight-M1-x2.json": {"pass": True, "identity": "i4"},
                 "runtime-recognition-G.json": {"ok": True, "identity": "i1", "gate_run": "G"},
-                "runtime-fresh-compare-B.json": {"ok": True, "identity": "i1", "bench_run": "B"}}
+                "runtime-fresh-compare-B.json": {"ok": True, "identity": "i1", "bench_run": "B"},
+                "budget-G-MB1-B-hybrid-x2.json": {"gate_run": "G", "preflight_identity": "i1", "timeout_s": 100},
+                "budget-G-M1-x2.json": {"gate_run": "G", "preflight_identity": "i4", "timeout_s": 100}}
         for f, doc in docs.items():
             (base / f).write_text(json.dumps(doc))
         self.saved = (T.REAL_ROOT, T.base_dir, T.identity, T.scorer_now, T.bench_qualification, T.freeze_file,

@@ -413,6 +413,8 @@ def main() -> None:
         if name == "session":
             s.add_argument("--metadata", default="{}")
     args = p.parse_args()
+    from gpu1bit.shared import seldoc
+    seldoc.use_candidate()            # the roster is defined under the candidate (c4)
     if args.action == "roster":
         doc = write_roster(roster_doc(args.run, args.gate_run))
         fz = selection.write_freeze(args.run)

@@ -1,7 +1,10 @@
 # Plan: native 1-bit CPU kernels for MB1 on Apple M1 Pro (NEON)
 
 **Status:** **plan review p10 CLEAN** (2026-10-21,
-review/cpu-benchmark-mac/p10.md; p8 and p9 findings resolved). Consolidated
+review/cpu-benchmark-mac/p10.md; p8 and p9 findings resolved). **Code review c6
+CLEAN** (2026-10-21, review/cpu-benchmark-mac/c6.md; c4 and c5 findings
+resolved), on the dev copy published as cpu1bit/shared (smoke job
+cpu1bit-H-smoke-170127). Consolidated
 2026-10-21; supersedes the earlier text and its
 amendments M1–M16, kept verbatim with the review trail in
 [cpu-benchmark-mac-history.md](cpu-benchmark-mac-history.md). It replaces the

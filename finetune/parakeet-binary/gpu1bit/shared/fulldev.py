@@ -595,7 +595,7 @@ def run(args) -> None:
     with env.gpu_lock(label) as lock:
         chunk = {"pid": os.getpid(), "label": label, "lock_before_cuda": not cuda_before and not torch.cuda.is_initialized(),
                  "locks_taken": 1, "lock_waited_s": lock["waited_s"], "started": time.strftime("%Y-%m-%dT%H:%M:%S"),
-                 "rows": {}, "stopped_by_budget": False, "wrapper": env.wrapper()}
+                 "rows": {}, "audio_s": {}, "stopped_by_budget": False, "wrapper": env.wrapper()}
         sink = None
         try:
             from nemo.utils import logging
@@ -633,6 +633,7 @@ def run(args) -> None:
                             slowest = max(slowest, end - last)  # includes any wait for the prefetched audio
                             last = end
                             chunk["rows"][name] = chunk["rows"].get(name, 0) + 1
+                            chunk["audio_s"][name] = chunk["audio_s"].get(name, 0.0) + float(rec["duration"])  # timed coverage
                         sink.flush()
                         os.fsync(sink.fileno())
                     if chunk["stopped_by_budget"]:

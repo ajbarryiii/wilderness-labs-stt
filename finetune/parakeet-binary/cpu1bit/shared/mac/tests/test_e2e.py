@@ -6,6 +6,9 @@ real runner.block_argv arguments), the state probes (macstate.Sampler's injected
 quiet-host wait, caffeinate, and the lock path. A clean block must be accepted, and the state samples
 must bracket the whole span: a completed sample before the spawn and one after the end of the capture.
 
+c5: the fake producer burns ~10% of a core and the fake host counters are independent of RUSAGE_CHILDREN,
+so charging the producer's lifetime CPU to the own ledger at its reap (the c5 major) fails this test.
+
 Contract additions (c4): runner.STATE_PROBES (keyword arguments for macstate.Sampler), runner.CAFFEINATE,
 macstate.Sampler(own_pids, interval_s, native=None, text=run_text), pm.now_ns / macstate.now_ns on
 CLOCK_MONOTONIC_RAW where CLOCK_UPTIME_RAW does not exist (Linux).
@@ -35,17 +38,47 @@ FAKES = os.path.join(HERE, "fakes")
 IDLE_W, WORK_W = 0.4, 6.0          # the fake producer's power model
 
 
+def pid_cpu_ns(pid: int) -> int:
+    """CPU time of one live or zombie process (raises OSError once it is reaped): /proc on Linux,
+    proc_pid_rusage on macOS."""
+    if sys.platform == "darwin":
+        global _NATIVE
+        if _NATIVE is None:
+            _NATIVE = macstate.Native()
+        return _NATIVE.pid_rusage(pid)[0]
+    with open(f"/proc/{pid}/stat") as f:
+        fields = f.read().rsplit(")", 1)[1].split()
+    return int((int(fields[11]) + int(fields[12])) * 1e9 / os.sysconf("SC_CLK_TCK"))
+
+
+_NATIVE = None
+
+
 class FakeNative:
-    """State probes that report no foreign load: 10 CPUs whose busy ticks are exactly our own CPU (this
-    process plus reaped children), live pids probed as alive (this process with its real CPU time),
+    """State probes with INDEPENDENT host counters, as on the real Mac (Codex c5): host busy ticks are the
+    CPU consumed so far by this process and by every child process ever observed (the tracked pids and
+    `extra_pids()`, e.g. the untracked powermetrics producer), read live and kept after the child is gone,
+    never derived from RUSAGE_CHILDREN. Live pids are probed with their real CPU time. 10 fake CPUs;
     memory pressure normal."""
 
-    def __init__(self):
+    def __init__(self, extra_pids=lambda: []):
         self.first_seen = {}
+        self.last_cpu = {}
+        self.extra_pids = extra_pids
+
+    def _cpu(self, pid):
+        try:
+            v = pid_cpu_ns(pid)
+        except (OSError, ValueError, IndexError):
+            return None
+        self.last_cpu[pid] = v
+        return v
 
     def cpu_ticks(self):
-        s, c = resource.getrusage(resource.RUSAGE_SELF), resource.getrusage(resource.RUSAGE_CHILDREN)
-        busy_ticks = (s.ru_utime + s.ru_stime + c.ru_utime + c.ru_stime) * macstate.STATHZ
+        for pid in set(self.extra_pids()) | set(self.last_cpu):
+            self._cpu(pid)
+        s = resource.getrusage(resource.RUSAGE_SELF)
+        busy_ticks = ((s.ru_utime + s.ru_stime) * 1e9 + sum(self.last_cpu.values())) * macstate.STATHZ / 1e9
         total_ticks = pm.now_ns() * macstate.STATHZ / 1e9
         return [(int(busy_ticks / 10), int(total_ticks)) for _ in range(10)]
 
@@ -53,11 +86,10 @@ class FakeNative:
         if pid == os.getpid():
             s = resource.getrusage(resource.RUSAGE_SELF)
             return ("ok", int((s.ru_utime + s.ru_stime) * 1e9), 0)
-        try:
-            os.kill(pid, 0)
-        except ProcessLookupError:
+        v = self._cpu(pid)
+        if v is None:
             return ("gone",)
-        return ("ok", 0, self.first_seen.setdefault(pid, pm.now_ns()))
+        return ("ok", v, self.first_seen.setdefault(pid, pm.now_ns()))
 
     def sysctl_int(self, name):
         return 1
@@ -99,12 +131,23 @@ class EndToEnd(unittest.TestCase):
         pm.COMMAND = [sys.executable, "-I", os.path.join(FAKES, "fake_powermetrics.py"), self.worklog]
         runner.LOCK = os.path.join(self.tmp, "lock", "active.lock")
         runner.CAFFEINATE = [sys.executable, "-I", "-c", "import time; time.sleep(3600)"]
-        runner.STATE_PROBES = {"native": FakeNative(), "text": fake_text}
+        self.readers = []
+        saved_reader = pm.Reader
+        test = self
+
+        class RecordingReader(saved_reader):
+            def __init__(self, *a, **k):
+                super().__init__(*a, **k)
+                test.readers.append(self)
+        self.saved_reader = saved_reader
+        pm.Reader = RecordingReader
+        runner.STATE_PROBES = {"native": FakeNative(lambda: [r.proc.pid for r in self.readers]), "text": fake_text}
         runner.wait_quiet = lambda log: {"ok": True, "checks": {"thermal_nominal": True}, "load1": 0.5, "waited_s": 0.0}
         runner.IDLE_S = 4.0
         os.environ["CPU1BIT_FAKE_WORKLOG"] = self.worklog
 
     def tearDown(self):
+        pm.Reader = self.saved_reader
         (pm.COMMAND, runner.LOCK, runner.CAFFEINATE, runner.STATE_PROBES, runner.wait_quiet, runner.IDLE_S, wl) = self.saved
         if wl is None:
             os.environ.pop("CPU1BIT_FAKE_WORKLOG", None)
@@ -126,6 +169,12 @@ class EndToEnd(unittest.TestCase):
         self.assertTrue(any(s["t_ns"] <= ph["spawn_ns"] for s in st), (ph, [s["t_ns"] for s in st][:3]))
         self.assertTrue(any(s["t_ns"] >= ph["span1"] for s in st), (ph, [s["t_ns"] for s in st][-3:]))
         self.assertTrue(a["span_state"]["valid"], a["span_state"]["reasons"])
+        # c5 major: the producer's lifetime CPU never lands in our own ledger (no own > host interval);
+        # it stays foreign, about 0.1 core.
+        self.assertFalse([e for s in st for e in s["errors"]], [e for s in st for e in s["errors"]][:3])
+        own_over_host = [s for s in st if s["own_busy_cores"] is not None
+                         and s["own_busy_cores"] > s["host_busy_cores"] + s["foreign_margin_cores"] + 0.05]
+        self.assertFalse(own_over_host, own_over_host[:2])
         self.assertTrue(a["stream"]["ok"] and a["band"]["valid"] and a["rate"]["valid"], (a["stream"], a["band"], a["rate"]))
         self.assertTrue(a["storage"] and a["storage"]["ok"])
         self.assertEqual(rec["exit_code"], 0)

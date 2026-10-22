@@ -70,24 +70,66 @@ class Preflight(unittest.TestCase):
 
 
 class DurationBudget(unittest.TestCase):
-    """X7's job duration budget, from the gate run's measured batch-1 throughput: the full-dev work time per
-    audio second and per utterance, each extrapolated to the test sets (the larger is kept), plus a cold
-    start-up and capture per chunk (preflight) for the chunks the work budget implies; the job timeout is
-    twice that. Missing measurements are refused."""
+    """X7's job duration budget (Codex x2 c3, major and minor). Throughput comes only from the utterances and audio
+    seconds covered by recorded chunk timings of the arm's identity: a killed worker keeps its rows but writes
+    no chunk record, so its share has no timing and is excluded, never divided over. The covered share must be
+    at least half of dev (utterances and audio) or the budget is refused. Per audio second and per utterance,
+    each extrapolated to the test sets, the larger kept, plus a cold start-up and capture per chunk the work
+    budget implies; the job timeout is twice that. The record is written once per gate run and arm."""
+    KW = dict(identity="I", dev_utterances=20000, dev_audio_s=100000.0, test_utterances=100000, test_audio_s=400000.0,
+              startup_s=30.0, capture_s=20.0)
+
+    def chunk(self, rows, audio, work, identity="I", **kw):
+        return {"identity": identity, "rows": {"s": rows}, "audio_s": {"s": audio}, "work_s": work, **kw}
 
     def test_budget(self):
-        b = PF.compute_budget(work_s=[300.0, 100.0], dev_utterances=20000, dev_audio_s=100000.0,
-                              test_utterances=100000, test_audio_s=400000.0, startup_s=30.0, capture_s=20.0)
+        b = PF.compute_budget([self.chunk(12000, 60000.0, 300.0), self.chunk(8000, 40000.0, 100.0)], **self.KW)
         self.assertAlmostEqual(b["per_audio_second_s"], 400.0 / 100000)
         self.assertAlmostEqual(b["per_utterance_s"], 400.0 / 20000)
         self.assertAlmostEqual(b["predicted_work_s"], max(400.0 / 100000 * 400000, 400.0 / 20000 * 100000))   # 2000 s
         self.assertEqual(b["chunks"], 5)                                   # ceil(2000 / 480)
         self.assertAlmostEqual(b["predicted_s"], 2000.0 + 5 * 50.0)
         self.assertEqual(b["timeout_s"], int(2 * (2000.0 + 5 * 50.0)))
-        for bad in ({"work_s": []}, {"dev_audio_s": 0.0}, {"test_utterances": 0}):
+        self.assertEqual((b["covered_utterances"], b["covered_audio_s"]), (20000, 100000.0))
+
+    def test_killed_worker_regression(self):
+        """A killed worker did most of the work without a chunk record."""
+        with self.assertRaisesRegex(ValueError, "coverage"):            # 10% covered: refused
+            PF.compute_budget([self.chunk(2000, 10000.0, 40.0)], **self.KW)
+        b = PF.compute_budget([self.chunk(12000, 60000.0, 240.0)], **self.KW)   # 60% covered
+        self.assertAlmostEqual(b["per_audio_second_s"], 240.0 / 60000)   # over the covered audio only
+        self.assertAlmostEqual(b["predicted_work_s"], max(240.0 / 60000 * 400000, 240.0 / 12000 * 100000))
+        self.assertGreater(b["predicted_work_s"], 240.0 / 100000 * 400000, "never divided over the whole of dev")
+        b = PF.compute_budget([self.chunk(12000, 60000.0, 240.0), self.chunk(5000, 25000.0, 99.0, error="Killed")], **self.KW)
+        self.assertEqual(b["covered_utterances"], 12000, "a chunk that ended in an error has no usable timing")
+
+    def test_refusals(self):
+        for name, chunks in {"no chunks": [], "another identity": [self.chunk(20000, 100000.0, 400.0, identity="J")],
+                             "no audio coverage field": [{"identity": "I", "rows": {"s": 20000}, "work_s": 400.0}],
+                             "audio below half": [self.chunk(15000, 30000.0, 300.0)]}.items():
+            with self.subTest(case=name), self.assertRaises(ValueError):
+                PF.compute_budget(chunks, **self.KW)
+        for bad in ({"test_utterances": 0}, {"dev_audio_s": 0.0}):
             with self.subTest(bad=bad), self.assertRaises(ValueError):
-                PF.compute_budget(**{**dict(work_s=[1.0], dev_utterances=1, dev_audio_s=1.0, test_utterances=1,
-                                            test_audio_s=1.0, startup_s=1.0, capture_s=1.0), **bad})
+                PF.compute_budget([self.chunk(20000, 100000.0, 400.0)], **{**self.KW, **bad})
+
+    def test_written_once(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        from gpu1bit.shared import env
+        d = Path(tempfile.mkdtemp(dir=str(env.ARTIFACTS_ROOT / "H")))
+        try:
+            f = d / "budget.json"
+            PF.write_once(f, {"timeout_s": 10})
+            PF.write_once(f, {"timeout_s": 10})                          # the same content: kept
+            with self.assertRaisesRegex(SystemExit, "written once"):
+                PF.write_once(f, {"timeout_s": 11})
+            self.assertEqual(json.loads(f.read_text()), {"timeout_s": 10})
+            self.assertEqual(PF.budget_path("G", "M1-x2").name, "budget-G-M1-x2.json")
+        finally:
+            import shutil
+            shutil.rmtree(d, ignore_errors=True)
 
 
 class Recognition(unittest.TestCase):

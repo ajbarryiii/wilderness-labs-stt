@@ -49,6 +49,8 @@ _CHUNK, _FAKE_IDENTITY.
     gpu1bit/shared/python -m gpu1bit.x2.testscore pin --arm A --attempt 1 --benchmark-run R --gates-run G
         (after the benchmark, the Z6/Z8 runtime tests and the preflights; refused unless they all pass)
     gpu1bit/shared/python -m gpu1bit.x2.testscore precheck --arm A [--attempt N --evidence E]   (read-only; ALL PASS)
+    gpu1bit/shared/python -m gpu1bit.x2.testscore job-args --arm A --attempt N   (the job command: timeout from the
+        pinned X7 budget, lease from the pinned preflight)
     gpu1bit/shared/python -m gpu1bit.x2.testscore score --arm MB1-B-hybrid-x2   (job --needs gpu:shared)
     gpu1bit/shared/python -m gpu1bit.x2.testscore summarize --arm A | record-failure --arm A --evidence T | report
 """
@@ -627,7 +629,8 @@ def record_failure(arm: str, evidence: str, name=None) -> None:
 NEMO_MB1_TEST = Path("/mnt/hd/wilderness-labs-stt/parakeet-binary/eval/MB1-test")
 SCORER_FILES = ("finetune/parakeet-ternary/evaluate.py", "finetune/whisper-ternary/wer.py",
                 "finetune/parakeet-binary/gpu1bit/x2/testscore.py", "finetune/parakeet-binary/gpu1bit/shared/fulldev.py")
-RECORD_KEYS = ("gates", "preflight:MB1-B-hybrid-x2", "preflight:M1-x2", "recognition", "memory")
+RECORD_KEYS = ("gates", "preflight:MB1-B-hybrid-x2", "preflight:M1-x2", "recognition", "memory",
+               "budget:MB1-B-hybrid-x2", "budget:M1-x2")
 
 
 def scorer_now() -> dict:
@@ -652,7 +655,8 @@ def pins_path(arm: str, attempt: int, name=None) -> Path:
 def record_paths(benchmark_run: str, gates_run: str, name=None) -> dict[str, Path]:
     b = base_dir(name)
     return {"gates": b / f"gates-{gates_run}.json", **{f"preflight:{a}": b / f"preflight-{a}.json" for a in ARMS},
-            "recognition": b / f"runtime-recognition-{gates_run}.json", "memory": b / f"runtime-fresh-compare-{benchmark_run}.json"}
+            "recognition": b / f"runtime-recognition-{gates_run}.json", "memory": b / f"runtime-fresh-compare-{benchmark_run}.json",
+            **{f"budget:{a}": b / f"budget-{gates_run}-{a}.json" for a in ARMS}}   # x2/preflight.budget_path
 
 
 def freeze_file(benchmark_run: str, name=None) -> Path:
@@ -729,6 +733,9 @@ def qualification_checks(arm: str, identities: dict, pins: dict | None, bench: d
     check("the Z8 runtime memory contract passed", mem.get("ok") is True)
     check("the Z8 record is of the MB1 runtime identity and the pinned benchmark",
           mem.get("identity") == mb1 and mem.get("bench_run") == pins.get("benchmark_run"))
+    bu = docs.get(f"budget:{arm}") or {}
+    check(f"{arm}: the X7 duration budget is of this identity and the pinned gate run, with a timeout",
+          bu.get("preflight_identity") == ident and bu.get("gate_run") == pins.get("gates_run") and (bu.get("timeout_s") or 0) > 0)
     for k in RECORD_KEYS:
         check(f"record {k} present and unchanged since pinned", unchanged.get(k) is True)
     check("the deployment pointer is x3 as pinned or the promoted candidate (Z2)", pointer in ("x3", "promoted"), pointer)
@@ -877,6 +884,31 @@ def pin(arm: str, attempt: int, benchmark_run: str, gates_run: str, name=None) -
         raise SystemExit(f"pin refused: the qualification fails: {[c['check'] for c in bad][:8]}")
     path.write_text(json.dumps(doc, indent=1) + "\n")
     return doc
+
+
+def job_args(arm: str, attempt: int, name=None, new_attempt: Path | None = None) -> dict:
+    """The scoring job's agent-jobs arguments from the attempt's PINNED records (Codex x2 c3 minor): the timeout
+    is the X7 duration budget's, the VRAM lease the pinned Y6 preflight's (c4); refused if either changed since
+    pinning. --new-attempt <evidence> is forwarded whenever it is supplied and never required here (c5):
+    score() decides from the ledger (a new attempt after a stop needs it; an open attempt resumes without it
+    and refuses it)."""
+    name = fake_name() if name is None else name
+    pp = pins_path(arm, attempt, name)
+    if not pp.exists():
+        raise SystemExit(f"{arm}: attempt {attempt} has no pins (`pin`)")
+    pins = json.loads(pp.read_text())
+    docs, unchanged = _load_records(pins)
+    for k in (f"budget:{arm}", f"preflight:{arm}"):
+        if not unchanged.get(k):
+            raise SystemExit(f"{arm}: the pinned record {k} is missing or changed since pinned")
+    timeout = int(docs[f"budget:{arm}"]["timeout_s"])
+    lease = int(docs[f"preflight:{arm}"]["lease_bytes"])          # the pinned preflight's own record (c4)
+    vram = f"{-(-lease // 2**30)}G"
+    cmd = (f"job start h-x2-testscore-{arm} --needs gpu:shared --vram {vram} --timeout {timeout}s "
+           f"--cwd {env.BINARY_DIR} -- gpu1bit/shared/python -m gpu1bit.x2.testscore score --arm {arm}")
+    if new_attempt:
+        cmd += f" --new-attempt {new_attempt}"
+    return {"arm": arm, "attempt": attempt, "timeout_s": timeout, "vram": vram, "command": cmd}
 
 
 def precheck(arm: str, attempt: int | None = None, evidence: dict | None = None, name=None) -> dict:
@@ -1056,7 +1088,13 @@ def main() -> None:
     s.add_argument("--benchmark-run", required=True)
     s.add_argument("--gates-run", required=True)
     sub.add_parser("report")
+    s = sub.add_parser("job-args", help="the scoring job's command from the attempt's pinned budget and preflight")
+    s.add_argument("--arm", required=True)
+    s.add_argument("--attempt", type=int, required=True)
+    s.add_argument("--new-attempt", type=Path, default=None, help="replacement evidence, forwarded to score (Y3)")
     args = p.parse_args()
+    from gpu1bit.shared import seldoc
+    seldoc.use_candidate()            # every action: the test arms are candidate arms, also with the pointer at x3 (c4)
     if args.action == "score":
         if args.limit is not None:
             raise SystemExit("--limit is refused for test scoring; smoke tests use dev only")
@@ -1070,6 +1108,8 @@ def main() -> None:
     elif args.action == "precheck":
         ev = json.loads(args.evidence.read_text()) if args.evidence else None
         sys.exit(0 if precheck(args.arm, args.attempt, ev)["pass"] else 1)
+    elif args.action == "job-args":
+        print(json.dumps(job_args(args.arm, args.attempt, new_attempt=args.new_attempt)))
     elif args.action == "pin":
         print(json.dumps(pin(args.arm, args.attempt, args.benchmark_run, args.gates_run), indent=1))
     else:

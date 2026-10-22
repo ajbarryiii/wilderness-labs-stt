@@ -50,6 +50,14 @@ def check_parts(parts) -> int:
     return parts
 
 
+def use_candidate() -> Path:
+    """Select the candidate document for this process and its children (GPU1BIT_SELECTION): every x2 entry
+    point (gates, preflight and budget, benchmark session, test scoring) is defined under it, also while the
+    live pointer is still the x3 document (Codex x2 c4)."""
+    os.environ["GPU1BIT_SELECTION"] = str(CANDIDATE)
+    return CANDIDATE
+
+
 def part_count(kernel: str) -> int:
     """A registry name's own activation part count: "<kernel>:x<N>[...]" is N (the part-count layer variants,
     gpu1bit.actprec.parts), anything else (int8_mma, int8_mma:b01, ...) 3."""
