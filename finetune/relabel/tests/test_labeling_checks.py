@@ -224,6 +224,132 @@ class Consistency(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             checks.evaluate_consistency(self.d, stage1_dir=self.s1)
 
+    # --- hallucination-guard exclusion (labeling plan "Gate to stage 3" item 1, amended 2026-10-25) ---
+
+    LOOP = "alpha " * 40                                       # 20 words per second and a repeated word: the guard
+
+    def stage1_hyps(self, name: str, hyps: dict[str, str]) -> None:
+        """Replace stage 1's transcripts of some clips (records and summary WER, as stage 1 wrote them)."""
+        data = json.loads((self.s1 / f"{name}.json").read_text())
+        for r in data["records"]:
+            r["hyp"] = hyps.get(r["id"], r["hyp"])
+        (self.s1 / f"{name}.json").write_text(json.dumps(data))
+        summary = json.loads((self.s1 / "summary.json").read_text())
+        summary["sets"][name]["wer"] = checks.corpus_wer([(r["ref"], r["hyp"]) for r in data["records"]])
+        (self.s1 / "summary.json").write_text(json.dumps(summary))
+
+    def test_stage_one_loop_is_excluded_and_unfiltered_numbers_reported(self):
+        self.stage1_hyps("ami_dev", {"ami_dev:005": self.LOOP})
+        write_outputs(self.d / "run", self.d / "pool", self.hyps)   # the run transcribes ami_dev:005 correctly
+        r = checks.evaluate_consistency(self.d, stage1_dir=self.s1)
+        s = r["sets"]["ami_dev"]
+        recs = json.loads((self.s1 / "ami_dev.json").read_text())["records"]
+        kept = [x for x in recs if x["id"] != "ami_dev:005"]
+        self.assertEqual((s["excluded"], s["guard_rejected_stage1"], s["guard_rejected_run"]), (1, 1, 0))
+        self.assertAlmostEqual(s["wer"], checks.corpus_wer([(x["ref"], self.hyps[x["id"]]) for x in kept]))
+        self.assertAlmostEqual(s["stage1_wer"], checks.corpus_wer([(x["ref"], x["hyp"]) for x in kept]))
+        self.assertAlmostEqual(s["diff"], 0.0)
+        self.assertAlmostEqual(s["wer_unfiltered"], checks.corpus_wer([(x["ref"], self.hyps[x["id"]]) for x in recs]))
+        self.assertAlmostEqual(s["stage1_wer_unfiltered"], checks.corpus_wer([(x["ref"], x["hyp"]) for x in recs]))
+        self.assertAlmostEqual(s["diff_unfiltered"], s["wer_unfiltered"] - s["stage1_wer_unfiltered"])
+        self.assertLess(s["diff_unfiltered"], -checks.WER_POINTS)   # the unfiltered rule would fail this set
+        self.assertEqual(s["guard_allowance"], 2)
+        self.assertTrue(s["ok"])
+        self.assertTrue(r["passed"])
+        self.assertEqual(r["gate_version"], 2)
+        self.assertIsInstance(r["criterion"], str)
+        for k in ("full_population", "contract", "limit", "run", "engine"):
+            self.assertIn(k, r)
+
+    def test_a_loop_on_both_sides_is_excluded_once(self):
+        self.stage1_hyps("ami_dev", {"ami_dev:005": self.LOOP})
+        write_outputs(self.d / "run", self.d / "pool", self.hyps | {"ami_dev:005": self.LOOP + "bravo"})
+        s = checks.evaluate_consistency(self.d, stage1_dir=self.s1)["sets"]["ami_dev"]
+        self.assertEqual((s["excluded"], s["guard_rejected_stage1"], s["guard_rejected_run"]), (1, 1, 1))
+        self.assertTrue(s["ok"])
+
+    def test_run_hallucinating_beyond_the_allowance_fails(self):
+        loops = {f"ami_dev:{i:03d}": self.LOOP for i in (1, 2, 3)}
+        write_outputs(self.d / "run", self.d / "pool", self.hyps | loops)
+        r = checks.evaluate_consistency(self.d, stage1_dir=self.s1)
+        s = r["sets"]["ami_dev"]
+        self.assertEqual((s["excluded"], s["guard_rejected_stage1"], s["guard_rejected_run"]), (3, 0, 3))
+        self.assertAlmostEqual(s["diff"], 0.0)                   # the kept clips match stage 1 exactly
+        self.assertFalse(s["ok"])
+        self.assertTrue(r["sets"]["voxpopuli_dev"]["ok"])
+        self.assertFalse(r["passed"])
+
+    def test_run_hallucinating_within_the_allowance_passes(self):
+        loops = {f"ami_dev:{i:03d}": self.LOOP for i in (1, 2)}
+        write_outputs(self.d / "run", self.d / "pool", self.hyps | loops)
+        r = checks.evaluate_consistency(self.d, stage1_dir=self.s1)
+        s = r["sets"]["ami_dev"]
+        self.assertEqual((s["guard_rejected_run"], s["guard_allowance"]), (2, 2))
+        self.assertGreater(abs(s["diff_unfiltered"]), checks.WER_POINTS)
+        self.assertTrue(s["ok"])
+        self.assertTrue(r["passed"])
+
+    def test_allowance_counts_against_stage_ones_rejections(self):
+        self.stage1_hyps("ami_dev", {"ami_dev:004": self.LOOP})
+        loops = {f"ami_dev:{i:03d}": self.LOOP for i in (1, 2, 3)}   # 3 run rejections <= 1 + 2
+        write_outputs(self.d / "run", self.d / "pool", self.hyps | loops)
+        s = checks.evaluate_consistency(self.d, stage1_dir=self.s1)["sets"]["ami_dev"]
+        self.assertEqual((s["excluded"], s["guard_rejected_stage1"], s["guard_rejected_run"]), (4, 1, 3))
+        self.assertTrue(s["ok"])
+
+    def test_human_wer_filter_does_not_exclude(self):
+        write_outputs(self.d / "run", self.d / "pool", self.hyps | {"ami_dev:001": "nothing like it at all"})
+        s = checks.evaluate_consistency(self.d, stage1_dir=self.s1)["sets"]["ami_dev"]
+        self.assertEqual(s["excluded"], 0)
+        self.assertFalse(s["ok"])
+
+    def test_a_set_with_nothing_left_to_compare_fails(self):
+        d = self.root / "cons-one"                              # a --limit 1 smoke
+        rows = [clip_row(f"{name}:000", name, "x", "human") for name in ("ami_dev", "voxpopuli_dev")]
+        checks.write_rows_as_shards(rows, d / "pool", 25)
+        c2.write_json(d / "pool" / "materialized.json", {})
+        c2.write_json(d / "set.json", {"sets": {n: {"manifest_sha256": "m"} for n in ("ami_dev", "voxpopuli_dev")},
+                                       "limit": 1})
+        c2.init_run(d / "run", pool_dir=d / "pool", engine={"kind": "fake"}, group_shards=2, b0_batch_seconds=60.0,
+                    declared_vram_gb=None)
+        write_outputs(d / "run", d / "pool", {"ami_dev:000": self.LOOP, "voxpopuli_dev:000": self.hyps["voxpopuli_dev:000"]})
+        r = checks.evaluate_consistency(d, stage1_dir=self.s1)
+        s = r["sets"]["ami_dev"]
+        self.assertEqual((s["excluded"], s["guard_rejected_run"]), (1, 1))
+        self.assertIsNone(s["wer"])
+        self.assertIsNone(s["diff"])
+        self.assertGreater(s["diff_unfiltered"], checks.WER_POINTS)
+        self.assertFalse(s["ok"])
+        self.assertTrue(r["sets"]["voxpopuli_dev"]["ok"])
+        self.assertFalse(r["passed"])
+        self.assertTrue((d / "result-run.json").exists())
+
+    def test_allowance(self):
+        self.assertEqual([checks.guard_allowance(n) for n in (1, 30, 400, 401, 2000, 13098)], [2, 2, 2, 3, 10, 66])
+
+    def test_limited_population_is_the_first_ids(self):
+        d = self.root / "cons-limit"
+        rows = [clip_row(i, name, ref, "human")
+                for name in ("ami_dev", "voxpopuli_dev")
+                for i, ref in sorted((x["id"], x["ref"]) for x in
+                                     json.loads((self.s1 / f"{name}.json").read_text())["records"])[:10]]
+        checks.write_rows_as_shards(rows, d / "pool", 25)
+        c2.write_json(d / "pool" / "materialized.json", {})
+        c2.write_json(d / "set.json", {"sets": {n: {"manifest_sha256": "m"} for n in ("ami_dev", "voxpopuli_dev")},
+                                       "limit": 10})
+        c2.init_run(d / "run", pool_dir=d / "pool", engine={"kind": "fake"}, group_shards=2, b0_batch_seconds=60.0,
+                    declared_vram_gb=None)
+        self.stage1_hyps("ami_dev", {"ami_dev:005": self.LOOP})
+        write_outputs(d / "run", d / "pool", {r["id"]: self.hyps[r["id"]] for r in rows})
+        r = checks.evaluate_consistency(d, stage1_dir=self.s1)
+        s = r["sets"]["ami_dev"]
+        recs = sorted(json.loads((self.s1 / "ami_dev.json").read_text())["records"], key=lambda x: x["id"])[:10]
+        self.assertAlmostEqual(s["stage1_wer_unfiltered"], checks.corpus_wer([(x["ref"], x["hyp"]) for x in recs]))
+        self.assertEqual(s["excluded"], 1)
+        self.assertTrue(s["ok"])
+        self.assertFalse(r["full_population"])
+        self.assertEqual(r["limit"], 10)
+
 
 def contract(engine, group_shards=4, declared=20.0):
     return {"engine": engine, "group_shards": group_shards, "b0_batch_seconds": 1200.0, "declared_vram_gb": declared,

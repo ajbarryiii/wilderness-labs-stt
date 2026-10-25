@@ -16,7 +16,10 @@ Equivalence check (vLLM only, preregistered):
 
 Consistency gate (gate item 1): the labeling decoder at production settings, no filters, on stage 1's dev ids
 (every stage 1 utterance, padded as stage 1 did), scored with evaluate.score / wer_summary, reproduces T*'s
-stage 1 WER (diagnostic/<T*>/summary.json) on every set within 0.05 points.
+stage 1 WER on every set within 0.05 points. Amended 2026-10-25 (gate_version 2): per set, clips whose stage 1 or
+run transcript the hallucination guard rejects are left out of both WERs (stage 1 looped to the token cap on a clip
+the engines transcribe correctly), and the run may lose at most max(2, ceil(0.5%)) more clips to the guard than
+stage 1; the unfiltered WERs (stage 1's from diagnostic/<T*>/summary.json) are still reported.
 
 GPU probe: per engine and setting, C2's teacher step for PROBE minutes on C1's first groups, then B0 on the
 same groups; complete shard-to-label throughput (reads, FLAC decoding, T*, B0) in audio hours per GPU-hour,
@@ -36,6 +39,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import math
 import random
 import subprocess
 import time
@@ -46,6 +50,11 @@ from labeling import c2, layout, shards
 
 MAX_DROP, MAX_HALLUCINATION = 0.05, 0.02
 WER_POINTS = 0.05
+GATE_VERSION = 2          # consistency results: 2 = hallucination-guard exclusion (2026-10-25); 1 had no "gate_version"
+GUARD_ALLOWANCE_MIN, GUARD_ALLOWANCE_SHARE = 2, 0.005
+GUARD_CRITERION = ("per set: clips whose stage 1 or run transcript the hallucination guard (filter 3) rejects are "
+                   "excluded; on the kept clips |corpus WER(run) - corpus WER(stage 1)| <= 0.05 points, and the guard "
+                   "rejects the run's transcripts on at most stage 1's count + max(2, ceil(0.5% of the set's clips))")
 DISPOSITION_MAX = 0.01
 FLOOR_FACTOR, FLOOR_POINTS = 2.0, 0.01
 VLLM_SETTINGS = ({"max_num_seqs": 64, "gpu_memory_utilization": 0.40},
@@ -317,7 +326,22 @@ def evaluate_equivalence(check_dir: Path, coverage=None) -> dict:
     return result
 
 
+def guard_allowance(n_clips: int) -> int:
+    """How many more clips of a set the hallucination guard may reject in the run's transcripts than in stage 1's."""
+    return max(GUARD_ALLOWANCE_MIN, math.ceil(round(n_clips * GUARD_ALLOWANCE_SHARE, 9)))
+
+
+def guard_rejects(duration: float, label: str, reference: str) -> bool:
+    """Whether the hallucination guard (filter 3) rejects a transcript, applied as C2 applies it to a label with a human
+    reference (so the B0 rule does not apply; tokenizer coverage is filter 4, not the guard)."""
+    from labeling import filters
+    reasons = filters.check(duration, label, reference, "human", None, lambda _: True)["reasons"]
+    return any(r in filters.HALLUCINATION for r in reasons)
+
+
 def evaluate_consistency(check_dir: Path, run_name: str = "run", stage1_dir: Path | None = None) -> dict:
+    """Gate item 1 (gate_version 2, labeling plan amendment 2026-10-25): see GUARD_CRITERION. The unfiltered WERs
+    (`*_unfiltered`; stage 1's from its summary.json on the full population) are reported next to the compared ones."""
     import relabel_paths
     check_dir = Path(check_dir)
     info = json.loads((check_dir / "set.json").read_text())
@@ -339,13 +363,27 @@ def evaluate_consistency(check_dir: Path, run_name: str = "run", stage1_dir: Pat
             raise RuntimeError(f"{name}: manifest differs from stage 1's")
         refs = {r["id"]: r["ref"] for r in stage1["records"]}
         hyps = {r["id"]: r["hyp"] for r in stage1["records"]}
-        wer = corpus_wer([(refs[i], lab[i][0]) for i in ids])
-        ref_wer = summary["sets"][name]["wer"] if not limit else corpus_wer([(refs[i], hyps[i]) for i in ids])
-        sets[name] = {"wer": wer, "stage1_wer": ref_wer, "diff": wer - ref_wer, "ok": abs(wer - ref_wer) <= WER_POINTS}
+        wer_all = corpus_wer([(refs[i], lab[i][0]) for i in ids])
+        ref_all = summary["sets"][name]["wer"] if not limit else corpus_wer([(refs[i], hyps[i]) for i in ids])
+        bad_run = {i for i in ids if guard_rejects(pool[i]["duration"], lab[i][0], refs[i])}
+        bad_s1 = {i for i in ids if guard_rejects(pool[i]["duration"], hyps[i], refs[i])}
+        kept = [i for i in ids if i not in bad_run | bad_s1]
+        wer = corpus_wer([(refs[i], lab[i][0]) for i in kept])
+        ref_wer = corpus_wer([(refs[i], hyps[i]) for i in kept])
+        # no scored clip left (a small --limit smoke): nothing compared, so the set fails
+        diff = None if wer is None or ref_wer is None else wer - ref_wer
+        allowance = guard_allowance(len(ids))
+        sets[name] = {"wer": wer, "stage1_wer": ref_wer, "diff": diff, "wer_unfiltered": wer_all,
+                      "stage1_wer_unfiltered": ref_all,
+                      "diff_unfiltered": None if wer_all is None or ref_all is None else wer_all - ref_all,
+                      "clips": len(ids), "excluded": len(ids) - len(kept), "guard_rejected_run": len(bad_run),
+                      "guard_rejected_stage1": len(bad_s1), "guard_allowance": allowance,
+                      "ok": diff is not None and abs(diff) <= WER_POINTS and len(bad_run) <= len(bad_s1) + allowance}
     engine = json.loads(next((check_dir / run_name / "work" / "teacher").glob("*.json")).read_text())["engine"]
     run = c2.load_run(check_dir / run_name)
     full = info.get("limit") is None and sorted(sets) == sorted(relabel_paths.SETS)
-    result = {"passed": all(s["ok"] for s in sets.values()), "full_population": full, "sets": sets,
+    result = {"passed": all(s["ok"] for s in sets.values()), "gate_version": GATE_VERSION,
+              "criterion": GUARD_CRITERION, "full_population": full, "sets": sets,
               "points": WER_POINTS, "engine": engine, "run": run, "contract": c2.contract(run),
               "limit": info.get("limit")}
     write_json(check_dir / f"result-{run_name}.json", result)
