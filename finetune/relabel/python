@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Interpreter for the teacher diagnostic (diagnostic plan).
+#
+# Roots come from the environment or, for keys not set there, from private/local.env (gitignored; copy
+# local.env.example). The shared runtime $SHARED_RUNTIME (torch 2.11 cu128, NeMo 3.0.0, transformers 5.17.0;
+# never modified) runs relabel_boot.py, which points every cache at $RELABEL_ROOT/caches, puts this
+# directory and finetune/parakeet-ternary (evaluate, paths) first on sys.path and
+# finetune/whisper-ternary (wer.edit_counts) last, appends $RELABEL_ROOT/deps/$RELABEL_DEPS when set
+# (extra packages for one teacher, never shadowing a shared one), then runs the script or -m module.
+set -euo pipefail
+here="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+env_file="$here/private/local.env"
+required=(DATA_MOUNT RELABEL_ROOT PARAKEET_TERNARY_ROOT PARAKEET_BINARY_ROOT SHARED_RUNTIME)
+if [[ -f "$env_file" ]]; then
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ "$line" =~ ^([A-Z_][A-Z0-9_]*)=(.*)$ ]] || continue
+    key="${BASH_REMATCH[1]}"; value="${BASH_REMATCH[2]}"
+    [[ -n "${!key:-}" ]] || export "$key=$value"
+  done < "$env_file"
+fi
+for key in "${required[@]}"; do
+  [[ -n "${!key:-}" ]] || { echo "python: $key is not set (environment or $env_file; see local.env.example)" >&2; exit 2; }
+done
+mountpoint -q "$DATA_MOUNT" || { echo "python: $DATA_MOUNT is not mounted; refusing artifact writes." >&2; exit 1; }
+[[ -x "$SHARED_RUNTIME" ]] || { echo "python: SHARED_RUNTIME $SHARED_RUNTIME is not executable" >&2; exit 2; }
+if [[ -n "${RELABEL_DEPS:-}" ]]; then
+  [[ "$RELABEL_DEPS" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "python: bad RELABEL_DEPS" >&2; exit 2; }
+  [[ -d "$RELABEL_ROOT/deps/$RELABEL_DEPS" ]] || { echo "python: missing \$RELABEL_ROOT/deps/$RELABEL_DEPS" >&2; exit 2; }
+fi
+exec "$SHARED_RUNTIME" "$here/relabel_boot.py" "$@"
