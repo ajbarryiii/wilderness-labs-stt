@@ -36,6 +36,14 @@ VLLM_BATCH_INVARIANT=1 in the environment before vLLM is imported (the spawned e
 start if the installed vLLM does not know the variable or does not read it as set. VllmTeacher.load is the only place
 that constructs vllm.LLM (checked by a test), so every vLLM entry point runs in the mode its spec names.
 
+vLLM's multimodal processor cache is off (mm_processor_cache_gb=0, recorded in info()). By default the engine core keeps
+an LRU of up to 4 GiB of processed audio per process, and C2 never repeats a clip, so it never hits and only grows: in
+the 2026-10-24 GPU probe it took the engine core from ~2 to ~5.6 GB of host memory by the third group, the job's
+anonymous memory reached its 15 GB cap and the processes stalled on page faults (no error, no OOM kill). The cache only
+skips re-processing an identical input, so it is not meant to change outputs. That is not a bitwise guarantee: separate
+runs at the same settings already differ on ~1% of texts (cache on or off), so outputs from cache-on runs are not
+references for cache-off ones.
+
 The engine identity (name, versions, settings) is recorded with every output.
 """
 from __future__ import annotations
@@ -50,6 +58,7 @@ MIN_DECODE_SAMPLES = 480      # evaluate.MIN_DECODE_SAMPLES (0.03 s); checked eq
 MAX_NEW_TOKENS = 256          # teachers.MAX_NEW_TOKENS
 SIGNAL_TOP = 2                # chosen token and runner-up
 VLLM_LOGPROBS_MODE = "raw_logprobs"
+VLLM_MM_PROCESSOR_CACHE_GB = 0   # off: clips never repeat (module docstring)
 VLLM_MODE_ENV = "VLLM_BATCH_INVARIANT"
 
 
@@ -379,7 +388,8 @@ class VllmTeacher:
         self.llm = LLM(model=self.model_dir, tokenizer=self.model_dir, dtype="bfloat16",
                        max_model_len=self.max_model_len, max_num_seqs=self.max_num_seqs,
                        gpu_memory_utilization=self.gpu_memory_utilization, limit_mm_per_prompt={"audio": 1},
-                       seed=self.seed, logprobs_mode=VLLM_LOGPROBS_MODE)
+                       seed=self.seed, logprobs_mode=VLLM_LOGPROBS_MODE,
+                       mm_processor_cache_gb=VLLM_MM_PROCESSOR_CACHE_GB)
         self.load_s = time.perf_counter() - t0
         self.SamplingParams = SamplingParams
 
@@ -422,7 +432,8 @@ class VllmTeacher:
                 "dtype": "bfloat16", "sampling": {"temperature": 0.0, "max_tokens": self.max_tokens,
                                                   "skip_special_tokens": True,
                                                   "logprobs": SIGNAL_TOP if self.confidence else None},
-                "logprobs_mode": VLLM_LOGPROBS_MODE, "confidence": self.confidence,
+                "logprobs_mode": VLLM_LOGPROBS_MODE, "mm_processor_cache_gb": VLLM_MM_PROCESSOR_CACHE_GB,
+                "confidence": self.confidence,
                 "batch_invariant": self.batch_invariant, VLLM_MODE_ENV: os.environ.get(VLLM_MODE_ENV),
                 "hf_id": getattr(self, "hf_id", None), "revision": getattr(self, "revision", None),
                 "model_dir": getattr(self, "model_dir", None), "excluded_files": getattr(self, "excluded_files", None),

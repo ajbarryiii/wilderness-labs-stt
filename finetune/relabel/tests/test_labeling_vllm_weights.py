@@ -174,6 +174,9 @@ class LoadTest(unittest.TestCase):
             self.assertEqual((info["hf_id"], info["revision"]), (spec.hf_id, spec.revision))
             self.assertIs(info["batch_invariant"], True)
             self.assertEqual(calls["logprobs_mode"], engines.VLLM_LOGPROBS_MODE)
+            # every clip is unique, so vLLM's processor cache could only grow (2026-10-24 probe hang): off, and recorded
+            self.assertEqual(calls["mm_processor_cache_gb"], 0)
+            self.assertEqual(info["mm_processor_cache_gb"], 0)
 
 
 if __name__ == "__main__":
