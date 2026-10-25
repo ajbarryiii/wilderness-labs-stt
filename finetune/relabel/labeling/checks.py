@@ -368,10 +368,13 @@ def _run_steps(steps: list[tuple[str, Path, dict]], lock_wait: float, label: str
 
 
 def vllm_engine(setting: dict, total_vram_gb: float | None = None) -> dict:
-    """A production vLLM engine spec (confidence signals on, batch-invariant mode; labeling plan 2026-10-24)."""
+    """A production vLLM engine spec (confidence signals on, batch-invariant mode; labeling plan 2026-10-24) with the
+    per-clip Granite encoder (encoder_patch: the patch identity, so part of c2.contract; 2026-10-25)."""
+    from labeling import vllm_granite_patch
     return {"kind": "vllm", "max_num_seqs": int(setting["max_num_seqs"]),
             "gpu_memory_utilization": float(setting["gpu_memory_utilization"]), "max_model_len": 2048,
-            "submit_clips": 2048, "confidence": True, "batch_invariant": True, "total_vram_gb": total_vram_gb}
+            "submit_clips": 2048, "confidence": True, "batch_invariant": True,
+            "encoder_patch": vllm_granite_patch.identity(), "total_vram_gb": total_vram_gb}
 
 
 def tf_engine(setting: dict) -> dict:

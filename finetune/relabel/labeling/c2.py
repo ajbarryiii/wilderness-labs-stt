@@ -248,7 +248,8 @@ def make_engine(spec: dict, run: dict, timing: bool = False):
         return engines.VllmTeacher(spec["max_num_seqs"], spec["gpu_memory_utilization"],
                                    max_model_len=spec.get("max_model_len", 2048),
                                    submit_clips=spec.get("submit_clips", 2048), confidence=wants_signals(spec),
-                                   batch_invariant=bool(spec.get("batch_invariant", False)))
+                                   batch_invariant=bool(spec.get("batch_invariant", False)),
+                                   encoder_patch=spec.get("encoder_patch"))
     if kind == "transformers":
         return engines.TransformersTeacher(spec["batch_size"], spec["max_batch_seconds"],
                                            declared_vram_gb=run.get("declared_vram_gb"), timing=timing,

@@ -3,7 +3,14 @@
 #
 #   labeling/vllm_env.sh install     create $RELABEL_ROOT/deps/vllm-$VLLM_VERSION (a venv) and pip-install the
 #                                    pinned vLLM into it (network; run as a job); records pip freeze
+#   labeling/vllm_env.sh plugin      install (idempotently) the relabel vLLM plugin entry points into that venv;
+#                                    install and python run it too
 #   labeling/vllm_env.sh python ...  run relabel_boot.py with that venv's interpreter (like ./python)
+#
+# The plugin is a metadata-only distribution (relabel_vllm_plugins-1.dist-info: METADATA and entry_points.txt) whose
+# vllm.general_plugins entry point is labeling.vllm_granite_patch:register; its code is this repository's (on sys.path
+# through relabel_boot.py, which the spawned engine core inherits). vLLM loads it in every process it starts; it does
+# nothing unless the engine spec asks for the patch (labeling/vllm_granite_patch.py).
 #
 # vLLM pins its own torch, which differs from the shared runtime's, so it cannot be an appended RELABEL_DEPS
 # directory: it gets its own venv, built from the shared runtime's base interpreter without its site-packages.
@@ -27,7 +34,32 @@ mountpoint -q "$DATA_MOUNT" || { echo "vllm_env: $DATA_MOUNT is not mounted; ref
 venv="$RELABEL_ROOT/deps/vllm-$VLLM_VERSION"
 runtime_ld="$("$SHARED_RUNTIME" -c 'import os; print(os.environ.get("LD_LIBRARY_PATH", ""))')"
 
+# The plugin's metadata (kept in step with labeling/vllm_granite_patch.py: PLUGIN, ENTRY_POINT; checked by a test).
+plugin_dist="relabel_vllm_plugins-1.dist-info"
+plugin_metadata="Metadata-Version: 2.1
+Name: relabel-vllm-plugins
+Version: 1
+Summary: entry points of finetune/relabel's vLLM patches (the code is the repository's labeling package)"
+plugin_entry_points="[vllm.general_plugins]
+relabel_granite_encoder = labeling.vllm_granite_patch:register"
+
+ensure_plugin() {
+  local site d f body
+  site="$(cd -- "$venv"/lib/python3*/site-packages 2>/dev/null && pwd)" \
+    || { echo "vllm_env: no site-packages under $venv (run: labeling/vllm_env.sh install)" >&2; exit 2; }
+  d="$site/$plugin_dist"
+  mkdir -p "$d"
+  for f in METADATA entry_points.txt; do
+    if [[ "$f" == METADATA ]]; then body="$plugin_metadata"; else body="$plugin_entry_points"; fi
+    if [[ ! -f "$d/$f" || "$(cat "$d/$f")" != "$body" ]]; then
+      printf '%s\n' "$body" > "$d/$f.tmp$$" && mv -f "$d/$f.tmp$$" "$d/$f"
+    fi
+  done
+}
+
 case "${1:-}" in
+  plugin)
+    ensure_plugin ;;
   install)
     base="$(env -u PYTHONPATH "$SHARED_RUNTIME" -I -c 'import sys; print(sys.executable)')"
     mkdir -p "$RELABEL_ROOT/caches/pip" "$RELABEL_ROOT/tmp"
@@ -39,12 +71,14 @@ case "${1:-}" in
     # chat template are stage 1's; pyarrow and soundfile read C1's shards.
     "$venv/bin/python" -I -m pip install --no-input "vllm[audio]==$VLLM_VERSION" "transformers==5.17.0" \
       "pyarrow==25.0.1" "soundfile==0.13.1"
+    ensure_plugin
     "$venv/bin/python" -I -m pip freeze > "$venv/FREEZE.txt"
     "$venv/bin/python" -I -c 'import vllm, torch; print("vllm", vllm.__version__, "torch", torch.__version__, torch.version.cuda)' \
       | tee "$venv/INSTALLED.txt" ;;
   python)
     shift
     [[ -x "$venv/bin/python" ]] || { echo "vllm_env: $venv is missing (run: labeling/vllm_env.sh install)" >&2; exit 2; }
+    ensure_plugin
     # vLLM forks its EngineCore by default. The parent has already run torch CPU ops on its OpenMP (libgomp)
     # thread pool by then, and libgomp is not fork-safe: the forked engine segfaulted in gomp_team_start on its
     # first parallel CPU op (2026-10-22 smoke). A spawned engine starts a fresh interpreter instead.
@@ -82,5 +116,5 @@ exec \"$loader\" --library-path \"$(dirname -- "$loader"):$runtime_ld\" \"$tool_
     unset PYTHONPATH RELABEL_DEPS
     exec "$venv/bin/python" "$here/relabel_boot.py" "$@" ;;
   *)
-    sed -n '2,12p' "$0" >&2; exit 2 ;;
+    sed -n '2,18p' "$0" >&2; exit 2 ;;
 esac

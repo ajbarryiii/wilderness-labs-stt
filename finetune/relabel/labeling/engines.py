@@ -44,6 +44,14 @@ skips re-processing an identical input, so it is not meant to change outputs. Th
 runs at the same settings already differ on ~1% of texts (cache on or off), so outputs from cache-on runs are not
 references for cache-off ones.
 
+Per-clip Granite encoder (labeling plan "Engine", 2026-10-25): vLLM's Granite speech encoder let a clip's embedding
+depend on the other clips of its scheduler step (labeling/vllm_granite_patch.py). A spec's encoder_patch (the patch
+identity: name, version, sha256 of the patch source; every production vLLM spec names it) asks for the patched encoder:
+VllmTeacher.load sets the patch's environment variable before vLLM is imported (the spawned engine core inherits it),
+and after vLLM starts asks the worker that holds the model for the patch status; it refuses to run unless the worker,
+in another process than this one, reports the expected identity and the patched model class. Without encoder_patch the
+variable is removed and vLLM's own encoder runs. The identity and the worker's report are recorded in info().
+
 The engine identity (name, versions, settings) is recorded with every output.
 """
 from __future__ import annotations
@@ -359,14 +367,19 @@ class VllmTeacher:
     kind = "vllm"
 
     def __init__(self, max_num_seqs: int, gpu_memory_utilization: float, max_model_len: int = 2048,
-                 submit_clips: int = 2048, seed: int = 0, confidence: bool = False, batch_invariant: bool = False):
+                 submit_clips: int = 2048, seed: int = 0, confidence: bool = False, batch_invariant: bool = False,
+                 encoder_patch: dict | None = None):
         self.max_num_seqs, self.gpu_memory_utilization = max_num_seqs, gpu_memory_utilization
         self.max_model_len, self.submit_clips, self.seed = max_model_len, submit_clips, seed
         self.max_tokens = MAX_NEW_TOKENS
         self.confidence, self.batch_invariant = bool(confidence), bool(batch_invariant)
+        self.encoder_patch = dict(encoder_patch) if encoder_patch else None
+        self.patch_status = None
 
     def load(self) -> None:
+        from labeling import vllm_granite_patch
         apply_vllm_mode(self.batch_invariant)
+        vllm_granite_patch.apply_env(self.encoder_patch)
         import importlib
         import teachers
         from transformers import AutoTokenizer
@@ -392,6 +405,13 @@ class VllmTeacher:
                        mm_processor_cache_gb=VLLM_MM_PROCESSOR_CACHE_GB)
         self.load_s = time.perf_counter() - t0
         self.SamplingParams = SamplingParams
+        if self.encoder_patch:
+            try:
+                reports = self.llm.collective_rpc(vllm_granite_patch.STATUS_METHOD)
+            except Exception as e:   # the method is missing: the plugin was not loaded in the worker
+                raise RuntimeError(f"the vLLM Granite encoder patch is expected but its status is unavailable: {e!r} "
+                                   "(is the plugin installed? labeling/vllm_env.sh plugin)") from e
+            self.patch_status = vllm_granite_patch.check_status(self.encoder_patch, reports, os.getpid())
 
     def _params(self, max_tokens: int, confidence: bool):
         return self.SamplingParams(temperature=0.0, max_tokens=max_tokens, skip_special_tokens=True,
@@ -435,6 +455,7 @@ class VllmTeacher:
                 "logprobs_mode": VLLM_LOGPROBS_MODE, "mm_processor_cache_gb": VLLM_MM_PROCESSOR_CACHE_GB,
                 "confidence": self.confidence,
                 "batch_invariant": self.batch_invariant, VLLM_MODE_ENV: os.environ.get(VLLM_MODE_ENV),
+                "encoder_patch": self.encoder_patch, "encoder_patch_status": self.patch_status,
                 "hf_id": getattr(self, "hf_id", None), "revision": getattr(self, "revision", None),
                 "model_dir": getattr(self, "model_dir", None), "excluded_files": getattr(self, "excluded_files", None),
                 "chat_prompt": getattr(self, "chat_prompt", None), "load_s": getattr(self, "load_s", None)}
