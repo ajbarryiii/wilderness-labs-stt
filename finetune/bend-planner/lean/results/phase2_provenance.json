@@ -1,0 +1,31 @@
+{
+  "review_sources": {
+    "Audit.lean": "2be7cc206c2c3f9e5b65b362282b2f8c88dad9edcedb0bc21849a9dca3a1cb4c",
+    "BendModel/Log2.lean": "48eca5376b0956c19fd1778f3a30929ad4b1e12b02f92c0d21837dee3a05ea36",
+    "BendModel/Phase2.lean": "c1ed94ff9050cb5a4a11a646b100b18c3f7b5343bbf98b90af7f089012077394",
+    "BendModel/Refinement.lean": "afe89f4bf899c6a47d4f0f2650f4ff384a5bcaff45dca879b0be5d9ac7189ddc",
+    "BendModel/U32.lean": "c41b9dfa3f28718ac356e17d0e23910c927a67733bfe9d26b6ac89af7d70938e",
+    "BendModel/Word.lean": "fd68f9bc1301e6a01406a1f0f934f99426d9ae52f80869e96a784b9f95275cfe",
+    "BendModel.lean": "fa4a8ba8d6ad18d8fcb3e9864996d9711536a6367e3dc911c5373d3af6f759c6",
+    "Main.lean": "82ef2b60cc7347411efbb940b4ea5650137577fb5fdac5345f339ceade8e85e8",
+    "conversion_probes.py": "6c02a99b774c445846c64e375dca0e9b0aa0060e2a92c71855588f6e40d41ab1",
+    "fidelity.py": "2103412243e16b05de319487e9eb94f85c3f9cd09894b356eb183bbfd334ee3a",
+    "lakefile.lean": "24e946bc266bf3ecefc4bccd5ea30eea46987ac37bb28edcae5a1b6cce9f165d",
+    "phase2_audit.py": "a039a57eda6385d79b2e1a939f6133683fc2088e8b8c0b4f9d512b8527564d17",
+    "phase2_bend.py": "36bc84af5cfabe81ef315363910a8c6535b24c2b5a8acf021fbe660dbf1c8b51",
+    "phase2_kernel_controls.py": "04f8a3b1b52f2f9c46fe8eefa47b56daed9acfae262492844453d3ee7b062f82",
+    "phase2_mutations.py": "dd4286900ad8098f312f3924422802348e7ce6d165be9045cbf8b4be3c275796",
+    "phase2_report.py": "956d0a92917f5d790e1fd8247d225b2e86dd95a2a31fcecd117ba0d419006371",
+    "verify.sh": "c4752607666c50821c626e8bb633e244aa790f62f1b95bcccc1faaeda4ba993d"
+  },
+  "real_sources": {
+    "PROOF.bend": "be4224828ccffa8ea225171fb13460b6dfbab6f94ac8ad381070a8889ff82ee2",
+    "u32.bend": "e81b2d072ed68b08866c21fe95a973aba7a01ad96f3b2b1b3c813316e9c22067",
+    "LAWS.bend": "366ee9e9b198ad219013a9ad3b777df6e21e55524c2c8af29982b5d3b41bb361",
+    "plan.bend": "3f8ff4fef8345e6718c120122d07264f1ca837ba0e157664cef530a91f93dd58"
+  },
+  "lean_version": "4.34.0",
+  "bend_version": "2.0.37",
+  "audit_declarations": 569,
+  "audit_theorems_including_generated": 398
+}

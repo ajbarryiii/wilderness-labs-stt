@@ -1,0 +1,1748 @@
+{
+  "arithmetic": [
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/01-Nat-cmp_bit-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{EQ{} == EQ{} : Cmp} -> Empty\n- observed : non-inferrable term\nLocation: Nat.cmp_bit\n25 |         case False{} False{}:\n26>|           {==}\n   |           ^^^^\n27 |         case False{} True{}:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.1402441260870546,
+      "law": "Nat.cmp_bit",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -16,7 +16,7 @@\n   for y: Nat\n   for +a: Bool\n   for +b: Bool\n-  {Nat.cmp(Nat.bit(a, x), Nat.bit(b, y)) == Word.cmp.fin(a, b, Nat.cmp(x, y)) : Cmp}\n+  {Nat.cmp(Nat.bit(a, x), Nat.bit(b, y)) != Word.cmp.fin(a, b, Nat.cmp(x, y)) : Cmp}\n \n def Nat.cmp_bit(x, y, a, b):\n   match x y:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/01-Nat-cmp_bit-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : LT{}\n- observed : EQ{}\nLocation: Nat.cmp_bit\n25 |         case False{} False{}:\n26>|           {==}\n   |           ^^^^\n27 |         case False{} True{}:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.1662205170141533,
+      "law": "Nat.cmp_bit",
+      "mutant": 2,
+      "intent": "shift natural/word result by one; break equal-compare tie",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -16,7 +16,7 @@\n   for y: Nat\n   for +a: Bool\n   for +b: Bool\n-  {Nat.cmp(Nat.bit(a, x), Nat.bit(b, y)) == Word.cmp.fin(a, b, Nat.cmp(x, y)) : Cmp}\n+  {Word.cmp.fin(False{}, True{}, Nat.cmp(Nat.bit(a, x), Nat.bit(b, y))) == Word.cmp.fin(a, b, Nat.cmp(x, y)) : Cmp}\n \n def Nat.cmp_bit(x, y, a, b):\n   match x y:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/02-Word-cmp_to_nat-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{EQ{} == EQ{} : Cmp} -> Empty\n- observed : non-inferrable term\nContext:\n- a : Word.Nil\n- b : Word.Nil\nLocation: Word.cmp_to_nat\n82 |     case 0n:\n83>|       {==}\n   |       ^^^^\n84 |     case 1n+p:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.13381337700411677,
+      "law": "Word.cmp_to_nat",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -75,7 +75,7 @@\n   for +n: Nat\n   for a: Word(n)\n   for b: Word(n)\n-  {Word.cmp(n, a, b) == Nat.cmp(Word.to_nat(n, a), Word.to_nat(n, b)) : Cmp}\n+  {Word.cmp(n, a, b) != Nat.cmp(Word.to_nat(n, a), Word.to_nat(n, b)) : Cmp}\n \n def Word.cmp_to_nat(n, a, b):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/02-Word-cmp_to_nat-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : LT{}\n- observed : EQ{}\nContext:\n- a : Word.Nil\n- b : Word.Nil\nLocation: Word.cmp_to_nat\n82 |     case 0n:\n83>|       {==}\n   |       ^^^^\n84 |     case 1n+p:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.15933138399850577,
+      "law": "Word.cmp_to_nat",
+      "mutant": 2,
+      "intent": "shift natural/word result by one; break equal-compare tie",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -75,7 +75,7 @@\n   for +n: Nat\n   for a: Word(n)\n   for b: Word(n)\n-  {Word.cmp(n, a, b) == Nat.cmp(Word.to_nat(n, a), Word.to_nat(n, b)) : Cmp}\n+  {Word.cmp.fin(False{}, True{}, Word.cmp(n, a, b)) == Nat.cmp(Word.to_nat(n, a), Word.to_nat(n, b)) : Cmp}\n \n def Word.cmp_to_nat(n, a, b):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/03-U32-cmp_to_nat-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{Word.cmp(32n, x, y) == Nat.cmp(Word.to_nat(32n, x), Word.to_nat(32n, y)) : Cmp} -> Empty\n- observed : {Word.cmp(32n, x, y) == Nat.cmp(Word.to_nat(32n, x), Word.to_nat(32n, y)) : Cmp}\nContext:\n- x : Word.Con<31n>\n- y : Word.Con<31n>\nLocation: U32.cmp_to_nat\n101 |     case U32{x} U32{y}:\n102>|       Word.cmp_to_nat(32n, x, y)\n    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^\n103 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.13676313089672476,
+      "law": "U32.cmp_to_nat",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -94,7 +94,7 @@\n law U32.cmp_to_nat:\n   for a: U32\n   for b: U32\n-  {U32.cmp(a, b) == Nat.cmp(U32.to_nat(a), U32.to_nat(b)) : Cmp}\n+  {U32.cmp(a, b) != Nat.cmp(U32.to_nat(a), U32.to_nat(b)) : Cmp}\n \n def U32.cmp_to_nat(a, b):\n   match a b:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/03-U32-cmp_to_nat-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Word.cmp.fin(False{}, True{}, Word.cmp(32n, x, y)) == Nat.cmp(Word.to_nat(32n, x), Word.to_nat(32n, y)) : Cmp}\n- observed : {Word.cmp(32n, x, y) == Nat.cmp(Word.to_nat(32n, x), Word.to_nat(32n, y)) : Cmp}\nContext:\n- x : Word.Con<31n>\n- y : Word.Con<31n>\nLocation: U32.cmp_to_nat\n101 |     case U32{x} U32{y}:\n102>|       Word.cmp_to_nat(32n, x, y)\n    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^\n103 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.16106192592997104,
+      "law": "U32.cmp_to_nat",
+      "mutant": 2,
+      "intent": "shift natural/word result by one; break equal-compare tie",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -94,7 +94,7 @@\n law U32.cmp_to_nat:\n   for a: U32\n   for b: U32\n-  {U32.cmp(a, b) == Nat.cmp(U32.to_nat(a), U32.to_nat(b)) : Cmp}\n+  {Word.cmp.fin(False{}, True{}, U32.cmp(a, b)) == Nat.cmp(U32.to_nat(a), U32.to_nat(b)) : Cmp}\n \n def U32.cmp_to_nat(a, b):\n   match a b:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/04-U32-le_trans-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{Cmp.is_le(U32.cmp(a, c)) == True{} : Bool} -> Empty\n- observed : {Cmp.is_le(U32.cmp(a, c)) == True{} : Bool}\nContext:\n- a  : U32\n- b  : U32\n- c  : U32\n- ab : {Cmp.is_le(U32.cmp(a, b)) == True{} : Bool}\n- bc : {Cmp.is_le(U32.cmp(b, c)) == True{} : Bool}\nLocation: U32.le_trans\n113 | def U32.le_trans(a, b, c, ab, bc):\n114>|   %Equal.sym(Cmp, U32.cmp(a, c), Nat.cmp(U32.to_nat(a), U32.to_nat(c)), U32.cmp_to_nat(a, c)) : {Cmp.is_le(_) == True{} : Bool}\n    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n115 |   N.le_trans(U32.to_nat(a), U32.to_nat(b), U32.to_nat(c),\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.14363396388944238,
+      "law": "U32.le_trans",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -108,7 +108,7 @@\n   for +c: U32\n   for ab: {U32.is_le(a, b) == True{} : Bool}\n   for bc: {U32.is_le(b, c) == True{} : Bool}\n-  {U32.is_le(a, c) == True{} : Bool}\n+  {U32.is_le(a, c) != True{} : Bool}\n \n def U32.le_trans(a, b, c, ab, bc):\n   %Equal.sym(Cmp, U32.cmp(a, c), Nat.cmp(U32.to_nat(a), U32.to_nat(c)), U32.cmp_to_nat(a, c)) : {Cmp.is_le(_) == True{} : Bool}\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/04-U32-le_trans-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Cmp.is_le(U32.cmp(b, c)) == True{} : Bool}\n- observed : Unit\nContext:\n- a  : U32\n- b  : U32\n- c  : U32\n- ab : {Cmp.is_le(U32.cmp(a, b)) == True{} : Bool}\n- bc : Unit\nLocation: U32.le_trans\n120 |       Equal.sym(Bool, U32.is_le(b, c), Nat.is_le(U32.to_nat(b), U32.to_nat(c)),\n121>|         Equal.cong(Cmp, Bool, Cmp.is_le, U32.cmp(b, c), Nat.cmp(U32.to_nat(b), U32.to_nat(c)), U32.cmp_to_nat(b, c))), bc))\n    |                                                                                                                        ^^\n122 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.16820244397968054,
+      "law": "U32.le_trans",
+      "mutant": 2,
+      "intent": "drop hypothesis bc by replacing its proposition with Unit",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -107,7 +107,7 @@\n   for +b: U32\n   for +c: U32\n   for ab: {U32.is_le(a, b) == True{} : Bool}\n-  for bc: {U32.is_le(b, c) == True{} : Bool}\n+  for bc: Unit\n   {U32.is_le(a, c) == True{} : Bool}\n \n def U32.le_trans(a, b, c, ab, bc):\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/05-Nat-sub_bit-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{1n == 0n : Nat} -> Empty\n- observed : {1n == 0n : Nat}\nContext:\n- h : {False{} == True{} : Bool}\nLocation: Nat.sub_bit\n230 |         case False{} False{} False{}:\n231>|           Empty.absurd({Nat.bit(Bool.sub_low(False{}, False{}, False{}), Nat.sub_carry(Bool.sub_carry(False{}, False{}, False{}), 0n, 0n)) == Nat.sub_carry(False{}, Nat.bit(False{}, 0n), Nat.bit(False{}, 0n)) : Nat}, N.internal_false_ne_true(h))\n    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n232 |         case False{} False{} True{}:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.13495290407445282,
+      "law": "Nat.sub_bit",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -221,7 +221,7 @@\n   for +c: Bool\n   for h: Nat.sub_ok(Bool.sub_carry(a, b, c), x, y)\n   {Nat.bit(Bool.sub_low(a, b, c), Nat.sub_carry(Bool.sub_carry(a, b, c), x, y))\n-    == Nat.sub_carry(c, Nat.bit(a, x), Nat.bit(b, y)) : Nat}\n+    != Nat.sub_carry(c, Nat.bit(a, x), Nat.bit(b, y)) : Nat}\n \n def Nat.sub_bit(x, y, a, b, c, h):\n   match x y:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/05-Nat-sub_bit-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {False{} == True{} : Bool}\n- observed : Unit\nContext:\n- h : Unit\nLocation: Nat.sub_bit\n230 |         case False{} False{} False{}:\n231>|           Empty.absurd({Nat.bit(Bool.sub_low(False{}, False{}, False{}), Nat.sub_carry(Bool.sub_carry(False{}, False{}, False{}), 0n, 0n)) == Nat.sub_carry(False{}, Nat.bit(False{}, 0n), Nat.bit(False{}, 0n)) : Nat}, N.internal_false_ne_true(h))\n    |                                                                                                                                                                                                                                                   ^\n232 |         case False{} False{} True{}:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.1681056539528072,
+      "law": "Nat.sub_bit",
+      "mutant": 2,
+      "intent": "drop hypothesis h by replacing its proposition with Unit",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -219,7 +219,7 @@\n   for +a: Bool\n   for +b: Bool\n   for +c: Bool\n-  for h: Nat.sub_ok(Bool.sub_carry(a, b, c), x, y)\n+  for h: Unit\n   {Nat.bit(Bool.sub_low(a, b, c), Nat.sub_carry(Bool.sub_carry(a, b, c), x, y))\n     == Nat.sub_carry(c, Nat.bit(a, x), Nat.bit(b, y)) : Nat}\n \n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/06-Word-to_nat_sub_carry-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{0n == 0n : Nat} -> Empty\n- observed : {0n == 0n : Nat}\nContext:\n- a : Word.Nil\n- b : Word.Nil\n- h : {False{} == True{} : Bool}\nLocation: Word.to_nat_sub_carry\n320 |         case False{}:\n321>|           Empty.absurd({0n == 0n : Nat}, N.internal_false_ne_true(h))\n    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n322 |         case True{}:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.12117362301796675,
+      "law": "Word.to_nat_sub_carry",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -311,7 +311,7 @@\n   for +c: Bool\n   for +h: Nat.sub_ok(c, Word.to_nat(n, a), Word.to_nat(n, b))\n   {Word.to_nat(n, Word.adc(n, a, b, True{}, c))\n-    == Nat.sub_carry(c, Word.to_nat(n, a), Word.to_nat(n, b)) : Nat}\n+    != Nat.sub_carry(c, Word.to_nat(n, a), Word.to_nat(n, b)) : Nat}\n \n def Word.to_nat_sub_carry(n, a, b, c, h):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/06-Word-to_nat_sub_carry-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {False{} == True{} : Bool}\n- observed : Unit\nContext:\n- a : Word.Nil\n- b : Word.Nil\n- h : Unit\nLocation: Word.to_nat_sub_carry\n320 |         case False{}:\n321>|           Empty.absurd({0n == 0n : Nat}, N.internal_false_ne_true(h))\n    |                                                                   ^\n322 |         case True{}:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17032759299036115,
+      "law": "Word.to_nat_sub_carry",
+      "mutant": 2,
+      "intent": "drop hypothesis h by replacing its proposition with Unit",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -309,7 +309,7 @@\n   for +a: Word(n)\n   for +b: Word(n)\n   for +c: Bool\n-  for +h: Nat.sub_ok(c, Word.to_nat(n, a), Word.to_nat(n, b))\n+  for +h: Unit\n   {Word.to_nat(n, Word.adc(n, a, b, True{}, c))\n     == Nat.sub_carry(c, Word.to_nat(n, a), Word.to_nat(n, b)) : Nat}\n \n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/07-U32-to_nat_sub-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{Word.to_nat(32n, Word.adc(32n, x, y, True{}, True{})) == Nat.sub(Word.to_nat(32n, x), Word.to_nat(32n, y)) : Nat} -> Empty\n- observed : {Word.to_nat(32n, Word.adc(32n, x, y, True{}, True{})) == Nat.sub(Word.to_nat(32n, x), Word.to_nat(32n, y)) : Nat}\nContext:\n- x : Word.Con<31n>\n- y : Word.Con<31n>\n- h : {Cmp.is_le(Word.cmp(32n, y, x)) == True{} : Bool}\nLocation: U32.to_nat_sub\n369 |     case U32{+x} U32{+y}:\n370>|       Word.to_nat_sub_carry(32n, x, y, True{},\n    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n371 |         Equal.trans(Bool, Nat.is_ge(Word.to_nat(32n, x), Word.to_nat(32n, y)), Nat.is_le(Word.to_nat(32n, y), Word.to_nat(32n, x)), True{},\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.14484417997300625,
+      "law": "U32.to_nat_sub",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -362,7 +362,7 @@\n   for +a: U32\n   for +b: U32\n   for h: {U32.is_le(b, a) == True{} : Bool}\n-  {U32.to_nat(U32.sub(a, b)) == Nat.sub(U32.to_nat(a), U32.to_nat(b)) : Nat}\n+  {U32.to_nat(U32.sub(a, b)) != Nat.sub(U32.to_nat(a), U32.to_nat(b)) : Nat}\n \n def U32.to_nat_sub(a, b, h):\n   match a b:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/07-U32-to_nat_sub-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Cmp.is_le(Word.cmp(32n, y, x)) == True{} : Bool}\n- observed : Unit\nContext:\n- x : Word.Con<31n>\n- y : Word.Con<31n>\n- h : Unit\nLocation: U32.to_nat_sub\n374 |             Equal.cong(Cmp, Bool, Cmp.is_le, Nat.cmp(Word.to_nat(32n, y), Word.to_nat(32n, x)), Word.cmp(32n, y, x),\n375>|               Equal.sym(Cmp, Word.cmp(32n, y, x), Nat.cmp(Word.to_nat(32n, y), Word.to_nat(32n, x)), Word.cmp_to_nat(32n, y, x))), h)))\n    |                                                                                                                                    ^\n376 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.16388982394710183,
+      "law": "U32.to_nat_sub",
+      "mutant": 2,
+      "intent": "drop hypothesis h by replacing its proposition with Unit",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -361,7 +361,7 @@\n law U32.to_nat_sub:\n   for +a: U32\n   for +b: U32\n-  for h: {U32.is_le(b, a) == True{} : Bool}\n+  for h: Unit\n   {U32.to_nat(U32.sub(a, b)) == Nat.sub(U32.to_nat(a), U32.to_nat(b)) : Nat}\n \n def U32.to_nat_sub(a, b, h):\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/08-Word-to_nat_bound-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{True{} == True{} : Bool} -> Empty\n- observed : non-inferrable term\nContext:\n- a : Word.Nil\nLocation: Word.to_nat_bound\n393 |     case 0n:\n394>|       {==}\n    |       ^^^^\n395 |     case 1n+p:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17483574606012553,
+      "law": "Word.to_nat_bound",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -386,7 +386,7 @@\n law Word.to_nat_bound:\n   for +n: Nat\n   for a: Word(n)\n-  {Nat.is_le(Word.to_nat(n, a), Word.max_nat(n)) == True{} : Bool}\n+  {Nat.is_le(Word.to_nat(n, a), Word.max_nat(n)) != True{} : Bool}\n \n def Word.to_nat_bound(n, a):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/08-Word-to_nat_bound-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : False{}\n- observed : True{}\nContext:\n- a : Word.Nil\nLocation: Word.to_nat_bound\n393 |     case 0n:\n394>|       {==}\n    |       ^^^^\n395 |     case 1n+p:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.1357918611029163,
+      "law": "Word.to_nat_bound",
+      "mutant": 2,
+      "intent": "make non-strict/equality test strict",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -386,7 +386,7 @@\n law Word.to_nat_bound:\n   for +n: Nat\n   for a: Word(n)\n-  {Nat.is_le(Word.to_nat(n, a), Word.max_nat(n)) == True{} : Bool}\n+  {Nat.is_lt(Word.to_nat(n, a), Word.max_nat(n)) == True{} : Bool}\n \n def Word.to_nat_bound(n, a):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/09-Nat-cmp_double-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{EQ{} == EQ{} : Cmp} -> Empty\n- observed : non-inferrable term\nLocation: Nat.cmp_double\n412 |     case 0n 0n:\n413>|       {==}\n    |       ^^^^\n414 |     case 0n 1n+q:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17141032498329878,
+      "law": "Nat.cmp_double",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -405,7 +405,7 @@\n law Nat.cmp_double:\n   for x: Nat\n   for y: Nat\n-  {Nat.cmp(x, y) == Nat.cmp(Nat.double(x), Nat.double(y)) : Cmp}\n+  {Nat.cmp(x, y) != Nat.cmp(Nat.double(x), Nat.double(y)) : Cmp}\n \n def Nat.cmp_double(x, y):\n   match x y:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/09-Nat-cmp_double-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : LT{}\n- observed : EQ{}\nLocation: Nat.cmp_double\n412 |     case 0n 0n:\n413>|       {==}\n    |       ^^^^\n414 |     case 0n 1n+q:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.13878717098850757,
+      "law": "Nat.cmp_double",
+      "mutant": 2,
+      "intent": "shift natural/word result by one; break equal-compare tie",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -405,7 +405,7 @@\n law Nat.cmp_double:\n   for x: Nat\n   for y: Nat\n-  {Nat.cmp(x, y) == Nat.cmp(Nat.double(x), Nat.double(y)) : Cmp}\n+  {Word.cmp.fin(False{}, True{}, Nat.cmp(x, y)) == Nat.cmp(Nat.double(x), Nat.double(y)) : Cmp}\n \n def Nat.cmp_double(x, y):\n   match x y:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/10-Word-to_nat_inc-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{0n == 1n : Nat} -> Empty\n- observed : {0n == 1n : Nat}\nContext:\n- a : Word.Nil\n- h : {False{} == True{} : Bool}\nLocation: Word.to_nat_inc\n430 |     case 0n:\n431>|       Empty.absurd({0n == 1n : Nat}, N.internal_false_ne_true(h))\n    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n432 |     case 1n+p:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17593143798876554,
+      "law": "Word.to_nat_inc",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -423,7 +423,7 @@\n   for +n: Nat\n   for +a: Word(n)\n   for h: {Nat.is_lt(Word.to_nat(n, a), Word.max_nat(n)) == True{} : Bool}\n-  {Word.to_nat(n, Word.inc(n, a)) == 1n+Word.to_nat(n, a) : Nat}\n+  {Word.to_nat(n, Word.inc(n, a)) != 1n+Word.to_nat(n, a) : Nat}\n \n def Word.to_nat_inc(n, a, h):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/10-Word-to_nat_inc-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {False{} == True{} : Bool}\n- observed : Unit\nContext:\n- a : Word.Nil\n- h : Unit\nLocation: Word.to_nat_inc\n430 |     case 0n:\n431>|       Empty.absurd({0n == 1n : Nat}, N.internal_false_ne_true(h))\n    |                                                               ^\n432 |     case 1n+p:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.1668703919276595,
+      "law": "Word.to_nat_inc",
+      "mutant": 2,
+      "intent": "drop hypothesis h by replacing its proposition with Unit",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -422,7 +422,7 @@\n law Word.to_nat_inc:\n   for +n: Nat\n   for +a: Word(n)\n-  for h: {Nat.is_lt(Word.to_nat(n, a), Word.max_nat(n)) == True{} : Bool}\n+  for h: Unit\n   {Word.to_nat(n, Word.inc(n, a)) == 1n+Word.to_nat(n, a) : Nat}\n \n def Word.to_nat_inc(n, a, h):\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/11-U32-to_nat_bound-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "746 |     }\n747 |     case \"Min\": {\n748 |       return Min(term_higher(tm.a, env), term_higher(tm.b, env), tm.s);\n749 |     }\n750 |     case \"App\": {\n751 |       const f = term_higher(tm.f, env);\n                      ^\nRangeError: Maximum call stack size exceeded.\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:751:17)\n      at map (1:11)\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:762:29)\n      at map (1:11)\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:762:29)\n      at term_wnf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:2845:19)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3004:14)\n      at map (1:11)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3029:29)\n      at map (1:11)\n      at async cli (<nix-store>/bend2-2.0.37/share/bend2/bend2/main.ts:155:11)\n\nBun v1.4.2 (Linux x64)\n",
+      "passed": false,
+      "rejected": false,
+      "elapsed_seconds": 0.1580700681079179,
+      "law": "U32.to_nat_bound",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -454,7 +454,7 @@\n # Every U32 converts to a natural in [0, 2^32 - 1], using the symbolic width bound.\n law U32.to_nat_bound:\n   for +a: U32\n-  {Nat.is_le(U32.to_nat(a), Word.max_nat(32n)) == True{} : Bool}\n+  {Nat.is_le(U32.to_nat(a), Word.max_nat(32n)) != True{} : Bool}\n \n def U32.to_nat_bound(a):\n   %U32.word_nat(a) : {Nat.is_le(_, Word.max_nat(32n)) == True{} : Bool}\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/11-U32-to_nat_bound-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "757 |     }\n758 |     case \"ADT\": {\n759 |       return ADT(tm.k, tm.x.map((x) => term_higher(x, env)), tm.s, tm.r);\n760 |     }\n761 |     case \"Ctr\": {\n762 |       return Ctr(tm.k, tm.x.map((x) => term_higher(x, env)), tm.s);\n                                  ^\nRangeError: Maximum call stack size exceeded.\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:762:29)\n      at map (1:11)\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:762:29)\n      at term_wnf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:2845:19)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3004:14)\n      at map (1:11)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3029:29)\n      at map (1:11)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3029:29)\n      at map (1:11)\n      at async cli (<nix-store>/bend2-2.0.37/share/bend2/bend2/main.ts:155:11)\n\nBun v1.4.2 (Linux x64)\n",
+      "passed": false,
+      "rejected": false,
+      "elapsed_seconds": 0.17636370798572898,
+      "law": "U32.to_nat_bound",
+      "mutant": 2,
+      "intent": "make non-strict/equality test strict",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -454,7 +454,7 @@\n # Every U32 converts to a natural in [0, 2^32 - 1], using the symbolic width bound.\n law U32.to_nat_bound:\n   for +a: U32\n-  {Nat.is_le(U32.to_nat(a), Word.max_nat(32n)) == True{} : Bool}\n+  {Nat.is_lt(U32.to_nat(a), Word.max_nat(32n)) == True{} : Bool}\n \n def U32.to_nat_bound(a):\n   %U32.word_nat(a) : {Nat.is_le(_, Word.max_nat(32n)) == True{} : Bool}\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/12-U32-to_nat_inc-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "746 |     }\n747 |     case \"Min\": {\n748 |       return Min(term_higher(tm.a, env), term_higher(tm.b, env), tm.s);\n749 |     }\n750 |     case \"App\": {\n751 |       const f = term_higher(tm.f, env);\n                      ^\nRangeError: Maximum call stack size exceeded.\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:751:17)\n      at map (1:11)\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:762:29)\n      at map (1:11)\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:762:29)\n      at term_wnf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:2845:19)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3004:14)\n      at map (1:11)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3029:29)\n      at map (1:11)\n      at async cli (<nix-store>/bend2-2.0.37/share/bend2/bend2/main.ts:155:11)\n\nBun v1.4.2 (Linux x64)\n",
+      "passed": false,
+      "rejected": false,
+      "elapsed_seconds": 0.1885912569705397,
+      "law": "U32.to_nat_inc",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -470,7 +470,7 @@\n law U32.to_nat_inc:\n   for +a: U32\n   for h: {Nat.is_lt(U32.to_nat(a), Word.max_nat(32n)) == True{} : Bool}\n-  {U32.to_nat(U32.inc(a)) == 1n+U32.to_nat(a) : Nat}\n+  {U32.to_nat(U32.inc(a)) != 1n+U32.to_nat(a) : Nat}\n \n def U32.to_nat_inc(a, h):\n   Equal.trans(Nat, U32.to_nat(U32.inc(a)), Word.to_nat(32n, Word.inc(32n, U32.word(a))), 1n+U32.to_nat(a),\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/12-U32-to_nat_inc-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "746 |     }\n747 |     case \"Min\": {\n748 |       return Min(term_higher(tm.a, env), term_higher(tm.b, env), tm.s);\n749 |     }\n750 |     case \"App\": {\n751 |       const f = term_higher(tm.f, env);\n                      ^\nRangeError: Maximum call stack size exceeded.\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:751:17)\n      at map (1:11)\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:762:29)\n      at map (1:11)\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:762:29)\n      at term_wnf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:2845:19)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3004:14)\n      at map (1:11)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3029:29)\n      at map (1:11)\n      at async cli (<nix-store>/bend2-2.0.37/share/bend2/bend2/main.ts:155:11)\n\nBun v1.4.2 (Linux x64)\n",
+      "passed": false,
+      "rejected": false,
+      "elapsed_seconds": 0.1792648519622162,
+      "law": "U32.to_nat_inc",
+      "mutant": 2,
+      "intent": "drop hypothesis h by replacing its proposition with Unit",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -469,7 +469,7 @@\n # Increment converts to successor only when it cannot wrap.\n law U32.to_nat_inc:\n   for +a: U32\n-  for h: {Nat.is_lt(U32.to_nat(a), Word.max_nat(32n)) == True{} : Bool}\n+  for h: Unit\n   {U32.to_nat(U32.inc(a)) == 1n+U32.to_nat(a) : Nat}\n \n def U32.to_nat_inc(a, h):\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/13-Word-to_nat_zero-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{0n == 0n : Nat} -> Empty\n- observed : non-inferrable term\nLocation: Word.to_nat_zero\n491 |     case 0n:\n492>|       {==}\n    |       ^^^^\n493 |     case 1n+p:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.13814275397453457,
+      "law": "Word.to_nat_zero",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -484,7 +484,7 @@\n # The natural value of a zero word is zero at every width.\n law Word.to_nat_zero:\n   for n: Nat\n-  {Word.to_nat(n, Word.zero(n)) == 0n : Nat}\n+  {Word.to_nat(n, Word.zero(n)) != 0n : Nat}\n \n def Word.to_nat_zero(n):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/13-Word-to_nat_zero-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : 1n\n- observed : 0n\nLocation: Word.to_nat_zero\n491 |     case 0n:\n492>|       {==}\n    |       ^^^^\n493 |     case 1n+p:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17142511194106191,
+      "law": "Word.to_nat_zero",
+      "mutant": 2,
+      "intent": "shift natural/word result by one; break equal-compare tie",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -484,7 +484,7 @@\n # The natural value of a zero word is zero at every width.\n law Word.to_nat_zero:\n   for n: Nat\n-  {Word.to_nat(n, Word.zero(n)) == 0n : Nat}\n+  {1n+Word.to_nat(n, Word.zero(n)) == 0n : Nat}\n \n def Word.to_nat_zero(n):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/14-Word-to_nat_from_nat-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{Word.to_nat(n, Word.zero(n)) == 0n : Nat} -> Empty\n- observed : {Word.to_nat(n, Word.zero(n)) == 0n : Nat}\nContext:\n- n : Nat\n- h : {Cmp.is_le(Nat.cmp(0n, Word.max_nat(n))) == True{} : Bool}\nLocation: Word.to_nat_from_nat\n513 |     case 0n:\n514>|       Word.to_nat_zero(n)\n    |       ^^^^^^^^^^^^^^^^^^^\n515 |     case 1n++p:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.1389838350005448,
+      "law": "Word.to_nat_from_nat",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -506,7 +506,7 @@\n   for +m: Nat\n   for +n: Nat\n   for +h: {Nat.is_le(m, Word.max_nat(n)) == True{} : Bool}\n-  {Word.to_nat(n, Word.from_nat(m, n)) == m : Nat}\n+  {Word.to_nat(n, Word.from_nat(m, n)) != m : Nat}\n \n def Word.to_nat_from_nat(m, n, h):\n   match m:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/14-Word-to_nat_from_nat-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Cmp.is_le(Nat.cmp(1n+p, Word.max_nat(n))) == True{} : Bool}\n- observed : Unit\nContext:\n- p : Nat\n- n : Nat\n- h : Unit\nLocation: Word.to_nat_from_nat\n515 |     case 1n++p:\n516>|       +hp = N.le_of_lt(p, Word.max_nat(n), N.lt_of_succ_le(p, Word.max_nat(n), h))\n    |                                                                                ^\n517 |       Equal.trans(Nat, Word.to_nat(n, Word.inc(n, Word.from_nat(p, n))), 1n+Word.to_nat(n, Word.from_nat(p, n)), 1n+p,\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17309868102893233,
+      "law": "Word.to_nat_from_nat",
+      "mutant": 2,
+      "intent": "drop hypothesis h by replacing its proposition with Unit",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -505,7 +505,7 @@\n law Word.to_nat_from_nat:\n   for +m: Nat\n   for +n: Nat\n-  for +h: {Nat.is_le(m, Word.max_nat(n)) == True{} : Bool}\n+  for +h: Unit\n   {Word.to_nat(n, Word.from_nat(m, n)) == m : Nat}\n \n def Word.to_nat_from_nat(m, n, h):\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/15-U32-from_nat_word-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{0 == 0 : U32} -> Empty\n- observed : non-inferrable term\nLocation: U32.from_nat_word\n531 |     case 0n:\n532>|       {==}\n    |       ^^^^\n533 |     case 1n++p:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.16745647904463112,
+      "law": "U32.from_nat_word",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -524,7 +524,7 @@\n # U32.from_nat is the width-32 instance of Word.from_nat, including wrapping.\n law U32.from_nat_word:\n   for +n: Nat\n-  {U32{Word.from_nat(n, 32n)} == U32.from_nat(n) : U32}\n+  {U32{Word.from_nat(n, 32n)} != U32.from_nat(n) : U32}\n \n def U32.from_nat_word(n):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/15-U32-from_nat_word-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : 1\n- observed : 0\nLocation: U32.from_nat_word\n531 |     case 0n:\n532>|       {==}\n    |       ^^^^\n533 |     case 1n++p:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.14040544303134084,
+      "law": "U32.from_nat_word",
+      "mutant": 2,
+      "intent": "shift natural/word result by one; break equal-compare tie",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -524,7 +524,7 @@\n # U32.from_nat is the width-32 instance of Word.from_nat, including wrapping.\n law U32.from_nat_word:\n   for +n: Nat\n-  {U32{Word.from_nat(n, 32n)} == U32.from_nat(n) : U32}\n+  {U32.inc(U32{Word.from_nat(n, 32n)}) == U32.from_nat(n) : U32}\n \n def U32.from_nat_word(n):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/16-U32-to_nat_from_nat-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "746 |     }\n747 |     case \"Min\": {\n748 |       return Min(term_higher(tm.a, env), term_higher(tm.b, env), tm.s);\n749 |     }\n750 |     case \"App\": {\n751 |       const f = term_higher(tm.f, env);\n                      ^\nRangeError: Maximum call stack size exceeded.\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:751:17)\n      at map (1:11)\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:762:29)\n      at map (1:11)\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:762:29)\n      at term_wnf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:2845:19)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3004:14)\n      at map (1:11)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3029:29)\n      at map (1:11)\n      at async cli (<nix-store>/bend2-2.0.37/share/bend2/bend2/main.ts:155:11)\n\nBun v1.4.2 (Linux x64)\n",
+      "passed": false,
+      "rejected": false,
+      "elapsed_seconds": 0.18906483601313084,
+      "law": "U32.to_nat_from_nat",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -539,7 +539,7 @@\n law U32.to_nat_from_nat:\n   for +n: Nat\n   for h: {Nat.is_le(n, Word.max_nat(32n)) == True{} : Bool}\n-  {U32.to_nat(U32.from_nat(n)) == n : Nat}\n+  {U32.to_nat(U32.from_nat(n)) != n : Nat}\n \n def U32.to_nat_from_nat(n, h):\n   %U32.from_nat_word(n) : {U32.to_nat(_) == n : Nat}\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/16-U32-to_nat_from_nat-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "746 |     }\n747 |     case \"Min\": {\n748 |       return Min(term_higher(tm.a, env), term_higher(tm.b, env), tm.s);\n749 |     }\n750 |     case \"App\": {\n751 |       const f = term_higher(tm.f, env);\n                      ^\nRangeError: Maximum call stack size exceeded.\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:751:17)\n      at map (1:11)\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:762:29)\n      at map (1:11)\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:762:29)\n      at term_wnf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:2845:19)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3004:14)\n      at map (1:11)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3029:29)\n      at map (1:11)\n      at async cli (<nix-store>/bend2-2.0.37/share/bend2/bend2/main.ts:155:11)\n\nBun v1.4.2 (Linux x64)\n",
+      "passed": false,
+      "rejected": false,
+      "elapsed_seconds": 0.18426005903165787,
+      "law": "U32.to_nat_from_nat",
+      "mutant": 2,
+      "intent": "drop hypothesis h by replacing its proposition with Unit",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -538,7 +538,7 @@\n # so the proof never expands a 4-billion-constructor Peano literal.\n law U32.to_nat_from_nat:\n   for +n: Nat\n-  for h: {Nat.is_le(n, Word.max_nat(32n)) == True{} : Bool}\n+  for h: Unit\n   {U32.to_nat(U32.from_nat(n)) == n : Nat}\n \n def U32.to_nat_from_nat(n, h):\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/17-Word-adc_carry-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{WNil{} == WNil{} : Word.Nil} -> Empty\n- observed : non-inferrable term\nContext:\n- a : Word.Nil\n- b : Word.Nil\nLocation: Word.adc_carry\n558 |     case 0n:\n559>|       {==}\n    |       ^^^^\n560 |     case 1n+p:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.12577650300227106,
+      "law": "Word.adc_carry",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -551,7 +551,7 @@\n   for +n: Nat\n   for a: Word(n)\n   for b: Word(n)\n-  {Word.adc(n, a, b, False{}, True{}) == Word.inc(n, Word.adc(n, a, b, False{}, False{})) : Word(n)}\n+  {Word.adc(n, a, b, False{}, True{}) != Word.inc(n, Word.adc(n, a, b, False{}, False{})) : Word(n)}\n \n def Word.adc_carry(n, a, b):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/17-Word-adc_carry-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : WCon{False{}, Word.inc(p, Word.adc(p, at, bt, False{}, False{}))}\n- observed : WCon{True{}, Word.adc(p, at, bt, False{}, False{})}\nContext:\n- p  : Nat\n- at : Word(p)\n- bt : Word(p)\nLocation: Word.adc_carry\n562 |         case WCon{False{}, at} WCon{False{}, bt}:\n563>|           {==}\n    |           ^^^^\n564 |         case WCon{False{}, +at} WCon{True{}, +bt}:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17343247798271477,
+      "law": "Word.adc_carry",
+      "mutant": 2,
+      "intent": "shift natural/word result by one; break equal-compare tie",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -551,7 +551,7 @@\n   for +n: Nat\n   for a: Word(n)\n   for b: Word(n)\n-  {Word.adc(n, a, b, False{}, True{}) == Word.inc(n, Word.adc(n, a, b, False{}, False{})) : Word(n)}\n+  {Word.inc(n, Word.adc(n, a, b, False{}, True{})) == Word.inc(n, Word.adc(n, a, b, False{}, False{})) : Word(n)}\n \n def Word.adc_carry(n, a, b):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/18-Word-add_inc-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{WNil{} == WNil{} : Word.Nil} -> Empty\n- observed : non-inferrable term\nContext:\n- a : Word.Nil\n- b : Word.Nil\nLocation: Word.add_inc\n582 |     case 0n:\n583>|       {==}\n    |       ^^^^\n584 |     case 1n+p:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.13695932703558356,
+      "law": "Word.add_inc",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -575,7 +575,7 @@\n   for +n: Nat\n   for +a: Word(n)\n   for +b: Word(n)\n-  {Word.add(n, a, Word.inc(n, b)) == Word.inc(n, Word.add(n, a, b)) : Word(n)}\n+  {Word.add(n, a, Word.inc(n, b)) != Word.inc(n, Word.add(n, a, b)) : Word(n)}\n \n def Word.add_inc(n, a, b):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/18-Word-add_inc-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : WCon{False{}, Word.inc(p, Word.adc(p, at, bt, False{}, False{}))}\n- observed : WCon{True{}, Word.adc(p, at, bt, False{}, False{})}\nContext:\n- p  : Nat\n- at : Word(p)\n- bt : Word(p)\nLocation: Word.add_inc\n586 |         case WCon{False{}, at} WCon{False{}, bt}:\n587>|           {==}\n    |           ^^^^\n588 |         case WCon{True{}, +at} WCon{False{}, +bt}:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.16385569609701633,
+      "law": "Word.add_inc",
+      "mutant": 2,
+      "intent": "shift natural/word result by one; break equal-compare tie",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -575,7 +575,7 @@\n   for +n: Nat\n   for +a: Word(n)\n   for +b: Word(n)\n-  {Word.add(n, a, Word.inc(n, b)) == Word.inc(n, Word.add(n, a, b)) : Word(n)}\n+  {Word.inc(n, Word.add(n, a, Word.inc(n, b))) == Word.inc(n, Word.add(n, a, b)) : Word(n)}\n \n def Word.add_inc(n, a, b):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/19-Word-add_zero-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{WNil{} == WNil{} : Word.Nil} -> Empty\n- observed : non-inferrable term\nLocation: Word.add_zero\n610 |         case WNil{}:\n611>|           {==}\n    |           ^^^^\n612 |     case 1n+p:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17714108701329678,
+      "law": "Word.add_zero",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -601,7 +601,7 @@\n law Word.add_zero:\n   for +n: Nat\n   for +a: Word(n)\n-  {Word.add(n, a, Word.zero(n)) == a : Word(n)}\n+  {Word.add(n, a, Word.zero(n)) != a : Word(n)}\n \n def Word.add_zero(n, a):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/19-Word-add_zero-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Word.adc(p, t, Word.zero(p), False{}, False{}) == t : Word(p)}\n- observed : {Word.inc(p, Word.adc(p, t, Word.zero(p), False{}, False{})) == t : Word(p)}\nContext:\n- p : Nat\n- t : Word(p)\nLocation: Word.add_zero\n614 |         case WCon{False{}, +t}:\n615>|           Equal.cong(Word(p), Word(1n+p), w => WCon{False{}, w}, Word.add(p, t, Word.zero(p)), t, Word.add_zero(p, t))\n    |                                                                                                   ^^^^^^^^^^^^^^^^^^^\n616 |         case WCon{True{}, +t}:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.14559658197686076,
+      "law": "Word.add_zero",
+      "mutant": 2,
+      "intent": "shift natural/word result by one; break equal-compare tie",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -601,7 +601,7 @@\n law Word.add_zero:\n   for +n: Nat\n   for +a: Word(n)\n-  {Word.add(n, a, Word.zero(n)) == a : Word(n)}\n+  {Word.inc(n, Word.add(n, a, Word.zero(n))) == a : Word(n)}\n \n def Word.add_zero(n, a):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/20-U32-add_one-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{U32{Word.adc(32n, w, WCon{True{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WNil{}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}, False{}, False{})} == U32{Word.inc(32n, w)} : U32} -> Empty\n- observed : {U32{Word.adc(32n, w, WCon{True{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WNil{}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}, False{}, False{})} == U32{Word.inc(32n, w)} : U32}\nContext:\n- w : Word.Con<31n>\nLocation: U32.add_one\n626 |     case U32{+w}:\n627>|       Equal.cong(Word(32n), U32, x => U32{x}, Word.add(32n, w, Word.inc(32n, Word.zero(32n))), Word.inc(32n, w),\n    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n628 |         Equal.trans(Word(32n), Word.add(32n, w, Word.inc(32n, Word.zero(32n))), Word.inc(32n, Word.add(32n, w, Word.zero(32n))), Word.inc(32n, w),\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17133525596000254,
+      "law": "U32.add_one",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -619,7 +619,7 @@\n # Adding one agrees with increment, including wraparound.\n law U32.add_one:\n   for +a: U32\n-  {U32.add(a, 1) == U32.inc(a) : U32}\n+  {U32.add(a, 1) != U32.inc(a) : U32}\n \n def U32.add_one(a):\n   match a:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/20-U32-add_one-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {U32{Word.inc(32n, Word.adc(32n, w, WCon{True{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WNil{}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}, False{}, False{}))} == U32{Word.inc(32n, w)} : U32}\n- observed : {U32{Word.adc(32n, w, WCon{True{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WNil{}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}, False{}, False{})} == U32{Word.inc(32n, w)} : U32}\nContext:\n- w : Word.Con<31n>\nLocation: U32.add_one\n626 |     case U32{+w}:\n627>|       Equal.cong(Word(32n), U32, x => U32{x}, Word.add(32n, w, Word.inc(32n, Word.zero(32n))), Word.inc(32n, w),\n    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n628 |         Equal.trans(Word(32n), Word.add(32n, w, Word.inc(32n, Word.zero(32n))), Word.inc(32n, Word.add(32n, w, Word.zero(32n))), Word.inc(32n, w),\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.14655694307293743,
+      "law": "U32.add_one",
+      "mutant": 2,
+      "intent": "shift natural/word result by one; break equal-compare tie",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -619,7 +619,7 @@\n # Adding one agrees with increment, including wraparound.\n law U32.add_one:\n   for +a: U32\n-  {U32.add(a, 1) == U32.inc(a) : U32}\n+  {U32.inc(U32.add(a, 1)) == U32.inc(a) : U32}\n \n def U32.add_one(a):\n   match a:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/21-U32-add_inc-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{U32{Word.adc(32n, x, Word.inc(32n, y), False{}, False{})} == U32{Word.inc(32n, Word.adc(32n, x, y, False{}, False{}))} : U32} -> Empty\n- observed : {U32{Word.adc(32n, x, Word.inc(32n, y), False{}, False{})} == U32{Word.inc(32n, Word.adc(32n, x, y, False{}, False{}))} : U32}\nContext:\n- x : Word.Con<31n>\n- y : Word.Con<31n>\nLocation: U32.add_inc\n640 |     case U32{+x} U32{+y}:\n641>|       Equal.cong(Word(32n), U32, w => U32{w}, Word.add(32n, x, Word.inc(32n, y)), Word.inc(32n, Word.add(32n, x, y)), Word.add_inc(32n, x, y))\n    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n642 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17115002102218568,
+      "law": "U32.add_inc",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -633,7 +633,7 @@\n law U32.add_inc:\n   for +a: U32\n   for +b: U32\n-  {U32.add(a, U32.inc(b)) == U32.inc(U32.add(a, b)) : U32}\n+  {U32.add(a, U32.inc(b)) != U32.inc(U32.add(a, b)) : U32}\n \n def U32.add_inc(a, b):\n   match a b:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/21-U32-add_inc-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {U32{Word.inc(32n, Word.adc(32n, x, Word.inc(32n, y), False{}, False{}))} == U32{Word.inc(32n, Word.adc(32n, x, y, False{}, False{}))} : U32}\n- observed : {U32{Word.adc(32n, x, Word.inc(32n, y), False{}, False{})} == U32{Word.inc(32n, Word.adc(32n, x, y, False{}, False{}))} : U32}\nContext:\n- x : Word.Con<31n>\n- y : Word.Con<31n>\nLocation: U32.add_inc\n640 |     case U32{+x} U32{+y}:\n641>|       Equal.cong(Word(32n), U32, w => U32{w}, Word.add(32n, x, Word.inc(32n, y)), Word.inc(32n, Word.add(32n, x, y)), Word.add_inc(32n, x, y))\n    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n642 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.1694846380269155,
+      "law": "U32.add_inc",
+      "mutant": 2,
+      "intent": "shift natural/word result by one; break equal-compare tie",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -633,7 +633,7 @@\n law U32.add_inc:\n   for +a: U32\n   for +b: U32\n-  {U32.add(a, U32.inc(b)) == U32.inc(U32.add(a, b)) : U32}\n+  {U32.inc(U32.add(a, U32.inc(b))) == U32.inc(U32.add(a, b)) : U32}\n \n def U32.add_inc(a, b):\n   match a b:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/22-U32-add_zero-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{U32{Word.adc(32n, w, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WNil{}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}, False{}, False{})} == U32{w} : U32} -> Empty\n- observed : {U32{Word.adc(32n, w, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WNil{}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}, False{}, False{})} == U32{w} : U32}\nContext:\n- w : Word.Con<31n>\nLocation: U32.add_zero\n650 |     case U32{+w}:\n651>|       Equal.cong(Word(32n), U32, x => U32{x}, Word.add(32n, w, Word.zero(32n)), w, Word.add_zero(32n, w))\n    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n652 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.14981684600934386,
+      "law": "U32.add_zero",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -643,7 +643,7 @@\n # Adding zero changes no U32.\n law U32.add_zero:\n   for +a: U32\n-  {U32.add(a, 0) == a : U32}\n+  {U32.add(a, 0) != a : U32}\n \n def U32.add_zero(a):\n   match a:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/22-U32-add_zero-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {U32{Word.inc(32n, Word.adc(32n, w, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WNil{}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}, False{}, False{}))} == U32{w} : U32}\n- observed : {U32{Word.adc(32n, w, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WCon{False{}, WNil{}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}, False{}, False{})} == U32{w} : U32}\nContext:\n- w : Word.Con<31n>\nLocation: U32.add_zero\n650 |     case U32{+w}:\n651>|       Equal.cong(Word(32n), U32, x => U32{x}, Word.add(32n, w, Word.zero(32n)), w, Word.add_zero(32n, w))\n    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n652 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17575770802795887,
+      "law": "U32.add_zero",
+      "mutant": 2,
+      "intent": "shift natural/word result by one; break equal-compare tie",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -643,7 +643,7 @@\n # Adding zero changes no U32.\n law U32.add_zero:\n   for +a: U32\n-  {U32.add(a, 0) == a : U32}\n+  {U32.inc(U32.add(a, 0)) == a : U32}\n \n def U32.add_zero(a):\n   match a:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/23-U32-add_from_nat_succ-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{U32.add(a, U32.inc(U32.from_nat(n))) == U32.add(U32.add(a, 1), U32.from_nat(n)) : U32} -> Empty\n- observed : {U32.add(a, U32.inc(U32.from_nat(n))) == U32.add(U32.add(a, 1), U32.from_nat(n)) : U32}\nContext:\n- a : U32\n- n : Nat\nLocation: U32.add_from_nat_succ\n661 | def U32.add_from_nat_succ(a, n):\n662>|   Equal.trans(U32, U32.add(a, U32.inc(U32.from_nat(n))), U32.inc(U32.add(a, U32.from_nat(n))), U32.add(U32.add(a, 1), U32.from_nat(n)),\n    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n663 |     U32.add_inc(a, U32.from_nat(n)),\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.1773363610263914,
+      "law": "U32.add_from_nat_succ",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -656,7 +656,7 @@\n law U32.add_from_nat_succ:\n   for +a: U32\n   for +n: Nat\n-  {U32.add(a, U32.from_nat(1n+n)) == U32.add(U32.add(a, 1), U32.from_nat(n)) : U32}\n+  {U32.add(a, U32.from_nat(1n+n)) != U32.add(U32.add(a, 1), U32.from_nat(n)) : U32}\n \n def U32.add_from_nat_succ(a, n):\n   Equal.trans(U32, U32.add(a, U32.inc(U32.from_nat(n))), U32.inc(U32.add(a, U32.from_nat(n))), U32.add(U32.add(a, 1), U32.from_nat(n)),\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/23-U32-add_from_nat_succ-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {U32.inc(U32.add(a, U32.inc(U32.from_nat(n)))) == U32.add(U32.add(a, 1), U32.from_nat(n)) : U32}\n- observed : {U32.add(a, U32.inc(U32.from_nat(n))) == U32.add(U32.add(a, 1), U32.from_nat(n)) : U32}\nContext:\n- a : U32\n- n : Nat\nLocation: U32.add_from_nat_succ\n661 | def U32.add_from_nat_succ(a, n):\n662>|   Equal.trans(U32, U32.add(a, U32.inc(U32.from_nat(n))), U32.inc(U32.add(a, U32.from_nat(n))), U32.add(U32.add(a, 1), U32.from_nat(n)),\n    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n663 |     U32.add_inc(a, U32.from_nat(n)),\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17877659399528056,
+      "law": "U32.add_from_nat_succ",
+      "mutant": 2,
+      "intent": "shift natural/word result by one; break equal-compare tie",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -656,7 +656,7 @@\n law U32.add_from_nat_succ:\n   for +a: U32\n   for +n: Nat\n-  {U32.add(a, U32.from_nat(1n+n)) == U32.add(U32.add(a, 1), U32.from_nat(n)) : U32}\n+  {U32.inc(U32.add(a, U32.from_nat(1n+n))) == U32.add(U32.add(a, 1), U32.from_nat(n)) : U32}\n \n def U32.add_from_nat_succ(a, n):\n   Equal.trans(U32, U32.add(a, U32.inc(U32.from_nat(n))), U32.inc(U32.add(a, U32.from_nat(n))), U32.add(U32.add(a, 1), U32.from_nat(n)),\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/24-Word-to_nat_inc_le-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{True{} == True{} : Bool} -> Empty\n- observed : non-inferrable term\nContext:\n- a : Word.Nil\nLocation: Word.to_nat_inc_le\n680 |     case 0n:\n681>|       {==}\n    |       ^^^^\n682 |     case 1n+p:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.15693328902125359,
+      "law": "Word.to_nat_inc_le",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -673,7 +673,7 @@\n law Word.to_nat_inc_le:\n   for +n: Nat\n   for +a: Word(n)\n-  {Nat.is_le(Word.to_nat(n, Word.inc(n, a)), 1n+Word.to_nat(n, a)) == True{} : Bool}\n+  {Nat.is_le(Word.to_nat(n, Word.inc(n, a)), 1n+Word.to_nat(n, a)) != True{} : Bool}\n \n def Word.to_nat_inc_le(n, a):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/24-Word-to_nat_inc_le-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Cmp.is_lt(Nat.cmp(Nat.double(Word.to_nat(p, t)), Nat.double(Word.to_nat(p, t)))) == True{} : Bool}\n- observed : {Cmp.is_le(Nat.cmp(Nat.double(Word.to_nat(p, t)), Nat.double(Word.to_nat(p, t)))) == True{} : Bool}\nContext:\n- p : Nat\n- t : Word(p)\nLocation: Word.to_nat_inc_le\n684 |         case WCon{False{}, +t}:\n685>|           N.le_refl(1n+Nat.double(Word.to_nat(p, t)))\n    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n686 |         case WCon{True{}, +t}:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.16644516005180776,
+      "law": "Word.to_nat_inc_le",
+      "mutant": 2,
+      "intent": "make non-strict/equality test strict",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -673,7 +673,7 @@\n law Word.to_nat_inc_le:\n   for +n: Nat\n   for +a: Word(n)\n-  {Nat.is_le(Word.to_nat(n, Word.inc(n, a)), 1n+Word.to_nat(n, a)) == True{} : Bool}\n+  {Nat.is_lt(Word.to_nat(n, Word.inc(n, a)), 1n+Word.to_nat(n, a)) == True{} : Bool}\n \n def Word.to_nat_inc_le(n, a):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/25-U32-to_nat_inc_le-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{Cmp.is_le(Nat.cmp(U32.to_nat(U32.inc(a)), 1n+U32.to_nat(a))) == True{} : Bool} -> Empty\n- observed : {Cmp.is_le(Nat.cmp(U32.to_nat(U32.inc(a)), 1n+U32.to_nat(a))) == True{} : Bool}\nContext:\n- a : U32\nLocation: U32.to_nat_inc_le\n694 | def U32.to_nat_inc_le(a):\n695>|   %U32.inc_nat_word(a) : {Nat.is_le(_, 1n+U32.to_nat(a)) == True{} : Bool}\n    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n696 |   %U32.word_nat(a) : {Nat.is_le(Word.to_nat(32n, Word.inc(32n, U32.word(a))), 1n+_) == True{} : Bool}\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.14040460507385433,
+      "law": "U32.to_nat_inc_le",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -689,7 +689,7 @@\n # Wrapping increment cannot increase the natural value by more than one.\n law U32.to_nat_inc_le:\n   for +a: U32\n-  {Nat.is_le(U32.to_nat(U32.inc(a)), 1n+U32.to_nat(a)) == True{} : Bool}\n+  {Nat.is_le(U32.to_nat(U32.inc(a)), 1n+U32.to_nat(a)) != True{} : Bool}\n \n def U32.to_nat_inc_le(a):\n   %U32.inc_nat_word(a) : {Nat.is_le(_, 1n+U32.to_nat(a)) == True{} : Bool}\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/25-U32-to_nat_inc_le-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Cmp.is_lt(Nat.cmp(U32.to_nat(U32.inc(a)), 1n+U32.to_nat(a))) == True{} : Bool}\n- observed : {Cmp.is_le(Nat.cmp(U32.to_nat(U32.inc(a)), 1n+U32.to_nat(a))) == True{} : Bool}\nContext:\n- a : U32\nLocation: U32.to_nat_inc_le\n694 | def U32.to_nat_inc_le(a):\n695>|   %U32.inc_nat_word(a) : {Nat.is_le(_, 1n+U32.to_nat(a)) == True{} : Bool}\n    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n696 |   %U32.word_nat(a) : {Nat.is_le(Word.to_nat(32n, Word.inc(32n, U32.word(a))), 1n+_) == True{} : Bool}\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17530021094717085,
+      "law": "U32.to_nat_inc_le",
+      "mutant": 2,
+      "intent": "make non-strict/equality test strict",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -689,7 +689,7 @@\n # Wrapping increment cannot increase the natural value by more than one.\n law U32.to_nat_inc_le:\n   for +a: U32\n-  {Nat.is_le(U32.to_nat(U32.inc(a)), 1n+U32.to_nat(a)) == True{} : Bool}\n+  {Nat.is_lt(U32.to_nat(U32.inc(a)), 1n+U32.to_nat(a)) == True{} : Bool}\n \n def U32.to_nat_inc_le(a):\n   %U32.inc_nat_word(a) : {Nat.is_le(_, 1n+U32.to_nat(a)) == True{} : Bool}\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/26-U32-to_nat_from_nat_le-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{True{} == True{} : Bool} -> Empty\n- observed : non-inferrable term\nLocation: U32.to_nat_from_nat_le\n706 |     case 0n:\n707>|       {==}\n    |       ^^^^\n708 |     case 1n++p:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17441711795981973,
+      "law": "U32.to_nat_from_nat_le",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -699,7 +699,7 @@\n # Conversion to U32 and back never exceeds the input Nat; no bound is needed.\n law U32.to_nat_from_nat_le:\n   for +n: Nat\n-  {Nat.is_le(U32.to_nat(U32.from_nat(n)), n) == True{} : Bool}\n+  {Nat.is_le(U32.to_nat(U32.from_nat(n)), n) != True{} : Bool}\n \n def U32.to_nat_from_nat_le(n):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/26-U32-to_nat_from_nat_le-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : False{}\n- observed : True{}\nLocation: U32.to_nat_from_nat_le\n706 |     case 0n:\n707>|       {==}\n    |       ^^^^\n708 |     case 1n++p:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.14297241298481822,
+      "law": "U32.to_nat_from_nat_le",
+      "mutant": 2,
+      "intent": "make non-strict/equality test strict",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -699,7 +699,7 @@\n # Conversion to U32 and back never exceeds the input Nat; no bound is needed.\n law U32.to_nat_from_nat_le:\n   for +n: Nat\n-  {Nat.is_le(U32.to_nat(U32.from_nat(n)), n) == True{} : Bool}\n+  {Nat.is_lt(U32.to_nat(U32.from_nat(n)), n) == True{} : Bool}\n \n def U32.to_nat_from_nat_le(n):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/27-U32-to_nat_le-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{Cmp.is_le(Nat.cmp(U32.to_nat(a), U32.to_nat(b))) == True{} : Bool} -> Empty\n- observed : {Cmp.is_le(Nat.cmp(U32.to_nat(a), U32.to_nat(b))) == True{} : Bool}\nContext:\n- a : U32\n- b : U32\n- h : {Cmp.is_le(U32.cmp(a, b)) == True{} : Bool}\nLocation: U32.to_nat_le\n719 | def U32.to_nat_le(a, b, h):\n720>|   %U32.cmp_to_nat(a, b) : {Cmp.is_le(_) == True{} : Bool}\n    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n721 |   h\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17246562195941806,
+      "law": "U32.to_nat_le",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -714,7 +714,7 @@\n   for +a: U32\n   for +b: U32\n   for h: {U32.is_le(a, b) == True{} : Bool}\n-  {Nat.is_le(U32.to_nat(a), U32.to_nat(b)) == True{} : Bool}\n+  {Nat.is_le(U32.to_nat(a), U32.to_nat(b)) != True{} : Bool}\n \n def U32.to_nat_le(a, b, h):\n   %U32.cmp_to_nat(a, b) : {Cmp.is_le(_) == True{} : Bool}\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/27-U32-to_nat_le-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Cmp.is_le(U32.cmp(a, b)) == True{} : Bool}\n- observed : Unit\nContext:\n- a : U32\n- b : U32\n- h : Unit\nLocation: U32.to_nat_le\n720 |   %U32.cmp_to_nat(a, b) : {Cmp.is_le(_) == True{} : Bool}\n721>|   h\n    |   ^\n722 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17758562101516873,
+      "law": "U32.to_nat_le",
+      "mutant": 2,
+      "intent": "drop hypothesis h by replacing its proposition with Unit",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -713,7 +713,7 @@\n law U32.to_nat_le:\n   for +a: U32\n   for +b: U32\n-  for h: {U32.is_le(a, b) == True{} : Bool}\n+  for h: Unit\n   {Nat.is_le(U32.to_nat(a), U32.to_nat(b)) == True{} : Bool}\n \n def U32.to_nat_le(a, b, h):\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/28-U32-to_nat_eq-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{U32.to_nat(a) == U32.to_nat(b) : Nat} -> Empty\n- observed : {U32.to_nat(a) == U32.to_nat(b) : Nat}\nContext:\n- a : U32\n- b : U32\n- h : {Cmp.is_eq(U32.cmp(a, b)) == True{} : Bool}\nLocation: U32.to_nat_eq\n730 | def U32.to_nat_eq(a, b, h):\n731>|   N.eq_of_is_eq(U32.to_nat(a), U32.to_nat(b),\n    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n732 |     Equal.trans(Bool, Nat.is_eq(U32.to_nat(a), U32.to_nat(b)), U32.is_eq(a, b), True{},\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.13978349196258932,
+      "law": "U32.to_nat_eq",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -725,7 +725,7 @@\n   for +a: U32\n   for +b: U32\n   for h: {U32.is_eq(a, b) == True{} : Bool}\n-  {U32.to_nat(a) == U32.to_nat(b) : Nat}\n+  {U32.to_nat(a) != U32.to_nat(b) : Nat}\n \n def U32.to_nat_eq(a, b, h):\n   N.eq_of_is_eq(U32.to_nat(a), U32.to_nat(b),\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/28-U32-to_nat_eq-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Cmp.is_eq(U32.cmp(a, b)) == True{} : Bool}\n- observed : Unit\nContext:\n- a : U32\n- b : U32\n- h : Unit\nLocation: U32.to_nat_eq\n733 |       Equal.sym(Bool, U32.is_eq(a, b), Nat.is_eq(U32.to_nat(a), U32.to_nat(b)),\n734>|         Equal.cong(Cmp, Bool, Cmp.is_eq, U32.cmp(a, b), Nat.cmp(U32.to_nat(a), U32.to_nat(b)), U32.cmp_to_nat(a, b))), h))\n    |                                                                                                                        ^\n735 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17345133097842336,
+      "law": "U32.to_nat_eq",
+      "mutant": 2,
+      "intent": "drop hypothesis h by replacing its proposition with Unit",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -724,7 +724,7 @@\n law U32.to_nat_eq:\n   for +a: U32\n   for +b: U32\n-  for h: {U32.is_eq(a, b) == True{} : Bool}\n+  for h: Unit\n   {U32.to_nat(a) == U32.to_nat(b) : Nat}\n \n def U32.to_nat_eq(a, b, h):\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/29-Nat-bit_add-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{Nat.double(Nat.add(x, y)) == Nat.add(Nat.double(x), Nat.double(y)) : Nat} -> Empty\n- observed : {Nat.double(Nat.add(x, y)) == Nat.add(Nat.double(x), Nat.double(y)) : Nat}\nContext:\n- x : Nat\n- y : Nat\nLocation: Nat.bit_add\n745 |     case False{}:\n746>|       N.double_add(x, y)\n    |       ^^^^^^^^^^^^^^^^^^\n747 |     case True{}:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.16854312899522483,
+      "law": "Nat.bit_add",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -738,7 +738,7 @@\n   for c: Bool\n   for +x: Nat\n   for +y: Nat\n-  {Nat.bit(c, Nat.add(x, y)) == Nat.add(Nat.bit(c, x), Nat.double(y)) : Nat}\n+  {Nat.bit(c, Nat.add(x, y)) != Nat.add(Nat.bit(c, x), Nat.double(y)) : Nat}\n \n def Nat.bit_add(c, x, y):\n   match c:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/29-Nat-bit_add-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {1n+Nat.double(Nat.add(x, y)) == Nat.add(Nat.double(x), Nat.double(y)) : Nat}\n- observed : {Nat.double(Nat.add(x, y)) == Nat.add(Nat.double(x), Nat.double(y)) : Nat}\nContext:\n- x : Nat\n- y : Nat\nLocation: Nat.bit_add\n745 |     case False{}:\n746>|       N.double_add(x, y)\n    |       ^^^^^^^^^^^^^^^^^^\n747 |     case True{}:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.14860822691116482,
+      "law": "Nat.bit_add",
+      "mutant": 2,
+      "intent": "shift natural/word result by one; break equal-compare tie",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -738,7 +738,7 @@\n   for c: Bool\n   for +x: Nat\n   for +y: Nat\n-  {Nat.bit(c, Nat.add(x, y)) == Nat.add(Nat.bit(c, x), Nat.double(y)) : Nat}\n+  {1n+Nat.bit(c, Nat.add(x, y)) == Nat.add(Nat.bit(c, x), Nat.double(y)) : Nat}\n \n def Nat.bit_add(c, x, y):\n   match c:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/30-Word-shift_spec-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{0n == 0n : Nat} -> Empty\n- observed : non-inferrable term\nContext:\n- w : Word.Nil\nLocation: Word.shift_spec\n785 |         case False{}:\n786>|           {==}\n    |           ^^^^\n787 |         case True{}:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.178863016073592,
+      "law": "Word.shift_spec",
+      "mutant": 1,
+      "intent": "negate shift certificate",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -776,7 +776,7 @@\n   for +n: Nat\n   for +c: Bool\n   for +w: Word(n)\n-  Word.Shift(n, c, w, Word.shl.out(n, c, w))\n+  (Word.Shift(n, c, w, Word.shl.out(n, c, w)) -> Empty)\n \n def Word.shift_spec(n, c, w):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/30-Word-shift_spec-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : 1n\n- observed : 0n\nContext:\n- w : Word.Nil\nLocation: Word.shift_spec\n785 |         case False{}:\n786>|           {==}\n    |           ^^^^\n787 |         case True{}:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.16957609402015805,
+      "law": "Word.shift_spec",
+      "mutant": 2,
+      "intent": "flip incoming bit in claimed shift",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -776,7 +776,7 @@\n   for +n: Nat\n   for +c: Bool\n   for +w: Word(n)\n-  Word.Shift(n, c, w, Word.shl.out(n, c, w))\n+  Word.Shift(n, Bool.not(c), w, Word.shl.out(n, c, w))\n \n def Word.shift_spec(n, c, w):\n   match n:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/31-Word-max_nat_mono-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Cmp.is_lt(Nat.cmp(0n, Word.max_nat(m))) == True{} : Bool}\n- observed : {Cmp.is_le(Nat.cmp(0n, Word.max_nat(m))) == True{} : Bool}\nContext:\n- m : Nat\n- h : {Cmp.is_le(Nat.cmp(0n, m)) == True{} : Bool}\nLocation: Word.max_nat_mono\n837 |     case 0n _:\n838>|       N.zero_le(Word.max_nat(m))\n    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^\n839 |     case 1n+p 0n:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.143094734987244,
+      "law": "Word.max_nat_mono",
+      "mutant": 1,
+      "intent": "make order conclusion strict",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -830,7 +830,7 @@\n   for +n: Nat\n   for +m: Nat\n   for h: N.le(n, m)\n-  N.le(Word.max_nat(n), Word.max_nat(m))\n+  N.lt(Word.max_nat(n), Word.max_nat(m))\n \n def Word.max_nat_mono(n, m, h):\n   match n m:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/31-Word-max_nat_mono-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {False{} == True{} : Bool}\n- observed : Unit\nContext:\n- p : Nat\n- h : Unit\nLocation: Word.max_nat_mono\n839 |     case 1n+p 0n:\n840>|       Empty.absurd(N.le(Word.max_nat(1n+p), 0n), N.internal_false_ne_true(h))\n    |                                                                           ^\n841 |     case 1n++p 1n++q:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17492839903570712,
+      "law": "Word.max_nat_mono",
+      "mutant": 2,
+      "intent": "drop hypothesis h by replacing its proposition with Unit",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -829,7 +829,7 @@\n law Word.max_nat_mono:\n   for +n: Nat\n   for +m: Nat\n-  for h: N.le(n, m)\n+  for h: Unit\n   N.le(Word.max_nat(n), Word.max_nat(m))\n \n def Word.max_nat_mono(n, m, h):\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/32-U32-of_nat_le-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{Cmp.is_le(U32.cmp(a, b)) == True{} : Bool} -> Empty\n- observed : {Cmp.is_le(U32.cmp(a, b)) == True{} : Bool}\nContext:\n- a : U32\n- b : U32\n- h : {Cmp.is_le(Nat.cmp(U32.to_nat(a), U32.to_nat(b))) == True{} : Bool}\nLocation: U32.of_nat_le\n851 | def U32.of_nat_le(a, b, h):\n852>|   %Equal.sym(Cmp, U32.cmp(a, b), Nat.cmp(U32.to_nat(a), U32.to_nat(b)), U32.cmp_to_nat(a, b)) : {Cmp.is_le(_) == True{} : Bool}\n    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n853 |   h\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.14312813093420118,
+      "law": "U32.of_nat_le",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -846,7 +846,7 @@\n   for +a: U32\n   for +b: U32\n   for h: N.le(U32.to_nat(a), U32.to_nat(b))\n-  {U32.is_le(a, b) == True{} : Bool}\n+  {U32.is_le(a, b) != True{} : Bool}\n \n def U32.of_nat_le(a, b, h):\n   %Equal.sym(Cmp, U32.cmp(a, b), Nat.cmp(U32.to_nat(a), U32.to_nat(b)), U32.cmp_to_nat(a, b)) : {Cmp.is_le(_) == True{} : Bool}\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/32-U32-of_nat_le-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Cmp.is_le(Nat.cmp(U32.to_nat(a), U32.to_nat(b))) == True{} : Bool}\n- observed : Unit\nContext:\n- a : U32\n- b : U32\n- h : Unit\nLocation: U32.of_nat_le\n852 |   %Equal.sym(Cmp, U32.cmp(a, b), Nat.cmp(U32.to_nat(a), U32.to_nat(b)), U32.cmp_to_nat(a, b)) : {Cmp.is_le(_) == True{} : Bool}\n853>|   h\n    |   ^\n854 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.1531993760727346,
+      "law": "U32.of_nat_le",
+      "mutant": 2,
+      "intent": "drop hypothesis h by replacing its proposition with Unit",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -845,7 +845,7 @@\n law U32.of_nat_le:\n   for +a: U32\n   for +b: U32\n-  for h: N.le(U32.to_nat(a), U32.to_nat(b))\n+  for h: Unit\n   {U32.is_le(a, b) == True{} : Bool}\n \n def U32.of_nat_le(a, b, h):\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/33-U32-ge_nat-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{Cmp.is_ge(U32.cmp(a, b)) == Cmp.is_le(Nat.cmp(U32.to_nat(b), U32.to_nat(a))) : Bool} -> Empty\n- observed : {Cmp.is_ge(U32.cmp(a, b)) == Cmp.is_le(Nat.cmp(U32.to_nat(b), U32.to_nat(a))) : Bool}\nContext:\n- a : U32\n- b : U32\nLocation: U32.ge_nat\n861 | def U32.ge_nat(a, b):\n862>|   %Equal.sym(Cmp, U32.cmp(a, b), Nat.cmp(U32.to_nat(a), U32.to_nat(b)), U32.cmp_to_nat(a, b)) : {Cmp.is_ge(_) == Nat.is_le(U32.to_nat(b), U32.to_nat(a)) : Bool}\n    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n863 |   N.is_ge_eq_is_le(U32.to_nat(a), U32.to_nat(b))\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.16745928500313312,
+      "law": "U32.ge_nat",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -856,7 +856,7 @@\n law U32.ge_nat:\n   for +a: U32\n   for +b: U32\n-  {U32.is_ge(a, b) == Nat.is_le(U32.to_nat(b), U32.to_nat(a)) : Bool}\n+  {U32.is_ge(a, b) != Nat.is_le(U32.to_nat(b), U32.to_nat(a)) : Bool}\n \n def U32.ge_nat(a, b):\n   %Equal.sym(Cmp, U32.cmp(a, b), Nat.cmp(U32.to_nat(a), U32.to_nat(b)), U32.cmp_to_nat(a, b)) : {Cmp.is_ge(_) == Nat.is_le(U32.to_nat(b), U32.to_nat(a)) : Bool}\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/33-U32-ge_nat-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Cmp.is_ge(U32.cmp(a, b)) == Cmp.is_lt(Nat.cmp(U32.to_nat(b), U32.to_nat(a))) : Bool}\n- observed : {Cmp.is_ge(U32.cmp(a, b)) == Cmp.is_le(Nat.cmp(U32.to_nat(b), U32.to_nat(a))) : Bool}\nContext:\n- a : U32\n- b : U32\nLocation: U32.ge_nat\n861 | def U32.ge_nat(a, b):\n862>|   %Equal.sym(Cmp, U32.cmp(a, b), Nat.cmp(U32.to_nat(a), U32.to_nat(b)), U32.cmp_to_nat(a, b)) : {Cmp.is_ge(_) == Nat.is_le(U32.to_nat(b), U32.to_nat(a)) : Bool}\n    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n863 |   N.is_ge_eq_is_le(U32.to_nat(a), U32.to_nat(b))\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.1423264479963109,
+      "law": "U32.ge_nat",
+      "mutant": 2,
+      "intent": "make non-strict/equality test strict",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -856,7 +856,7 @@\n law U32.ge_nat:\n   for +a: U32\n   for +b: U32\n-  {U32.is_ge(a, b) == Nat.is_le(U32.to_nat(b), U32.to_nat(a)) : Bool}\n+  {U32.is_ge(a, b) == Nat.is_lt(U32.to_nat(b), U32.to_nat(a)) : Bool}\n \n def U32.ge_nat(a, b):\n   %Equal.sym(Cmp, U32.cmp(a, b), Nat.cmp(U32.to_nat(a), U32.to_nat(b)), U32.cmp_to_nat(a, b)) : {Cmp.is_ge(_) == Nat.is_le(U32.to_nat(b), U32.to_nat(a)) : Bool}\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/34-U32-divmod_spec-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:Sigma<&1, &1, {0n == 0n : Nat}, _ => {Cmp.is_lt(Nat.cmp(0n, U32.to_nat(b))) == True{} : Bool}> -> Empty\n- observed : Sigma\nContext:\n- b        : U32\n- width    : {True{} == True{} : Bool}\n- positive : {Cmp.is_lt(Nat.cmp(0n, U32.to_nat(b))) == True{} : Bool}\nLocation: U32.divmod_spec\n1041 |     case 0n WNil{}:\n1042>|       ({==}, positive)\n     |       ^^^^^^^^^^^^^^^^\n1043 |     case 1n+p WCon{+c, +hi}:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.1722346720052883,
+      "law": "U32.divmod_spec",
+      "mutant": 1,
+      "intent": "negate quotient/remainder certificate",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -1034,7 +1034,7 @@\n   for +b: U32\n   for +width: N.le(m, 32n)\n   for positive: N.lt(0n, U32.to_nat(b))\n-  U32.DivSpec(m, a, b, U32.divmod.go(m, a, b))\n+  (U32.DivSpec(m, a, b, U32.divmod.go(m, a, b)) -> Empty)\n \n def U32.divmod_spec(m, a, b, width, positive):\n   match m a:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/34-U32-divmod_spec-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Cmp.is_le(Nat.cmp(p, 31n)) == True{} : Bool}\n- observed : Unit\nContext:\n- p        : Nat\n- c        : Bool\n- hi       : Word(p)\n- b        : U32\n- width    : Unit\n- positive : {Cmp.is_lt(Nat.cmp(0n, U32.to_nat(b))) == True{} : Bool}\nLocation: U32.divmod_spec\n1043 |     case 1n+p WCon{+c, +hi}:\n1044>|       U32.div_rec_spec(p, c, hi, b, U32.divmod.go(p, hi, b), width,\n     |                                                              ^^^^^\n1045 |         U32.divmod_spec(p, hi, b, N.le_trans(p, 1n+p, 32n, N.le_succ(p), width), positive))\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.1747238519601524,
+      "law": "U32.divmod_spec",
+      "mutant": 2,
+      "intent": "drop hypothesis width by replacing its proposition with Unit",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -1032,7 +1032,7 @@\n   for +m: Nat\n   for +a: Word(m)\n   for +b: U32\n-  for +width: N.le(m, 32n)\n+  for +width: Unit\n   for positive: N.lt(0n, U32.to_nat(b))\n   U32.DivSpec(m, a, b, U32.divmod.go(m, a, b))\n \n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/35-U32-zero_nat-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{Cmp.is_eq(U32.cmp(a, 0)) == Cmp.is_eq(Nat.cmp(U32.to_nat(a), 0n)) : Bool} -> Empty\n- observed : {Cmp.is_eq(U32.cmp(a, 0)) == Cmp.is_eq(Nat.cmp(U32.to_nat(a), 0n)) : Bool}\nContext:\n- a : U32\nLocation: U32.zero_nat\n1060 | def U32.zero_nat(a):\n1061>|   Equal.cong(Cmp, Bool, Cmp.is_eq, U32.cmp(a, 0), Nat.cmp(U32.to_nat(a), 0n), U32.cmp_to_nat(a, 0))\n     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n1062 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.15145005099475384,
+      "law": "U32.zero_nat",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -1055,7 +1055,7 @@\n # Machine zero testing agrees with natural zero testing.\n law U32.zero_nat:\n   for +a: U32\n-  {U32.is_zero(a) == Nat.is_eq(U32.to_nat(a), 0n) : Bool}\n+  {U32.is_zero(a) != Nat.is_eq(U32.to_nat(a), 0n) : Bool}\n \n def U32.zero_nat(a):\n   Equal.cong(Cmp, Bool, Cmp.is_eq, U32.cmp(a, 0), Nat.cmp(U32.to_nat(a), 0n), U32.cmp_to_nat(a, 0))\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/35-U32-zero_nat-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Cmp.is_eq(U32.cmp(a, 0)) == Cmp.is_lt(Nat.cmp(U32.to_nat(a), 0n)) : Bool}\n- observed : {Cmp.is_eq(U32.cmp(a, 0)) == Cmp.is_eq(Nat.cmp(U32.to_nat(a), 0n)) : Bool}\nContext:\n- a : U32\nLocation: U32.zero_nat\n1060 | def U32.zero_nat(a):\n1061>|   Equal.cong(Cmp, Bool, Cmp.is_eq, U32.cmp(a, 0), Nat.cmp(U32.to_nat(a), 0n), U32.cmp_to_nat(a, 0))\n     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n1062 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17535895796027035,
+      "law": "U32.zero_nat",
+      "mutant": 2,
+      "intent": "make non-strict/equality test strict",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -1055,7 +1055,7 @@\n # Machine zero testing agrees with natural zero testing.\n law U32.zero_nat:\n   for +a: U32\n-  {U32.is_zero(a) == Nat.is_eq(U32.to_nat(a), 0n) : Bool}\n+  {U32.is_zero(a) == Nat.is_lt(U32.to_nat(a), 0n) : Bool}\n \n def U32.zero_nat(a):\n   Equal.cong(Cmp, Bool, Cmp.is_eq, U32.cmp(a, 0), Nat.cmp(U32.to_nat(a), 0n), U32.cmp_to_nat(a, 0))\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/36-U32-to_nat_div-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{U32.to_nat(U32.div(a, b)) == Pair.fst(Nat, Nat, Nat.divmod(U32.to_nat(a), U32.to_nat(b))) : Nat} -> Empty\n- observed : {U32.to_nat(U32.div(a, b)) == Pair.fst(Nat, Nat, Nat.divmod(U32.to_nat(a), U32.to_nat(b))) : Nat}\nContext:\n- a        : U32\n- b        : U32\n- positive : {Cmp.is_lt(Nat.cmp(0n, U32.to_nat(b))) == True{} : Bool}\nLocation: U32.to_nat_div\n1108 | def U32.to_nat_div(a, b, positive):\n1109>|   %U32.div_word(a, b) : {U32.to_nat(_) == Nat.div(U32.to_nat(a), U32.to_nat(b)) : Nat}\n     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n1110 |   %U32.div_if_nonzero(U32.word(a), b, U32.is_zero(b),\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.1753488889662549,
+      "law": "U32.to_nat_div",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -1103,7 +1103,7 @@\n   for +a: U32\n   for +b: U32\n   for +positive: N.lt(0n, U32.to_nat(b))\n-  {U32.to_nat(U32.div(a, b)) == Nat.div(U32.to_nat(a), U32.to_nat(b)) : Nat}\n+  {U32.to_nat(U32.div(a, b)) != Nat.div(U32.to_nat(a), U32.to_nat(b)) : Nat}\n \n def U32.to_nat_div(a, b, positive):\n   %U32.div_word(a, b) : {U32.to_nat(_) == Nat.div(U32.to_nat(a), U32.to_nat(b)) : Nat}\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/36-U32-to_nat_div-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Cmp.is_lt(Nat.cmp(0n, U32.to_nat(b))) == True{} : Bool}\n- observed : Unit\nContext:\n- a        : U32\n- b        : U32\n- positive : Unit\nLocation: U32.to_nat_div\n1110 |   %U32.div_if_nonzero(U32.word(a), b, U32.is_zero(b),\n1111>|     Equal.trans(Bool, U32.is_zero(b), Nat.is_eq(U32.to_nat(b), 0n), False{}, U32.zero_nat(b), Nat.positive_ne_zero(U32.to_nat(b), positive))) :\n     |                                                                                                                                   ^^^^^^^^\n1112 |     {U32.to_nat(_) == Nat.div(U32.to_nat(a), U32.to_nat(b)) : Nat}\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.14657563902437687,
+      "law": "U32.to_nat_div",
+      "mutant": 2,
+      "intent": "drop hypothesis positive by replacing its proposition with Unit",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -1102,7 +1102,7 @@\n law U32.to_nat_div:\n   for +a: U32\n   for +b: U32\n-  for +positive: N.lt(0n, U32.to_nat(b))\n+  for +positive: Unit\n   {U32.to_nat(U32.div(a, b)) == Nat.div(U32.to_nat(a), U32.to_nat(b)) : Nat}\n \n def U32.to_nat_div(a, b, positive):\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/37-Nat-div_antitone-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Cmp.is_lt(Nat.cmp(Pair.fst(Nat, Nat, Nat.divmod(a, t)), 0n)) == True{} : Bool}\n- observed : {Cmp.is_le(Nat.cmp(Pair.fst(Nat, Nat, Nat.divmod(a, t)), 0n)) == True{} : Bool}\nContext:\n- a        : Nat\n- t        : Nat\n- st       : {Cmp.is_le(Nat.cmp(0n, t)) == True{} : Bool}\n- positive : {False{} == True{} : Bool}\nLocation: Nat.div_antitone\n1128 |     case 0n _:\n1129>|       Empty.absurd(N.le(Nat.div(a, t), Nat.div(a, 0n)), N.internal_false_ne_true(positive))\n     |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n1130 |     case 1n+sp 0n:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17533790902234614,
+      "law": "Nat.div_antitone",
+      "mutant": 1,
+      "intent": "make order conclusion strict",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -1121,7 +1121,7 @@\n   for +t: Nat\n   for st: N.le(s, t)\n   for positive: N.lt(0n, s)\n-  N.le(Nat.div(a, t), Nat.div(a, s))\n+  N.lt(Nat.div(a, t), Nat.div(a, s))\n \n def Nat.div_antitone(a, s, t, st, positive):\n   match s t:\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/37-Nat-div_antitone-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {False{} == True{} : Bool}\n- observed : Unit\nContext:\n- a        : Nat\n- t        : Nat\n- st       : {Cmp.is_le(Nat.cmp(0n, t)) == True{} : Bool}\n- positive : Unit\nLocation: Nat.div_antitone\n1128 |     case 0n _:\n1129>|       Empty.absurd(N.le(Nat.div(a, t), Nat.div(a, 0n)), N.internal_false_ne_true(positive))\n     |                                                                                  ^^^^^^^^\n1130 |     case 1n+sp 0n:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17274129297584295,
+      "law": "Nat.div_antitone",
+      "mutant": 2,
+      "intent": "drop hypothesis positive by replacing its proposition with Unit",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -1120,7 +1120,7 @@\n   for +s: Nat\n   for +t: Nat\n   for st: N.le(s, t)\n-  for positive: N.lt(0n, s)\n+  for positive: Unit\n   N.le(Nat.div(a, t), Nat.div(a, s))\n \n def Nat.div_antitone(a, s, t, st, positive):\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/38-U32-to_nat_lt-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Cmp.is_le(Nat.cmp(U32.to_nat(b), U32.to_nat(a))) == True{} : Bool}\n- observed : {Cmp.is_lt(Nat.cmp(U32.to_nat(a), U32.to_nat(b))) == True{} : Bool}\nContext:\n- a : U32\n- b : U32\n- h : {Cmp.is_lt(U32.cmp(a, b)) == True{} : Bool}\nLocation: U32.to_nat_lt\n1145 | def U32.to_nat_lt(a, b, h):\n1146>|   %U32.cmp_to_nat(a, b) : {Cmp.is_lt(_) == True{} : Bool}\n     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n1147 |   h\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.1578559409826994,
+      "law": "U32.to_nat_lt",
+      "mutant": 1,
+      "intent": "reverse strict order into its negation",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -1140,7 +1140,7 @@\n   for +a: U32\n   for +b: U32\n   for h: {U32.is_lt(a, b) == True{} : Bool}\n-  N.lt(U32.to_nat(a), U32.to_nat(b))\n+  N.le(U32.to_nat(b), U32.to_nat(a))\n \n def U32.to_nat_lt(a, b, h):\n   %U32.cmp_to_nat(a, b) : {Cmp.is_lt(_) == True{} : Bool}\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/38-U32-to_nat_lt-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Cmp.is_lt(U32.cmp(a, b)) == True{} : Bool}\n- observed : Unit\nContext:\n- a : U32\n- b : U32\n- h : Unit\nLocation: U32.to_nat_lt\n1146 |   %U32.cmp_to_nat(a, b) : {Cmp.is_lt(_) == True{} : Bool}\n1147>|   h\n     |   ^\n1148 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.18917092797346413,
+      "law": "U32.to_nat_lt",
+      "mutant": 2,
+      "intent": "drop hypothesis h by replacing its proposition with Unit",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -1139,7 +1139,7 @@\n law U32.to_nat_lt:\n   for +a: U32\n   for +b: U32\n-  for h: {U32.is_lt(a, b) == True{} : Bool}\n+  for h: Unit\n   N.lt(U32.to_nat(a), U32.to_nat(b))\n \n def U32.to_nat_lt(a, b, h):\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/39-U32-div_antitone-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{Cmp.is_le(U32.cmp(U32.div(a, t), U32.div(a, s))) == True{} : Bool} -> Empty\n- observed : {Cmp.is_le(U32.cmp(U32.div(a, t), U32.div(a, s))) == True{} : Bool}\nContext:\n- a        : U32\n- s        : U32\n- t        : U32\n- st       : {Cmp.is_le(U32.cmp(s, t)) == True{} : Bool}\n- positive : {Cmp.is_lt(U32.cmp(0, s)) == True{} : Bool}\nLocation: U32.div_antitone\n1168 | def U32.div_antitone(a, s, t, st, positive):\n1169>|   U32.of_nat_le(U32.div(a, t), U32.div(a, s),\n     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n1170 |     U32.div_antitone_nat(a, s, t, U32.to_nat_le(s, t, st), U32.to_nat_lt(0, s, positive)))\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17725856299512088,
+      "law": "U32.div_antitone",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -1163,7 +1163,7 @@\n   for +t: U32\n   for st: {U32.is_le(s, t) == True{} : Bool}\n   for positive: {U32.is_lt(0, s) == True{} : Bool}\n-  {U32.is_le(U32.div(a, t), U32.div(a, s)) == True{} : Bool}\n+  {U32.is_le(U32.div(a, t), U32.div(a, s)) != True{} : Bool}\n \n def U32.div_antitone(a, s, t, st, positive):\n   U32.of_nat_le(U32.div(a, t), U32.div(a, s),\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/39-U32-div_antitone-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Cmp.is_lt(U32.cmp(0, s)) == True{} : Bool}\n- observed : Unit\nContext:\n- a        : U32\n- s        : U32\n- t        : U32\n- st       : {Cmp.is_le(U32.cmp(s, t)) == True{} : Bool}\n- positive : Unit\nLocation: U32.div_antitone\n1169 |   U32.of_nat_le(U32.div(a, t), U32.div(a, s),\n1170>|     U32.div_antitone_nat(a, s, t, U32.to_nat_le(s, t, st), U32.to_nat_lt(0, s, positive)))\n     |                                                                                ^^^^^^^^\n1171 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.16909432993270457,
+      "law": "U32.div_antitone",
+      "mutant": 2,
+      "intent": "drop hypothesis positive by replacing its proposition with Unit",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -1162,7 +1162,7 @@\n   for +s: U32\n   for +t: U32\n   for st: {U32.is_le(s, t) == True{} : Bool}\n-  for positive: {U32.is_lt(0, s) == True{} : Bool}\n+  for positive: Unit\n   {U32.is_le(U32.div(a, t), U32.div(a, s)) == True{} : Bool}\n \n def U32.div_antitone(a, s, t, st, positive):\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/40-U32-positive_of_nonzero-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Cmp.is_le(Nat.cmp(U32.to_nat(a), 0n)) == True{} : Bool}\n- observed : {Cmp.is_lt(Nat.cmp(0n, U32.to_nat(a))) == True{} : Bool}\nContext:\n- a : U32\n- h : {Cmp.is_eq(U32.cmp(a, 0)) == False{} : Bool}\nLocation: U32.positive_of_nonzero\n1186 | def U32.positive_of_nonzero(a, h):\n1187>|   Nat.positive_of_zero_false(U32.to_nat(a), Equal.trans(Bool, Nat.is_eq(U32.to_nat(a), 0n), U32.is_zero(a), False{},\n     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n1188 |     Equal.sym(Bool, U32.is_zero(a), Nat.is_eq(U32.to_nat(a), 0n), U32.zero_nat(a)), h))\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.15266442799475044,
+      "law": "U32.positive_of_nonzero",
+      "mutant": 1,
+      "intent": "reverse strict order into its negation",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -1181,7 +1181,7 @@\n law U32.positive_of_nonzero:\n   for +a: U32\n   for h: {U32.is_zero(a) == False{} : Bool}\n-  N.lt(0n, U32.to_nat(a))\n+  N.le(U32.to_nat(a), 0n)\n \n def U32.positive_of_nonzero(a, h):\n   Nat.positive_of_zero_false(U32.to_nat(a), Equal.trans(Bool, Nat.is_eq(U32.to_nat(a), 0n), U32.is_zero(a), False{},\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/40-U32-positive_of_nonzero-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {Cmp.is_eq(U32.cmp(a, 0)) == False{} : Bool}\n- observed : Unit\nContext:\n- a : U32\n- h : Unit\nLocation: U32.positive_of_nonzero\n1187 |   Nat.positive_of_zero_false(U32.to_nat(a), Equal.trans(Bool, Nat.is_eq(U32.to_nat(a), 0n), U32.is_zero(a), False{},\n1188>|     Equal.sym(Bool, U32.is_zero(a), Nat.is_eq(U32.to_nat(a), 0n), U32.zero_nat(a)), h))\n     |                                                                                     ^\n1189 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17689086101017892,
+      "law": "U32.positive_of_nonzero",
+      "mutant": 2,
+      "intent": "drop hypothesis h by replacing its proposition with Unit",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -1180,7 +1180,7 @@\n # A nonzero U32 has a strictly positive exact natural value.\n law U32.positive_of_nonzero:\n   for +a: U32\n-  for h: {U32.is_zero(a) == False{} : Bool}\n+  for h: Unit\n   N.lt(0n, U32.to_nat(a))\n \n def U32.positive_of_nonzero(a, h):\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/41-U32-zero_add-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{U32.add(0, a) == a : U32} -> Empty\n- observed : {U32.add(0, a) == a : U32}\nContext:\n- a : U32\nLocation: U32.zero_add\n1195 | def U32.zero_add(a):\n1196>|   Equal.trans(U32, U32.add(0, a), U32.add(a, 0), a, U32.add_comm(0, a), U32.add_zero(a))\n     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n1197 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.17275836307089776,
+      "law": "U32.zero_add",
+      "mutant": 1,
+      "intent": "negate conclusion equality",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -1190,7 +1190,7 @@\n # Zero is also a left identity for U32 addition, including wrapping values.\n law U32.zero_add:\n   for +a: U32\n-  {U32.add(0, a) == a : U32}\n+  {U32.add(0, a) != a : U32}\n \n def U32.zero_add(a):\n   Equal.trans(U32, U32.add(0, a), U32.add(a, 0), a, U32.add_comm(0, a), U32.add_zero(a))\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/41-U32-zero_add-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {U32.inc(U32.add(0, a)) == a : U32}\n- observed : {U32.add(0, a) == a : U32}\nContext:\n- a : U32\nLocation: U32.zero_add\n1195 | def U32.zero_add(a):\n1196>|   Equal.trans(U32, U32.add(0, a), U32.add(a, 0), a, U32.add_comm(0, a), U32.add_zero(a))\n     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n1197 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.14610792591702193,
+      "law": "U32.zero_add",
+      "mutant": 2,
+      "intent": "shift natural/word result by one; break equal-compare tie",
+      "diff": "--- a/u32.bend\n+++ b/u32.bend\n@@ -1190,7 +1190,7 @@\n # Zero is also a left identity for U32 addition, including wrapping values.\n law U32.zero_add:\n   for +a: U32\n-  {U32.add(0, a) == a : U32}\n+  {U32.inc(U32.add(0, a)) == a : U32}\n \n def U32.zero_add(a):\n   Equal.trans(U32, U32.add(0, a), U32.add(a, 0), a, U32.add_comm(0, a), U32.add_zero(a))\n",
+      "baseline": "original/u32.bend: both checkers pass",
+      "eligible": true
+    }
+  ],
+  "planner": [
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/planner-pool_budget-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : Laws.Budgets(0, Plan.cut.fin(Plan.cut.go(b, List.sort(Plan.Clip, Plan.Clip.le, xs), 0n)))\n- observed : Laws.Budgets(b, Plan.cut.fin(Plan.cut.go(b, List.sort(Plan.Clip, Plan.Clip.le, xs), 0n)))\nContext:\n- b  : U32\n- xs : List<&2, Plan.Clip>\n- zs : List<&2, Plan.Clip>\nLocation: Laws.pool_budget\n1476 |   +zs = Plan.sort(xs)\n1477>|   lasts_budget(Plan.cut(b, zs), b, Laws.pool_sorted(b, xs), last_fin(b, Plan.cut.go(b, zs, 0n), last_go(b, zs, 0n)))\n     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n1478 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.21457866905257106,
+      "law": "pool_budget",
+      "mutant": 1,
+      "intent": "claim zero budget",
+      "diff": "--- a/LAWS.bend\n+++ b/LAWS.bend\n@@ -197,7 +197,7 @@\n law pool_budget:\n   for +b : U32\n   for +xs: List<&2, Plan.Clip>\n-  Budgets(b, Plan.pool(b, xs))\n+  Budgets(0, Plan.pool(b, xs))\n \n # LAW 3a (greedy, order): the batches, joined, ascend in (samples, sequence number) order\n law pool_sorted:\n",
+      "eligible": true,
+      "baseline": "ten-laws: both checkers pass"
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/planner-pool_budget-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : Laws.Budgets(U32.sub(b, 1), Plan.cut.fin(Plan.cut.go(b, List.sort(Plan.Clip, Plan.Clip.le, xs), 0n)))\n- observed : Laws.Budgets(b, Plan.cut.fin(Plan.cut.go(b, List.sort(Plan.Clip, Plan.Clip.le, xs), 0n)))\nContext:\n- b  : U32\n- xs : List<&2, Plan.Clip>\n- zs : List<&2, Plan.Clip>\nLocation: Laws.pool_budget\n1476 |   +zs = Plan.sort(xs)\n1477>|   lasts_budget(Plan.cut(b, zs), b, Laws.pool_sorted(b, xs), last_fin(b, Plan.cut.go(b, zs, 0n), last_go(b, zs, 0n)))\n     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n1478 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.20766447694040835,
+      "law": "pool_budget",
+      "mutant": 2,
+      "intent": "decrease the claimed budget by one",
+      "diff": "--- a/LAWS.bend\n+++ b/LAWS.bend\n@@ -197,7 +197,7 @@\n law pool_budget:\n   for +b : U32\n   for +xs: List<&2, Plan.Clip>\n-  Budgets(b, Plan.pool(b, xs))\n+  Budgets(U32.sub(b, 1), Plan.pool(b, xs))\n \n # LAW 3a (greedy, order): the batches, joined, ascend in (samples, sequence number) order\n law pool_sorted:\n",
+      "eligible": true,
+      "baseline": "ten-laws: both checkers pass"
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/planner-pools_sizes-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{[] == [] : List<&2, Nat>} -> Empty\n- observed : {[] == [] : List<&2, Nat>}\nContext:\n- ss : List<&2, U32>\n- w  : {Cmp.is_le(Nat.cmp(List.length(&2, U32, ss), 4294967295n)) == True{} : Bool}\n- v  : {False{} == True{} : Bool}\nLocation: Laws.pools_sizes\n1204 |     case Nil{}:\n1205>|       Empty.absurd({Nil{} == Nil{} : List<&2, Nat>}, false_true(v))\n     |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n1206 |     case +lo <> +t:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.21512329997494817,
+      "law": "pools_sizes",
+      "mutant": 1,
+      "intent": "negate sizes equality",
+      "diff": "--- a/LAWS.bend\n+++ b/LAWS.bend\n@@ -228,7 +228,7 @@\n   for +ps: List<&2, U32>\n   for w  : Small(ss)\n   for v  : Valid(ss, ps)\n-  {lens(Plan.pools(ss, ps)) == offsets.gaps(ps) : List<&2, Nat>}\n+  {lens(Plan.pools(ss, ps)) != offsets.gaps(ps) : List<&2, Nat>}\n \n # the parallel driver (a balanced tree, cut leaf by leaf) computes the sequential plan\n law solve_spec:\n",
+      "eligible": true,
+      "baseline": "ten-laws: both checkers pass"
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/planner-pools_sizes-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : {[] == [0n] : List<&2, Nat>}\n- observed : {[] == [] : List<&2, Nat>}\nContext:\n- ss : List<&2, U32>\n- w  : {Cmp.is_le(Nat.cmp(List.length(&2, U32, ss), 4294967295n)) == True{} : Bool}\n- v  : {False{} == True{} : Bool}\nLocation: Laws.pools_sizes\n1204 |     case Nil{}:\n1205>|       Empty.absurd({Nil{} == Nil{} : List<&2, Nat>}, false_true(v))\n     |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n1206 |     case +lo <> +t:\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.2034772529732436,
+      "law": "pools_sizes",
+      "mutant": 2,
+      "intent": "insert an extra zero-size pool in the expected lengths",
+      "diff": "--- a/LAWS.bend\n+++ b/LAWS.bend\n@@ -228,7 +228,7 @@\n   for +ps: List<&2, U32>\n   for w  : Small(ss)\n   for v  : Valid(ss, ps)\n-  {lens(Plan.pools(ss, ps)) == offsets.gaps(ps) : List<&2, Nat>}\n+  {lens(Plan.pools(ss, ps)) == 0n <> offsets.gaps(ps) : List<&2, Nat>}\n \n # the parallel driver (a balanced tree, cut leaf by leaf) computes the sequential plan\n law solve_spec:\n",
+      "eligible": true,
+      "baseline": "ten-laws: both checkers pass"
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/planner-pools_sizes-3/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 0,
+      "stdout": "ALL PROOFS CHECK\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n",
+      "passed": true,
+      "rejected": false,
+      "elapsed_seconds": 0.5068433299893513,
+      "law": "pools_sizes",
+      "mutant": 3,
+      "intent": "drop Small and its unused proof parameter; proof body unchanged",
+      "diff": "--- a/LAWS.bend\n+++ b/LAWS.bend\n@@ -226,7 +226,6 @@\n law pools_sizes:\n   for +ss: List<&2, U32>\n   for +ps: List<&2, U32>\n-  for w  : Small(ss)\n   for v  : Valid(ss, ps)\n   {lens(Plan.pools(ss, ps)) == offsets.gaps(ps) : List<&2, Nat>}\n \n--- a/PROOF.bend\n+++ b/PROOF.bend\n@@ -1199,7 +1199,7 @@\n \n # Fill the original law verbatim. Small is unnecessary for lengths, but is kept\n # in the original interface; it remains essential for exact cover.\n-def Laws.pools_sizes(ss, ps, w, v):\n+def Laws.pools_sizes(ss, ps, v):\n   match ps:\n     case Nil{}:\n       Empty.absurd({Nil{} == Nil{} : List<&2, Nat>}, false_true(v))\n",
+      "eligible": true,
+      "baseline": "ten-laws: both checkers pass"
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/planner-pools_cover-1/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError: 1 TODO found.\nThe code is incomplete, and not a valid proof yet.\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.21636920399032533,
+      "law": "pools_cover",
+      "mutant": 1,
+      "intent": "negate exact cover",
+      "diff": "--- a/LAWS.bend\n+++ b/LAWS.bend\n@@ -226,7 +226,7 @@\n   for +ps: List<&2, U32>\n   for w  : Small(ss)\n   for v  : Valid(ss, ps)\n-  {flat(Plan.pools(ss, ps)) == Plan.clips(ss, 0) : List<&2, Plan.Clip>}\n+  {flat(Plan.pools(ss, ps)) != Plan.clips(ss, 0) : List<&2, Plan.Clip>}\n \n # LAW 1 (each pool inside its range): pool k holds ps[k + 1] - ps[k] clips, so with pools_cover\n # it is exactly the clips [ps[k], ps[k + 1])\n",
+      "eligible": false,
+      "baseline": "original: one TODO; no proof exists to mutation-test"
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/mutations/planner-pools_cover-2/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError: 1 TODO found.\nThe code is incomplete, and not a valid proof yet.\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.21451057796366513,
+      "law": "pools_cover",
+      "mutant": 2,
+      "intent": "shift every expected clip index by one",
+      "diff": "--- a/LAWS.bend\n+++ b/LAWS.bend\n@@ -226,7 +226,7 @@\n   for +ps: List<&2, U32>\n   for w  : Small(ss)\n   for v  : Valid(ss, ps)\n-  {flat(Plan.pools(ss, ps)) == Plan.clips(ss, 0) : List<&2, Plan.Clip>}\n+  {flat(Plan.pools(ss, ps)) == Plan.clips(ss, 1) : List<&2, Plan.Clip>}\n \n # LAW 1 (each pool inside its range): pool k holds ps[k + 1] - ps[k] clips, so with pools_cover\n # it is exactly the clips [ps[k], ps[k + 1])\n",
+      "eligible": false,
+      "baseline": "original: one TODO; no proof exists to mutation-test"
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/cover-instance/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 0,
+      "stdout": "ALL PROOFS CHECK\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n",
+      "passed": true,
+      "rejected": false,
+      "elapsed_seconds": 0.13546166208107024,
+      "law": "pools_cover_concrete_instance",
+      "mutant": null,
+      "eligible": true,
+      "intent": "baseline"
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/cover-instance/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : @_:{[plan.Clip{7, 0}] == [plan.Clip{7, 0}] : List<&2, plan.Clip>} -> Empty\n- observed : non-inferrable term\nLocation: Laws.cover\n7 | def Laws.cover():\n8>|   {==}\n  |   ^^^^\n9 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.08224730798974633,
+      "law": "pools_cover_concrete_instance",
+      "mutant": 0,
+      "eligible": true,
+      "intent": "negate exact cover"
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/cover-instance/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError:\n- expected : [plan.Clip{7, 0}]\n- observed : [plan.Clip{7, 1}]\nLocation: Laws.cover\n7 | def Laws.cover():\n8>|   {==}\n  |   ^^^^\n9 | \nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.08037155901547521,
+      "law": "pools_cover_concrete_instance",
+      "mutant": 1,
+      "eligible": true,
+      "intent": "shift clip index by one"
+    }
+  ]
+}

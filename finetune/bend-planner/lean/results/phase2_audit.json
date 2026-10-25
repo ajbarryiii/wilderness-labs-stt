@@ -1,0 +1,982 @@
+{
+  "direct_nat_references": [
+    {
+      "name": "add_assoc",
+      "kind": "law",
+      "statement": "law add_assoc:\n  for a: Nat\n  for -b: Nat\n  for -c: Nat\n  {Nat.add(Nat.add(a, b), c) == Nat.add(a, Nat.add(b, c)) : Nat}"
+    },
+    {
+      "name": "add_comm",
+      "kind": "law",
+      "statement": "law add_comm:\n  for n: Nat\n  for m: Nat\n  {Nat.add(n, m) == Nat.add(m, n) : Nat}"
+    },
+    {
+      "name": "add_left_comm",
+      "kind": "law",
+      "statement": "law add_left_comm:\n  for a: Nat\n  for b: Nat\n  for -c: Nat\n  {Nat.add(a, Nat.add(b, c)) == Nat.add(b, Nat.add(a, c)) : Nat}"
+    },
+    {
+      "name": "add_lt_add_iff_left",
+      "kind": "law",
+      "statement": "law add_lt_add_iff_left:\n  for k: Nat\n  for -a: Nat\n  for -b: Nat\n  {Nat.is_lt(a, b) == Nat.is_lt(Nat.add(k, a), Nat.add(k, b)) : Bool}"
+    },
+    {
+      "name": "add_mul_div_right",
+      "kind": "law",
+      "statement": "law add_mul_div_right:\n  for x: Nat\n  for z: Nat\n  for b: Nat\n  {Nat.div(Nat.add(x, Nat.mul(z, 1n+b)), 1n+b) == Nat.add(Nat.div(x, 1n+b), z) : Nat}"
+    },
+    {
+      "name": "add_sub_of_le",
+      "kind": "law",
+      "statement": "law add_sub_of_le:\n  for a: Nat\n  for b: Nat\n  for h: le(a, b)\n  {Nat.add(a, Nat.sub(b, a)) == b : Nat}"
+    },
+    {
+      "name": "add_succ",
+      "kind": "law",
+      "statement": "law add_succ:\n  for n: Nat\n  for -m: Nat\n  {Nat.add(n, 1n+m) == 1n+Nat.add(n, m) : Nat}"
+    },
+    {
+      "name": "add_zero",
+      "kind": "law",
+      "statement": "law add_zero:\n  for x: Nat\n  {Nat.add(x, 0n) == x : Nat}"
+    },
+    {
+      "name": "div_eq_zero_of_le",
+      "kind": "law",
+      "statement": "law div_eq_zero_of_le:\n  for +a: Nat\n  for +b: Nat\n  for h: le(a, b)\n  {Nat.div(a, 1n+b) == 0n : Nat}"
+    },
+    {
+      "name": "div_mul_le_self",
+      "kind": "law",
+      "statement": "law div_mul_le_self:\n  for a: Nat\n  for b: Nat\n  le(Nat.mul(Nat.div(a, b), b), a)"
+    },
+    {
+      "name": "double_add",
+      "kind": "law",
+      "statement": "law double_add:\n  for a: Nat\n  for b: Nat\n  {Nat.double(Nat.add(a, b)) == Nat.add(Nat.double(a), Nat.double(b)) : Nat}"
+    },
+    {
+      "name": "double_eq_add",
+      "kind": "law",
+      "statement": "law double_eq_add:\n  for n: Nat\n  {Nat.double(n) == Nat.add(n, n) : Nat}"
+    },
+    {
+      "name": "double_le_double",
+      "kind": "law",
+      "statement": "law double_le_double:\n  for a: Nat\n  for b: Nat\n  for h: le(a, b)\n  le(Nat.double(a), Nat.double(b))"
+    },
+    {
+      "name": "double_mul",
+      "kind": "law",
+      "statement": "law double_mul:\n  for a: Nat\n  for b: Nat\n  {Nat.double(Nat.mul(a, b)) == Nat.mul(Nat.double(a), b) : Nat}"
+    },
+    {
+      "name": "eq_of_is_eq",
+      "kind": "law",
+      "statement": "law eq_of_is_eq:\n  for a: Nat\n  for b: Nat\n  for h: {Nat.is_eq(a, b) == True{} : Bool}\n  {a == b : Nat}"
+    },
+    {
+      "name": "internal_false_ne_true",
+      "kind": "helper definition",
+      "statement": null
+    },
+    {
+      "name": "is_ge_eq_is_le",
+      "kind": "law",
+      "statement": "law is_ge_eq_is_le:\n  for a: Nat\n  for b: Nat\n  {Nat.is_ge(a, b) == Nat.is_le(b, a) : Bool}"
+    },
+    {
+      "name": "le",
+      "kind": "helper definition",
+      "statement": null
+    },
+    {
+      "name": "le_add_left",
+      "kind": "law",
+      "statement": "law le_add_left:\n  for n: Nat\n  for m: Nat\n  le(n, Nat.add(m, n))"
+    },
+    {
+      "name": "le_div_iff_mul_le",
+      "kind": "law",
+      "statement": "law le_div_iff_mul_le:\n  for n: Nat\n  for +a: Nat\n  for +b: Nat\n  {Nat.is_le(n, Nat.div(a, 1n+b)) == Nat.is_le(Nat.mul(n, 1n+b), a) : Bool}"
+    },
+    {
+      "name": "le_of_lt",
+      "kind": "law",
+      "statement": "law le_of_lt:\n  for a: Nat\n  for b: Nat\n  for h: lt(a, b)\n  le(a, b)"
+    },
+    {
+      "name": "le_of_lt_succ",
+      "kind": "law",
+      "statement": "law le_of_lt_succ:\n  for m: Nat\n  for n: Nat\n  for h: lt(m, 1n+n)\n  le(m, n)"
+    },
+    {
+      "name": "le_refl",
+      "kind": "law",
+      "statement": "law le_refl:\n  for a: Nat\n  le(a, a)"
+    },
+    {
+      "name": "le_succ",
+      "kind": "law",
+      "statement": "law le_succ:\n  for n: Nat\n  le(n, 1n+n)"
+    },
+    {
+      "name": "le_trans",
+      "kind": "law",
+      "statement": "law le_trans:\n  for a: Nat\n  for b: Nat\n  for c: Nat\n  for ab: le(a, b)\n  for bc: le(b, c)\n  le(a, c)"
+    },
+    {
+      "name": "lt",
+      "kind": "helper definition",
+      "statement": null
+    },
+    {
+      "name": "lt_of_le_of_lt",
+      "kind": "law",
+      "statement": "law lt_of_le_of_lt:\n  for a: Nat\n  for b: Nat\n  for c: Nat\n  for ab: le(a, b)\n  for bc: lt(b, c)\n  lt(a, c)"
+    },
+    {
+      "name": "lt_of_lt_of_le",
+      "kind": "law",
+      "statement": "law lt_of_lt_of_le:\n  for a: Nat\n  for b: Nat\n  for c: Nat\n  for ab: lt(a, b)\n  for bc: le(b, c)\n  lt(a, c)"
+    },
+    {
+      "name": "lt_of_not_le",
+      "kind": "law",
+      "statement": "law lt_of_not_le:\n  for a: Nat\n  for b: Nat\n  for h: {Nat.is_le(a, b) == False{} : Bool}\n  lt(b, a)"
+    },
+    {
+      "name": "lt_of_succ_le",
+      "kind": "law",
+      "statement": "law lt_of_succ_le:\n  for n: Nat\n  for m: Nat\n  for h: le(1n+n, m)\n  lt(n, m)"
+    },
+    {
+      "name": "lt_succ_self",
+      "kind": "law",
+      "statement": "law lt_succ_self:\n  for n: Nat\n  lt(n, 1n+n)"
+    },
+    {
+      "name": "mul_double",
+      "kind": "law",
+      "statement": "law mul_double:\n  for a: Nat\n  for b: Nat\n  {Nat.mul(a, Nat.double(b)) == Nat.double(Nat.mul(a, b)) : Nat}"
+    },
+    {
+      "name": "mul_le_mul_left",
+      "kind": "law",
+      "statement": "law mul_le_mul_left:\n  for a: Nat\n  for b: Nat\n  for k: Nat\n  for h: le(a, b)\n  le(Nat.mul(k, a), Nat.mul(k, b))"
+    },
+    {
+      "name": "not_le_of_lt",
+      "kind": "law",
+      "statement": "law not_le_of_lt:\n  for a: Nat\n  for b: Nat\n  for h: lt(a, b)\n  {Nat.is_le(b, a) == False{} : Bool}"
+    },
+    {
+      "name": "one_mul",
+      "kind": "law",
+      "statement": "law one_mul:\n  for x: Nat\n  {Nat.mul(1n, x) == x : Nat}"
+    },
+    {
+      "name": "sub_zero",
+      "kind": "law",
+      "statement": "law sub_zero:\n  for n: Nat\n  {Nat.sub(n, 0n) == n : Nat}"
+    },
+    {
+      "name": "zero_le",
+      "kind": "law",
+      "statement": "law zero_le:\n  for b: Nat\n  le(0n, b)"
+    }
+  ],
+  "direct_law_count": 34,
+  "transitive_nat_dependencies": [
+    "add_add_add_comm",
+    "add_assoc",
+    "add_comm",
+    "add_div_left",
+    "add_le_add",
+    "add_le_add_left",
+    "add_le_add_right",
+    "add_left_comm",
+    "add_lt_add_iff_left",
+    "add_mul",
+    "add_mul_div_right",
+    "add_sub_of_le",
+    "add_succ",
+    "add_zero",
+    "div_eq_zero_of_le",
+    "div_mod_eq",
+    "div_mul_le_self",
+    "double_add",
+    "double_eq_add",
+    "double_le_double",
+    "double_mul",
+    "eq_of_is_eq",
+    "internal_div_add_zero_r",
+    "internal_div_block_start",
+    "internal_div_block_step",
+    "internal_div_go_eq",
+    "internal_div_go_run",
+    "internal_div_go_shift",
+    "internal_div_go_small",
+    "internal_div_gt_add",
+    "internal_div_le_add_cancel",
+    "internal_div_le_big",
+    "internal_div_le_small",
+    "internal_div_le_step",
+    "internal_div_le_wit",
+    "internal_div_not_succ_le",
+    "internal_div_true_ne_false",
+    "internal_div_wit_succ",
+    "internal_div_zero_le",
+    "internal_div_zero_of_wit",
+    "internal_false_ne_true",
+    "is_ge_eq_is_le",
+    "is_lt_eq_succ_le",
+    "le",
+    "le_add_left",
+    "le_add_right",
+    "le_div_iff_mul_le",
+    "le_of_add_eq",
+    "le_of_lt",
+    "le_of_lt_succ",
+    "le_refl",
+    "le_succ",
+    "le_trans",
+    "lt",
+    "lt_of_le_of_lt",
+    "lt_of_lt_of_le",
+    "lt_of_not_le",
+    "lt_of_succ_le",
+    "lt_succ_iff",
+    "lt_succ_self",
+    "mul_add",
+    "mul_comm",
+    "mul_double",
+    "mul_le_mul_left",
+    "mul_le_mul_right",
+    "mul_succ",
+    "mul_zero",
+    "not_le_of_lt",
+    "one_mul",
+    "sub_add_cancel",
+    "sub_zero",
+    "zero_le"
+  ],
+  "transitive_dependency_count": 72,
+  "transitive_method": "Reachability from all 41 emitted laws through resolved global names in emitted BendTT types and bodies; not all imported definitions.",
+  "scans": [
+    {
+      "file": "<scratch>/phase2/original/LAWS.bend",
+      "sha256": "366ee9e9b198ad219013a9ad3b777df6e21e55524c2c8af29982b5d3b41bb361",
+      "imports": [
+        "import Base",
+        "import ./plan.bend as Plan"
+      ],
+      "todo_tokens": [],
+      "unsafe_markers": [],
+      "question_defs": [],
+      "open_laws": [
+        "pool_cover",
+        "pool_budget",
+        "pool_sorted",
+        "pool_greedy",
+        "pool_filled",
+        "pools_cover",
+        "pools_sizes",
+        "solve_spec",
+        "cut_cover",
+        "sort_perm",
+        "sort_sorted"
+      ],
+      "foreign_imports": []
+    },
+    {
+      "file": "<scratch>/phase2/original/PROOF.bend",
+      "sha256": "be4224828ccffa8ea225171fb13460b6dfbab6f94ac8ad381070a8889ff82ee2",
+      "imports": [
+        "import Base",
+        "import ./plan.bend as Plan",
+        "import ./LAWS.bend as Laws",
+        "import ./u32.bend as W",
+        "import 0xcd4682caa53da19986acd472c2181473/nat.bend as N"
+      ],
+      "todo_tokens": [],
+      "unsafe_markers": [],
+      "question_defs": [],
+      "open_laws": [],
+      "foreign_imports": []
+    },
+    {
+      "file": "<scratch>/phase2/original/u32.bend",
+      "sha256": "e81b2d072ed68b08866c21fe95a973aba7a01ad96f3b2b1b3c813316e9c22067",
+      "imports": [
+        "import Base",
+        "import 0xcd4682caa53da19986acd472c2181473/nat.bend as N"
+      ],
+      "todo_tokens": [],
+      "unsafe_markers": [],
+      "question_defs": [],
+      "open_laws": [],
+      "foreign_imports": []
+    },
+    {
+      "file": "<scratch>/phase2/original/plan.bend",
+      "sha256": "3f8ff4fef8345e6718c120122d07264f1ca837ba0e157664cef530a91f93dd58",
+      "imports": [
+        "import Base"
+      ],
+      "todo_tokens": [],
+      "unsafe_markers": [],
+      "question_defs": [],
+      "open_laws": [],
+      "foreign_imports": []
+    },
+    {
+      "file": "~/.bend/lib/0xcd4682caa53da19986acd472c2181473/nat.bend",
+      "sha256": "6ce3175202287430ee1f41b53ae9f959a0983081d1ba7e53191489115c3de37a",
+      "imports": [
+        "import Base"
+      ],
+      "todo_tokens": [],
+      "unsafe_markers": [],
+      "question_defs": [],
+      "open_laws": [],
+      "foreign_imports": []
+    },
+    {
+      "file": "<nix-store>/bend2-2.0.37/share/bend2/bend2/base.bend",
+      "sha256": "3238272964daa05438a8a99311008802fd495963ac78dbbf51f6d5e6bdcee77c",
+      "imports": [],
+      "todo_tokens": [],
+      "unsafe_markers": [
+        "@unsafe",
+        "@unsafe"
+      ],
+      "question_defs": [],
+      "open_laws": [
+        "File",
+        "Socket",
+        "Listener",
+        "Window",
+        "Audio",
+        "Chan",
+        "U32.to_f32",
+        "F32.to_u32",
+        "F32.add",
+        "F32.sub",
+        "F32.mul",
+        "F32.div",
+        "F32.mod",
+        "F32.pow",
+        "F32.atan2",
+        "F32.neg",
+        "F32.abs",
+        "F32.sqrt",
+        "F32.exp",
+        "F32.log",
+        "F32.log2",
+        "F32.log10",
+        "F32.sin",
+        "F32.cos",
+        "F32.tan",
+        "F32.asin",
+        "F32.acos",
+        "F32.atan",
+        "F32.sinh",
+        "F32.cosh",
+        "F32.tanh",
+        "F32.floor",
+        "F32.ceil",
+        "F32.trunc",
+        "F32.is_eq",
+        "F32.is_ne",
+        "F32.is_lt",
+        "F32.is_le",
+        "F32.is_gt",
+        "F32.is_ge",
+        "F32.show",
+        "F32.bits",
+        "F32.read",
+        "Array.atomic.add",
+        "Array.atomic.min",
+        "Array.atomic.max",
+        "Array.atomic.and",
+        "Array.atomic.or",
+        "Array.atomic.xor",
+        "Array.atomic.exch",
+        "Array.atomic.cas",
+        "Array.atomic.fadd"
+      ],
+      "foreign_imports": [
+        {
+          "line": 169,
+          "text": "import \"./effs/print.c\""
+        },
+        {
+          "line": 170,
+          "text": "import \"./effs/print.js\""
+        },
+        {
+          "line": 173,
+          "text": "import \"./effs/write.c\""
+        },
+        {
+          "line": 174,
+          "text": "import \"./effs/write.js\""
+        },
+        {
+          "line": 177,
+          "text": "import \"./effs/print_err.c\""
+        },
+        {
+          "line": 178,
+          "text": "import \"./effs/print_err.js\""
+        },
+        {
+          "line": 181,
+          "text": "import \"./effs/get_env.c\""
+        },
+        {
+          "line": 182,
+          "text": "import \"./effs/get_env.js\""
+        },
+        {
+          "line": 187,
+          "text": "import \"./effs/args.c\""
+        },
+        {
+          "line": 188,
+          "text": "import \"./effs/args.js\""
+        },
+        {
+          "line": 193,
+          "text": "import \"./effs/process_run.c\""
+        },
+        {
+          "line": 194,
+          "text": "import \"./effs/process_run.js\""
+        },
+        {
+          "line": 213,
+          "text": "import \"./effs/random_u32.c\""
+        },
+        {
+          "line": 214,
+          "text": "import \"./effs/random_u32.js\""
+        },
+        {
+          "line": 217,
+          "text": "import \"./effs/spawn.c\""
+        },
+        {
+          "line": 218,
+          "text": "import \"./effs/spawn.js\""
+        },
+        {
+          "line": 221,
+          "text": "import \"./effs/sleep.c\""
+        },
+        {
+          "line": 222,
+          "text": "import \"./effs/sleep.js\""
+        },
+        {
+          "line": 225,
+          "text": "import \"./effs/now.c\""
+        },
+        {
+          "line": 226,
+          "text": "import \"./effs/now.js\""
+        },
+        {
+          "line": 229,
+          "text": "import \"./effs/thread_count.c\""
+        },
+        {
+          "line": 230,
+          "text": "import \"./effs/thread_count.js\""
+        },
+        {
+          "line": 233,
+          "text": "import \"./effs/chan.c\""
+        },
+        {
+          "line": 234,
+          "text": "import \"./effs/chan.js\""
+        },
+        {
+          "line": 238,
+          "text": "import \"./effs/chan.c\""
+        },
+        {
+          "line": 239,
+          "text": "import \"./effs/chan.js\""
+        },
+        {
+          "line": 243,
+          "text": "import \"./effs/chan.c\""
+        },
+        {
+          "line": 244,
+          "text": "import \"./effs/chan.js\""
+        },
+        {
+          "line": 248,
+          "text": "import \"./effs/chan.c\""
+        },
+        {
+          "line": 249,
+          "text": "import \"./effs/chan.js\""
+        },
+        {
+          "line": 253,
+          "text": "import \"./effs/chan.c\""
+        },
+        {
+          "line": 254,
+          "text": "import \"./effs/chan.js\""
+        },
+        {
+          "line": 257,
+          "text": "import \"./effs/chan.c\""
+        },
+        {
+          "line": 258,
+          "text": "import \"./effs/chan.js\""
+        },
+        {
+          "line": 290,
+          "text": "import \"./effs/file_open.c\""
+        },
+        {
+          "line": 291,
+          "text": "import \"./effs/file_open.js\""
+        },
+        {
+          "line": 295,
+          "text": "import \"./effs/file_read.c\""
+        },
+        {
+          "line": 296,
+          "text": "import \"./effs/file_read.js\""
+        },
+        {
+          "line": 300,
+          "text": "import \"./effs/file_read.c\""
+        },
+        {
+          "line": 301,
+          "text": "import \"./effs/file_read.js\""
+        },
+        {
+          "line": 305,
+          "text": "import \"./effs/file_read.c\""
+        },
+        {
+          "line": 306,
+          "text": "import \"./effs/file_read.js\""
+        },
+        {
+          "line": 310,
+          "text": "import \"./effs/file_size.c\""
+        },
+        {
+          "line": 311,
+          "text": "import \"./effs/file_size.js\""
+        },
+        {
+          "line": 315,
+          "text": "import \"./effs/file_write.c\""
+        },
+        {
+          "line": 316,
+          "text": "import \"./effs/file_write.js\""
+        },
+        {
+          "line": 320,
+          "text": "import \"./effs/file_write.c\""
+        },
+        {
+          "line": 321,
+          "text": "import \"./effs/file_write.js\""
+        },
+        {
+          "line": 324,
+          "text": "import \"./effs/file_close.c\""
+        },
+        {
+          "line": 325,
+          "text": "import \"./effs/file_close.js\""
+        },
+        {
+          "line": 328,
+          "text": "import \"./effs/tcp_listen.c\""
+        },
+        {
+          "line": 329,
+          "text": "import \"./effs/tcp_listen.js\""
+        },
+        {
+          "line": 333,
+          "text": "import \"./effs/tcp_accept.c\""
+        },
+        {
+          "line": 334,
+          "text": "import \"./effs/tcp_accept.js\""
+        },
+        {
+          "line": 338,
+          "text": "import \"./effs/tcp_accept.c\""
+        },
+        {
+          "line": 339,
+          "text": "import \"./effs/tcp_accept.js\""
+        },
+        {
+          "line": 343,
+          "text": "import \"./effs/tcp_connect.c\""
+        },
+        {
+          "line": 344,
+          "text": "import \"./effs/tcp_connect.js\""
+        },
+        {
+          "line": 350,
+          "text": "import \"./effs/tcp_send.c\""
+        },
+        {
+          "line": 351,
+          "text": "import \"./effs/tcp_send.js\""
+        },
+        {
+          "line": 355,
+          "text": "import \"./effs/tcp_send.c\""
+        },
+        {
+          "line": 356,
+          "text": "import \"./effs/tcp_send.js\""
+        },
+        {
+          "line": 362,
+          "text": "import \"./effs/tcp_recv.c\""
+        },
+        {
+          "line": 363,
+          "text": "import \"./effs/tcp_recv.js\""
+        },
+        {
+          "line": 367,
+          "text": "import \"./effs/tcp_recv.c\""
+        },
+        {
+          "line": 368,
+          "text": "import \"./effs/tcp_recv.js\""
+        },
+        {
+          "line": 375,
+          "text": "import \"./effs/tcp_send.c\""
+        },
+        {
+          "line": 376,
+          "text": "import \"./effs/tcp_send.js\""
+        },
+        {
+          "line": 381,
+          "text": "import \"./effs/tcp_send.c\""
+        },
+        {
+          "line": 382,
+          "text": "import \"./effs/tcp_send.js\""
+        },
+        {
+          "line": 386,
+          "text": "import \"./effs/tcp_recv.c\""
+        },
+        {
+          "line": 387,
+          "text": "import \"./effs/tcp_recv.js\""
+        },
+        {
+          "line": 392,
+          "text": "import \"./effs/tcp_recv.c\""
+        },
+        {
+          "line": 393,
+          "text": "import \"./effs/tcp_recv.js\""
+        },
+        {
+          "line": 396,
+          "text": "import \"./effs/udp_bind.c\""
+        },
+        {
+          "line": 397,
+          "text": "import \"./effs/udp_bind.js\""
+        },
+        {
+          "line": 402,
+          "text": "import \"./effs/udp_send_to.c\""
+        },
+        {
+          "line": 403,
+          "text": "import \"./effs/udp_send_to.js\""
+        },
+        {
+          "line": 407,
+          "text": "import \"./effs/udp_send_to.c\""
+        },
+        {
+          "line": 408,
+          "text": "import \"./effs/udp_send_to.js\""
+        },
+        {
+          "line": 415,
+          "text": "import \"./effs/udp_send_to.c\""
+        },
+        {
+          "line": 416,
+          "text": "import \"./effs/udp_send_to.js\""
+        },
+        {
+          "line": 422,
+          "text": "import \"./effs/udp_send_to.c\""
+        },
+        {
+          "line": 423,
+          "text": "import \"./effs/udp_send_to.js\""
+        },
+        {
+          "line": 428,
+          "text": "import \"./effs/udp_recv_from.c\""
+        },
+        {
+          "line": 429,
+          "text": "import \"./effs/udp_recv_from.js\""
+        },
+        {
+          "line": 433,
+          "text": "import \"./effs/udp_recv_from.c\""
+        },
+        {
+          "line": 434,
+          "text": "import \"./effs/udp_recv_from.js\""
+        },
+        {
+          "line": 440,
+          "text": "import \"./effs/udp_recv_from.c\""
+        },
+        {
+          "line": 441,
+          "text": "import \"./effs/udp_recv_from.js\""
+        },
+        {
+          "line": 446,
+          "text": "import \"./effs/udp_recv_from.c\""
+        },
+        {
+          "line": 447,
+          "text": "import \"./effs/udp_recv_from.js\""
+        },
+        {
+          "line": 450,
+          "text": "import \"./effs/socket_close.c\""
+        },
+        {
+          "line": 451,
+          "text": "import \"./effs/socket_close.js\""
+        },
+        {
+          "line": 454,
+          "text": "import \"./effs/listener_close.c\""
+        },
+        {
+          "line": 455,
+          "text": "import \"./effs/listener_close.js\""
+        },
+        {
+          "line": 459,
+          "text": "import \"./effs/window.c\""
+        },
+        {
+          "line": 460,
+          "text": "import \"./effs/window_open.js\""
+        },
+        {
+          "line": 464,
+          "text": "import \"./effs/window.c\""
+        },
+        {
+          "line": 465,
+          "text": "import \"./effs/window_frame.js\""
+        },
+        {
+          "line": 468,
+          "text": "import \"./effs/window.c\""
+        },
+        {
+          "line": 469,
+          "text": "import \"./effs/window_set_title.js\""
+        },
+        {
+          "line": 474,
+          "text": "import \"./effs/window.c\""
+        },
+        {
+          "line": 475,
+          "text": "import \"./effs/window_grab.js\""
+        },
+        {
+          "line": 478,
+          "text": "import \"./effs/window.c\""
+        },
+        {
+          "line": 479,
+          "text": "import \"./effs/window_close.js\""
+        },
+        {
+          "line": 482,
+          "text": "import \"./effs/audio.c\""
+        },
+        {
+          "line": 483,
+          "text": "import \"./effs/audio_open.js\""
+        },
+        {
+          "line": 486,
+          "text": "import \"./effs/audio.c\""
+        },
+        {
+          "line": 487,
+          "text": "import \"./effs/audio_write.js\""
+        },
+        {
+          "line": 490,
+          "text": "import \"./effs/audio.c\""
+        },
+        {
+          "line": 491,
+          "text": "import \"./effs/audio_close.js\""
+        }
+      ]
+    }
+  ],
+  "kernel_export_sha256": "475c3cc74ddce89a0bff58c92e619973aab853153b6d3e88f8020a3ca380fead",
+  "planner_open_laws": [
+    "pools_cover"
+  ],
+  "arithmetic_proof_references_to_unsafe_base": [],
+  "planner_proof_references_to_unsafe_base": [],
+  "base_foreign_definitions": [
+    "IO.print",
+    "IO.write",
+    "IO.print_err",
+    "IO.get_env",
+    "IO.args",
+    "Process.run",
+    "IO.random_u32",
+    "IO.spawn",
+    "IO.sleep",
+    "IO.now",
+    "IO.thread_count",
+    "Chan.new",
+    "Chan.send",
+    "Chan.recv",
+    "Chan.try_send",
+    "Chan.try_recv",
+    "Chan.close",
+    "File.open",
+    "File.read",
+    "File.read_bytes",
+    "File.read_at",
+    "File.size",
+    "File.write",
+    "File.write_bytes",
+    "File.close",
+    "TCP.listen",
+    "TCP.accept",
+    "TCP.try_accept",
+    "TCP.connect",
+    "TCP.send",
+    "TCP.try_send",
+    "TCP.recv",
+    "TCP.try_recv",
+    "TCP.send_bytes",
+    "TCP.try_send_bytes",
+    "TCP.recv_bytes",
+    "TCP.try_recv_bytes",
+    "UDP.bind",
+    "UDP.send_to",
+    "UDP.try_send_to",
+    "UDP.send_bytes_to",
+    "UDP.try_send_bytes_to",
+    "UDP.recv_from",
+    "UDP.try_recv_from",
+    "UDP.recv_bytes_from",
+    "UDP.try_recv_bytes_from",
+    "Socket.close",
+    "Listener.close",
+    "Window.open",
+    "Window.frame",
+    "Window.set_title",
+    "Window.grab",
+    "Window.close",
+    "Audio.open",
+    "Audio.write",
+    "Audio.close"
+  ],
+  "arithmetic_proof_references_to_foreign_base": [],
+  "planner_proof_references_to_foreign_base": [],
+  "base_opaque_intrinsic_declarations": [
+    "File",
+    "Socket",
+    "Listener",
+    "Window",
+    "Audio",
+    "Chan",
+    "U32.to_f32",
+    "F32.to_u32",
+    "F32.add",
+    "F32.sub",
+    "F32.mul",
+    "F32.div",
+    "F32.mod",
+    "F32.pow",
+    "F32.atan2",
+    "F32.neg",
+    "F32.abs",
+    "F32.sqrt",
+    "F32.exp",
+    "F32.log",
+    "F32.log2",
+    "F32.log10",
+    "F32.sin",
+    "F32.cos",
+    "F32.tan",
+    "F32.asin",
+    "F32.acos",
+    "F32.atan",
+    "F32.sinh",
+    "F32.cosh",
+    "F32.tanh",
+    "F32.floor",
+    "F32.ceil",
+    "F32.trunc",
+    "F32.is_eq",
+    "F32.is_ne",
+    "F32.is_lt",
+    "F32.is_le",
+    "F32.is_gt",
+    "F32.is_ge",
+    "F32.show",
+    "F32.bits",
+    "F32.read",
+    "Array.atomic.add",
+    "Array.atomic.min",
+    "Array.atomic.max",
+    "Array.atomic.and",
+    "Array.atomic.or",
+    "Array.atomic.xor",
+    "Array.atomic.exch",
+    "Array.atomic.cas",
+    "Array.atomic.fadd"
+  ],
+  "planner_kernel_export_sha256": "f348eac8bfde8b529580af6d3a4c28616cdfec44294820e68c09884a3af7bab0"
+}

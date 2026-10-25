@@ -1,0 +1,39 @@
+{
+  "bend_version": "2.0.37",
+  "lean_version": "4.34.0",
+  "base_and_frontend": {
+    "<nix-store>/bend2-2.0.37/share/bend2/bend2/base.bend": "3238272964daa05438a8a99311008802fd495963ac78dbbf51f6d5e6bdcee77c",
+    "<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts": "6c1df3eb304fe085070aa4797928f70243b80d4635389e3d5d8a49fdfbb3051e",
+    "<nix-store>/bend2-2.0.37/share/bend2/bend2/comp.ts": "56d5727049bc3ef528ef84d3b4712a41a0a8ce0a06437b29d881e71107638c70"
+  },
+  "review_sources": {
+    "Audit.lean": "2be7cc206c2c3f9e5b65b362282b2f8c88dad9edcedb0bc21849a9dca3a1cb4c",
+    "BendModel/Log2.lean": "48eca5376b0956c19fd1778f3a30929ad4b1e12b02f92c0d21837dee3a05ea36",
+    "BendModel/Refinement.lean": "afe89f4bf899c6a47d4f0f2650f4ff384a5bcaff45dca879b0be5d9ac7189ddc",
+    "BendModel/U32.lean": "c41b9dfa3f28718ac356e17d0e23910c927a67733bfe9d26b6ac89af7d70938e",
+    "BendModel/Word.lean": "fd68f9bc1301e6a01406a1f0f934f99426d9ae52f80869e96a784b9f95275cfe",
+    "BendModel.lean": "7952e302d6c33eb58f845cdab4cdd0db6cc503bfb5f7a21a51dcaa77d18160ed",
+    "Main.lean": "82ef2b60cc7347411efbb940b4ea5650137577fb5fdac5345f339ceade8e85e8",
+    "conversion_probes.py": "6c02a99b774c445846c64e375dca0e9b0aa0060e2a92c71855588f6e40d41ab1",
+    "fidelity.py": "2103412243e16b05de319487e9eb94f85c3f9cd09894b356eb183bbfd334ee3a",
+    "lakefile.lean": "24e946bc266bf3ecefc4bccd5ea30eea46987ac37bb28edcae5a1b6cce9f165d",
+    "verify.sh": "c4752607666c50821c626e8bb633e244aa790f62f1b95bcccc1faaeda4ba993d"
+  },
+  "kernel": {
+    "path": "<nix-store>/bendtt-2.0.37/bin/bendtt",
+    "sha256": "b6db9a8e0bccf700d5a764c082e1831d003194d19b056c57f88df191762753a7"
+  },
+  "worktree": {
+    "branch": "bend-planner",
+    "commit": "555d25163f1b0bb3ea601bc39921f6e5681374de"
+  },
+  "audit": {
+    "declarations": 445,
+    "theorems_including_generated": 294,
+    "allowed_axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+    ]
+  }
+}

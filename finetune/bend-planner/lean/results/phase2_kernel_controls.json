@@ -1,0 +1,111 @@
+[
+  {
+    "law": "baseline",
+    "command": [
+      "<nix-store>/bendtt-2.0.37/bin/bendtt",
+      "<scratch>/phase2/u32.bendtt"
+    ],
+    "returncode": 0,
+    "stdout": "ALL PROOFS CHECK\n",
+    "stderr": "",
+    "passed": true,
+    "rejected": false,
+    "elapsed_seconds": 0.030782900983467698
+  },
+  {
+    "law": "U32.to_nat_bound",
+    "mutant": 1,
+    "old_header": "\u2200+x0 : U32 -> {(Nat.is_le (U32.to_nat x0) (Word.max_nat (.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())))) == (.True, ()) : Bool} =",
+    "new_header": "\u2200+x0 : U32 -> \u2200x99 : {(Nat.is_le (U32.to_nat x0) (Word.max_nat (.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())))) == (.True, ()) : Bool} -> Empty =",
+    "command": [
+      "<nix-store>/bendtt-2.0.37/bin/bendtt",
+      "<scratch>/phase2/kernel-controls/U32-to_nat_bound-1.bendtt"
+    ],
+    "returncode": 1,
+    "stdout": "SOME PROOFS FAIL\nIn U32.to_nat_bound:\nexpected: \u2200x1 : {((Nat.is_le (U32.to_nat x0)) (Word.max_nat (.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())))) == (.True, ()) : Bool} -> Empty\nobserved: {((Nat.is_le (U32.to_nat x0)) (Word.max_nat (.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())))) == (.True, ()) : Bool}\n",
+    "stderr": "",
+    "passed": false,
+    "rejected": true,
+    "elapsed_seconds": 0.023023886955343187
+  },
+  {
+    "law": "U32.to_nat_bound",
+    "mutant": 2,
+    "old_header": "\u2200+x0 : U32 -> {(Nat.is_le (U32.to_nat x0) (Word.max_nat (.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())))) == (.True, ()) : Bool} =",
+    "new_header": "\u2200+x0 : U32 -> {(Nat.is_lt (U32.to_nat x0) (Word.max_nat (.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())))) == (.True, ()) : Bool} =",
+    "command": [
+      "<nix-store>/bendtt-2.0.37/bin/bendtt",
+      "<scratch>/phase2/kernel-controls/U32-to_nat_bound-2.bendtt"
+    ],
+    "returncode": 1,
+    "stdout": "SOME PROOFS FAIL\nIn U32.to_nat_bound:\nexpected: {((Nat.is_lt (U32.to_nat x0)) (Word.max_nat (.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())))) == (.True, ()) : Bool}\nobserved: {((Nat.is_le (U32.to_nat x0)) (Word.max_nat (.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())))) == (.True, ()) : Bool}\n",
+    "stderr": "",
+    "passed": false,
+    "rejected": true,
+    "elapsed_seconds": 0.023478818009607494
+  },
+  {
+    "law": "U32.to_nat_inc",
+    "mutant": 1,
+    "old_header": "\u2200+x0 : U32 -> \u2200x1 : {(Nat.is_lt (U32.to_nat x0) (Word.max_nat (.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())))) == (.True, ()) : Bool} -> {(U32.to_nat (U32.inc x0)) == (.Succ, ((U32.to_nat x0), ())) : Nat} =",
+    "new_header": "\u2200+x0 : U32 -> \u2200x1 : {(Nat.is_lt (U32.to_nat x0) (Word.max_nat (.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())))) == (.True, ()) : Bool} -> \u2200x99 : {(U32.to_nat (U32.inc x0)) == (.Succ, ((U32.to_nat x0), ())) : Nat} -> Empty =",
+    "command": [
+      "<nix-store>/bendtt-2.0.37/bin/bendtt",
+      "<scratch>/phase2/kernel-controls/U32-to_nat_inc-1.bendtt"
+    ],
+    "returncode": 1,
+    "stdout": "SOME PROOFS FAIL\nIn U32.to_nat_inc:\nexpected: \u2200x2 : {(U32.to_nat (U32.inc x0)) == (.Succ, ((U32.to_nat x0), ())) : Nat} -> Empty\nobserved: {(U32.to_nat (U32.inc x0)) == (.Succ, ((U32.to_nat x0), ())) : Nat}\n",
+    "stderr": "",
+    "passed": false,
+    "rejected": true,
+    "elapsed_seconds": 0.022838691947981715
+  },
+  {
+    "law": "U32.to_nat_inc",
+    "mutant": 2,
+    "old_header": "\u2200+x0 : U32 -> \u2200x1 : {(Nat.is_lt (U32.to_nat x0) (Word.max_nat (.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())))) == (.True, ()) : Bool} -> {(U32.to_nat (U32.inc x0)) == (.Succ, ((U32.to_nat x0), ())) : Nat} =",
+    "new_header": "\u2200+x0 : U32 -> \u2200x1 : Unit -> {(U32.to_nat (U32.inc x0)) == (.Succ, ((U32.to_nat x0), ())) : Nat} =",
+    "command": [
+      "<nix-store>/bendtt-2.0.37/bin/bendtt",
+      "<scratch>/phase2/kernel-controls/U32-to_nat_inc-2.bendtt"
+    ],
+    "returncode": 1,
+    "stdout": "SOME PROOFS FAIL\nIn U32.to_nat_inc:\nexpected: {((Nat.is_lt (U32.to_nat x0)) (Word.max_nat (.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())))) == (.True, ()) : Bool}\nobserved: \u03a3x2 : <Unit> -> (Unit.arms x2)\n",
+    "stderr": "",
+    "passed": false,
+    "rejected": true,
+    "elapsed_seconds": 0.022259459015913308
+  },
+  {
+    "law": "U32.to_nat_from_nat",
+    "mutant": 1,
+    "old_header": "\u2200+x0 : Nat -> \u2200x1 : {(Nat.is_le x0 (Word.max_nat (.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())))) == (.True, ()) : Bool} -> {(U32.to_nat (U32.from_nat x0)) == x0 : Nat} =",
+    "new_header": "\u2200+x0 : Nat -> \u2200x1 : {(Nat.is_le x0 (Word.max_nat (.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())))) == (.True, ()) : Bool} -> \u2200x99 : {(U32.to_nat (U32.from_nat x0)) == x0 : Nat} -> Empty =",
+    "command": [
+      "<nix-store>/bendtt-2.0.37/bin/bendtt",
+      "<scratch>/phase2/kernel-controls/U32-to_nat_from_nat-1.bendtt"
+    ],
+    "returncode": 1,
+    "stdout": "SOME PROOFS FAIL\nIn U32.to_nat_from_nat:\nexpected: \u2200x2 : {(U32.to_nat (U32.from_nat x0)) == x0 : Nat} -> Empty\nobserved: {(U32.to_nat (U32.from_nat x0)) == x0 : Nat}\n",
+    "stderr": "",
+    "passed": false,
+    "rejected": true,
+    "elapsed_seconds": 0.023184817982837558
+  },
+  {
+    "law": "U32.to_nat_from_nat",
+    "mutant": 2,
+    "old_header": "\u2200+x0 : Nat -> \u2200x1 : {(Nat.is_le x0 (Word.max_nat (.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())))) == (.True, ()) : Bool} -> {(U32.to_nat (U32.from_nat x0)) == x0 : Nat} =",
+    "new_header": "\u2200+x0 : Nat -> \u2200x1 : Unit -> {(U32.to_nat (U32.from_nat x0)) == x0 : Nat} =",
+    "command": [
+      "<nix-store>/bendtt-2.0.37/bin/bendtt",
+      "<scratch>/phase2/kernel-controls/U32-to_nat_from_nat-2.bendtt"
+    ],
+    "returncode": 1,
+    "stdout": "SOME PROOFS FAIL\nIn U32.to_nat_from_nat:\nexpected: {((Nat.is_le x0) (Word.max_nat (.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())))) == (.True, ()) : Bool}\nobserved: \u03a3x2 : <Unit> -> (Unit.arms x2)\n",
+    "stderr": "",
+    "passed": false,
+    "rejected": true,
+    "elapsed_seconds": 0.023187784012407064
+  }
+]
