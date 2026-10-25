@@ -13,6 +13,7 @@ $RELABEL_ROOT:
     labeling/equivalence/<run>/               the equivalence check
     labeling/consistency/<run>/               the consistency gate (stage 1 dev ids, no filters)
     labeling/gate/<run>/                      the gate to stage 3 (drops, completeness, spot check)
+    labeling/advance/<step>.json              the job driver's inputs, decisions and submitted jobs (labeling.advance)
     smoke/labeling/...                        smoke runs (tiny fixtures, --limit); never a production path
 
 The private registry ($PRIVATE_REGISTRY/sources.json) maps aliases to sources; Part B's outputs are read
@@ -119,6 +120,10 @@ def consistency_dir(run: str) -> Path:
 
 def gate_dir(run: str) -> Path:
     return labeling_dir() / "gate" / run
+
+
+def advance_dir() -> Path:
+    return labeling_dir() / "advance"
 
 
 def smoke_dir(name: str) -> Path:
