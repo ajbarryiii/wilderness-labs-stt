@@ -1,0 +1,60 @@
+# Dosages, units, routes and frequencies.
+milligram
+milligrams
+mg
+microgram
+micrograms
+mcg
+milligrams per kilogram
+micrograms per kilogram
+milliliter
+milliliters
+millilitre
+international units
+milliequivalents
+meq
+millimoles
+mmol
+millimeters of mercury
+beats per minute
+breaths per minute
+liters per minute
+drops per minute
+intravenous
+intravenously
+intramuscular
+intramuscularly
+intraosseous
+subcutaneous
+subcutaneously
+sublingual
+transmucosal
+intranasal
+orally
+topical
+rectal
+nebulized
+iv
+bolus
+infusion
+loading dose
+maintenance dose
+once daily
+twice daily
+three times daily
+four times daily
+every four hours
+every six hours
+every eight hours
+every twelve hours
+prn
+lozenge
+injection
+suppository
+inhaler
+vial
+ampule
+syringe
+saline lock
+iv push
+iv drip

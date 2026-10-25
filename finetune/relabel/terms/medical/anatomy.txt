@@ -1,0 +1,213 @@
+# Anatomy. Everyday words with common non-medical senses (back, hand, head, face, chest, arm, heart, ...)
+# are left out on purpose; multi-word anatomical phrases that contain them are kept.
+abdomen
+abdominal wall
+acetabulum
+achilles tendon
+acromion
+adrenal gland
+alveoli
+alveolus
+anterior cruciate ligament
+aorta
+aortic arch
+aortic valve
+appendix
+arteriole
+artery
+axilla
+basilic vein
+biceps
+bile duct
+bladder
+brachial artery
+brachial plexus
+brainstem
+bronchiole
+bronchus
+bronchi
+calcaneus
+capillary
+carotid artery
+carpal
+cartilage
+cecum
+cephalic vein
+cerebellum
+cerebral cortex
+cerebrum
+cervical spine
+cervix
+clavicle
+coccyx
+common carotid artery
+coronary artery
+cranium
+cricoid cartilage
+cricothyroid membrane
+deltoid
+deltoid muscle
+diaphragm
+duodenum
+dura mater
+eardrum
+epidermis
+dermis
+epididymis
+epiglottis
+esophagus
+external jugular vein
+fallopian tube
+femoral artery
+femoral vein
+femur
+fibula
+frontal lobe
+gallbladder
+gastrocnemius
+glottis
+gluteus maximus
+groin
+hamstring
+hepatic artery
+humerus
+hypothalamus
+ileum
+iliac artery
+iliac crest
+ilium
+inferior vena cava
+inguinal ligament
+intercostal space
+intestine
+small intestine
+large intestine
+jejunum
+jugular vein
+kidney
+kidneys
+larynx
+left ventricle
+right ventricle
+ligament
+liver
+lumbar spine
+lung
+lungs
+lymph node
+lymph nodes
+mandible
+manubrium
+mastoid
+maxilla
+mediastinum
+medulla oblongata
+meninges
+meniscus
+mesentery
+metacarpal
+metatarsal
+midclavicular line
+anterior axillary line
+midaxillary line
+mitral valve
+myocardium
+nasal septum
+nasopharynx
+oropharynx
+occipital lobe
+olecranon
+optic nerve
+ovary
+pancreas
+parietal lobe
+parietal pleura
+patella
+pelvis
+pericardium
+perineum
+peritoneum
+phalanges
+pharynx
+pituitary gland
+pleura
+pleural space
+popliteal artery
+portal vein
+prostate
+pubic symphysis
+pulmonary artery
+pulmonary vein
+quadriceps
+radial artery
+rectum
+retina
+retroperitoneum
+rib cage
+sacrum
+scapula
+sciatic nerve
+sclera
+scrotum
+sigmoid colon
+sinoatrial node
+skull
+spinal cord
+spleen
+sternum
+subclavian artery
+subclavian vein
+superior vena cava
+tarsal
+temporal lobe
+tendon
+testis
+testicle
+thalamus
+thoracic spine
+thorax
+thyroid
+thyroid cartilage
+thyroid gland
+tibia
+tibial tuberosity
+trachea
+trapezius
+triceps
+tricuspid valve
+tympanic membrane
+ulna
+ulnar artery
+ureter
+urethra
+uterus
+uvula
+vagina
+vagus nerve
+vena cava
+ventricle
+vertebra
+vertebrae
+vocal cords
+xiphoid process
+zygoma
+chest wall
+neck veins
+axillary artery
+carotid pulse
+radial pulse
+femoral pulse
+pedal pulse
+dorsalis pedis
+posterior tibial artery
+cervical vertebrae
+lumbar vertebrae
+thoracic cavity
+abdominal cavity
+pleural cavity
+peritoneal cavity
+
+# --- spelling variants (2026-10-24): joined, split or hyphenated forms of a term listed above, attested in the
+# dev and eval references and reviewed for collisions; terms.variant_key makes each one term with its listed form.
+ear drum
+gall bladder

@@ -1,0 +1,209 @@
+# Science: physics, chemistry, biology, earth sciences and mathematics.
+hypothesis
+hypotheses
+experiment
+experiments
+experimental
+empirical
+theorem
+theorems
+lemma
+equation
+equations
+differential equation
+linear algebra
+matrix
+matrices
+eigenvalue
+eigenvalues
+eigenvector
+vector space
+calculus
+derivative
+derivatives
+integrals
+probability distribution
+probability
+statistics
+statistical
+statistically significant
+standard deviation
+variance
+correlation
+regression analysis
+p-value
+confidence interval
+bayesian
+gaussian
+normal distribution
+logarithm
+exponential
+polynomial
+topology
+geometry
+algebra
+quantum
+quantum mechanics
+quantum physics
+relativity
+general relativity
+special relativity
+particle physics
+electron
+electrons
+proton
+protons
+neutron
+neutrons
+photon
+photons
+quark
+quarks
+boson
+higgs boson
+atom
+atoms
+atomic
+molecule
+molecules
+molecular
+isotope
+isotopes
+nucleus
+nuclei
+wavelength
+wavelengths
+spectroscopy
+spectrometer
+mass spectrometry
+chromatography
+electromagnetic radiation
+infrared
+ultraviolet
+x-rays
+gamma rays
+radioactive
+radioactivity
+half-life
+entropy
+enthalpy
+kinetic energy
+potential energy
+velocity
+gravity
+gravitational
+gravitational waves
+newton's laws
+inertia
+magnetic field
+electric field
+superconductor
+superconductivity
+semiconductor physics
+plasma physics
+astrophysics
+astronomy
+cosmology
+black hole
+black holes
+galaxy
+galaxies
+telescope
+exoplanet
+dark matter
+dark energy
+big bang
+chemistry
+chemical reaction
+catalyst
+catalysts
+oxidation
+reduction reaction
+polymer
+polymers
+organic chemistry
+inorganic chemistry
+biochemistry
+molecular biology
+biology
+genetics
+genome
+genomes
+genomic
+genomics
+gene expression
+dna
+rna
+mrna
+amino acid
+amino acids
+enzyme
+enzymes
+cell membrane
+mitochondria
+chromosome
+chromosomes
+mutation
+mutations
+crispr
+gene editing
+sequencing
+evolutionary
+natural selection
+ecology
+ecosystem
+ecosystems
+biodiversity
+microbiology
+bacteria
+bacterium
+virus
+viruses
+pathogen
+pathogens
+microbiome
+neuroscience
+neuron
+neurons
+synapse
+synapses
+neurotransmitter
+cognitive science
+photosynthesis
+carbon dioxide
+methane
+greenhouse gas
+greenhouse gases
+climate change
+global warming
+geology
+tectonic plates
+earthquake
+seismic
+volcano
+volcanic
+sediment
+fossil
+fossils
+oceanography
+atmospheric
+meteorology
+hydrogen
+oxygen atom
+nitrogen
+helium
+carbon atom
+silicon dioxide
+sodium chloride
+ph
+acidity
+nanoparticles
+peer review
+peer-reviewed
+laboratory
+microscope
+electron microscope
+specimen
+specimens
+control group
+sample size

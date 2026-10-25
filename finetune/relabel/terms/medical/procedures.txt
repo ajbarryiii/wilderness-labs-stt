@@ -1,0 +1,184 @@
+# Clinical procedures, examinations and investigations.
+appendectomy
+cholecystectomy
+laparotomy
+laparoscopy
+thoracotomy
+thoracostomy
+tube thoracostomy
+chest tube
+needle thoracostomy
+pericardiocentesis
+thoracentesis
+paracentesis
+lumbar puncture
+craniotomy
+burr hole
+tracheostomy
+tracheotomy
+cricothyroidotomy
+cricothyrotomy
+intubation
+endotracheal intubation
+rapid sequence intubation
+extubation
+bag valve mask
+mechanical ventilation
+cardiopulmonary resuscitation
+cpr
+defibrillation
+cardioversion
+transcutaneous pacing
+angiography
+angioplasty
+coronary angiography
+stent
+catheterization
+cardiac catheterization
+urinary catheter
+foley catheter
+central line
+central venous catheter
+arterial line
+peripheral iv
+intravenous access
+intraosseous access
+venipuncture
+phlebotomy
+blood transfusion
+transfusion
+massive transfusion
+fasciotomy
+escharotomy
+amputation
+debridement
+suturing
+sutures
+wound closure
+skin graft
+incision and drainage
+splinting
+traction splint
+closed reduction
+open reduction and internal fixation
+external fixation
+arthroscopy
+arthroplasty
+hip replacement
+knee replacement
+endoscopy
+colonoscopy
+sigmoidoscopy
+gastroscopy
+bronchoscopy
+cystoscopy
+biopsy
+fine needle aspiration
+excision
+mastectomy
+lumpectomy
+hysterectomy
+cesarean section
+caesarean section
+episiotomy
+dilation and curettage
+vasectomy
+circumcision
+tonsillectomy
+adenoidectomy
+thyroidectomy
+splenectomy
+nephrectomy
+colectomy
+bowel resection
+hernia repair
+bypass surgery
+coronary artery bypass graft
+cabg
+valve replacement
+pacemaker insertion
+dialysis
+hemodialysis
+nebulizer
+nebulization
+oxygen therapy
+non-invasive ventilation
+cpap
+bipap
+electrocardiogram
+ecg
+ekg
+echocardiogram
+echocardiography
+electroencephalogram
+eeg
+x-ray
+chest x-ray
+radiograph
+ultrasound
+fast exam
+efast
+computed tomography
+ct scan
+cat scan
+mri
+magnetic resonance imaging
+pet scan
+mammogram
+spirometry
+peak flow
+pulse oximetry
+capnography
+blood gas
+arterial blood gas
+full blood count
+complete blood count
+urea and electrolytes
+basic metabolic panel
+liver function tests
+coagulation screen
+blood culture
+urinalysis
+urine dipstick
+lipid panel
+troponin
+d-dimer
+hba1c
+blood glucose
+fingerstick glucose
+lactate
+international normalized ratio
+inr
+prothrombin time
+glasgow coma scale
+gcs
+avpu
+triage
+primary survey
+secondary survey
+log roll
+spinal immobilization
+cervical collar
+c-collar
+rectal examination
+pelvic examination
+otoscopy
+fundoscopy
+auscultation
+palpation
+vaccination
+immunization
+anesthesia
+general anesthesia
+local anesthesia
+regional anesthesia
+nerve block
+epidural
+spinal anesthesia
+sedation
+procedural sedation
+
+# --- spelling variants (2026-10-24): joined, split or hyphenated forms of a term listed above, attested in the
+# dev and eval references and reviewed for collisions; terms.variant_key makes each one term with its listed form.
+xray
+chest xray

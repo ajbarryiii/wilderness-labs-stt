@@ -1,0 +1,163 @@
+# Tactical Combat Casualty Care (TCCC) vocabulary: phases, the MARCH PAWS sequence, equipment, evacuation
+# and documentation terms, from the public TCCC guidelines' terminology.
+tactical combat casualty care
+tccc
+care under fire
+tactical field care
+tactical evacuation care
+tactical evacuation
+tacevac
+casualty evacuation
+casevac
+medical evacuation
+medevac
+nine line
+9-line
+nine line medevac
+mist report
+march paws
+massive hemorrhage
+respiration
+head injury
+hypothermia prevention
+antibiotics
+wounds
+casualty
+casualties
+casualty collection point
+combat medic
+corpsman
+pararescue
+pararescueman
+medic
+first responder
+tourniquet
+tourniquets
+combat application tourniquet
+cat tourniquet
+sof tactical tourniquet
+junctional tourniquet
+junctional hemorrhage
+junctional emergency treatment tool
+sam junctional tourniquet
+pelvic binder
+hemostatic dressing
+hemostatic agent
+combat gauze
+quikclot
+celox
+chitogauze
+wound packing
+pressure dressing
+emergency trauma dressing
+israeli bandage
+elastic bandage
+chest seal
+vented chest seal
+occlusive dressing
+needle decompression
+decompression needle
+finger thoracostomy
+nasopharyngeal airway
+npa
+oropharyngeal airway
+supraglottic airway
+i-gel
+king lt
+surgical airway
+cric
+cric kit
+airway management
+recovery position
+jaw thrust
+chin lift
+head tilt
+suction
+pulse oximeter
+oxygen saturation
+end-tidal co2
+blood pressure
+heart rate
+respiratory rate
+capillary refill
+radial pulse present
+mental status
+fluid resuscitation
+hypotensive resuscitation
+permissive hypotension
+whole blood
+low titer o whole blood
+ltowb
+cold stored whole blood
+walking blood bank
+fresh whole blood
+blood products
+freeze-dried plasma
+dried plasma
+red blood cells
+blood warmer
+txa
+oral transmucosal fentanyl citrate
+otfc
+fentanyl lozenge
+combat wound medication pack
+combat pill pack
+pain management
+analgesia
+hypothermia prevention and management kit
+hpmk
+ready-heat blanket
+heat reflective shell
+space blanket
+litter carry
+skedco
+evacuation category
+urgent surgical
+mass casualty
+masscal
+dd form 1380
+tccc card
+casualty card
+dd 1380
+tactical trauma assessment
+improvised explosive device
+ied
+shrapnel
+penetrating eye injury
+rigid eye shield
+eye shield
+burn dressing
+rule of nines
+total body surface area
+tbsa
+parkland formula
+splint
+sam splint
+spinal motion restriction
+tbi
+moderate traumatic brain injury
+severe traumatic brain injury
+unequal pupils
+herniation
+decorticate
+decerebrate
+compensated shock
+uncompensated shock
+tourniquet conversion
+tourniquet time
+two-inch rule
+high and tight
+point of injury
+prolonged field care
+prolonged casualty care
+damage control resuscitation
+damage control surgery
+forward surgical team
+hospital ship
+aeromedical evacuation
+hoist extraction
+landing zone
+helicopter landing zone
+hlz
+pickup zone
+blood transfusion kit

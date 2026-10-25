@@ -1,0 +1,273 @@
+# Conditions, injuries, signs and symptoms with a clinical meaning.
+hemorrhage
+haemorrhage
+bleeding
+exsanguination
+hypovolemia
+hypovolemic shock
+hemorrhagic shock
+septic shock
+cardiogenic shock
+anaphylaxis
+anaphylactic shock
+sepsis
+septicemia
+hypotension
+hypertension
+tachycardia
+bradycardia
+arrhythmia
+atrial fibrillation
+atrial flutter
+ventricular fibrillation
+ventricular tachycardia
+asystole
+pulseless electrical activity
+cardiac arrest
+myocardial infarction
+heart attack
+angina
+heart failure
+congestive heart failure
+cardiomyopathy
+pericarditis
+cardiac tamponade
+pericardial effusion
+aortic dissection
+aneurysm
+deep vein thrombosis
+pulmonary embolism
+embolism
+thrombosis
+stroke
+transient ischemic attack
+subarachnoid hemorrhage
+subdural hematoma
+epidural hematoma
+intracranial hemorrhage
+intracranial pressure
+traumatic brain injury
+concussion
+seizure
+epilepsy
+status epilepticus
+meningitis
+encephalitis
+migraine
+syncope
+vertigo
+dementia
+delirium
+pneumonia
+bronchitis
+bronchiolitis
+asthma
+chronic obstructive pulmonary disease
+copd
+emphysema
+pulmonary edema
+pleural effusion
+pneumothorax
+tension pneumothorax
+open pneumothorax
+hemothorax
+hemopneumothorax
+flail chest
+rib fracture
+pulmonary contusion
+acute respiratory distress syndrome
+respiratory failure
+hypoxia
+hypoxemia
+hypercapnia
+dyspnea
+shortness of breath
+tachypnea
+apnea
+cyanosis
+stridor
+wheezing
+hemoptysis
+tuberculosis
+covid
+influenza
+diabetes
+diabetes mellitus
+type 1 diabetes
+type 2 diabetes
+diabetic ketoacidosis
+hypoglycemia
+hyperglycemia
+hypothyroidism
+hyperthyroidism
+hyperkalemia
+hypokalemia
+hyponatremia
+hypernatremia
+hypocalcemia
+acidosis
+alkalosis
+metabolic acidosis
+dehydration
+renal failure
+acute kidney injury
+chronic kidney disease
+kidney stones
+urinary tract infection
+pyelonephritis
+cystitis
+appendicitis
+cholecystitis
+pancreatitis
+hepatitis
+cirrhosis
+gastritis
+peptic ulcer
+gastroesophageal reflux
+bowel obstruction
+diverticulitis
+crohn's disease
+ulcerative colitis
+irritable bowel syndrome
+gastroenteritis
+diarrhea
+constipation
+nausea
+vomiting
+hematemesis
+melena
+dysphagia
+jaundice
+ascites
+peritonitis
+evisceration
+hernia
+fracture
+open fracture
+compound fracture
+closed fracture
+femur fracture
+pelvic fracture
+skull fracture
+spinal fracture
+dislocation
+sprain
+contusion
+laceration
+abrasion
+avulsion
+puncture wound
+gunshot wound
+penetrating trauma
+blunt trauma
+blast injury
+crush injury
+compartment syndrome
+rhabdomyolysis
+amputated
+traumatic amputation
+full thickness burn
+partial thickness burn
+inhalation injury
+frostbite
+hypothermia
+hyperthermia
+heat stroke
+heat exhaustion
+dehiscence
+cellulitis
+abscess
+gangrene
+necrotizing fasciitis
+osteomyelitis
+arthritis
+rheumatoid arthritis
+osteoarthritis
+gout
+osteoporosis
+lupus
+anemia
+sickle cell disease
+leukemia
+lymphoma
+myeloma
+thrombocytopenia
+coagulopathy
+hemophilia
+disseminated intravascular coagulation
+cancer
+carcinoma
+adenocarcinoma
+melanoma
+sarcoma
+tumor
+metastasis
+malignancy
+glioblastoma
+anxiety
+post-traumatic stress disorder
+ptsd
+bipolar disorder
+schizophrenia
+psychosis
+suicidal ideation
+overdose
+opioid overdose
+poisoning
+toxicity
+allergy
+allergic reaction
+urticaria
+angioedema
+eczema
+psoriasis
+dermatitis
+conjunctivitis
+glaucoma
+cataract
+retinal detachment
+otitis media
+sinusitis
+pharyngitis
+tonsillitis
+laryngitis
+epistaxis
+preeclampsia
+eclampsia
+ectopic pregnancy
+miscarriage
+placental abruption
+postpartum hemorrhage
+fever
+pyrexia
+febrile
+hypotensive
+hypertensive
+tachycardic
+bradycardic
+hypoxic
+altered mental status
+loss of consciousness
+paralysis
+paraplegia
+quadriplegia
+numbness
+tingling
+paresthesia
+edema
+swelling
+lesion
+erythema
+pallor
+diaphoresis
+burn injury
+skin rash
+clinical depression
+major depressive disorder
+
+# --- spelling variants (2026-10-24): joined, split or hyphenated forms of a term listed above, attested in the
+# dev and eval references and reviewed for collisions; terms.variant_key makes each one term with its listed form.
+p t s d
+gastro enteritis
+diabetic keto acidosis
+gastro esophageal reflux
