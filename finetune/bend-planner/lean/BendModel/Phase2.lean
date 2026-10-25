@@ -237,8 +237,8 @@ theorem u32_divmod_spec (a : Word m) (b : U32) (width : decide (m ≤ 32) = true
   exact ⟨by simpa [Nat.mul_comm] using h.2, decide_eq_true h.1⟩
 -- 35 U32.zero_nat
 theorem u32_zero_nat (a : U32) : U32.isZero a = decide (Word.toNat a = 0) := U32.isZero_spec a
--- 36 U32.to_nat_div (the stated positivity hypothesis is retained)
-theorem u32_to_nat_div (a b : U32) (positive : decide (0 < Word.toNat b) = true) :
+-- 36 U32.to_nat_div (every divisor, including zero)
+theorem u32_to_nat_div (a b : U32) :
     Word.toNat (U32.div a b) = Word.toNat a / Word.toNat b := U32.div_spec a b
 -- 37 Nat.div_antitone
 theorem nat_div_antitone (a s t : Nat) (st : decide (s ≤ t) = true)

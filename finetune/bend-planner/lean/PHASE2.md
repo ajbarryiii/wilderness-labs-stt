@@ -8,11 +8,14 @@ experiment also stack-overflows.
 
 The surviving planner mutation removes `Small` from `pools_sizes`. Its unchanged
 proof body still passes Bend and BendTT, establishing that the hypothesis is
-unnecessary for that law. Two other unnecessary restrictions are proved in Lean:
-the width bound in `U32.divmod_spec`, and positivity in `U32.to_nat_div`.
+unnecessary for that law. Lean also proves the width bound in `U32.divmod_spec`
+unnecessary. `U32.to_nat_div` now has no positive-divisor hypothesis in either
+Bend or its Lean mapping: both quotients are zero when the divisor is zero.
 
-Everything written is under `lean/` or `/tmp`. The real `LAWS.bend`, `PROOF.bend`,
-`u32.bend`, and `plan.bend` were not changed. No commits, pushes, PRs, or publishing.
+The original audit wrote only under `lean/` or `/tmp` and left the real Bend
+files unchanged. The subsequent `U32.to_nat_div` generalization updates
+`u32.bend` and its documentation; the recorded `results/*.json` remain historical
+snapshots. No commits, pushes, PRs, or publishing.
 
 ## Independent translation and scope
 
@@ -26,9 +29,9 @@ is assumed as a Lean axiom.
 
 Quantities (`+`, `-`) concern Bend's use of evidence; the Lean statements express
 the mathematical contracts over the same values and Boolean relations. Every
-original mathematical hypothesis is retained in the corresponding theorem,
-including the two demonstrated redundant ones. The stronger forms have separate
-theorems, so they do not replace or weaken the acceptance statements.
+current mathematical hypothesis is retained in the corresponding theorem.
+`U32.to_nat_div` and `u32_to_nat_div` both quantify over every divisor, with the
+positivity hypothesis removed. Other stronger forms have separate theorems.
 
 `lake build` and `lake env lean Audit.lean` pass on Lean 4.34.0, without Mathlib.
 The final audit covers **569 declarations, including 398 generated/user theorems**,
@@ -80,7 +83,7 @@ handled in an upstream implementation.
 | 33 | `U32.ge_nat` | [u32_ge_nat](BendModel/Phase2.lean#L232) | Generic | Phase 1 greater-or-equal reflection | Exact intended form; no unnecessary hypothesis identified. |
 | 34 | `U32.divmod_spec` | [u32_divmod_spec](BendModel/Phase2.lean#L234) | Generic | Phase 1 long-division invariant; width hypothesis unused | Width bound m <= 32 is unnecessary; proved without it. Positivity remains necessary for strict remainder bound. |
 | 35 | `U32.zero_nat` | [u32_zero_nat](BendModel/Phase2.lean#L239) | Generic | Phase 1 exact zero-test reflection | Exact intended form; no unnecessary hypothesis identified. |
-| 36 | `U32.to_nat_div` | [u32_to_nat_div](BendModel/Phase2.lean#L241) | Generic | Phase 1 total division refinement; positivity unused | Positive-divisor hypothesis is unnecessary, including b=0. |
+| 36 | `U32.to_nat_div`: `U32.to_nat(U32.div(a, b)) == Nat.div(U32.to_nat(a), U32.to_nat(b))` for all `a, b` | [u32_to_nat_div](BendModel/Phase2.lean#L241) | Generic | Phase 1 total division refinement | Positive-divisor hypothesis removed in Bend and Lean; includes b=0. |
 | 37 | `Nat.div_antitone` | [nat_div_antitone](BendModel/Phase2.lean#L244) | Generic | Core Lean Nat.div_le_div_left with positive smaller divisor | Exact intended form; no unnecessary hypothesis identified. |
 | 38 | `U32.to_nat_lt` | [u32_to_nat_lt](BendModel/Phase2.lean#L249) | Generic | Phase 1 strict-order reflection | One direction; u32_lt_iff proves equivalence. |
 | 39 | `U32.div_antitone` | [u32_div_antitone](BendModel/Phase2.lean#L252) | Generic | Division refinement, order reflection, and #37 | Exact intended form; no unnecessary hypothesis identified. |
@@ -95,7 +98,8 @@ The most concrete stronger forms are:
   the high-bit overflow arm directly. The Bend proof instead uses width ≤32 to
   show that this arm cannot arise at its dividend prefixes.
 - `u32_to_nat_div_without_positive`: exact quotient conversion for **all** U32
-  divisors, since both Nat and U32 define division by zero as zero.
+  divisors, since both Nat and U32 define division by zero as zero. This is now
+  also the mapped `u32_to_nat_div` statement and the public Bend law.
 - `word_adc_carry_general`: the carry-in/increment identity for both values of the
   add/subtract flag, rather than only addition.
 - `u32_le_iff`, `u32_lt_iff`, `u32_eq_iff`, `u32_positive_iff`, and
