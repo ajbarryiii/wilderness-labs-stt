@@ -438,10 +438,10 @@ law U32.zero_nat:
   for +a: U32
   {U32.is_zero(a) == Nat.is_eq(U32.to_nat(a), 0n) : Bool}
 
+# Every divisor, including zero; the positive-divisor hypothesis is removed.
 law U32.to_nat_div:
   for +a: U32
   for +b: U32
-  for +positive: N.lt(0n, U32.to_nat(b))
   {U32.to_nat(U32.div(a, b)) == Nat.div(U32.to_nat(a), U32.to_nat(b)) : Nat}
 
 law Nat.div_antitone:

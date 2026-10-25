@@ -1088,31 +1088,49 @@ def U32.div_word(a: U32, b: U32) ->
     case U32{x} U32{y}:
       {==}
 
-def U32.div_if_nonzero(+a: Word(32n), +b: U32, z: Bool, h: {z == False{} : Bool}) ->
-  {U32.div.fin(U32.divmod.go(32n, a, b)) == U32.div.if(a, b, z) : U32}:
-  match z:
-    case False{}:
+# A false zero test supplies the positive-natural hypothesis needed for division.
+def Nat.positive_of_zero_false(n: Nat, h: {Nat.is_eq(n, 0n) == False{} : Bool}) -> N.lt(0n, n):
+  match n:
+    case 0n:
+      Empty.absurd({False{} == True{} : Bool}, N.internal_false_ne_true(Equal.sym(Bool, True{}, False{}, h)))
+    case 1n+p:
       {==}
-    case True{}:
-      Empty.absurd({U32.div.fin(U32.divmod.go(32n, a, b)) == 0 : U32},
-        N.internal_false_ne_true(Equal.sym(Bool, True{}, False{}, h)))
 
-# U32 division agrees with Nat division for a positive divisor. Base separately
-# defines division by zero to be zero; positivity is explicit here.
+# A nonzero U32 has a strictly positive exact natural value.
+law U32.positive_of_nonzero:
+  for +a: U32
+  for h: {U32.is_zero(a) == False{} : Bool}
+  N.lt(0n, U32.to_nat(a))
+
+def U32.positive_of_nonzero(a, h):
+  Nat.positive_of_zero_false(U32.to_nat(a), Equal.trans(Bool, Nat.is_eq(U32.to_nat(a), 0n), U32.is_zero(a), False{},
+    Equal.sym(Bool, U32.is_zero(a), Nat.is_eq(U32.to_nat(a), 0n), U32.zero_nat(a)), h))
+
+def U32.to_nat_div_if(z: Bool, +a: U32, +b: U32, e: {U32.is_zero(b) == z : Bool}) ->
+  {U32.to_nat(U32.div.if(U32.word(a), b, z)) == Nat.div(U32.to_nat(a), U32.to_nat(b)) : Nat}:
+  match z:
+    case True{}:
+      +zero = N.eq_of_is_eq(U32.to_nat(b), 0n,
+        Equal.trans(Bool, Nat.is_eq(U32.to_nat(b), 0n), U32.is_zero(b), True{},
+          Equal.sym(Bool, U32.is_zero(b), Nat.is_eq(U32.to_nat(b), 0n), U32.zero_nat(b)), e))
+      %Equal.sym(Nat, U32.to_nat(b), 0n, zero) : {U32.to_nat(0) == Nat.div(U32.to_nat(a), _) : Nat}
+      {==}
+    case False{}:
+      +positive = U32.positive_of_nonzero(b, e)
+      %U32.word_nat(a) : {U32.to_nat(U32.div.fin(U32.divmod.go(32n, U32.word(a), b))) == Nat.div(_, U32.to_nat(b)) : Nat}
+      U32.div_nat_result(U32.word(a), b, U32.divmod.go(32n, U32.word(a), b), positive,
+        U32.divmod_spec(32n, U32.word(a), b, N.le_refl(32n), positive))
+
+# U32 division agrees with Nat division for every divisor, including zero:
+# Base defines both zero-divisor quotients to be zero.
 law U32.to_nat_div:
   for +a: U32
   for +b: U32
-  for +positive: N.lt(0n, U32.to_nat(b))
   {U32.to_nat(U32.div(a, b)) == Nat.div(U32.to_nat(a), U32.to_nat(b)) : Nat}
 
-def U32.to_nat_div(a, b, positive):
+def U32.to_nat_div(a, b):
   %U32.div_word(a, b) : {U32.to_nat(_) == Nat.div(U32.to_nat(a), U32.to_nat(b)) : Nat}
-  %U32.div_if_nonzero(U32.word(a), b, U32.is_zero(b),
-    Equal.trans(Bool, U32.is_zero(b), Nat.is_eq(U32.to_nat(b), 0n), False{}, U32.zero_nat(b), Nat.positive_ne_zero(U32.to_nat(b), positive))) :
-    {U32.to_nat(_) == Nat.div(U32.to_nat(a), U32.to_nat(b)) : Nat}
-  %U32.word_nat(a) : {U32.to_nat(U32.div.fin(U32.divmod.go(32n, U32.word(a), b))) == Nat.div(_, U32.to_nat(b)) : Nat}
-  U32.div_nat_result(U32.word(a), b, U32.divmod.go(32n, U32.word(a), b), positive,
-    U32.divmod_spec(32n, U32.word(a), b, N.le_refl(32n), positive))
+  U32.to_nat_div_if(U32.is_zero(b), a, b, {==})
 
 # Increasing a positive Nat divisor cannot increase the quotient.
 law Nat.div_antitone:
@@ -1150,9 +1168,8 @@ def U32.to_nat_lt(a, b, h):
 def U32.div_antitone_nat(+a: U32, +s: U32, +t: U32,
   +st: N.le(U32.to_nat(s), U32.to_nat(t)), +positive: N.lt(0n, U32.to_nat(s))) ->
   N.le(U32.to_nat(U32.div(a, t)), U32.to_nat(U32.div(a, s))):
-  +pt = N.lt_of_lt_of_le(0n, U32.to_nat(s), U32.to_nat(t), positive, st)
-  %Equal.sym(Nat, U32.to_nat(U32.div(a, t)), Nat.div(U32.to_nat(a), U32.to_nat(t)), U32.to_nat_div(a, t, pt)) : {Nat.is_le(_, U32.to_nat(U32.div(a, s))) == True{} : Bool}
-  %Equal.sym(Nat, U32.to_nat(U32.div(a, s)), Nat.div(U32.to_nat(a), U32.to_nat(s)), U32.to_nat_div(a, s, positive)) : {Nat.is_le(Nat.div(U32.to_nat(a), U32.to_nat(t)), _) == True{} : Bool}
+  %Equal.sym(Nat, U32.to_nat(U32.div(a, t)), Nat.div(U32.to_nat(a), U32.to_nat(t)), U32.to_nat_div(a, t)) : {Nat.is_le(_, U32.to_nat(U32.div(a, s))) == True{} : Bool}
+  %Equal.sym(Nat, U32.to_nat(U32.div(a, s)), Nat.div(U32.to_nat(a), U32.to_nat(s)), U32.to_nat_div(a, s)) : {Nat.is_le(Nat.div(U32.to_nat(a), U32.to_nat(t)), _) == True{} : Bool}
   Nat.div_antitone(U32.to_nat(a), U32.to_nat(s), U32.to_nat(t), st, positive)
 
 # Increasing a positive U32 divisor cannot increase the quotient. Requiring
@@ -1168,24 +1185,6 @@ law U32.div_antitone:
 def U32.div_antitone(a, s, t, st, positive):
   U32.of_nat_le(U32.div(a, t), U32.div(a, s),
     U32.div_antitone_nat(a, s, t, U32.to_nat_le(s, t, st), U32.to_nat_lt(0, s, positive)))
-
-# A false zero test supplies the positive-natural hypothesis needed for division.
-def Nat.positive_of_zero_false(n: Nat, h: {Nat.is_eq(n, 0n) == False{} : Bool}) -> N.lt(0n, n):
-  match n:
-    case 0n:
-      Empty.absurd({False{} == True{} : Bool}, N.internal_false_ne_true(Equal.sym(Bool, True{}, False{}, h)))
-    case 1n+p:
-      {==}
-
-# A nonzero U32 has a strictly positive exact natural value.
-law U32.positive_of_nonzero:
-  for +a: U32
-  for h: {U32.is_zero(a) == False{} : Bool}
-  N.lt(0n, U32.to_nat(a))
-
-def U32.positive_of_nonzero(a, h):
-  Nat.positive_of_zero_false(U32.to_nat(a), Equal.trans(Bool, Nat.is_eq(U32.to_nat(a), 0n), U32.is_zero(a), False{},
-    Equal.sym(Bool, U32.is_zero(a), Nat.is_eq(U32.to_nat(a), 0n), U32.zero_nat(a)), h))
 
 # Zero is also a left identity for U32 addition, including wrapping values.
 law U32.zero_add:
