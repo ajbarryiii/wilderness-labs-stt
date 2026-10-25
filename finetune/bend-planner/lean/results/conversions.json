@@ -1,0 +1,230 @@
+{
+  "edge_probes": [
+    {
+      "op": "to_nat",
+      "input": 0,
+      "returncode": 0,
+      "stdout": "0n\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.11893201107159257
+    },
+    {
+      "op": "to_nat",
+      "input": 1,
+      "returncode": 0,
+      "stdout": "1n\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.19045878492761403
+    },
+    {
+      "op": "to_nat",
+      "input": 2,
+      "returncode": 0,
+      "stdout": "2n\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.19391895306762308
+    },
+    {
+      "op": "to_nat",
+      "input": 3,
+      "returncode": 0,
+      "stdout": "3n\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.11385697999503464
+    },
+    {
+      "op": "to_nat",
+      "input": 65535,
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Error: the machine stack overflowed (a deep recursion, or a literal too large to expand)\nbend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.2878257679985836
+    },
+    {
+      "op": "to_nat",
+      "input": 65536,
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Error: the machine stack overflowed (a deep recursion, or a literal too large to expand)\nbend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.24159727606456727
+    },
+    {
+      "op": "to_nat",
+      "input": 65537,
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Error: the machine stack overflowed (a deep recursion, or a literal too large to expand)\nbend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.18611900811083615
+    },
+    {
+      "op": "to_nat",
+      "input": 2147483646,
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Error: the machine stack overflowed (a deep recursion, or a literal too large to expand)\nbend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.3006663870764896
+    },
+    {
+      "op": "to_nat",
+      "input": 2147483647,
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Error: the machine stack overflowed (a deep recursion, or a literal too large to expand)\nbend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.26052875095047057
+    },
+    {
+      "op": "to_nat",
+      "input": 2147483648,
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Error: the machine stack overflowed (a deep recursion, or a literal too large to expand)\nbend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.2324776139575988
+    },
+    {
+      "op": "to_nat",
+      "input": 2147483649,
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Error: the machine stack overflowed (a deep recursion, or a literal too large to expand)\nbend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.2801614069612697
+    },
+    {
+      "op": "to_nat",
+      "input": 4294967293,
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Error: the machine stack overflowed (a deep recursion, or a literal too large to expand)\nbend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.21228687500115484
+    },
+    {
+      "op": "to_nat",
+      "input": 4294967294,
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Error: the machine stack overflowed (a deep recursion, or a literal too large to expand)\nbend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.28088322503026575
+    },
+    {
+      "op": "to_nat",
+      "input": 4294967295,
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Error: the machine stack overflowed (a deep recursion, or a literal too large to expand)\nbend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.18899973307270557
+    },
+    {
+      "op": "from_nat",
+      "input": 0,
+      "returncode": 0,
+      "stdout": "0\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.12945806002244353
+    },
+    {
+      "op": "from_nat",
+      "input": 1,
+      "returncode": 0,
+      "stdout": "1\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.17808556102681905
+    },
+    {
+      "op": "from_nat",
+      "input": 2,
+      "returncode": 0,
+      "stdout": "2\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.19761603500228375
+    },
+    {
+      "op": "from_nat",
+      "input": 3,
+      "returncode": 0,
+      "stdout": "3\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.19476656697224826
+    },
+    {
+      "op": "from_nat",
+      "input": 65535,
+      "returncode": 0,
+      "stdout": "65535\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.9134322099853307
+    },
+    {
+      "op": "from_nat",
+      "input": 65536,
+      "returncode": 0,
+      "stdout": "65536\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.9414514419622719
+    },
+    {
+      "op": "from_nat",
+      "input": 65537,
+      "returncode": 0,
+      "stdout": "65537\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n",
+      "elapsed_seconds": 0.9107754569267854
+    },
+    {
+      "op": "from_nat",
+      "input": 2147483646,
+      "timed_out_seconds": 5,
+      "stdout": "",
+      "stderr": "",
+      "elapsed_seconds": 5.0600943909958005
+    },
+    {
+      "op": "from_nat",
+      "input": 2147483647,
+      "timed_out_seconds": 5,
+      "stdout": "",
+      "stderr": "",
+      "elapsed_seconds": 5.060855700052343
+    },
+    {
+      "op": "from_nat",
+      "input": 2147483648,
+      "timed_out_seconds": 5,
+      "stdout": "",
+      "stderr": "",
+      "elapsed_seconds": 5.0588858659612015
+    },
+    {
+      "op": "from_nat",
+      "input": 2147483649,
+      "timed_out_seconds": 5,
+      "stdout": "",
+      "stderr": "",
+      "elapsed_seconds": 5.071009672014043
+    },
+    {
+      "op": "from_nat",
+      "input": 4294967293,
+      "timed_out_seconds": 5,
+      "stdout": "",
+      "stderr": "",
+      "elapsed_seconds": 5.079350312007591
+    },
+    {
+      "op": "from_nat",
+      "input": 4294967294,
+      "timed_out_seconds": 5,
+      "stdout": "",
+      "stderr": "",
+      "elapsed_seconds": 5.063897942891344
+    },
+    {
+      "op": "from_nat",
+      "input": 4294967295,
+      "timed_out_seconds": 5,
+      "stdout": "",
+      "stderr": "",
+      "elapsed_seconds": 5.102521340944804
+    }
+  ],
+  "small_roundtrips_passed": 257,
+  "limitation": "Checker conversion results could not be normalized for all full-width inputs; see individual resource failures."
+}

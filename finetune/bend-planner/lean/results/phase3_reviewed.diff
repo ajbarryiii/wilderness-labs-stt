@@ -1,0 +1,76 @@
+diff --git a/finetune/bend-planner/LAWS.bend b/finetune/bend-planner/LAWS.bend
+index 79b5ea3..4154be0 100644
+--- a/finetune/bend-planner/LAWS.bend
++++ b/finetune/bend-planner/LAWS.bend
+@@ -17,6 +17,7 @@
+ # The lemmas sort_perm and sort_sorted, and cut_cover, are the halves pool_cover and pool_sorted
+ # split into.
+ import Base
++import ./u32.bend as W
+ import ./plan.bend as Plan
+ 
+ # Vocabulary
+@@ -170,7 +171,7 @@ def is_none(m: Maybe<&2, String>) -> Bool:
+ # ss has at most 2^32 - 1 samples, as a u32 file does (its length is a u32 count of bytes); past
+ # that, Valid compares the pools with the length mod 2^32, and the pool laws need not hold
+ def Small(+ss: List<&2, U32>) -> Type:
+-  Holds(Nat.is_le(List.length(&2, U32, ss), 4294967295n))
++  Holds(Nat.is_le(List.length(&2, U32, ss), W.Word.max_nat(32n)))
+ 
+ # The pool offsets pass the planner's validation for the samples ss
+ def Valid(+ss: List<&2, U32>, +ps: List<&2, U32>) -> Type:
+diff --git a/finetune/bend-planner/PROOF.bend b/finetune/bend-planner/PROOF.bend
+index 94d29eb..d5af039 100644
+--- a/finetune/bend-planner/PROOF.bend
++++ b/finetune/bend-planner/PROOF.bend
+@@ -1,6 +1,5 @@
+-# PROOF.bend: the proofs of LAWS.bend. `bend PROOF.bend` checks them; it prints SOME PROOFS FAIL with
+-# "1 TODO" because pools_cover is still open (README.md gives the exact missing range bridge).
+-# The other ten laws are proven here, by structural induction, with no unsafe or foreign code:
++# PROOF.bend: all eleven laws of LAWS.bend, with no unsafe or foreign code.
++# Both `bend PROOF.bend` and `bend PROOF.bend --verdict` print ALL PROOFS CHECK.
+ #
+ #   cut_cover     Cut: cover             the cut keeps its input, in order
+ #   pool_filled   Cut: no empty batch
+@@ -12,6 +11,7 @@
+ #   pool_sorted   cut_cover + sort_sorted
+ #   pools_sizes   validated differences telescope; take/runs consume their requested lengths
+ #   pool_budget   cut last-clip invariant + sortedness + division antitonicity
++#   pools_cover   exact split consumption + bounded U32 conversion
+ #
+ # A rewrite `%e : P` with e : {a == b} needs P, with _ at b, to be the goal; the goal becomes P
+ # with a there. Most lemmas are stated simple == complex so that a rewrite folds the complex side.
+@@ -1478,7 +1478,6 @@ def Laws.pool_budget(b, xs):
+ 
+ # Pools: exact cover with the symbolic width bound
+ # -----------------------------------------------
+-# The remaining adapter to Laws.Small is the concrete maximum-numeral bridge.
+ 
+ # The taken clips followed by the remaining samples, starting at j.
+ def take_join(+j: U32, r: Plan.Run()) -> List<&2, Plan.Clip>:
+@@ -1551,8 +1550,7 @@ def split_cover(ds: List<&2, Nat>, +ss: List<&2, U32>, e: {sum_sizes(ds) == List
+       %W.U32.zero_add(U32.from_nat(d)) : {take_join(_, Plan.take(d, ss, 0)) == Plan.clips(ss, 0) : List<&2, Plan.Clip>}
+       take_cover(d, ss, 0)
+ 
+-# Complete pool-cover proof when conversion preserves the input length. This
+-# leaves Laws.pools_cover unchanged and open until Small supplies the roundtrip.
++# Complete pool-cover proof when conversion preserves the input length.
+ def pools_cover_roundtrip(+ss: List<&2, U32>, ps: List<&2, U32>,
+   roundtrip: {U32.to_nat(U32.from_nat(List.length(&2, U32, ss))) == List.length(&2, U32, ss) : Nat}, v: Laws.Valid(ss, ps)) ->
+   {Laws.flat(Plan.pools(ss, ps)) == Plan.clips(ss, 0) : List<&2, Plan.Clip>}:
+@@ -1576,3 +1574,15 @@ def pools_cover_bounded(+ss: List<&2, U32>, +ps: List<&2, U32>,
+   bounded: {Nat.is_le(List.length(&2, U32, ss), W.Word.max_nat(32n)) == True{} : Bool}, v: Laws.Valid(ss, ps)) ->
+   {Laws.flat(Plan.pools(ss, ps)) == Plan.clips(ss, 0) : List<&2, Plan.Clip>}:
+   pools_cover_roundtrip(ss, ps, W.U32.to_nat_from_nat(List.length(&2, U32, ss), bounded), v)
++
++# Returning w directly compares the Small/Holds aliases with an explicit
++# equality. Bend 2.0.37 then unfolds max_nat(32n) while comparing their bounds
++# and overflows. Equality elimination only exposes w's equation; the motive
++# and reflexivity compare identical symbolic expressions without expanding it.
++def small_bound(+ss: List<&2, U32>, w: Laws.Small(ss)) ->
++  {Nat.is_le(List.length(&2, U32, ss), W.Word.max_nat(32n)) == True{} : Bool}:
++  %w : {Nat.is_le(List.length(&2, U32, ss), W.Word.max_nat(32n)) == _ : Bool}
++  {==}
++
++def Laws.pools_cover(ss, ps, w, v):
++  pools_cover_bounded(ss, ps, small_bound(ss, w), v)

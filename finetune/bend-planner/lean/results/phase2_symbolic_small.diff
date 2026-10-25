@@ -1,0 +1,29 @@
+--- a/LAWS.bend
++++ b/LAWS.bend
+@@ -17,6 +17,7 @@
+ # The lemmas sort_perm and sort_sorted, and cut_cover, are the halves pool_cover and pool_sorted
+ # split into.
+ import Base
++import ./u32.bend as W
+ import ./plan.bend as Plan
+ 
+ # Vocabulary
+@@ -170,7 +171,7 @@
+ # ss has at most 2^32 - 1 samples, as a u32 file does (its length is a u32 count of bytes); past
+ # that, Valid compares the pools with the length mod 2^32, and the pool laws need not hold
+ def Small(+ss: List<&2, U32>) -> Type:
+-  Holds(Nat.is_le(List.length(&2, U32, ss), 4294967295n))
++  Holds(Nat.is_le(List.length(&2, U32, ss), W.Word.max_nat(32n)))
+ 
+ # The pool offsets pass the planner's validation for the samples ss
+ def Valid(+ss: List<&2, U32>, +ps: List<&2, U32>) -> Type:
+--- a/PROOF.bend
++++ b/PROOF.bend
+@@ -1576,3 +1576,7 @@
+   bounded: {Nat.is_le(List.length(&2, U32, ss), W.Word.max_nat(32n)) == True{} : Bool}, v: Laws.Valid(ss, ps)) ->
+   {Laws.flat(Plan.pools(ss, ps)) == Plan.clips(ss, 0) : List<&2, Plan.Clip>}:
+   pools_cover_roundtrip(ss, ps, W.U32.to_nat_from_nat(List.length(&2, U32, ss), bounded), v)
++
++
++def Laws.pools_cover(ss, ps, w, v):
++  pools_cover_bounded(ss, ps, w, v)

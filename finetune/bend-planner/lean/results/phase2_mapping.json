@@ -1,0 +1,535 @@
+[
+  {
+    "index": 1,
+    "bend": "Nat.cmp_bit",
+    "lean": "BendModel.Phase2.nat_cmp_bit",
+    "lean_line": 67,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Boolean cases, Nat comparison reflection, omega",
+    "generality": "Exact intended form; no unnecessary hypothesis identified.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 2,
+    "bend": "Word.cmp_to_nat",
+    "lean": "BendModel.Phase2.word_cmp_to_nat",
+    "lean_line": 83,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Phase 1 structural Word comparison refinement",
+    "generality": "Exact intended form; no unnecessary hypothesis identified.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 3,
+    "bend": "U32.cmp_to_nat",
+    "lean": "BendModel.Phase2.u32_cmp_to_nat",
+    "lean_line": 85,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Width-32 instance of structural comparison",
+    "generality": "Width-32 specialization of #2.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 4,
+    "bend": "U32.le_trans",
+    "lean": "BendModel.Phase2.u32_le_trans",
+    "lean_line": 87,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Boolean reflection and Nat order transitivity",
+    "generality": "Exact intended form; no unnecessary hypothesis identified.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 5,
+    "bend": "Nat.sub_bit",
+    "lean": "BendModel.Phase2.nat_sub_bit",
+    "lean_line": 93,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Eight bit cases and omega, with valid high-tail borrow",
+    "generality": "Exact intended form; no unnecessary hypothesis identified.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 6,
+    "bend": "Word.to_nat_sub_carry",
+    "lean": "BendModel.Phase2.word_to_nat_sub_carry",
+    "lean_line": 101,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Full-adder conservation, word bounds, carry cases, omega",
+    "generality": "Conditional non-wrapping form; a total modular ADC value formula is more general.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 7,
+    "bend": "U32.to_nat_sub",
+    "lean": "BendModel.Phase2.u32_to_nat_sub",
+    "lean_line": 116,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Phase 1 wrapping subtraction under no underflow",
+    "generality": "Conditional non-wrapping form; Phase 1 gives both subtraction branches.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 8,
+    "bend": "Word.to_nat_bound",
+    "lean": "BendModel.Phase2.word_to_nat_bound",
+    "lean_line": 122,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Word value bound and symbolic maximum/power identity",
+    "generality": "Exact intended form; no unnecessary hypothesis identified.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 9,
+    "bend": "Nat.cmp_double",
+    "lean": "BendModel.Phase2.nat_cmp_double",
+    "lean_line": 129,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Positive scaling preserves both Nat comparison tests",
+    "generality": "Exact intended form; no unnecessary hypothesis identified.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 10,
+    "bend": "Word.to_nat_inc",
+    "lean": "BendModel.Phase2.word_to_nat_inc",
+    "lean_line": 133,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Wrapping increment formula plus strict maximum bound",
+    "generality": "Conditional successor form; Phase 1 gives exact value modulo 2^n.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 11,
+    "bend": "U32.to_nat_bound",
+    "lean": "BendModel.Phase2.u32_to_nat_bound",
+    "lean_line": 140,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Width-32 instance of #8",
+    "generality": "Width-32 specialization of #8.",
+    "mutation_results": [
+      "frontend crash",
+      "frontend crash"
+    ]
+  },
+  {
+    "index": 12,
+    "bend": "U32.to_nat_inc",
+    "lean": "BendModel.Phase2.u32_to_nat_inc",
+    "lean_line": 142,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Width-32 instance of #10",
+    "generality": "Width-32 specialization of #10; exact modular form is stronger.",
+    "mutation_results": [
+      "frontend crash",
+      "frontend crash"
+    ]
+  },
+  {
+    "index": 13,
+    "bend": "Word.to_nat_zero",
+    "lean": "BendModel.Phase2.word_to_nat_zero",
+    "lean_line": 145,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Phase 1 structural induction on zero words",
+    "generality": "Exact intended form; no unnecessary hypothesis identified.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 14,
+    "bend": "Word.to_nat_from_nat",
+    "lean": "BendModel.Phase2.word_to_nat_from_nat",
+    "lean_line": 147,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Repeated-increment modulo invariant and representability bound",
+    "generality": "Bounded identity; wordFromNat_mod proves the total modular formula.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 15,
+    "bend": "U32.from_nat_word",
+    "lean": "BendModel.Phase2.u32_from_nat_word",
+    "lean_line": 154,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Word value injectivity and the same modulo decoding",
+    "generality": "Width-32 adapter for the generic Word conversion.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 16,
+    "bend": "U32.to_nat_from_nat",
+    "lean": "BendModel.Phase2.u32_to_nat_from_nat",
+    "lean_line": 158,
+    "classification": "Generic / upstreamable in scope",
+    "method": "#14 and wrapper conversion #15",
+    "generality": "Bounded identity; Phase 1 fromNat_spec is total and exact.",
+    "mutation_results": [
+      "frontend crash",
+      "frontend crash"
+    ]
+  },
+  {
+    "index": 17,
+    "bend": "Word.adc_carry",
+    "lean": "BendModel.Phase2.word_adc_carry",
+    "lean_line": 163,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Adder conservation modulo 2^n and increment formula",
+    "generality": "Can quantify over subtraction flag f too; word_adc_carry_general proves this.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 18,
+    "bend": "Word.add_inc",
+    "lean": "BendModel.Phase2.word_add_inc",
+    "lean_line": 168,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Modular addition and increment algebra",
+    "generality": "Exact intended form; no unnecessary hypothesis identified.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 19,
+    "bend": "Word.add_zero",
+    "lean": "BendModel.Phase2.word_add_zero",
+    "lean_line": 172,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Modular zero identity and word bound",
+    "generality": "Exact intended form; no unnecessary hypothesis identified.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 20,
+    "bend": "U32.add_one",
+    "lean": "BendModel.Phase2.u32_add_one",
+    "lean_line": 176,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Addition/increment value refinements and injectivity",
+    "generality": "Width-32 adapter; the same modular fact holds at arbitrary Word width.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 21,
+    "bend": "U32.add_inc",
+    "lean": "BendModel.Phase2.u32_add_inc",
+    "lean_line": 180,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Width-32 instance of #18",
+    "generality": "Width-32 specialization of #18.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 22,
+    "bend": "U32.add_zero",
+    "lean": "BendModel.Phase2.u32_add_zero",
+    "lean_line": 182,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Modular zero identity and injectivity",
+    "generality": "Width-32 specialization of #19.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 23,
+    "bend": "U32.add_from_nat_succ",
+    "lean": "BendModel.Phase2.u32_add_from_nat_succ",
+    "lean_line": 186,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Modulo congruence and Nat addition associativity",
+    "generality": "Useful step form; derivable from ordinary modular addition laws.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 24,
+    "bend": "Word.to_nat_inc_le",
+    "lean": "BendModel.Phase2.word_to_nat_inc_le",
+    "lean_line": 196,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Exact wrapping increment and remainder <= dividend",
+    "generality": "One-sided bound; exact modular increment formula is stronger.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 25,
+    "bend": "U32.to_nat_inc_le",
+    "lean": "BendModel.Phase2.u32_to_nat_inc_le",
+    "lean_line": 200,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Width-32 instance of #24",
+    "generality": "Width-32 one-sided bound; exact modular increment formula is stronger.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 26,
+    "bend": "U32.to_nat_from_nat_le",
+    "lean": "BendModel.Phase2.u32_to_nat_from_nat_le",
+    "lean_line": 202,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Exact modulo conversion and remainder <= dividend",
+    "generality": "One-sided bound; exact n mod 2^32 formula is stronger.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 27,
+    "bend": "U32.to_nat_le",
+    "lean": "BendModel.Phase2.u32_to_nat_le",
+    "lean_line": 207,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Phase 1 Boolean order reflection",
+    "generality": "One direction; u32_le_iff proves equivalence.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 28,
+    "bend": "U32.to_nat_eq",
+    "lean": "BendModel.Phase2.u32_to_nat_eq",
+    "lean_line": 210,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Phase 1 Boolean equality reflection",
+    "generality": "One direction; u32_eq_iff proves equivalence.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 29,
+    "bend": "Nat.bit_add",
+    "lean": "BendModel.Phase2.nat_bit_add",
+    "lean_line": 213,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Faithful Nat doubling refinement and distributivity",
+    "generality": "Exact intended form; no unnecessary hypothesis identified.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 30,
+    "bend": "Word.shift_spec",
+    "lean": "BendModel.Phase2.word_shift_spec",
+    "lean_line": 216,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Structural outgoing-bit shift conservation, including width 0",
+    "generality": "Exact intended form; no unnecessary hypothesis identified.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 31,
+    "bend": "Word.max_nat_mono",
+    "lean": "BendModel.Phase2.word_max_nat_mono",
+    "lean_line": 222,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Maximum/power identity and monotonicity of powers of two",
+    "generality": "One direction; maxNat_mono_iff also reflects the width order.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 32,
+    "bend": "U32.of_nat_le",
+    "lean": "BendModel.Phase2.u32_of_nat_le",
+    "lean_line": 229,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Converse Boolean order reflection",
+    "generality": "Converse of #27; u32_le_iff combines both directions.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 33,
+    "bend": "U32.ge_nat",
+    "lean": "BendModel.Phase2.u32_ge_nat",
+    "lean_line": 232,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Phase 1 greater-or-equal reflection",
+    "generality": "Exact intended form; no unnecessary hypothesis identified.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 34,
+    "bend": "U32.divmod_spec",
+    "lean": "BendModel.Phase2.u32_divmod_spec",
+    "lean_line": 234,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Phase 1 long-division invariant; width hypothesis unused",
+    "generality": "Width bound m <= 32 is unnecessary; proved without it. Positivity remains necessary for strict remainder bound.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 35,
+    "bend": "U32.zero_nat",
+    "lean": "BendModel.Phase2.u32_zero_nat",
+    "lean_line": 239,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Phase 1 exact zero-test reflection",
+    "generality": "Exact intended form; no unnecessary hypothesis identified.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 36,
+    "bend": "U32.to_nat_div",
+    "lean": "BendModel.Phase2.u32_to_nat_div",
+    "lean_line": 241,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Phase 1 total division refinement; positivity unused",
+    "generality": "Positive-divisor hypothesis is unnecessary, including b=0.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 37,
+    "bend": "Nat.div_antitone",
+    "lean": "BendModel.Phase2.nat_div_antitone",
+    "lean_line": 244,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Core Lean Nat.div_le_div_left with positive smaller divisor",
+    "generality": "Exact intended form; no unnecessary hypothesis identified.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 38,
+    "bend": "U32.to_nat_lt",
+    "lean": "BendModel.Phase2.u32_to_nat_lt",
+    "lean_line": 249,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Phase 1 strict-order reflection",
+    "generality": "One direction; u32_lt_iff proves equivalence.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 39,
+    "bend": "U32.div_antitone",
+    "lean": "BendModel.Phase2.u32_div_antitone",
+    "lean_line": 252,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Division refinement, order reflection, and #37",
+    "generality": "Exact intended form; no unnecessary hypothesis identified.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 40,
+    "bend": "U32.positive_of_nonzero",
+    "lean": "BendModel.Phase2.u32_positive_of_nonzero",
+    "lean_line": 260,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Zero-test reflection and Nat nonzero iff positive",
+    "generality": "One direction; u32_positive_iff proves equivalence.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  },
+  {
+    "index": 41,
+    "bend": "U32.zero_add",
+    "lean": "BendModel.Phase2.u32_zero_add",
+    "lean_line": 265,
+    "classification": "Generic / upstreamable in scope",
+    "method": "Modular left-zero identity and word bound",
+    "generality": "Width-32 adapter; the left-zero identity holds for every Word width.",
+    "mutation_results": [
+      "rejected",
+      "rejected"
+    ]
+  }
+]

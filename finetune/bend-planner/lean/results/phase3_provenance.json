@@ -1,0 +1,20 @@
+{
+  "reviewed_at_utc": "2026-10-25T00:46:04.385554+00:00",
+  "head": "f4f5e113df4b9c2a02a9f4773b8455de8f17e22d",
+  "real_sources": {
+    "LAWS.bend": "cf98af471d69253a7189e3de5f5ca9becd0c20d9af0e478a1bbc9350f84cd73e",
+    "PROOF.bend": "0e1586d75dea176dce9d57da2787597c786dcfbf9c8898cf67208c101156ea27",
+    "u32.bend": "e81b2d072ed68b08866c21fe95a973aba7a01ad96f3b2b1b3c813316e9c22067",
+    "plan.bend": "3f8ff4fef8345e6718c120122d07264f1ca837ba0e157664cef530a91f93dd58"
+  },
+  "review_sources": {
+    "BendModel.lean": "2bb1abf949b8614ef916e354ef0c96db6c0650a64bd4816b76b2b604d62b3903",
+    "BendModel/Phase3.lean": "a778f52fa992b53307ca2d265210bcaae43eaf9f3db5e6adaee00d00afdd84f4",
+    "phase3_bend.py": "b240e814df09c446831aa210d42fe1a7ede7851c9a14cbb1b977aac779941c46",
+    "phase3_mutations.py": "8df6c4656d2b0dad3f2e144344ec3a215e30e72b1845f3cd6f311a462faea0fc",
+    "phase3_report.py": "6b96b39019231fa92d100749c0f91a4bd0207e121fdbcf66922a0d87eefa7254"
+  },
+  "kernel_export_sha256": "e6f5fcf8900b0443ec241b3e6943056c5ef95a70a501670bc41cdceaa27fee61",
+  "lean_version": "4.34.0",
+  "bend_version": "2.0.37"
+}

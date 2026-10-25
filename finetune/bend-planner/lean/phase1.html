@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bend U32: independent Lean verification</title>
+<style>
+body{font-family:var(--font-sans,system-ui);color:var(--foreground);line-height:1.48;margin:0;font-size:14px}
+p{margin:0 0 14px}.lead{font-size:20px;line-height:1.35;font-weight:650}.muted{color:var(--muted-foreground)}
+.counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+.count{border-top:2px solid var(--success,#3b8b63);padding-top:9px}.number{display:block;font-size:25px;font-weight:650;font-variant-numeric:tabular-nums}
+.label{font-size:12px;color:var(--muted-foreground)}
+table{border-collapse:collapse;width:100%;font-size:12px;margin:14px 0 18px;table-layout:fixed}
+th{text-align:left;font-weight:650;color:var(--muted-foreground);padding:9px 8px;border-bottom:2px solid var(--border)}
+td{vertical-align:top;padding:10px 8px;border-bottom:1px solid var(--border);overflow-wrap:anywhere}
+th:first-child,td:first-child{padding-left:0;width:17%}th:last-child,td:last-child{padding-right:0;width:20%}
+code{font-family:var(--font-mono,monospace);font-size:.93em}.note{background:var(--warning-surface,var(--secondary));border-radius:var(--radius,8px);padding:16px;margin:15px 0}
+.note p:last-child{margin-bottom:0}.small{font-size:12px}.section{font-weight:650;margin:22px 0 8px}.pass{color:var(--success-foreground,var(--foreground))}
+@media(max-width:500px){.lead{font-size:18px}.counts{gap:8px}.number{font-size:21px}thead{display:none}table,tr,td{display:block}tr{padding:9px 0;border-bottom:1px solid var(--border)}td{border:0;padding:3px 0!important;width:auto!important}td:before{content:attr(data-label) ": ";font-weight:600;color:var(--muted-foreground)}td:first-child{font-weight:650}td:first-child:before{content:none}}
+</style>
+<body>
+<p class="lead">AJ, Phase 1 found no numeric mismatches in completed comparisons.</p>
+<p class="muted">Independent structural model of installed Bend 2.0.37 Base, proved with Lean 4.34.0 and Std. Full-width checker conversion coverage remains incomplete because of resource failures.</p>
+<div class="counts">
+  <div class="count"><span class="number">200,196</span><span class="label">Native pairs<br>196 edge + 200,000 random</span></div>
+  <div class="count"><span class="number">4,292</span><span class="label">Checker pairs<br>196 edge + 4,096 random</span></div>
+  <div class="count"><span class="number">0</span><span class="label">Numeric mismatches<br>in completed comparisons</span></div>
+</div>
+<p class="small">Seed <code>20261024</code> · xorshift32(13,17,5) · all 14 edge values combined pairwise. Every common row tests 25 operation results and echoes both inputs. Native rows add six conversion results.</p>
+<p class="section">Semantics: M = 2<sup>32</sup>, unsigned x,y ∈ [0,M)</p>
+<table>
+<thead><tr><th>Operation</th><th>Bend Base</th><th>Lean model</th><th>UInt32 / BitVec 32</th></tr></thead>
+<tbody>
+<tr><td data-label="Operation">add</td><td data-label="Bend">(x+y) mod M</td><td data-label="Lean">Structural carry chain; wrapping proved</td><td data-label="UInt32">Equal</td></tr>
+<tr><td data-label="Operation">sub</td><td data-label="Bend">(M+x−y) mod M; underflow wraps</td><td data-label="Lean">Complement/carry; both underflow branches proved</td><td data-label="UInt32">Equal</td></tr>
+<tr><td data-label="Operation">mul</td><td data-label="Bend">(x·y) mod M</td><td data-label="Lean">Structural shift/add; wrapping proved</td><td data-label="UInt32">Equal</td></tr>
+<tr><td data-label="Operation">div</td><td data-label="Bend">⌊x/y⌋; x/0 = 0</td><td data-label="Lean">Long division, including high-bit overflow</td><td data-label="UInt32">Equal, including /0</td></tr>
+<tr><td data-label="Operation">mod</td><td data-label="Bend">Remainder; x%0 = x</td><td data-label="Lean">Euclidean remainder proved</td><td data-label="UInt32">Equal, including %0</td></tr>
+<tr><td data-label="Operation">eq/ne/lt/le/gt/ge</td><td data-label="Bend">Unsigned comparisons</td><td data-label="Lean">Word comparison equals Nat comparison</td><td data-label="UInt32">Equal</td></tr>
+<tr><td data-label="Operation">to_nat / from_nat</td><td data-label="Bend">x / n mod M</td><td data-label="Lean">Exact decoding; recursive increment conversion proved</td><td data-label="UInt32">Equal</td></tr>
+<tr><td data-label="Operation">Literals</td><td data-label="Bend">Accept 0..M−1; reject larger digits</td><td data-label="Lean">Bounded parser model; accepted values exact</td><td data-label="UInt32">Lean’s ofNat wraps larger n</td></tr>
+<tr><td data-label="Operation">Bit operations</td><td data-label="Bend">inc/not/and/or/xor; zero-fill shifts</td><td data-label="Lean">Universal BitVec refinements</td><td data-label="UInt32">Equal for one-bit shifts</td></tr>
+<tr><td data-label="Operation">Shift by n</td><td data-label="Bend">Zero when n ≥ 32</td><td data-label="Lean">Equal to BitVec shift with Nat count n</td><td data-label="UInt32">Count masked to n mod 32</td></tr>
+<tr><td data-label="Operation">min/max/log2</td><td data-label="Bend">Unsigned extrema; floor log2, log2(0)=0</td><td data-label="Lean">Universal arithmetic characterizations</td><td data-label="UInt32">Same values</td></tr>
+</tbody>
+</table>
+<p class="small">Concrete shift difference: Bend <code>shln(1,32n) = 0</code>; Lean <code>((1 : UInt32) &lt;&lt;&lt; 32) = 1</code>. Both conventions and their agreement below 32 are proved explicitly.</p>
+<div class="note">
+<p><strong>Checker conversion findings</strong></p>
+<p><code>U32.to_nat(x)</code> fails with “the machine stack overflowed” for all ten tested edges from 65,535 upward. Seven <code>from_nat</code> probes from 2,147,483,646 upward hit their individual five-second limits.</p>
+<p>All 257 checker roundtrips for 0..256 pass. Native conversions match Lean throughout the full corpus. The failed full-width checker probes are retained as failures and cannot support a fidelity claim.</p>
+</div>
+<p class="small muted">The model’s universal proofs pass Lean’s kernel; the declaration audit finds no unsafe code or extra axioms beyond propext, Quot.sound, and Classical.choice. Differential tests do not prove Bend’s parser, kernel translation, or compiler correct. No Phase 2 lemma or planner-law verification is claimed yet.</p>
+</body>
+</html>

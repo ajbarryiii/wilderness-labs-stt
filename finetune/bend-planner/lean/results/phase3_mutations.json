@@ -1,0 +1,165 @@
+{
+  "export_sha256": "e6f5fcf8900b0443ec241b3e6943056c5ef95a70a501670bc41cdceaa27fee61",
+  "old_header": "\u2200+x0 : (List -.Q2 -U32) -> \u2200+x1 : (List -.Q2 -U32) -> \u2200x2 : (LAWS.Small +x0) -> \u2200x3 : (LAWS.Valid +x0 +x1) -> {(LAWS.flat (plan.pools x0 x1)) == (plan.clips x0 +U32.lit0) : (List -.Q2 -plan.Clip)} =",
+  "width32_term": "(.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ()))",
+  "width33_term": "(.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ()))",
+  "kernel": [
+    {
+      "control": "baseline",
+      "command": [
+        "<nix-store>/bendtt-2.0.37/bin/bendtt",
+        "<scratch>/phase3/planner-eleven.bendtt"
+      ],
+      "returncode": 0,
+      "stdout": "ALL PROOFS CHECK\n",
+      "stderr": "",
+      "passed": true,
+      "rejected": false,
+      "elapsed_seconds": 0.05345287290401757
+    },
+    {
+      "control": "positive-small-expanded-width32",
+      "new_header": "\u2200+x0 : (List -.Q2 -U32) -> \u2200+x1 : (List -.Q2 -U32) -> \u2200x2 : (LAWS.Holds (Nat.is_le (List.length -.Q2 -U32 x0) (u32.Word.max_nat (.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ()))))) -> \u2200x3 : (LAWS.Valid +x0 +x1) -> {(LAWS.flat (plan.pools x0 x1)) == (plan.clips x0 +U32.lit0) : (List -.Q2 -plan.Clip)} =",
+      "command": [
+        "<nix-store>/bendtt-2.0.37/bin/bendtt",
+        "<scratch>/phase3/kernel-controls/positive-small-expanded-width32.bendtt"
+      ],
+      "returncode": 0,
+      "stdout": "ALL PROOFS CHECK\n",
+      "stderr": "",
+      "passed": true,
+      "rejected": false,
+      "elapsed_seconds": 0.058496584999375045
+    },
+    {
+      "mutant": "a-start-one",
+      "intent": "Shift the expected clip start from U32 0 to U32 1.",
+      "new_header": "\u2200+x0 : (List -.Q2 -U32) -> \u2200+x1 : (List -.Q2 -U32) -> \u2200x2 : (LAWS.Small +x0) -> \u2200x3 : (LAWS.Valid +x0 +x1) -> {(LAWS.flat (plan.pools x0 x1)) == (plan.clips x0 +U32.lit1) : (List -.Q2 -plan.Clip)} =",
+      "diff": "--- original pools_cover header\n+++ a-start-one\n@@ -1 +1 @@\n-\u2200+x0 : (List -.Q2 -U32) -> \u2200+x1 : (List -.Q2 -U32) -> \u2200x2 : (LAWS.Small +x0) -> \u2200x3 : (LAWS.Valid +x0 +x1) -> {(LAWS.flat (plan.pools x0 x1)) == (plan.clips x0 +U32.lit0) : (List -.Q2 -plan.Clip)} =\n+\u2200+x0 : (List -.Q2 -U32) -> \u2200+x1 : (List -.Q2 -U32) -> \u2200x2 : (LAWS.Small +x0) -> \u2200x3 : (LAWS.Valid +x0 +x1) -> {(LAWS.flat (plan.pools x0 x1)) == (plan.clips x0 +U32.lit1) : (List -.Q2 -plan.Clip)} =\n",
+      "command": [
+        "<nix-store>/bendtt-2.0.37/bin/bendtt",
+        "<scratch>/phase3/kernel-controls/a-start-one.bendtt"
+      ],
+      "returncode": 1,
+      "stdout": "SOME PROOFS FAIL\nIn LAWS.pools_cover:\nexpected: {(LAWS.flat ((plan.pools x0) x1)) == ((plan.clips x0) +U32.lit1) : ((List -.Q2) -plan.Clip)}\nobserved: {(LAWS.flat ((plan.pools x0) x1)) == ((plan.clips x0) +U32.lit0) : ((List -.Q2) -plan.Clip)}\n",
+      "stderr": "",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.06296009698417038
+    },
+    {
+      "mutant": "b-negate-equality",
+      "intent": "Replace the conclusion equality by its negation.",
+      "new_header": "\u2200+x0 : (List -.Q2 -U32) -> \u2200+x1 : (List -.Q2 -U32) -> \u2200x2 : (LAWS.Small +x0) -> \u2200x3 : (LAWS.Valid +x0 +x1) -> \u2200x99 : {(LAWS.flat (plan.pools x0 x1)) == (plan.clips x0 +U32.lit0) : (List -.Q2 -plan.Clip)} -> Empty =",
+      "diff": "--- original pools_cover header\n+++ b-negate-equality\n@@ -1 +1 @@\n-\u2200+x0 : (List -.Q2 -U32) -> \u2200+x1 : (List -.Q2 -U32) -> \u2200x2 : (LAWS.Small +x0) -> \u2200x3 : (LAWS.Valid +x0 +x1) -> {(LAWS.flat (plan.pools x0 x1)) == (plan.clips x0 +U32.lit0) : (List -.Q2 -plan.Clip)} =\n+\u2200+x0 : (List -.Q2 -U32) -> \u2200+x1 : (List -.Q2 -U32) -> \u2200x2 : (LAWS.Small +x0) -> \u2200x3 : (LAWS.Valid +x0 +x1) -> \u2200x99 : {(LAWS.flat (plan.pools x0 x1)) == (plan.clips x0 +U32.lit0) : (List -.Q2 -plan.Clip)} -> Empty =\n",
+      "command": [
+        "<nix-store>/bendtt-2.0.37/bin/bendtt",
+        "<scratch>/phase3/kernel-controls/b-negate-equality.bendtt"
+      ],
+      "returncode": 1,
+      "stdout": "SOME PROOFS FAIL\nIn LAWS.pools_cover:\nexpected: \u2200x4 : {(LAWS.flat ((plan.pools x0) x1)) == ((plan.clips x0) +U32.lit0) : ((List -.Q2) -plan.Clip)} -> Empty\nobserved: {(LAWS.flat ((plan.pools x0) x1)) == ((plan.clips x0) +U32.lit0) : ((List -.Q2) -plan.Clip)}\n",
+      "stderr": "",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.05375467904377729
+    },
+    {
+      "mutant": "c-small-width33",
+      "intent": "Change only the cover assumption to Small with width 33.",
+      "new_header": "\u2200+x0 : (List -.Q2 -U32) -> \u2200+x1 : (List -.Q2 -U32) -> \u2200x2 : (LAWS.Holds (Nat.is_le (List.length -.Q2 -U32 x0) (u32.Word.max_nat (.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ()))))) -> \u2200x3 : (LAWS.Valid +x0 +x1) -> {(LAWS.flat (plan.pools x0 x1)) == (plan.clips x0 +U32.lit0) : (List -.Q2 -plan.Clip)} =",
+      "diff": "--- original pools_cover header\n+++ c-small-width33\n@@ -1 +1 @@\n-\u2200+x0 : (List -.Q2 -U32) -> \u2200+x1 : (List -.Q2 -U32) -> \u2200x2 : (LAWS.Small +x0) -> \u2200x3 : (LAWS.Valid +x0 +x1) -> {(LAWS.flat (plan.pools x0 x1)) == (plan.clips x0 +U32.lit0) : (List -.Q2 -plan.Clip)} =\n+\u2200+x0 : (List -.Q2 -U32) -> \u2200+x1 : (List -.Q2 -U32) -> \u2200x2 : (LAWS.Holds (Nat.is_le (List.length -.Q2 -U32 x0) (u32.Word.max_nat (.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Succ, ((.Zero, ()), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ())), ()))))) -> \u2200x3 : (LAWS.Valid +x0 +x1) -> {(LAWS.flat (plan.pools x0 x1)) == (plan.clips x0 +U32.lit0) : (List -.Q2 -plan.Clip)} =\n",
+      "command": [
+        "<nix-store>/bendtt-2.0.37/bin/bendtt",
+        "<scratch>/phase3/kernel-controls/c-small-width33.bendtt"
+      ],
+      "returncode": -6,
+      "stdout": "",
+      "stderr": "\nStack overflow detected. Aborting.\n",
+      "passed": false,
+      "rejected": false,
+      "elapsed_seconds": 2.2907285359688103
+    },
+    {
+      "mutant": "d-drop-valid",
+      "intent": "Remove offset validity, retaining its binder with type Unit.",
+      "new_header": "\u2200+x0 : (List -.Q2 -U32) -> \u2200+x1 : (List -.Q2 -U32) -> \u2200x2 : (LAWS.Small +x0) -> \u2200x3 : Unit -> {(LAWS.flat (plan.pools x0 x1)) == (plan.clips x0 +U32.lit0) : (List -.Q2 -plan.Clip)} =",
+      "diff": "--- original pools_cover header\n+++ d-drop-valid\n@@ -1 +1 @@\n-\u2200+x0 : (List -.Q2 -U32) -> \u2200+x1 : (List -.Q2 -U32) -> \u2200x2 : (LAWS.Small +x0) -> \u2200x3 : (LAWS.Valid +x0 +x1) -> {(LAWS.flat (plan.pools x0 x1)) == (plan.clips x0 +U32.lit0) : (List -.Q2 -plan.Clip)} =\n+\u2200+x0 : (List -.Q2 -U32) -> \u2200+x1 : (List -.Q2 -U32) -> \u2200x2 : (LAWS.Small +x0) -> \u2200x3 : Unit -> {(LAWS.flat (plan.pools x0 x1)) == (plan.clips x0 +U32.lit0) : (List -.Q2 -plan.Clip)} =\n",
+      "command": [
+        "<nix-store>/bendtt-2.0.37/bin/bendtt",
+        "<scratch>/phase3/kernel-controls/d-drop-valid.bendtt"
+      ],
+      "returncode": 1,
+      "stdout": "SOME PROOFS FAIL\nIn LAWS.pools_cover:\nexpected: ((LAWS.Valid +x0) +x1)\nobserved: \u03a3x4 : <Unit> -> (Unit.arms x4)\n",
+      "stderr": "",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.04840251908171922
+    }
+  ],
+  "frontend": [
+    {
+      "mutant": "a-start-one",
+      "intent": "Shift the expected clip start from U32 0 to U32 1.",
+      "diff": "--- a/LAWS.bend\n+++ b/LAWS.bend\n@@ -227,7 +227,7 @@\n   for +ps: List<&2, U32>\n   for w  : Small(ss)\n   for v  : Valid(ss, ps)\n-  {flat(Plan.pools(ss, ps)) == Plan.clips(ss, 0) : List<&2, Plan.Clip>}\n+  {flat(Plan.pools(ss, ps)) == Plan.clips(ss, 1) : List<&2, Plan.Clip>}\n \n # LAW 1 (each pool inside its range): pool k holds ps[k + 1] - ps[k] clips, so with pools_cover\n # it is exactly the clips [ps[k], ps[k + 1])\n",
+      "command": [
+        "bend",
+        "<scratch>/phase3/source-mutants/a-start-one/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "757 |     }\n758 |     case \"ADT\": {\n759 |       return ADT(tm.k, tm.x.map((x) => term_higher(x, env)), tm.s, tm.r);\n760 |     }\n761 |     case \"Ctr\": {\n762 |       return Ctr(tm.k, tm.x.map((x) => term_higher(x, env)), tm.s);\n                ^\nRangeError: Maximum call stack size exceeded.\n      at map (1:11)\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:762:29)\n      at map (1:11)\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:762:29)\n      at term_wnf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:2845:19)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3004:14)\n      at map (1:11)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3029:29)\n      at map (1:11)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3029:29)\n      at async cli (<nix-store>/bend2-2.0.37/share/bend2/bend2/main.ts:155:11)\n\nBun v1.4.2 (Linux x64)\n",
+      "passed": false,
+      "rejected": false,
+      "elapsed_seconds": 0.24762698798440397
+    },
+    {
+      "mutant": "b-negate-equality",
+      "intent": "Replace the conclusion equality by its negation.",
+      "diff": "--- a/LAWS.bend\n+++ b/LAWS.bend\n@@ -227,7 +227,7 @@\n   for +ps: List<&2, U32>\n   for w  : Small(ss)\n   for v  : Valid(ss, ps)\n-  {flat(Plan.pools(ss, ps)) == Plan.clips(ss, 0) : List<&2, Plan.Clip>}\n+  {flat(Plan.pools(ss, ps)) != Plan.clips(ss, 0) : List<&2, Plan.Clip>}\n \n # LAW 1 (each pool inside its range): pool k holds ps[k + 1] - ps[k] clips, so with pools_cover\n # it is exactly the clips [ps[k], ps[k + 1])\n",
+      "command": [
+        "bend",
+        "<scratch>/phase3/source-mutants/b-negate-equality/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "757 |     }\n758 |     case \"ADT\": {\n759 |       return ADT(tm.k, tm.x.map((x) => term_higher(x, env)), tm.s, tm.r);\n760 |     }\n761 |     case \"Ctr\": {\n762 |       return Ctr(tm.k, tm.x.map((x) => term_higher(x, env)), tm.s);\n                ^\nRangeError: Maximum call stack size exceeded.\n      at map (1:11)\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:762:29)\n      at map (1:11)\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:762:29)\n      at term_wnf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:2845:19)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3004:14)\n      at map (1:11)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3029:29)\n      at map (1:11)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3029:29)\n      at async cli (<nix-store>/bend2-2.0.37/share/bend2/bend2/main.ts:155:11)\n\nBun v1.4.2 (Linux x64)\n",
+      "passed": false,
+      "rejected": false,
+      "elapsed_seconds": 0.2541352069238201
+    },
+    {
+      "mutant": "c-small-width33",
+      "intent": "Change only the cover assumption to Small with width 33.",
+      "diff": "--- a/LAWS.bend\n+++ b/LAWS.bend\n@@ -171,7 +171,7 @@\n # ss has at most 2^32 - 1 samples, as a u32 file does (its length is a u32 count of bytes); past\n # that, Valid compares the pools with the length mod 2^32, and the pool laws need not hold\n def Small(+ss: List<&2, U32>) -> Type:\n-  Holds(Nat.is_le(List.length(&2, U32, ss), W.Word.max_nat(32n)))\n+  Holds(Nat.is_le(List.length(&2, U32, ss), W.Word.max_nat(33n)))\n \n # The pool offsets pass the planner's validation for the samples ss\n def Valid(+ss: List<&2, U32>, +ps: List<&2, U32>) -> Type:\n",
+      "command": [
+        "bend",
+        "<scratch>/phase3/source-mutants/c-small-width33/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError: the machine stack overflowed (a deep recursion, or a literal too large to expand)\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": false,
+      "elapsed_seconds": 0.26951781299430877
+    },
+    {
+      "mutant": "d-drop-valid",
+      "intent": "Remove offset validity, retaining its binder with type Unit.",
+      "diff": "--- a/LAWS.bend\n+++ b/LAWS.bend\n@@ -226,7 +226,7 @@\n   for +ss: List<&2, U32>\n   for +ps: List<&2, U32>\n   for w  : Small(ss)\n-  for v  : Valid(ss, ps)\n+  for v  : Unit\n   {flat(Plan.pools(ss, ps)) == Plan.clips(ss, 0) : List<&2, Plan.Clip>}\n \n # LAW 1 (each pool inside its range): pool k holds ps[k + 1] - ps[k] clips, so with pools_cover\n",
+      "command": [
+        "bend",
+        "<scratch>/phase3/source-mutants/d-drop-valid/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "757 |     }\n758 |     case \"ADT\": {\n759 |       return ADT(tm.k, tm.x.map((x) => term_higher(x, env)), tm.s, tm.r);\n760 |     }\n761 |     case \"Ctr\": {\n762 |       return Ctr(tm.k, tm.x.map((x) => term_higher(x, env)), tm.s);\n                ^\nRangeError: Maximum call stack size exceeded.\n      at map (1:11)\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:762:29)\n      at map (1:11)\n      at term_higher (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:762:29)\n      at term_wnf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:2845:19)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3004:14)\n      at map (1:11)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3029:29)\n      at map (1:11)\n      at term_snf (<nix-store>/bend2-2.0.37/share/bend2/bend2/bend.ts:3029:29)\n      at async cli (<nix-store>/bend2-2.0.37/share/bend2/bend2/main.ts:155:11)\n\nBun v1.4.2 (Linux x64)\n",
+      "passed": false,
+      "rejected": false,
+      "elapsed_seconds": 0.2711934569524601
+    }
+  ]
+}

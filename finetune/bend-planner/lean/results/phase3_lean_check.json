@@ -1,0 +1,19 @@
+{
+  "command": "nix develop -c bash -c 'lake build && lake env lean Audit.lean'",
+  "state": "succeeded",
+  "exit_code": 0,
+  "run_id": "20261025T004448Z-50eb9abfaa86d16b",
+  "log": "path \"<repo>/finetune/bend-planner/lean\" does not contain a 'flake.nix', searching up\nwarning: Git tree '<repo>' is dirty\n\u2714 [12/18] Built BendModel.Phase3 (181ms)\n\u2714 [13/18] Built BendModel.Phase3:c.o (25ms)\n\u2714 [14/18] Built BendModel (159ms)\n\u2714 [15/18] Built BendModel:c.o (28ms)\n\u2714 [16/18] Built Main (236ms)\n\u2714 [18/18] Built fidelity:exe (321ms)\nBuild completed successfully (18 jobs).\nAudited 579 BendModel declarations, including 405 theorems. No unsafe declarations or axioms beyond propext, Quot.sound, Classical.choice.\n",
+  "source_sha256": "a778f52fa992b53307ca2d265210bcaae43eaf9f3db5e6adaee00d00afdd84f4",
+  "declarations": 579,
+  "theorems": 405,
+  "theorem_names": [
+    "small_propositions_equal",
+    "small_iff",
+    "holds_eliminate",
+    "small_bound",
+    "cover_contract_equivalent",
+    "width33_changes_condition",
+    "width33_roundtrip_counterexample"
+  ]
+}
