@@ -1,0 +1,30 @@
+# Stage 2c pronunciation lexicon: finance (plans/synthetic.md "Speech", Pronunciation; synthetic/pronounce.py).
+# One token per line, matched case-insensitively against whole tokens of the TTS input only; the label never changes.
+# "token" alone: spelled out with letter names. "token<TAB>respelling": said as a word, as in real speech.
+# Curated by hand from the domain's term list (short single-word terms, all-capital and vowel-less tokens) and the
+# pilot's sentences. All-capital tokens not listed here are spelled out by default.
+arpu	ar poo
+arr
+aum
+bps
+cagr	kagger
+capex	cap ex
+cogs	cogs
+ebit	ee bit
+ebitda	ee bit dah
+ecommerce	ee commerce
+eps
+etf
+fx
+gaap	gap
+gdp
+gmv
+ifrs
+ipo
+nasdaq	naz dack
+nyse
+opex	op ex
+roa
+roe
+roi
+roic

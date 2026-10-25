@@ -1,0 +1,13 @@
+# Stage 2c label forms: mathematics (plans/synthetic.md "Text", hygiene; synthetic/forms.py).
+# "written<TAB>conventional": a written form of a term and the conventional form the label uses. Matched
+# case-insensitively on whole tokens, longest first. The two sides may differ only in letter case and in a hyphen
+# versus a space, so the scorer's normalized words never change. ASCII only. Curated by hand (2026-10-24) from a
+# review of the pilot's labels; doubtful items (ordinary-word senses, noun versus modifier uses) are left out.
+gaussian	Gaussian
+bayesian	Bayesian
+chi squared	chi-squared
+p value	p-value
+p values	p-values
+kaplan meier	Kaplan-Meier
+hahn banach	Hahn-Banach
+integro differential	integro-differential

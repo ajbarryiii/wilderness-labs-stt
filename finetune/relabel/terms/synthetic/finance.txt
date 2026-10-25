@@ -1,0 +1,339 @@
+# Stage 2c term list: finance (plans/synthetic.md "Terms"). Written by
+# synthetic/termbuild.py; the split (targeted / held out) is synthetic/vocab.py's, not this file's.
+# Sections: core vocabulary written from general domain knowledge; terms from the program's
+# technical lists; terms from a CC0 knowledge base (alias syn-terms-kb, private registry). Everyday
+# single words (frequent in general transcribed speech) are left out on purpose.
+# --- core vocabulary
+discounted cash flow
+net present value
+internal rate of return
+weighted average cost of capital
+cost of capital
+cost of equity
+capital asset pricing model
+beta coefficient
+risk-free rate
+equity risk premium
+Sharpe ratio
+volatility
+implied volatility
+Black-Scholes model
+call option
+put option
+strike price
+option premium
+futures contract
+forward contract
+interest rate swap
+credit default swap
+collateralized debt obligation
+mortgage-backed security
+yield to maturity
+coupon rate
+bond yield
+bond duration
+convexity
+yield curve
+inverted yield curve
+basis points
+federal funds rate
+quantitative easing
+monetary policy
+fiscal policy
+arbitrage
+hedging
+short selling
+margin call
+leverage ratio
+debt-to-equity ratio
+current ratio
+quick ratio
+interest coverage ratio
+return on assets
+return on equity
+return on invested capital
+price-to-earnings ratio
+price-to-book ratio
+enterprise value
+market capitalization
+dividend yield
+payout ratio
+share buyback
+stock split
+initial public offering
+secondary offering
+balance sheet
+income statement
+cash flow statement
+retained earnings
+shareholders' equity
+accounts receivable
+accounts payable
+working capital
+inventory turnover
+days sales outstanding
+deferred revenue
+accrual accounting
+amortization
+depreciation
+goodwill impairment
+write-down
+operating leverage
+gross profit
+operating expenses
+cost of goods sold
+earnings guidance
+forward guidance
+year over year
+quarter over quarter
+organic growth
+same-store sales
+annual recurring revenue
+customer acquisition cost
+churn rate
+net interest margin
+loan loss provision
+tier one capital
+liquidity coverage ratio
+credit rating
+investment grade
+high-yield bond
+private equity
+venture capital
+leveraged buyout
+mergers and acquisitions
+due diligence
+hedge fund
+mutual fund
+exchange-traded fund
+index fund
+asset allocation
+portfolio diversification
+efficient market hypothesis
+modern portfolio theory
+value at risk
+compound interest
+present value
+future value
+annuity
+amortization schedule
+# --- from terms/technical
+revenue
+revenues
+earnings per share
+eps
+ebitda
+adjusted ebitda
+ebit
+operating income
+operating margin
+gross margin
+net income
+net loss
+net revenue
+free cash flow
+cash flow
+operating cash flow
+capital expenditure
+capital expenditures
+capex
+opex
+fiscal year
+fiscal quarter
+first quarter
+second quarter
+third quarter
+fourth quarter
+full year guidance
+consensus estimate
+analyst
+analysts
+earnings call
+conference call
+shareholders
+shareholder
+stockholders
+dividend
+dividends
+share repurchase
+buyback
+buybacks
+stock buyback
+market cap
+valuation
+liquidity
+deleveraging
+debt
+net debt
+debt to equity
+credit facility
+revolving credit facility
+term loan
+treasury
+treasuries
+interest rate
+interest rates
+bps
+federal reserve
+inflation
+deflation
+recession
+gdp
+gross domestic product
+impairment
+goodwill
+inventory
+inventories
+profitability
+profit margin
+margin expansion
+cogs
+selling general and administrative
+research and development
+headcount
+synergies
+acquisition
+acquisitions
+merger
+mergers
+divestiture
+spin-off
+ipo
+underwriting
+hedge funds
+derivatives contract
+options contract
+stock options
+equity compensation
+stock-based compensation
+portfolio
+asset management
+assets under management
+aum
+wealth management
+investment banking
+retail banking
+commercial banking
+net interest income
+loan loss provisions
+provision for credit losses
+credit risk
+default rate
+underwriting margin
+insurance premiums
+premiums
+reinsurance
+combined ratio
+roi
+return on investment
+roe
+roa
+roic
+compound annual growth rate
+cagr
+arr
+monthly recurring revenue
+churn
+lifetime value
+average revenue per user
+arpu
+gaap
+non-gaap
+ifrs
+sec filing
+sarbanes-oxley
+audit
+auditor
+tax rate
+effective tax rate
+pre-tax
+after-tax
+diluted shares
+diluted earnings per share
+share count
+outstanding shares
+stock price
+share price
+nasdaq
+nyse
+dow jones
+etf
+commodity
+commodities
+currency
+foreign exchange
+fx
+exchange rate
+exchange rates
+headwinds
+tailwinds
+macroeconomic
+macro environment
+cryptocurrency
+bitcoin
+ethereum
+fintech
+payment volume
+transaction volume
+gross merchandise volume
+gmv
+take rate
+comparable sales
+like for like
+foot traffic
+e-commerce
+ecommerce
+supply chain disruption
+pricing power
+price increases
+cost inflation
+# --- from the knowledge base (syn-terms-kb)
+price-earnings ratio
+earnings before interest and taxes
+rate of return
+asset turnover
+Economic Value Added
+times interest earned
+capital adequacy ratio
+Treynor ratio
+cash conversion cycle
+price-sales ratio
+debt service coverage ratio
+dividend payout ratio
+equity ratio
+Cyclically adjusted price-to-earnings ratio
+return on capital
+return on capital employed
+fixed asset
+financial instrument
+current asset
+collateral
+intangible asset
+financial asset
+convertible bond
+liabilities plus owner's equity
+statement of changes in equity
+consolidated financial statement
+net worth
+financial market
+financial analysis
+purchasing power parity
+money multiplier
+output gap
+Purchasing Managers' Index
+pension fund
+sovereign wealth fund
+real estate investment trust
+private equity fund
+
+# --- spelling variants (2026-10-24): joined, split or hyphenated forms of a term listed above, attested in the
+# dev and eval references and reviewed for collisions; terms.variant_key makes each one term with its listed form.
+cashflow
+free cashflow
+operating cashflow
+pretax
+cap ex
+head count
+de-leveraging
+macro-economic
+re-insurance

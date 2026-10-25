@@ -1,0 +1,52 @@
+# Stage 2c label forms: software engineering (plans/synthetic.md "Text", hygiene; synthetic/forms.py).
+# "written<TAB>conventional": a written form of a term and the conventional form the label uses. Matched
+# case-insensitively on whole tokens, longest first. The two sides may differ only in letter case and in a hyphen
+# versus a space, so the scorer's normalized words never change. ASCII only. Curated by hand (2026-10-24) from a
+# review of the pilot's labels; doubtful items (ordinary-word senses, noun versus modifier uses) are left out.
+asic	ASIC
+asr	ASR
+bert	BERT
+cnn	CNN
+cpu	CPU
+dns	DNS
+etl	ETL
+fpga	FPGA
+gpt	GPT
+gpu	GPU
+gpus	GPUs
+html	HTML
+http	HTTP
+https	HTTPS
+llms	LLMs
+lte	LTE
+nlp	NLP
+php	PHP
+rnn	RNN
+sql	SQL
+ssd	SSD
+tcp	TCP
+tpu	TPU
+xml	XML
+ios	iOS
+macos	macOS
+mysql	MySQL
+nosql	NoSQL
+github	GitHub
+mongodb	MongoDB
+git	Git
+docker	Docker
+kotlin	Kotlin
+redis	Redis
+unix	Unix
+ruby on rails	Ruby on Rails
+moore's law	Moore's law
+r tree	R-tree
+object oriented	object-oriented
+command line interface	command-line interface
+cross site	cross-site
+copy on write	copy-on-write
+depth first search	depth-first search
+breadth first search	breadth-first search
+double check	double-check
+ip	IP
+bleu	BLEU

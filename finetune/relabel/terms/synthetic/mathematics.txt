@@ -1,0 +1,411 @@
+# Stage 2c term list: mathematics (plans/synthetic.md "Terms"). Written by
+# synthetic/termbuild.py; the split (targeted / held out) is synthetic/vocab.py's, not this file's.
+# Sections: core vocabulary written from general domain knowledge; terms from the program's
+# technical lists; terms from a CC0 knowledge base (alias syn-terms-kb, private registry). Everyday
+# single words (frequent in general transcribed speech) are left out on purpose.
+# --- core vocabulary
+eigenvalue
+eigenvector
+eigendecomposition
+eigenspace
+characteristic polynomial
+singular value decomposition
+singular values
+matrix inverse
+inverse matrix
+matrix transpose
+determinant
+trace of a matrix
+rank of a matrix
+null space
+column space
+row space
+row reduction
+reduced row echelon form
+Gaussian elimination
+LU decomposition
+QR decomposition
+Cholesky decomposition
+orthogonal matrix
+symmetric matrix
+diagonal matrix
+identity matrix
+triangular matrix
+positive definite
+positive semidefinite
+linear independence
+linearly independent
+linear combination
+vector space
+subspace
+basis vectors
+orthonormal basis
+Gram-Schmidt process
+inner product
+dot product
+cross product
+projection matrix
+linear transformation
+change of basis
+matrix multiplication
+spectral theorem
+Markov matrix
+derivative
+partial derivative
+gradient vector
+Jacobian matrix
+Hessian matrix
+chain rule
+product rule
+quotient rule
+implicit differentiation
+definite integral
+indefinite integral
+antiderivative
+integration by parts
+fundamental theorem of calculus
+Taylor series
+Maclaurin series
+power series
+radius of convergence
+limit of a function
+L'Hopital's rule
+continuous function
+differentiable function
+local maximum
+local minimum
+saddle point
+Lagrange multiplier
+multivariable calculus
+double integral
+line integral
+divergence theorem
+Stokes' theorem
+Fourier series
+Fourier transform
+Laplace transform
+ordinary differential equation
+partial differential equation
+initial value problem
+boundary value problem
+separation of variables
+numerical integration
+Newton's method
+Riemann sum
+epsilon delta
+probability distribution
+probability density function
+cumulative distribution function
+probability mass function
+random variable
+expected value
+conditional probability
+joint distribution
+marginal distribution
+independent events
+Bayes' theorem
+law of total probability
+normal distribution
+standard normal distribution
+binomial distribution
+Poisson distribution
+exponential distribution
+uniform distribution
+Bernoulli trial
+geometric distribution
+chi-squared distribution
+Student's t-distribution
+central limit theorem
+law of large numbers
+standard deviation
+covariance
+covariance matrix
+correlation coefficient
+sample mean
+sample variance
+sampling distribution
+standard error
+confidence interval
+hypothesis test
+null hypothesis
+alternative hypothesis
+p-value
+significance level
+type one error
+type two error
+statistical power
+t-test
+chi-squared test
+analysis of variance
+linear regression
+least squares
+ordinary least squares
+regression coefficient
+residuals
+coefficient of determination
+maximum likelihood estimation
+likelihood function
+Bayesian inference
+prior distribution
+posterior distribution
+Markov chain
+Monte Carlo simulation
+bootstrap resampling
+unbiased estimator
+moment generating function
+median
+interquartile range
+z-score
+outlier
+combinatorics
+permutation
+binomial coefficient
+pigeonhole principle
+mathematical induction
+proof by contradiction
+set theory
+power set
+bijection
+injective function
+surjective function
+equivalence relation
+modular arithmetic
+greatest common divisor
+prime factorization
+group theory
+abelian group
+isomorphism
+homomorphism
+vector field
+complex number
+imaginary unit
+polynomial
+quadratic formula
+logarithm
+exponential function
+asymptote
+# --- from terms/technical
+lemma
+differential equation
+linear algebra
+eigenvalues
+calculus
+derivatives
+integrals
+statistics
+statistical
+statistically significant
+variance
+correlation
+regression analysis
+bayesian
+gaussian
+exponential
+topology
+geometry
+algebra
+# --- from the knowledge base (syn-terms-kb)
+Pythagorean theorem
+binomial theorem
+Heron's formula
+law of sines
+fundamental theorem of arithmetic
+Euler's formula
+law of cosines
+Fermat's little theorem
+fundamental theorem of algebra
+mean value theorem
+De Morgan's laws
+Euler's identity
+Cauchy-Schwarz inequality
+Rolle's theorem
+prime number theorem
+de Moivre's formula
+Thales' theorem
+triangle inequality theorem
+Chinese remainder theorem
+Cramer's rule
+Green's theorem
+Ceva's theorem
+Menelaus' theorem
+Ptolemy's theorem
+Stirling's approximation
+Cauchy's integral formula
+intermediate value theorem
+Cantor's theorem
+law of tangents
+Euler's theorem
+Wilson's theorem
+Bolzano-Weierstrass theorem
+Cantor's diagonal argument
+Noether's theorem
+intercept theorem
+Bertrand's postulate
+Lagrange's theorem
+Euclid's theorem
+Euclidean division
+Nyquist-Shannon sampling theorem
+Runge-Kutta method
+squeeze theorem
+Banach-Tarski paradox
+Stewart's theorem
+Taylor's theorem
+Apollonius' theorem
+Viviani's theorem
+Chebyshev's inequality
+Jensen's inequality
+extreme value theorem
+polynomial remainder theorem
+Brahmagupta's formula
+Cayley-Hamilton theorem
+Napoleon's theorem
+Markov's inequality
+Pascal's theorem
+parallelogram law
+Bretschneider's formula
+Pick's theorem
+Abel's theorem
+Banach fixed-point theorem
+Desargues' theorem
+Lagrange's four-square theorem
+Simson line
+quadratic reciprocity
+Cauchy's integral theorem
+Minkowski inequality
+Morley's trisector theorem
+alternating series test
+Hahn-Banach theorem
+angle bisector theorem
+Abel-Ruffini theorem
+Gaussian integral
+Jordan curve theorem
+Sylow theorems
+butterfly theorem
+modularity theorem
+rational root theorem
+residue theorem
+Baire category theorem
+Euler's theorem in geometry
+Green-Tao theorem
+Heine-Borel theorem
+Liouville's theorem
+multinomial theorem
+Atiyah-Singer index theorem
+Brahmagupta theorem
+Brouwer fixed-point theorem
+Descartes' theorem
+Dirichlet's theorem on arithmetic progressions
+Euler-Maclaurin formula
+Mollweide's formula
+Pappus's centroid theorem
+Pappus's hexagon theorem
+hairy ball theorem
+law of cotangents
+Bessel's inequality
+Borsuk-Ulam theorem
+Brianchon's theorem
+Cayley's theorem
+Fermat's theorem
+Laplace expansion
+Vandermonde's identity
+Varignon's theorem
+Weierstrass M-test
+isoperimetric inequality
+uniform boundedness principle
+well-ordering theorem
+Cantor-Bernstein-Schroeder theorem
+Casey's theorem
+Cauchy condensation test
+Cauchy-Hadamard theorem
+Cook-Levin theorem
+Descartes' rule of signs
+Hilbert's Nullstellensatz
+Kepler conjecture
+Lindemann-Weierstrass theorem
+Pitot theorem
+Poynting's theorem
+Theorema Egregium
+Young's inequality
+implicit function theorem
+inverse function theorem
+spin-statistics theorem
+linear map
+dimension of a vector space
+normed vector space
+matrix addition
+transformation matrix
+diagonalizable matrix
+quotient space
+rank-nullity theorem
+Cauchy-Binet formula
+Steinitz exchange lemma
+polarization identity
+Krylov subspace
+matrix ring
+Gauss-Markov theorem
+Erlang distribution
+Jaccard index
+latent Dirichlet allocation
+Neyman-Pearson lemma
+Wald-Wolfowitz runs test
+point process
+information theory
+histogram
+statistical test
+scatter plot
+statistical significance
+standard score
+margin of error
+power of a test
+point estimation
+econometrics
+descriptive statistics
+least squares method
+mathematical statistics
+design of experiments
+Bayesian statistics
+bootstrapping
+non-parametric statistics
+generalized linear model
+ensemble learning
+method of moments
+sufficient statistic
+Poisson regression model
+time series analysis
+Bristol-Fisher-Roach randomised tasting trial
+Kaplan-Meier estimator
+computational statistics
+extreme value theory
+probability axioms
+random experiment
+martingale
+probability tree
+law of the iterated logarithm
+Boole's inequality
+Wasserstein metric
+square matrix
+transpose matrix
+block matrix
+sparse matrix
+confusion matrix
+random matrix
+generalized inverse
+Cauchy matrix
+polynomial matrix
+design matrix
+submatrix
+Smith normal form
+integro-differential equation
+Bernoulli distribution
+Zeta distribution
+multivariate probability distribution
+posterior probability
+conditional probability distribution
+marginal probability distribution
+Dirichlet distribution
+prior probability
+continuous probability distribution
+exponential family
+heavy-tailed distribution
+mixture distribution
+inverse-gamma distribution
