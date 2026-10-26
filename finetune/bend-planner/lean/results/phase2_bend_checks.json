@@ -1,0 +1,150 @@
+{
+  "source_hashes": {
+    "PROOF.bend": "be4224828ccffa8ea225171fb13460b6dfbab6f94ac8ad381070a8889ff82ee2",
+    "u32.bend": "e81b2d072ed68b08866c21fe95a973aba7a01ad96f3b2b1b3c813316e9c22067",
+    "LAWS.bend": "366ee9e9b198ad219013a9ad3b777df6e21e55524c2c8af29982b5d3b41bb361",
+    "plan.bend": "3f8ff4fef8345e6718c120122d07264f1ca837ba0e157664cef530a91f93dd58"
+  },
+  "nat_sha256": "6ce3175202287430ee1f41b53ae9f959a0983081d1ba7e53191489115c3de37a",
+  "direct_nat_references": [
+    "add_assoc",
+    "add_comm",
+    "add_left_comm",
+    "add_lt_add_iff_left",
+    "add_mul_div_right",
+    "add_sub_of_le",
+    "add_succ",
+    "add_zero",
+    "div_eq_zero_of_le",
+    "div_mul_le_self",
+    "double_add",
+    "double_eq_add",
+    "double_le_double",
+    "double_mul",
+    "eq_of_is_eq",
+    "internal_false_ne_true",
+    "is_ge_eq_is_le",
+    "le",
+    "le_add_left",
+    "le_div_iff_mul_le",
+    "le_of_lt",
+    "le_of_lt_succ",
+    "le_refl",
+    "le_succ",
+    "le_trans",
+    "lt",
+    "lt_of_le_of_lt",
+    "lt_of_lt_of_le",
+    "lt_of_not_le",
+    "lt_of_succ_le",
+    "lt_succ_self",
+    "mul_double",
+    "mul_le_mul_left",
+    "not_le_of_lt",
+    "one_mul",
+    "sub_zero",
+    "zero_le"
+  ],
+  "checks": [
+    {
+      "command": [
+        "bend",
+        "<repo>/finetune/bend-planner/u32.bend"
+      ],
+      "returncode": 0,
+      "stdout": "ALL PROOFS CHECK\nUse --verdict for mathematical validity.\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n",
+      "passed": true,
+      "rejected": false,
+      "elapsed_seconds": 0.2107164351036772
+    },
+    {
+      "command": [
+        "bend",
+        "<repo>/finetune/bend-planner/u32.bend",
+        "--verdict"
+      ],
+      "returncode": 0,
+      "stdout": "ALL PROOFS CHECK\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n",
+      "passed": true,
+      "rejected": false,
+      "elapsed_seconds": 0.37409911095164716
+    },
+    {
+      "command": [
+        "bend",
+        "<repo>/finetune/bend-planner/PROOF.bend"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError: 1 TODO found.\nThe code is incomplete, and not a valid proof yet.\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.2189361680066213
+    },
+    {
+      "command": [
+        "bend",
+        "<repo>/finetune/bend-planner/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError: 1 TODO found.\nThe code is incomplete, and not a valid proof yet.\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.23512997396755964
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/ten-laws/PROOF.bend"
+      ],
+      "returncode": 0,
+      "stdout": "ALL PROOFS CHECK\nUse --verdict for mathematical validity.\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n",
+      "passed": true,
+      "rejected": false,
+      "elapsed_seconds": 0.2802856720518321
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/ten-laws/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 0,
+      "stdout": "ALL PROOFS CHECK\n",
+      "stderr": "bend 2.0.39 is available: run bend update\n",
+      "passed": true,
+      "rejected": false,
+      "elapsed_seconds": 0.5076750729931518
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/symbolic-small/PROOF.bend"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError: the machine stack overflowed (a deep recursion, or a literal too large to expand)\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.2443227400071919
+    },
+    {
+      "command": [
+        "bend",
+        "<scratch>/phase2/symbolic-small/PROOF.bend",
+        "--verdict"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "SOME PROOFS FAIL\nError: the machine stack overflowed (a deep recursion, or a literal too large to expand)\nbend 2.0.39 is available: run bend update\n",
+      "passed": false,
+      "rejected": true,
+      "elapsed_seconds": 0.25427111703902483
+    }
+  ]
+}

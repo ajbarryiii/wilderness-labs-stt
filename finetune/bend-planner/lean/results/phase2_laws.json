@@ -1,0 +1,207 @@
+[
+  {
+    "name": "Nat.cmp_bit",
+    "line": 14,
+    "statement": "law Nat.cmp_bit:\n  for x: Nat\n  for y: Nat\n  for +a: Bool\n  for +b: Bool\n  {Nat.cmp(Nat.bit(a, x), Nat.bit(b, y)) == Word.cmp.fin(a, b, Nat.cmp(x, y)) : Cmp}"
+  },
+  {
+    "name": "Word.cmp_to_nat",
+    "line": 74,
+    "statement": "law Word.cmp_to_nat:\n  for +n: Nat\n  for a: Word(n)\n  for b: Word(n)\n  {Word.cmp(n, a, b) == Nat.cmp(Word.to_nat(n, a), Word.to_nat(n, b)) : Cmp}"
+  },
+  {
+    "name": "U32.cmp_to_nat",
+    "line": 94,
+    "statement": "law U32.cmp_to_nat:\n  for a: U32\n  for b: U32\n  {U32.cmp(a, b) == Nat.cmp(U32.to_nat(a), U32.to_nat(b)) : Cmp}"
+  },
+  {
+    "name": "U32.le_trans",
+    "line": 105,
+    "statement": "law U32.le_trans:\n  for +a: U32\n  for +b: U32\n  for +c: U32\n  for ab: {U32.is_le(a, b) == True{} : Bool}\n  for bc: {U32.is_le(b, c) == True{} : Bool}\n  {U32.is_le(a, c) == True{} : Bool}"
+  },
+  {
+    "name": "Nat.sub_bit",
+    "line": 216,
+    "statement": "law Nat.sub_bit:\n  for x: Nat\n  for y: Nat\n  for +a: Bool\n  for +b: Bool\n  for +c: Bool\n  for h: Nat.sub_ok(Bool.sub_carry(a, b, c), x, y)\n  {Nat.bit(Bool.sub_low(a, b, c), Nat.sub_carry(Bool.sub_carry(a, b, c), x, y))\n    == Nat.sub_carry(c, Nat.bit(a, x), Nat.bit(b, y)) : Nat}"
+  },
+  {
+    "name": "Word.to_nat_sub_carry",
+    "line": 307,
+    "statement": "law Word.to_nat_sub_carry:\n  for +n: Nat\n  for +a: Word(n)\n  for +b: Word(n)\n  for +c: Bool\n  for +h: Nat.sub_ok(c, Word.to_nat(n, a), Word.to_nat(n, b))\n  {Word.to_nat(n, Word.adc(n, a, b, True{}, c))\n    == Nat.sub_carry(c, Word.to_nat(n, a), Word.to_nat(n, b)) : Nat}"
+  },
+  {
+    "name": "U32.to_nat_sub",
+    "line": 361,
+    "statement": "law U32.to_nat_sub:\n  for +a: U32\n  for +b: U32\n  for h: {U32.is_le(b, a) == True{} : Bool}\n  {U32.to_nat(U32.sub(a, b)) == Nat.sub(U32.to_nat(a), U32.to_nat(b)) : Nat}"
+  },
+  {
+    "name": "Word.to_nat_bound",
+    "line": 386,
+    "statement": "law Word.to_nat_bound:\n  for +n: Nat\n  for a: Word(n)\n  {Nat.is_le(Word.to_nat(n, a), Word.max_nat(n)) == True{} : Bool}"
+  },
+  {
+    "name": "Nat.cmp_double",
+    "line": 405,
+    "statement": "law Nat.cmp_double:\n  for x: Nat\n  for y: Nat\n  {Nat.cmp(x, y) == Nat.cmp(Nat.double(x), Nat.double(y)) : Cmp}"
+  },
+  {
+    "name": "Word.to_nat_inc",
+    "line": 422,
+    "statement": "law Word.to_nat_inc:\n  for +n: Nat\n  for +a: Word(n)\n  for h: {Nat.is_lt(Word.to_nat(n, a), Word.max_nat(n)) == True{} : Bool}\n  {Word.to_nat(n, Word.inc(n, a)) == 1n+Word.to_nat(n, a) : Nat}"
+  },
+  {
+    "name": "U32.to_nat_bound",
+    "line": 455,
+    "statement": "law U32.to_nat_bound:\n  for +a: U32\n  {Nat.is_le(U32.to_nat(a), Word.max_nat(32n)) == True{} : Bool}"
+  },
+  {
+    "name": "U32.to_nat_inc",
+    "line": 470,
+    "statement": "law U32.to_nat_inc:\n  for +a: U32\n  for h: {Nat.is_lt(U32.to_nat(a), Word.max_nat(32n)) == True{} : Bool}\n  {U32.to_nat(U32.inc(a)) == 1n+U32.to_nat(a) : Nat}"
+  },
+  {
+    "name": "Word.to_nat_zero",
+    "line": 485,
+    "statement": "law Word.to_nat_zero:\n  for n: Nat\n  {Word.to_nat(n, Word.zero(n)) == 0n : Nat}"
+  },
+  {
+    "name": "Word.to_nat_from_nat",
+    "line": 505,
+    "statement": "law Word.to_nat_from_nat:\n  for +m: Nat\n  for +n: Nat\n  for +h: {Nat.is_le(m, Word.max_nat(n)) == True{} : Bool}\n  {Word.to_nat(n, Word.from_nat(m, n)) == m : Nat}"
+  },
+  {
+    "name": "U32.from_nat_word",
+    "line": 525,
+    "statement": "law U32.from_nat_word:\n  for +n: Nat\n  {U32{Word.from_nat(n, 32n)} == U32.from_nat(n) : U32}"
+  },
+  {
+    "name": "U32.to_nat_from_nat",
+    "line": 539,
+    "statement": "law U32.to_nat_from_nat:\n  for +n: Nat\n  for h: {Nat.is_le(n, Word.max_nat(32n)) == True{} : Bool}\n  {U32.to_nat(U32.from_nat(n)) == n : Nat}"
+  },
+  {
+    "name": "Word.adc_carry",
+    "line": 550,
+    "statement": "law Word.adc_carry:\n  for +n: Nat\n  for a: Word(n)\n  for b: Word(n)\n  {Word.adc(n, a, b, False{}, True{}) == Word.inc(n, Word.adc(n, a, b, False{}, False{})) : Word(n)}"
+  },
+  {
+    "name": "Word.add_inc",
+    "line": 574,
+    "statement": "law Word.add_inc:\n  for +n: Nat\n  for +a: Word(n)\n  for +b: Word(n)\n  {Word.add(n, a, Word.inc(n, b)) == Word.inc(n, Word.add(n, a, b)) : Word(n)}"
+  },
+  {
+    "name": "Word.add_zero",
+    "line": 601,
+    "statement": "law Word.add_zero:\n  for +n: Nat\n  for +a: Word(n)\n  {Word.add(n, a, Word.zero(n)) == a : Word(n)}"
+  },
+  {
+    "name": "U32.add_one",
+    "line": 620,
+    "statement": "law U32.add_one:\n  for +a: U32\n  {U32.add(a, 1) == U32.inc(a) : U32}"
+  },
+  {
+    "name": "U32.add_inc",
+    "line": 633,
+    "statement": "law U32.add_inc:\n  for +a: U32\n  for +b: U32\n  {U32.add(a, U32.inc(b)) == U32.inc(U32.add(a, b)) : U32}"
+  },
+  {
+    "name": "U32.add_zero",
+    "line": 644,
+    "statement": "law U32.add_zero:\n  for +a: U32\n  {U32.add(a, 0) == a : U32}"
+  },
+  {
+    "name": "U32.add_from_nat_succ",
+    "line": 656,
+    "statement": "law U32.add_from_nat_succ:\n  for +a: U32\n  for +n: Nat\n  {U32.add(a, U32.from_nat(1n+n)) == U32.add(U32.add(a, 1), U32.from_nat(n)) : U32}"
+  },
+  {
+    "name": "Word.to_nat_inc_le",
+    "line": 673,
+    "statement": "law Word.to_nat_inc_le:\n  for +n: Nat\n  for +a: Word(n)\n  {Nat.is_le(Word.to_nat(n, Word.inc(n, a)), 1n+Word.to_nat(n, a)) == True{} : Bool}"
+  },
+  {
+    "name": "U32.to_nat_inc_le",
+    "line": 690,
+    "statement": "law U32.to_nat_inc_le:\n  for +a: U32\n  {Nat.is_le(U32.to_nat(U32.inc(a)), 1n+U32.to_nat(a)) == True{} : Bool}"
+  },
+  {
+    "name": "U32.to_nat_from_nat_le",
+    "line": 700,
+    "statement": "law U32.to_nat_from_nat_le:\n  for +n: Nat\n  {Nat.is_le(U32.to_nat(U32.from_nat(n)), n) == True{} : Bool}"
+  },
+  {
+    "name": "U32.to_nat_le",
+    "line": 713,
+    "statement": "law U32.to_nat_le:\n  for +a: U32\n  for +b: U32\n  for h: {U32.is_le(a, b) == True{} : Bool}\n  {Nat.is_le(U32.to_nat(a), U32.to_nat(b)) == True{} : Bool}"
+  },
+  {
+    "name": "U32.to_nat_eq",
+    "line": 724,
+    "statement": "law U32.to_nat_eq:\n  for +a: U32\n  for +b: U32\n  for h: {U32.is_eq(a, b) == True{} : Bool}\n  {U32.to_nat(a) == U32.to_nat(b) : Nat}"
+  },
+  {
+    "name": "Nat.bit_add",
+    "line": 737,
+    "statement": "law Nat.bit_add:\n  for c: Bool\n  for +x: Nat\n  for +y: Nat\n  {Nat.bit(c, Nat.add(x, y)) == Nat.add(Nat.bit(c, x), Nat.double(y)) : Nat}"
+  },
+  {
+    "name": "Word.shift_spec",
+    "line": 775,
+    "statement": "law Word.shift_spec:\n  for +n: Nat\n  for +c: Bool\n  for +w: Word(n)\n  Word.Shift(n, c, w, Word.shl.out(n, c, w))"
+  },
+  {
+    "name": "Word.max_nat_mono",
+    "line": 829,
+    "statement": "law Word.max_nat_mono:\n  for +n: Nat\n  for +m: Nat\n  for h: N.le(n, m)\n  N.le(Word.max_nat(n), Word.max_nat(m))"
+  },
+  {
+    "name": "U32.of_nat_le",
+    "line": 845,
+    "statement": "law U32.of_nat_le:\n  for +a: U32\n  for +b: U32\n  for h: N.le(U32.to_nat(a), U32.to_nat(b))\n  {U32.is_le(a, b) == True{} : Bool}"
+  },
+  {
+    "name": "U32.ge_nat",
+    "line": 856,
+    "statement": "law U32.ge_nat:\n  for +a: U32\n  for +b: U32\n  {U32.is_ge(a, b) == Nat.is_le(U32.to_nat(b), U32.to_nat(a)) : Bool}"
+  },
+  {
+    "name": "U32.divmod_spec",
+    "line": 1031,
+    "statement": "law U32.divmod_spec:\n  for +m: Nat\n  for +a: Word(m)\n  for +b: U32\n  for +width: N.le(m, 32n)\n  for positive: N.lt(0n, U32.to_nat(b))\n  U32.DivSpec(m, a, b, U32.divmod.go(m, a, b))"
+  },
+  {
+    "name": "U32.zero_nat",
+    "line": 1056,
+    "statement": "law U32.zero_nat:\n  for +a: U32\n  {U32.is_zero(a) == Nat.is_eq(U32.to_nat(a), 0n) : Bool}"
+  },
+  {
+    "name": "U32.to_nat_div",
+    "line": 1102,
+    "statement": "law U32.to_nat_div:\n  for +a: U32\n  for +b: U32\n  for +positive: N.lt(0n, U32.to_nat(b))\n  {U32.to_nat(U32.div(a, b)) == Nat.div(U32.to_nat(a), U32.to_nat(b)) : Nat}"
+  },
+  {
+    "name": "Nat.div_antitone",
+    "line": 1118,
+    "statement": "law Nat.div_antitone:\n  for +a: Nat\n  for +s: Nat\n  for +t: Nat\n  for st: N.le(s, t)\n  for positive: N.lt(0n, s)\n  N.le(Nat.div(a, t), Nat.div(a, s))"
+  },
+  {
+    "name": "U32.to_nat_lt",
+    "line": 1139,
+    "statement": "law U32.to_nat_lt:\n  for +a: U32\n  for +b: U32\n  for h: {U32.is_lt(a, b) == True{} : Bool}\n  N.lt(U32.to_nat(a), U32.to_nat(b))"
+  },
+  {
+    "name": "U32.div_antitone",
+    "line": 1160,
+    "statement": "law U32.div_antitone:\n  for +a: U32\n  for +s: U32\n  for +t: U32\n  for st: {U32.is_le(s, t) == True{} : Bool}\n  for positive: {U32.is_lt(0, s) == True{} : Bool}\n  {U32.is_le(U32.div(a, t), U32.div(a, s)) == True{} : Bool}"
+  },
+  {
+    "name": "U32.positive_of_nonzero",
+    "line": 1181,
+    "statement": "law U32.positive_of_nonzero:\n  for +a: U32\n  for h: {U32.is_zero(a) == False{} : Bool}\n  N.lt(0n, U32.to_nat(a))"
+  },
+  {
+    "name": "U32.zero_add",
+    "line": 1191,
+    "statement": "law U32.zero_add:\n  for +a: U32\n  {U32.add(0, a) == a : U32}"
+  }
+]

@@ -27,6 +27,23 @@ private planning space and are not part of this repository.
 - vLLM runs in its own environment (`labeling/vllm_env.sh`).
 - Long jobs go through the `job` supervisor. See the `launch.sh` script of each stage.
 
+## Batch plan cut engines
+
+`training/batchplan.py` cuts each pool into batches with numpy by default. With `--cut bend` the cut comes
+from the Bend 2 planner in `../bend-planner`, whose laws are proved, and numpy recomputes the same cut as a
+check. The plan is refused, and nothing is written, unless the two cuts are byte-identical. A plan directory,
+`plan.json` included, is identical whichever engine built it, so its identity does not depend on the engine.
+The build prints which engine ran.
+
+```
+(cd ../bend-planner && nix develop ../.. -c bend planner.bend -o build/planner)   # once; build/ is gitignored
+./python -m training.batchplan build --pools N --cut bend [--threads 8] [--planner PATH]
+```
+
+`--planner` defaults to `../bend-planner/build/planner`. The planner's inputs and outputs go to a temporary
+directory under `$RELABEL_ROOT/tmp`, which is removed afterwards. The engine tests in
+`tests/test_training_batchplan_engine.py` that need the real binary are skipped when it has not been built.
+
 ## Data policy
 
 - Data, audio, labels and checkpoints are kept on the data drive, never in the repository.
