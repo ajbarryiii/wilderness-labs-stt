@@ -1,4 +1,5 @@
-"""Per-sub-batch backward through the TDT joint and loss (train.py --tdt-chunked-backward).
+"""Per-sub-batch backward through the TDT joint and loss (--tdt-chunked-backward), a seam for
+consumers of finetune/parakeet-ternary/train.py (which stays unmodified).
 
 NeMo's fused joint (RNNTJoint.forward with fuse_loss_wer) splits a batch into sub-batches of
 fused_batch_size rows, trims each to its own longest encoder output and transcript, and
@@ -16,27 +17,71 @@ gradients by the incoming gradient. Peak memory is then one sub-batch's graph pl
 of size B x T x D, B x U x H and the joint's parameters.
 
 Each utterance's weight in the reduction is d reduce / d loss_i, taken from NeMo's own
-reduce up front (every supported reduction is linear in the per-utterance losses), so it is
-exactly what the fused path's backward feeds the TDT loss for a unit incoming gradient.
-Equal to the fused path up to floating-point order: the joint's parameter gradients are
-summed over sub-batches in FP32 (NeMo's single backward sums the bf16 gradients of
-autocast's cached weight casts, then casts once). The TDT loss's omega draw (one
-random.uniform per loss call) happens per sub-batch in the same order, so the same
-RNN-T/TDT branches are chosen. Not supported: double backward, compute_wer.
+reduce up front (every supported reduction is linear in the per-utterance losses; the pinned
+config's is mean_volume), so it is exactly what the fused path's backward feeds the TDT loss
+for a unit incoming gradient. Equal to the fused path up to floating-point order: the
+joint's parameter gradients are summed over sub-batches in FP32 (NeMo's single backward
+sums the bf16 gradients of autocast's cached weight casts, then casts once). The TDT loss's
+omega draw (one random.uniform per loss call) happens per sub-batch in the same order, so
+the same RNN-T/TDT branches are chosen. Not supported: double backward, compute_wer.
+
+Seam. Nothing in the train module is replaced: enable(joint) replaces the forward method of
+one joint instance, and train.compute_losses, which calls student.joint(..., compute_wer=False),
+then gets joint_loss's scalar (as (loss, None, None, None)); train.train_step's single
+loss.backward() applies the stored gradients. Every other call of the joint (no
+fuse_loss_wer, no decoder outputs: decoding, export) goes to NeMo's own forward. A consumer:
+
+1. add_arguments(parser): --tdt-chunked-backward (default off) and --fused-batch-size N
+   (default None: the model's own, 4);
+2. after building the training model, every session (first start and every resume; the
+   patch is not in checkpoints), record = configure(student, args.fused_batch_size,
+   args.tdt_chunked_backward), and record `record` in its provenance (config.json,
+   summary.json): the settings, the model's default size, the reduction and, with the flag
+   on, this module's SHA-256;
+3. a resume must refuse a change of either argument (a checkpoint recorded without them
+   means off / None);
+4. SOURCES are appended to train.TRAINING_SOURCES through the consumer's seam, so the source
+   guards cover this module;
+5. a replacement of train.compute_losses must keep calling student.joint(...) for the TDT loss,
+   or the chunked path is bypassed.
+
+Composition. The patches are on different attributes of different instances and compose in
+any order: this module replaces joint.forward; joint recompute (joint_recompute.enable)
+replaces joint.joint_after_projection, which NeMo's joint.joint calls for every sub-batch here
+(its checkpoint recomputes inside this module's per-sub-batch autograd.grad); the bf16 TDT
+gradients (tdt_bf16_grads.install) replace the TDT loss instance's autograd Function and add a
+pre-hook on RNNTLoss, both reached through the joint.loss(...) call made per sub-batch here.
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
+import types
 from pathlib import Path
 
 import torch
 
-ATTR = "tdt_chunked_backward"  # set on the joint by configure; train.compute_losses reads it
+SOURCES = ("parakeet-ternary/tdt_chunked.py",)  # relative to finetune/, for train.TRAINING_SOURCES
 SUPPORTED_REDUCTIONS = ("mean_batch", "mean_volume", "mean", "sum")
 
 
+def positive_int(value: str) -> int:
+    n = int(value)
+    if n < 1:
+        raise argparse.ArgumentTypeError(f"must be a positive integer, not {value}")
+    return n
+
+
+def add_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--tdt-chunked-backward", action="store_true",
+                        help="backward through the TDT joint and loss one sub-batch at a time "
+                             "(tdt_chunked.py): peak memory of one sub-batch, not the batch")
+    parser.add_argument("--fused-batch-size", type=positive_int,
+                        help="rows per sub-batch of the fused TDT joint (default: the model's)")
+
+
 def configure(student, fused_batch_size: int | None, chunked: bool) -> dict:
-    """Set the joint's sub-batch size (None: the model's own) and the chunked backward;
+    """Set the joint's sub-batch size (None: the model's own) and enable the chunked backward;
     returns the provenance record. With (None, False) the model is left untouched."""
     joint = student.joint
     default = joint.fused_batch_size
@@ -47,14 +92,48 @@ def configure(student, fused_batch_size: int | None, chunked: bool) -> dict:
     record = {"chunked_backward": bool(chunked), "fused_batch_size": joint.fused_batch_size,
               "fused_batch_size_default": default, "reduction": joint.loss.reduction}
     if chunked:
-        check_supported(joint)
-        setattr(joint, ATTR, True)
+        enable(joint)
         record["module_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     return record
 
 
+def _forward(self, *, encoder_outputs, decoder_outputs, encoder_lengths=None, transcripts=None,
+             transcript_lengths=None, compute_wer=False, keep_hypotheses=False):
+    """RNNTJoint.forward with the fused loss computed by joint_loss (keyword-only, as NeMo's)."""
+    if not self.fuse_loss_wer or decoder_outputs is None:
+        return _nemo_forward(self, encoder_outputs=encoder_outputs, decoder_outputs=decoder_outputs,
+                             encoder_lengths=encoder_lengths, transcripts=transcripts,
+                             transcript_lengths=transcript_lengths, compute_wer=compute_wer,
+                             keep_hypotheses=keep_hypotheses)
+    if encoder_lengths is None or transcript_lengths is None:
+        raise ValueError("the fused joint needs encoder and transcript lengths")
+    loss = joint_loss(self, encoder_outputs, decoder_outputs, encoder_lengths, transcripts,
+                      transcript_lengths, compute_wer=compute_wer)
+    self.hypotheses = None
+    return loss, None, None, None
+
+
+def _nemo_forward(joint, **kwargs):
+    """NeMo's own (typechecked) forward, whether or not the instance's is replaced."""
+    return type(joint).forward.__get__(joint, type(joint))(**kwargs)
+
+
 def enabled(joint) -> bool:
-    return bool(getattr(joint, ATTR, False))
+    return getattr(vars(joint).get("forward"), "__func__", None) is _forward
+
+
+def enable(joint) -> None:
+    """Route the joint's fused loss through joint_loss (see the module docstring)."""
+    check_supported(joint)
+    if "forward" in vars(joint):
+        raise RuntimeError("this joint's forward is already replaced"
+                           + (" (the chunked TDT backward is enabled)" if enabled(joint) else ""))
+    joint.forward = types.MethodType(_forward, joint)
+
+
+def disable(joint) -> None:
+    if enabled(joint):
+        del joint.forward
 
 
 def check_supported(joint) -> None:
@@ -82,9 +161,10 @@ def joint_loss(joint, encoder_outputs: torch.Tensor, decoder_outputs: torch.Tens
     params = [p for p in joint.parameters() if p.requires_grad]
     if not (torch.is_grad_enabled() and (encoder_outputs.requires_grad or decoder_outputs.requires_grad
                                          or params)):
-        loss, _, _, _ = joint(encoder_outputs=encoder_outputs, decoder_outputs=decoder_outputs,
-                              encoder_lengths=encoder_lengths, transcripts=transcripts,
-                              transcript_lengths=transcript_lengths, compute_wer=False)
+        loss, _, _, _ = _nemo_forward(joint, encoder_outputs=encoder_outputs,
+                                      decoder_outputs=decoder_outputs, encoder_lengths=encoder_lengths,
+                                      transcripts=transcripts, transcript_lengths=transcript_lengths,
+                                      compute_wer=False)
         return loss
     return _ChunkedJointLoss.apply(joint, encoder_lengths, transcripts, transcript_lengths,
                                    encoder_outputs, decoder_outputs, *params)

@@ -1,4 +1,5 @@
-"""Contract tests for tdt_chunked (train.py --tdt-chunked-backward and --fused-batch-size).
+"""Contract tests for tdt_chunked (--tdt-chunked-backward and --fused-batch-size, a seam for
+consumers of train.py, which stays unmodified).
 
 The reference is NeMo's fused joint (`student.joint(..., compute_wer=False)`) at the same
 fused_batch_size. Observable contract, flag on:
@@ -7,13 +8,16 @@ fused_batch_size. Observable contract, flag on:
    the pinned config's is mean_volume); other reductions are refused;
 2. the gradients w.r.t. the encoder output, the prediction-network output and every joint
    parameter equal the reference's (whichever of them require gradients);
-3. train.compute_losses / train.train_step work unchanged (one loss.backward());
+3. the seam (configure / enable: the joint instance's forward) makes the unmodified
+   train.compute_losses and train.train_step (one loss.backward()) use the chunked path, and
+   leaves the train module's attributes untouched;
 4. peak CUDA memory stays flat as the number of sub-batches grows (the reference's grows);
 5. the TDT loss's omega draw: one random.uniform per sub-batch loss, in order, so the same
    RNN-T/TDT branches are chosen as in the reference;
 6. an exception mid-loop leaves the loss reduction at its configured value;
 7. double backward and compute_wer=True are refused.
-Flag off, the trainer's path is NeMo's fused joint, untouched.
+Flag off, the trainer's path is NeMo's fused joint, untouched. The consumer's own wiring
+(arguments on its parser, provenance, resume checks, train.TRAINING_SOURCES) is tested there.
 
 Equality vs tolerance. Both paths run the same NeMo calls on the same sub-batches, so the
 loss and every gradient upstream of the joint's parameters (w.r.t. the encoder and
@@ -39,6 +43,7 @@ import os
 import random
 import types
 import unittest
+import argparse
 from pathlib import Path
 from unittest import mock
 
@@ -47,7 +52,22 @@ import torch
 import paths
 import tdt_chunked
 import train
-from test_train import HAS_CUDA, WORDS, make_args, tiny_model
+from test_train import HAS_CUDA, WORDS, tiny_model
+
+_TRAIN_ATTRIBUTES: dict = {}
+
+
+def setUpModule() -> None:
+    _TRAIN_ATTRIBUTES.update(vars(train))
+
+
+def tearDownModule() -> None:
+    """The seam patches model instances only: train's attributes are exactly as before."""
+    now = vars(train)
+    changed = sorted(k for k in set(now) | set(_TRAIN_ATTRIBUTES)
+                     if k not in now or k not in _TRAIN_ATTRIBUTES or now[k] is not _TRAIN_ATTRIBUTES[k])
+    if changed:
+        raise AssertionError(f"train module attributes changed by these tests: {changed}")
 
 # Tolerances for the joint's parameter gradients: worst over the joint's tensors of the
 # relative L2 difference, 1 - cosine, and max |diff| / max |reference| (per-element, scaled
@@ -213,55 +233,26 @@ class TinyJoint:
 # ----------------------------------------------------------------------------- CPU
 
 class ArgsTest(unittest.TestCase):
+    def parse(self, *argv: str) -> argparse.Namespace:
+        parser = argparse.ArgumentParser()
+        tdt_chunked.add_arguments(parser)
+        return parser.parse_args(list(argv))
+
     def test_defaults_are_off_and_validated(self) -> None:
-        args = make_args()
+        args = self.parse()
         self.assertFalse(args.tdt_chunked_backward)
         self.assertIsNone(args.fused_batch_size)
-        on = train.parse_args(
-            ["--arm", "P2", "--lr", "1e-3", "--run-name", "t", "--max-steps", "6",
-             "--tdt-chunked-backward", "--fused-batch-size", "16"])
+        on = self.parse("--tdt-chunked-backward", "--fused-batch-size", "16")
         self.assertTrue(on.tdt_chunked_backward)
         self.assertEqual(on.fused_batch_size, 16)
-        for bad in ("0", "-2"):
+        for bad in ("0", "-2", "2.5"):
             with self.assertRaises(SystemExit):
-                train.parse_args(["--arm", "P2", "--lr", "1e-3", "--run-name", "t",
-                                  "--max-steps", "6", "--fused-batch-size", bad])
+                self.parse("--fused-batch-size", bad)
 
-    def test_resume_refuses_a_change_and_accepts_older_checkpoints(self) -> None:
-        args = make_args()
-        for change in ({"tdt_chunked_backward": True}, {"fused_batch_size": 8}):
-            self.assertTrue(train.resume_mismatches(vars(args), make_args(**change)), change)
-        older = {k: v for k, v in vars(args).items()
-                 if k not in ("tdt_chunked_backward", "fused_batch_size")}
-        self.assertEqual(train.resume_mismatches(older, args), [])
-        self.assertTrue(train.resume_mismatches(older, make_args(tdt_chunked_backward=True)))
-        self.assertTrue(train.resume_mismatches(older, make_args(fused_batch_size=8)))
-
-    def test_legacy_checkpoint_without_args_refuses_the_new_settings(self) -> None:
-        """A checkpoint with only a resume_key (no recorded args) was written with both off."""
-        import shutil
-        import tempfile
-        from test_train import TEST_ROOT
-        TEST_ROOT.mkdir(parents=True, exist_ok=True)
-        run = Path(tempfile.mkdtemp(dir=TEST_ROOT))
-        try:
-            args = make_args()
-            train.save_checkpoint(run, {"step": 3, "resume_key": train.resume_key(args)})
-            self.assertEqual(train.load_resume_payload(run, args)["step"], 3)
-            for change in ({"tdt_chunked_backward": True}, {"fused_batch_size": 16}):
-                with self.assertRaises(SystemExit) as stop:
-                    train.load_resume_payload(run, make_args(**change))
-                self.assertEqual(stop.exception.code, train.EXIT_RESUME_MISMATCH, change)
-        finally:
-            shutil.rmtree(run, ignore_errors=True)
-
-
-class SourcesTest(unittest.TestCase):
-    def test_module_is_a_training_source(self) -> None:
-        """Its hash is recorded and checked with the other training sources (sweep.py mirrors
-        the list; test_train checks the two are equal)."""
-        self.assertIn("parakeet-ternary/tdt_chunked.py", train.TRAINING_SOURCES)
-        self.assertIn("parakeet-ternary/tdt_chunked.py", train.training_source_hashes())
+    def test_sources_name_this_module(self) -> None:
+        self.assertEqual(tdt_chunked.SOURCES, ("parakeet-ternary/tdt_chunked.py",))
+        self.assertEqual((paths.HERE.parent / tdt_chunked.SOURCES[0]).resolve(),
+                         Path(tdt_chunked.__file__).resolve())
 
 
 class ConfigureTest(unittest.TestCase):
@@ -276,6 +267,7 @@ class ConfigureTest(unittest.TestCase):
         record = tdt_chunked.configure(self.model, None, False)
         self.assertEqual(joint.fused_batch_size, before)
         self.assertFalse(tdt_chunked.enabled(joint))
+        self.assertNotIn("forward", vars(joint))
         self.assertEqual(record, {"chunked_backward": False, "fused_batch_size": before,
                                   "fused_batch_size_default": before,
                                   "reduction": joint.loss.reduction})
@@ -287,6 +279,11 @@ class ConfigureTest(unittest.TestCase):
         self.assertTrue(tdt_chunked.enabled(model.joint))
         self.assertTrue(record["chunked_backward"])
         self.assertEqual(len(record["module_sha256"]), 64)
+        with self.assertRaisesRegex(RuntimeError, "already replaced"):
+            tdt_chunked.enable(model.joint)
+        tdt_chunked.disable(model.joint)
+        self.assertNotIn("forward", vars(model.joint))
+        self.assertFalse(tdt_chunked.enabled(model.joint))
         for bad in (0, -1, 2.5):
             with self.assertRaises(ValueError):
                 tdt_chunked.configure(tiny_model(), bad, False)
@@ -563,7 +560,9 @@ class TrainerTest(unittest.TestCase):
         TOL_PIPELINE."""
         for fbs in (2, 3):
             ref = self.losses(self.student(fbs, False))
-            got = self.losses(self.student(fbs, True))
+            with mock.patch.object(tdt_chunked, "joint_loss", wraps=tdt_chunked.joint_loss) as spy:
+                got = self.losses(self.student(fbs, True))
+            self.assertEqual(spy.call_count, 1, "train.compute_losses did not take the chunked path")
             self.assertTrue(any(n.startswith("encoder.") for n in got[1]))
             self.assertTrue(any(n.startswith("decoder.") for n in got[1]))
             ok, found = within(ref, got, TOL_PIPELINE)
@@ -573,6 +572,29 @@ class TrainerTest(unittest.TestCase):
         self.assertFalse(any(n.startswith(("decoder.", "joint.")) for n in got[1]))
         ok, found = within(ref, got, TOL_PIPELINE)
         self.assertTrue(ok, f"frozen prediction/joint: {found}")
+
+    def test_other_joint_calls_go_to_nemo(self) -> None:
+        """No decoder outputs (NeMo's WER-only call) and no gradient: NeMo's own forward."""
+        model = self.student(2, True)
+        lab = self.labeled(model)
+        enc = torch.randn(len(self.texts), 64, 40, device="cuda")
+        enc_len = torch.full((len(self.texts),), 40, device="cuda")
+        with mock.patch.object(tdt_chunked, "_ChunkedJointLoss") as function:
+            out = model.joint(encoder_outputs=enc, decoder_outputs=None, encoder_lengths=enc_len,
+                              transcripts=lab["tokens"], transcript_lengths=lab["token_len"])
+            self.assertEqual(out, (None, None, None, None))
+            with torch.no_grad():
+                dec, _, _ = model.decoder(targets=lab["tokens"], target_length=lab["token_len"])
+                random.seed(3)  # the same omega draws in both calls
+                got = model.joint(encoder_outputs=enc, decoder_outputs=dec, encoder_lengths=enc_len,
+                                  transcripts=lab["tokens"], transcript_lengths=lab["token_len"])
+        function.apply.assert_not_called()
+        tdt_chunked.disable(model.joint)
+        random.seed(3)
+        with torch.no_grad():
+            ref = model.joint(encoder_outputs=enc, decoder_outputs=dec, encoder_lengths=enc_len,
+                              transcripts=lab["tokens"], transcript_lengths=lab["token_len"])
+        self.assertTrue(torch.equal(got[0], ref[0]))
 
     def test_flag_off_never_reaches_the_module(self) -> None:
         model = self.student(None, False)
