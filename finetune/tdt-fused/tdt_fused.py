@@ -1,6 +1,20 @@
-"""Fused joint + TDT loss (train.py --tdt-fused-kernel): NeMo's fused joint and numba TDT loss for a
-whole batch in one call, without the [B, T, U+1, V] joint output (V = 1030: 1024 tokens, blank,
-5 durations).
+"""Fused joint + TDT loss as a train.py seam: NeMo's fused joint and numba TDT loss for a whole batch
+in one call, without the [B, T, U+1, V] joint output (V = 1030: 1024 tokens, blank, 5 durations).
+
+The seam (finetune/parakeet-ternary is never modified; the pattern of relabel/training/seam.py):
+replacements() gives the (module, attribute, value) list a consuming trainer installs, and
+installed() installs it and restores the originals on exit:
+
+1. train.compute_losses: compute_losses below, the original train.compute_losses (features,
+   SpecAugment, BF16 autocast, encoder matching, the scalar check: all unchanged) with only the
+   joint's fused loss call, student.joint(..., compute_wer=False), answered by joint_loss for the
+   duration of the call;
+2. train.TRAINING_SOURCES: plus SOURCE, so train.py records this file's SHA-256 with its own (at
+   the start, at every resume and at finishing). settings() is the record for the consumer's
+   configuration and resume key.
+
+Another seam on train.compute_losses, or any replaced method of the joint or the TDT loss (they
+would be bypassed silently), is refused.
 
 NeMo (RNNTJoint.forward with fuse_loss_wer) runs the joint and the TDT loss once per sub-batch of
 fused_batch_size rows, and every sub-batch keeps its FP32 [.., V] gradient and joint activations
@@ -8,11 +22,11 @@ until loss.backward(). Here the TDT recursions need only per-cell scalars: the l
 the 1025 label logits, the blank and target logits and the duration log-softmax. So:
 
 - forward: the lattice cells (b, t, u) are cut into chunks of at most CHUNK_CELLS cells (rows of
-  similar lengths grouped, long rows split along T; never less than one frame); per chunk the joint hidden state
-  h = relu(f + g) and z = Linear_out(h) are computed exactly as NeMo does (same ops and dtypes)
-  and reduced by a Triton kernel to the per-cell scalars; then one Triton launch runs the alpha
-  recursion of every row (NeMo's compute_tdt_alphas_kernel, or compute_alphas_kernel on the omega
-  branch, on those scalars).
+  similar lengths grouped, long rows split along T; never less than one frame); per chunk the
+  joint hidden state h = relu(f + g) and z = Linear_out(h) are computed exactly as NeMo does
+  (same ops and dtypes) and reduced by a Triton kernel to the per-cell scalars; then one Triton
+  launch runs the alpha recursion of every row (NeMo's compute_tdt_alphas_kernel, or
+  compute_alphas_kernel on the omega branch, on those scalars).
 - backward: one launch for the beta recursion, one for the per-cell occupancies; then per chunk
   z is recomputed, turned into dz in place (Triton; the gradient NeMo's grad kernels write,
   including the duration log-softmax backward, rounded to the logits' dtype as NeMo's cast
@@ -25,13 +39,17 @@ rules, mean_batch (or any) reduction through the joint's RNNTLoss.reduce, and om
 random.uniform(0, 1) draw per loss call; below omega the call is the plain RNN-T loss). With one
 call per batch the omega branch is chosen per batch, not per sub-batch of 4 rows: the expected
 loss is unchanged, its step-to-step variance is not. Projections, the prediction network and the
-encoder stay in PyTorch. Not implemented (refused): joint dropout p > 0 in training, masking_prob,
-adapters, an explicit log_softmax in the joint, fastemit_lambda, gradient clamping.
+encoder stay in PyTorch. Not implemented (refused): joint dropout p > 0, masking_prob, adapters,
+an explicit log_softmax in the joint, fastemit_lambda, gradient clamping.
 """
 from __future__ import annotations
 
+import contextlib
+import hashlib
 import random
+import types
 from dataclasses import dataclass
+from pathlib import Path
 
 import torch
 import torch.nn.functional as F
@@ -39,12 +57,12 @@ import triton
 import triton.language as tl
 from triton.language.extra import libdevice
 
-ATTRIBUTE = "tdt_fused_kernel"  # set on the joint by enable(); train.compute_losses checks it
+SOURCE = "tdt-fused/tdt_fused.py"  # relative to finetune/, as train.TRAINING_SOURCES entries are
 CHUNK_CELLS = 16384  # lattice cells per joint chunk: h, z/dz and dh of a chunk stay in the 5090's L2
-# Flags of the other joint-memory changes: they reshape NeMo's fused joint, which this replaces.
-CONFLICTS = {"tdt_chunked_backward": "--tdt-chunked-backward", "joint_recompute": "--joint-recompute",
-             "fused_batch_size": "--fused-batch-size"}
 STATS = 3  # per-cell statistics before the duration log-probs: lse, logp(blank), logp(target)
+# Joint methods this path stands in for or relies on: any replacement of them is refused.
+JOINT_METHODS = ("forward", "joint", "joint_after_projection", "project_encoder", "project_prednet")
+_TRAIN: dict = {}  # train.compute_losses as replacements() found it
 
 
 @dataclass(frozen=True)
@@ -55,34 +73,79 @@ class Spec:
     omega: float
 
 
-# ----------------------------------------------------------------------------- configuration
+# ----------------------------------------------------------------------------- the seam
 
-def configure(student, args) -> dict | None:
-    """train.Context: enable the fused loss on student.joint when args.tdt_fused_kernel is set;
-    returns the record kept in the run's config (None when off)."""
-    if not getattr(args, "tdt_fused_kernel", False):
-        return None
-    for name, flag in CONFLICTS.items():
-        if getattr(args, name, None) not in (None, False):
-            raise ValueError(f"--tdt-fused-kernel replaces NeMo's fused joint; it cannot be combined with {flag}")
-    return enable(student.joint)
-
-
-def enable(joint) -> dict:
-    spec = loss_spec(joint)
-    record = {"chunk_cells": CHUNK_CELLS, "triton": triton.__version__, "blank": spec.blank,
-              "durations": list(spec.durations), "sigma": spec.sigma, "omega": spec.omega,
-              "omega_draw": "one per loss call = one per batch"}
-    setattr(joint, ATTRIBUTE, record)
-    return record
+def replacements() -> list[tuple]:
+    """(object, attribute, value) for the consumer's seam; train.compute_losses must be train.py's own."""
+    import train
+    current = train.compute_losses
+    if getattr(current, "__module__", None) != "train" or SOURCE in train.TRAINING_SOURCES:
+        raise ValueError(f"train.compute_losses is already replaced ({current.__module__}.{current.__qualname__}) "
+                         "or tdt_fused is installed: tdt_fused cannot be combined with another compute_losses seam")
+    _TRAIN["compute_losses"] = current
+    return [(train, "compute_losses", compute_losses),
+            (train, "TRAINING_SOURCES", tuple(train.TRAINING_SOURCES) + (SOURCE,))]
 
 
-def disable(joint) -> None:
-    setattr(joint, ATTRIBUTE, None)
+@contextlib.contextmanager
+def installed():
+    """Install replacements(); restore the originals on exit."""
+    items = replacements()
+    saved = [(obj, name, getattr(obj, name)) for obj, name, _ in items]
+    try:
+        for obj, name, value in items:
+            setattr(obj, name, value)
+        yield
+    finally:
+        for obj, name, value in reversed(saved):
+            setattr(obj, name, value)
 
 
-def enabled(joint) -> bool:
-    return getattr(joint, ATTRIBUTE, None) is not None
+def settings() -> dict:
+    """What a consumer records with the run (and should make part of its resume key)."""
+    path = Path(__file__).resolve()
+    return {"source": SOURCE, "source_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "chunk_cells": CHUNK_CELLS, "triton": triton.__version__,
+            "replaces": "train.compute_losses: the joint's fused loss call, one loss call per batch",
+            "omega_draw": "one random.uniform(0, 1) per loss call = one per batch"}
+
+
+def compute_losses(student, *args, **kwargs):
+    """train.compute_losses with student.joint's fused loss call answered by joint_loss."""
+    import train
+    joint = student.joint
+    _check_not_replaced(joint)
+    joint.forward = types.MethodType(_fused_forward, joint)
+    try:
+        return _TRAIN.get("compute_losses", train.compute_losses)(student, *args, **kwargs)
+    finally:
+        del joint.forward
+
+
+def _fused_forward(joint, encoder_outputs, decoder_outputs, encoder_lengths=None, transcripts=None,
+                   transcript_lengths=None, compute_wer=False, keep_hypotheses=False):
+    """RNNTJoint.forward's fused loss path: (loss, wer, wer_num, wer_denom) with compute_wer=False."""
+    if compute_wer or keep_hypotheses or decoder_outputs is None or transcripts is None:
+        raise RuntimeError("tdt_fused answers only the joint's loss call (compute_wer=False, with transcripts)")
+    loss = joint_loss(joint, encoder_outputs, decoder_outputs, encoder_lengths, transcripts, transcript_lengths)
+    return loss, None, None, None
+
+
+def _check_not_replaced(joint) -> None:
+    """ValueError if a method of the joint or its losses is not NeMo's own (another seam)."""
+    for obj, names in ((joint, JOINT_METHODS), (getattr(joint, "loss", None), ("forward",)),
+                       (getattr(getattr(joint, "loss", None), "_loss", None), ("forward",))):
+        if obj is None:
+            continue
+        for name in names:
+            own = vars(obj).get(name)
+            if own is not None and getattr(own, "__func__", None) is not _fused_forward:
+                raise ValueError(f"{type(obj).__name__}.{name} is replaced on the instance: tdt_fused cannot be "
+                                 "combined with another seam on the joint or the loss")
+            module = getattr(getattr(type(obj), name), "__module__", "") or ""
+            if not module.startswith("nemo."):
+                raise ValueError(f"{type(obj).__name__}.{name} is replaced ({module}): tdt_fused cannot be "
+                                 "combined with another seam on the joint or the loss")
 
 
 def loss_spec(joint) -> Spec:
@@ -123,6 +186,7 @@ def joint_loss(joint, encoder_outputs: torch.Tensor, decoder_outputs: torch.Tens
     """What joint(encoder_outputs=..., decoder_outputs=..., ..., compute_wer=False)[0] returns
     (the reduced TDT loss), in one loss call: encoder outputs [B, D, T], prediction-network
     outputs [B, D, U+1], transcripts [B, >= U]."""
+    _check_not_replaced(joint)
     spec = loss_spec(joint)
     f = joint.project_encoder(encoder_outputs.transpose(1, 2))
     g = joint.project_prednet(decoder_outputs.transpose(1, 2))

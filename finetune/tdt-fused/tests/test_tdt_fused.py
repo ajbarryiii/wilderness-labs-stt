@@ -447,6 +447,7 @@ class TrainerHookTest(_Case):
 
     def test_train_step_runs_with_the_seam(self) -> None:
         import types
+        from nemo.collections.asr.parts.numba.rnnt_loss import rnnt as numba_rnnt
         student = decoder_only_tiny_model()
         optimizer, scheduler = train.make_optimizer(student, 1e-4, 10)
         ctx = types.SimpleNamespace(student=student, recipe=self.RECIPE, optimizer=optimizer,
@@ -454,8 +455,8 @@ class TrainerHookTest(_Case):
         batch = tiny_batch(student, seed=2) | {"teacher_enc": None, "teacher_len": None}
         trainable = [p for group in optimizer.param_groups for p in group["params"]]
         before = [p.detach().clone() for p in trainable]
-        with tdt_fused.installed(), mock.patch.object(type(student.joint), "forward",
-                                                      side_effect=AssertionError("NeMo's fused joint called")):
+        with tdt_fused.installed(), mock.patch.object(numba_rnnt, "tdt_loss_gpu",
+                                                      side_effect=AssertionError("NeMo's numba TDT loss called")):
             values = train.train_step(ctx, batch, trainable)
         self.assertTrue(all(math.isfinite(v) for v in values.values()), values)
         self.assertTrue(any(not torch.equal(a, p) for a, p in zip(before, trainable)))

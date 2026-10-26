@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Interpreter for the fused joint + TDT loss seam: finetune/parakeet-ternary/python (the pinned
+# NeMo 3.0 / torch 2.11 / Triton 3.6 runtime; `import train` and `paths` resolve to parakeet-ternary)
+# with this directory on PYTHONPATH, so `import tdt_fused` resolves here.
+set -euo pipefail
+here="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+export PYTHONPATH="$here${PYTHONPATH:+:$PYTHONPATH}"
+exec "$here/../parakeet-ternary/python" "$@"

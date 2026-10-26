@@ -117,7 +117,6 @@ TRAINING_SOURCES = ("parakeet-ternary/train.py", "parakeet-ternary/quant.py",
                     "parakeet-ternary/stream.py", "parakeet-ternary/teacher.py",
                     "parakeet-ternary/evaluate.py", "parakeet-ternary/export.py",
                     "parakeet-ternary/data.py", "parakeet-ternary/paths.py",
-                    "parakeet-ternary/tdt_fused.py",
                     "whisper-ternary/quant.py", "whisper-ternary/wer.py")
 # Arguments that may differ between the original invocation and a resume.
 RESUME_ALLOWED_CHANGES = ("ckpt_minutes", "eval_batch_size", "no_powerlog", "overwrite")
@@ -143,8 +142,6 @@ SUMMARY_TYPES = {"run_name": str, "arm": str, "recipe": str, "lr": float, "max_s
                  "train_pred_joint": bool, "ramp_steps": int, "warmup_steps": int,
                  "audio_seconds_seen": float, "smoke": bool, "started_utc": str,
                  "finished_utc": str}
-# Arguments added after runs had started, with the value a checkpoint that predates them ran.
-ADDED_ARG_DEFAULTS = {"tdt_fused_kernel": False}
 # Arguments that must match for a checkpoint to be resumed (the rest are operational).
 RESUME_KEYS = ("arm", "recipe", "lr", "max_steps", "train", "stream", "batch_seconds", "seed",
                "eval_every", "dev_limit", "smoke", "select")
@@ -178,9 +175,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         help="padded audio seconds per batch (batch size x longest utterance)")
     parser.add_argument("--grad-checkpointing", action="store_true",
                         help="recompute each encoder layer in the backward pass")
-    parser.add_argument("--tdt-fused-kernel", action="store_true",
-                        help="joint + TDT loss in one call per batch without the [B, T, U, V] "
-                             "joint output (tdt_fused.py)")
     parser.add_argument("--eval-every", type=int, help="default: max_steps // 10")
     parser.add_argument("--select", choices=SELECT, default="final",
                         help="model scored and exported: final = the last checkpoint (step == "
@@ -961,12 +955,9 @@ def compute_losses(student, audio: torch.Tensor, audio_len: torch.Tensor, tokens
         grad_ctx = contextlib.nullcontext() if recipe["train_pred_joint"] else torch.no_grad()
         with grad_ctx:
             dec, _, _ = student.decoder(targets=tokens, target_length=token_len)
-        if getattr(student.joint, "tdt_fused_kernel", None):  # --tdt-fused-kernel (tdt_fused.py)
-            tdt = local_module("tdt_fused").joint_loss(student.joint, enc, dec, enc_len, tokens, token_len)
-        else:
-            tdt, _, _, _ = student.joint(encoder_outputs=enc, decoder_outputs=dec,
-                                         encoder_lengths=enc_len, transcripts=tokens,
-                                         transcript_lengths=token_len, compute_wer=False)
+        tdt, _, _, _ = student.joint(encoder_outputs=enc, decoder_outputs=dec,
+                                     encoder_lengths=enc_len, transcripts=tokens,
+                                     transcript_lengths=token_len, compute_wer=False)
     if tdt.dim() != 0:
         raise RuntimeError(f"TDT loss is not a scalar (shape {tuple(tdt.shape)}); "
                            f"loss reduction is {student.loss.reduction!r}")
@@ -1125,7 +1116,6 @@ def check_checkpoints_readable(run: Path) -> None:
 
 def comparable_args(args) -> dict:
     values = vars(args) if isinstance(args, argparse.Namespace) else dict(args)
-    values = {**ADDED_ARG_DEFAULTS, **values}
     return {k: v for k, v in values.items() if k not in RESUME_ALLOWED_CHANGES}
 
 
@@ -1206,8 +1196,6 @@ class Context:
         self.stream, self.evaluator, self.quant, self.device = stream, evaluator, quant, device
         self.label_fn = label_fn or local_module("teacher").teacher_label_batch
         self.tdt_kernel_sha256 = prepare_tdt_loss()
-        self.tdt_fused = (local_module("tdt_fused").configure(student, args)
-                          if getattr(args, "tdt_fused_kernel", False) else None)
         self.recipe = recipe_of(args)
         self.ramp = ramp_steps(args.max_steps) if self.recipe["quantized"] else None
         self.optimizer, self.scheduler = make_optimizer(student, args.lr, args.max_steps)
@@ -1554,8 +1542,8 @@ def run_probe(ctx: Context, steps: int) -> dict:
     ctx.optimizer.zero_grad(set_to_none=True)
     result = {"arm": args.arm, "recipe": args.recipe, "batch_seconds": args.batch_seconds,
               "grad_checkpointing": args.grad_checkpointing, "stream": args.stream,
-              "tdt_fused_kernel": ctx.tdt_fused, "status": status, "peak_memory": peaks,
-              "timed_steps": len(seconds), "drop_counts": dict(ctx.state.drop_counts)}
+              "status": status, "peak_memory": peaks, "timed_steps": len(seconds),
+              "drop_counts": dict(ctx.state.drop_counts)}
     if seconds:
         total = sum(sum(v) for v in phases.values())
         result.update({k + "_mean": sum(v) / len(v) for k, v in phases.items()})
@@ -1819,7 +1807,6 @@ def main(argv: list[str] | None = None) -> None:
                           "versions": versions(), "determinism": determinism, "model_file": str(paths.MODEL_FILE),
                           "numba_cuda": {**NUMBA_CUDA,
                                          "tdt_grad_kernel_patched_sha256": ctx.tdt_kernel_sha256},
-                          "tdt_fused_kernel": ctx.tdt_fused,
                           "stream": stream_identity(args, ctx.stream),
                           "stream_state_at_start": ctx.stream.state_dict(),
                           "bucketing": {"pool_batches": POOL_BATCHES,
@@ -1875,7 +1862,6 @@ def main(argv: list[str] | None = None) -> None:
                        "seed": args.seed, "batch_seconds": args.batch_seconds, "train": args.train,
                        "stream": config["stream"], **recipe_of(args),
                        "grad_checkpointing": args.grad_checkpointing,
-                       "tdt_fused_kernel": getattr(args, "tdt_fused_kernel", False),
                        "eval_every": args.eval_every,
                        "source_hashes": training_source_hashes(),  # the finishing session's
                        "quantized_modules_sha256": config.get("quantized_modules_sha256"),
