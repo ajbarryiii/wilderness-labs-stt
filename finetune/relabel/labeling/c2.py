@@ -37,10 +37,11 @@ started with even when filters.VERSION moves on. Re-filtering (labeling plan Par
 `refilter --run-dir labels/<T*>/<run> [--out D]` recomputes every record's disposition, reasons and filter values
 (human_wer, b0_wer, words_per_second) under filters.VERSION from what the run stored (raw label, B0's raw label,
 duration, reference kind) and the reference in the record's C1 shard, as merge computes them, into a new run directory
-(default the sibling <run>-f<VERSION>):
+(default the sibling <run>-f<VERSION>; it must be under $RELABEL_ROOT):
 
     run.json                    the source's, with the new filters_version and "refilter" (the source directory, its
-                                filters version and its manifest's SHA-256); a re-run refuses a different one
+                                filters version and the SHA-256 of its manifest's shard list); a re-run refuses a
+                                different one
     shards/<k>.labels.parquet   every other column copied unchanged, and <k>.json as merge writes it plus
                                 filters_version and source_sha256 (the source shard's SHA-256)
     manifest.json               as finish writes it
@@ -53,6 +54,7 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures as cf
+import hashlib
 import json
 import os
 import subprocess
@@ -557,14 +559,18 @@ def refilter(run_dir: Path, out_dir: Path | None = None, coverage=None) -> dict:
     out_dir = Path(out_dir) if out_dir is not None else refilter_dir(run_dir)
     if out_dir.resolve() == run_dir.resolve():
         raise ValueError("refilter writes a new run directory, not into its source")
+    if not out_dir.resolve().is_relative_to(layout.relabel_root().resolve()):
+        raise ValueError(f"{out_dir} is not under $RELABEL_ROOT")
     run = load_run(run_dir)
     if run["filters_version"] >= filters.VERSION:
         raise RuntimeError(f"{run_dir} is already under filters version {run['filters_version']}")
     listed = _complete_shards(run_dir, run)
     pool_dir = _abs(run["pool_dir"])
+    # the source's label shards (number, file, SHA-256, records), not its manifest file, which finish may re-render
+    digest = hashlib.sha256(json.dumps(listed, sort_keys=True).encode()).hexdigest()
     new = run | {"filters_version": filters.VERSION,
                  "refilter": {"source_run_dir": _rel(run_dir), "source_filters_version": run["filters_version"],
-                              "source_manifest_sha256": shards.sha256_file(run_dir / "manifest.json")}}
+                              "source_shards_sha256": digest}}
     path = out_dir / "run.json"
     if path.exists():
         if json.loads(path.read_text()) != new:

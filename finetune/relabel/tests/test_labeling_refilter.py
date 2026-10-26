@@ -2,6 +2,7 @@
 "Filters", amended 2026-10-25)."""
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import tempfile
@@ -123,7 +124,9 @@ class Refilter(unittest.TestCase):
         self.assertEqual(run["filters_version"], filters.VERSION)
         self.assertEqual(run["refilter"]["source_filters_version"], 1)
         self.assertEqual(run["refilter"]["source_run_dir"], "labels/v1")
-        self.assertEqual(run["refilter"]["source_manifest_sha256"], shards.sha256_file(self.v1 / "manifest.json"))
+        listed = json.loads((self.v1 / "manifest.json").read_text())["shards"]
+        self.assertEqual(run["refilter"]["source_shards_sha256"],
+                         hashlib.sha256(json.dumps(listed, sort_keys=True).encode()).hexdigest())
         self.assertEqual(c2.contract(run), c2.contract(src) | {"filters_version": 2})
         m = json.loads((self.out / "manifest.json").read_text())
         self.assertTrue(m["complete"])
@@ -160,6 +163,23 @@ class Refilter(unittest.TestCase):
         resumed = c2.refilter(self.v1, out, coverage=cover)
         self.assertEqual(resumed["refiltered"], [3])
         self.assertEqual(files(out) | {"manifest.json": (out / "manifest.json").read_bytes()}, before)
+
+    def test_a_rerendered_source_manifest_does_not_block_resuming(self):
+        """finish re-renders a complete run's manifest on every later chunk (other code may add keys); the output is
+        pinned to the source's label shards, not to the manifest file's bytes."""
+        src = self.root / "labels" / "v1-rerendered"
+        shutil.copytree(self.v1, src)
+        out = self.root / "labels" / "v1-rerendered-f2"
+        c2.refilter(src, out, coverage=cover)
+        m = json.loads((src / "manifest.json").read_text())
+        (src / "manifest.json").write_text(json.dumps(m | {"note": "re-rendered"}, indent=2))
+        self.assertEqual(c2.refilter(src, out, coverage=cover)["refiltered"], [])
+
+    def test_refuses_an_output_outside_the_relabel_root(self):
+        with tempfile.TemporaryDirectory() as elsewhere:
+            with self.assertRaisesRegex(ValueError, "RELABEL_ROOT"):
+                c2.refilter(self.v1, Path(elsewhere) / "v1-f2", coverage=cover)
+            self.assertFalse((Path(elsewhere) / "v1-f2").exists())
 
     def test_refuses_an_incomplete_run(self):
         d = self.root / "labels" / "partial"
