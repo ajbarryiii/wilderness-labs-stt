@@ -473,21 +473,6 @@ finite differences. Gradient checkpointing wraps each conformer layer
 recompute (identical dropout masks), and BatchNorm running statistics are restored after
 the recompute, so checkpointing is bit-identical to no checkpointing (tested).
 
-### bf16 saved TDT gradients (`--tdt-bf16-grads`, off by default)
-
-NeMo's TDT loss computes its fp32 gradient w.r.t. the label logits (B x T x U x 1025) in
-the forward pass and holds it until backward, for every fused sub-batch. With
-`--tdt-bf16-grads` (`tdt_bf16_grads.py`, a runtime rebuild of NeMo's `_TDTNumba` installed
-on the model's TDT loss) that tensor is held in bf16, halving it. Under the trainer's bf16
-autocast the gradient reaching the bf16 logits is rounded to bf16 anyway, so this moves
-one rounding: the loss is bitwise unchanged, every label element of the gradient w.r.t. the
-joint's output stays within one bf16 ulp, the saved duration gradients stay fp32, and the
-five duration columns of the gradient w.r.t. the joint's output are bitwise unchanged
-(`tests/test_tdt_bf16_grads.py`, both omega branches). The patched loss refuses
-logits that are not bf16. The flag is recorded in the run's args (a run cannot resume with
-it switched) and the patched source's SHA-256 in `config.json`
-(`numba_cuda.tdt_bf16_grads_patched_sha256`).
-
 ### Measured throughput and memory (Phase 0)
 
 Probe: `train.py --probe-steps` (2 untimed worst-case updates on 30 s utterances, built by

@@ -47,10 +47,12 @@ Run: finetune/parakeet-ternary/python -m unittest discover -s finetune/parakeet-
 """
 from __future__ import annotations
 
+import argparse
 import gc
-import tempfile
+import hashlib
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import torch
 
@@ -63,6 +65,29 @@ DURATIONS = [0, 1, 2, 3, 4]
 JOINT = {"encoder_hidden": 1024, "pred_hidden": 640, "joint_hidden": 640}
 REL_L2_TOL = 2.0 ** -7  # see the module docstring
 ELEMENT_TOL = 2.0 ** -6  # x max|ref|; see the module docstring
+_MISSING = object()
+_ORIGINAL: dict = {}
+
+
+def nemo_tdt_state() -> dict:
+    from nemo.collections.asr.parts.numba.rnnt_loss import rnnt_pytorch as rp
+    return {"_TDTNumba": rp._TDTNumba, "forward": vars(rp._TDTNumba)["forward"],
+            "backward": vars(rp._TDTNumba)["backward"], "TDTLossNumba.forward": rp.TDTLossNumba.forward}
+
+
+def setUpModule() -> None:
+    _ORIGINAL.update(train=dict(vars(train)), nemo=nemo_tdt_state())
+
+
+def tearDownModule() -> None:
+    """The seam patches loss instances only: after every test above, the train module's
+    attributes and NeMo's TDT classes are the original objects."""
+    now = vars(train)
+    changed = sorted(k for k in set(now) | set(_ORIGINAL["train"])
+                     if now.get(k, _MISSING) is not _ORIGINAL["train"].get(k, _MISSING))
+    nemo = [k for k, v in nemo_tdt_state().items() if v is not _ORIGINAL["nemo"][k]]
+    if changed or nemo:
+        raise AssertionError(f"not restored: train {changed}, NeMo {nemo}")
 
 
 def tdt_loss(omega: float):
@@ -165,10 +190,26 @@ class JointCase:
         return held, peak
 
 
-class SourcesTest(unittest.TestCase):
-    def test_is_a_training_source(self) -> None:
-        """Run source checks (sweep, resume guards) cover the patch module."""
-        self.assertIn("parakeet-ternary/tdt_bf16_grads.py", train.TRAINING_SOURCES)
+class SeamTest(unittest.TestCase):
+    """The consumer's side of the seam (see tdt_bf16_grads's docstring)."""
+
+    def setUp(self) -> None:
+        self.mod = train.local_module("tdt_bf16_grads")
+
+    def test_flag_defaults_to_none(self) -> None:
+        """Off is None, so consumer checkpoints recorded before the flag existed compare equal."""
+        parser = argparse.ArgumentParser()
+        self.mod.add_arguments(parser)
+        self.assertIsNone(parser.parse_args([]).tdt_bf16_grads)
+        self.assertIs(parser.parse_args(["--tdt-bf16-grads"]).tdt_bf16_grads, True)
+
+    def test_sources_extend_the_trainers_source_hashes(self) -> None:
+        """SOURCES appended to train.TRAINING_SOURCES (the consumer's seam) hash this module."""
+        with mock.patch.object(train, "TRAINING_SOURCES", tuple(train.TRAINING_SOURCES) + self.mod.SOURCES):
+            hashes = train.training_source_hashes()
+        self.assertEqual(self.mod.SOURCES, ("parakeet-ternary/tdt_bf16_grads.py",))
+        self.assertEqual(hashes[self.mod.SOURCES[0]],
+                         hashlib.sha256(Path(self.mod.__file__).read_bytes()).hexdigest())
 
 
 @unittest.skipUnless(HAS_CUDA, "TDT loss is CUDA-only")
@@ -278,21 +319,20 @@ class Bf16GradsTest(unittest.TestCase):
         self.assertGreaterEqual(peak_off - peak_on, 0.5 * expected * (4 - 2) / 4,
                                 f"step peak off {peak_off} on {peak_on}")
 
-    def test_context_installs_only_with_the_flag(self) -> None:
-        """train.Context applies the patch for --tdt-bf16-grads and records its SHA-256."""
-        from test_train import make_args
-        run = Path(tempfile.mkdtemp())
-        for flag in (None, True):
-            with self.subTest(flag=flag):
+    def test_configure_installs_only_when_enabled(self) -> None:
+        """configure(student, enabled), the consumer's hook: off leaves the model on today's path and
+        records no patch; on patches the model's own loss and records the patched source's SHA-256."""
+        for enabled in (False, True):
+            with self.subTest(enabled=enabled):
                 student = torch.nn.ModuleDict({"loss": tdt_loss(0.0), "proj": torch.nn.Linear(2, 2)})
-                ctx = train.Context(make_args(tdt_bf16_grads=flag), run, student, None, None, None)
-                self.assertEqual(ctx.tdt_kernel_sha256, self.kernel_sha)
-                if flag:
-                    self.assertEqual(ctx.tdt_bf16_grads_sha256, self.mod.install(tdt_loss(0.0)))
+                settings = self.mod.configure(student, enabled)
+                if enabled:
+                    self.assertEqual(settings, {"tdt_bf16_grads": True,
+                                                "tdt_bf16_grads_patched_sha256": self.mod.install(tdt_loss(0.0))})
                     with self.assertRaisesRegex(RuntimeError, "bf16"):
                         self.case.forward(student["loss"], dtype=None)
                 else:
-                    self.assertIsNone(ctx.tdt_bf16_grads_sha256)
+                    self.assertEqual(settings, {"tdt_bf16_grads": False, "tdt_bf16_grads_patched_sha256": None})
                     self.case.forward(student["loss"], dtype=None)
 
 
