@@ -44,17 +44,24 @@ an explicit log_softmax in the joint, fastemit_lambda, gradient clamping.
 """
 from __future__ import annotations
 
+import train  # noqa: I001  finetune/parakeet-ternary/train.py first: it configures numba for NeMo
+
 import contextlib
 import hashlib
+import inspect
 import random
 import types
 from dataclasses import dataclass
 from pathlib import Path
 
+import nemo
 import torch
 import torch.nn.functional as F
 import triton
 import triton.language as tl
+from nemo.collections.asr.losses.rnnt import RNNTLoss
+from nemo.collections.asr.modules.rnnt import RNNTJoint
+from nemo.collections.asr.parts.numba.rnnt_loss.rnnt_pytorch import TDTLossNumba
 from triton.language.extra import libdevice
 
 SOURCE = "tdt-fused/tdt_fused.py"  # relative to finetune/, as train.TRAINING_SOURCES entries are
@@ -62,7 +69,14 @@ CHUNK_CELLS = 16384  # lattice cells per joint chunk: h, z/dz and dh of a chunk 
 STATS = 3  # per-cell statistics before the duration log-probs: lse, logp(blank), logp(target)
 # Joint methods this path stands in for or relies on: any replacement of them is refused.
 JOINT_METHODS = ("forward", "joint", "joint_after_projection", "project_encoder", "project_prednet")
-_TRAIN: dict = {}  # train.compute_losses as replacements() found it
+# The originals as this module found them. A replacement is refused by identity (functools.wraps
+# keeps a wrapper's module and name, a wrapt wrapper even its __code__) and by code location (a
+# replacement made before this import).
+_COMPUTE_LOSSES = train.compute_losses
+_NEMO_DIR = Path(nemo.__file__).resolve().parent
+_NEMO_METHODS = {(cls, name): inspect.getattr_static(cls, name)
+                 for cls, names in ((RNNTJoint, JOINT_METHODS), (RNNTLoss, ("forward",)), (TDTLossNumba, ("forward",)))
+                 for name in names}
 
 
 @dataclass(frozen=True)
@@ -77,12 +91,11 @@ class Spec:
 
 def replacements() -> list[tuple]:
     """(object, attribute, value) for the consumer's seam; train.compute_losses must be train.py's own."""
-    import train
     current = train.compute_losses
-    if getattr(current, "__module__", None) != "train" or SOURCE in train.TRAINING_SOURCES:
-        raise ValueError(f"train.compute_losses is already replaced ({current.__module__}.{current.__qualname__}) "
-                         "or tdt_fused is installed: tdt_fused cannot be combined with another compute_losses seam")
-    _TRAIN["compute_losses"] = current
+    if (current is not _COMPUTE_LOSSES or not _defined_in(current, Path(train.__file__))
+            or SOURCE in train.TRAINING_SOURCES):
+        raise ValueError(f"train.compute_losses is already replaced ({current!r}) or tdt_fused is installed: "
+                         "tdt_fused cannot be combined with another compute_losses seam")
     return [(train, "compute_losses", compute_losses),
             (train, "TRAINING_SOURCES", tuple(train.TRAINING_SOURCES) + (SOURCE,))]
 
@@ -112,12 +125,11 @@ def settings() -> dict:
 
 def compute_losses(student, *args, **kwargs):
     """train.compute_losses with student.joint's fused loss call answered by joint_loss."""
-    import train
     joint = student.joint
     _check_not_replaced(joint)
     joint.forward = types.MethodType(_fused_forward, joint)
     try:
-        return _TRAIN.get("compute_losses", train.compute_losses)(student, *args, **kwargs)
+        return _COMPUTE_LOSSES(student, *args, **kwargs)
     finally:
         del joint.forward
 
@@ -132,20 +144,30 @@ def _fused_forward(joint, encoder_outputs, decoder_outputs, encoder_lengths=None
 
 
 def _check_not_replaced(joint) -> None:
-    """ValueError if a method of the joint or its losses is not NeMo's own (another seam)."""
-    for obj, names in ((joint, JOINT_METHODS), (getattr(joint, "loss", None), ("forward",)),
-                       (getattr(getattr(joint, "loss", None), "_loss", None), ("forward",))):
-        if obj is None:
-            continue
-        for name in names:
+    """ValueError unless the joint and its losses are NeMo's RNNTJoint, RNNTLoss and TDTLossNumba with
+    their own methods (none replaced on the class or the instance, no subclass override)."""
+    loss = getattr(joint, "loss", None)
+    for obj, cls in ((joint, RNNTJoint), (loss, RNNTLoss), (getattr(loss, "_loss", None), TDTLossNumba)):
+        if not isinstance(obj, cls):
+            raise ValueError(f"tdt_fused needs NeMo's {cls.__name__} on the joint, not {type(obj).__name__}")
+        for name in JOINT_METHODS if cls is RNNTJoint else ("forward",):
             own = vars(obj).get(name)
             if own is not None and getattr(own, "__func__", None) is not _fused_forward:
                 raise ValueError(f"{type(obj).__name__}.{name} is replaced on the instance: tdt_fused cannot be "
                                  "combined with another seam on the joint or the loss")
-            module = getattr(getattr(type(obj), name), "__module__", "") or ""
-            if not module.startswith("nemo."):
-                raise ValueError(f"{type(obj).__name__}.{name} is replaced ({module}): tdt_fused cannot be "
+            method = inspect.getattr_static(type(obj), name)
+            if method is not _NEMO_METHODS[(cls, name)] or not _defined_in(method, _NEMO_DIR):
+                raise ValueError(f"{type(obj).__name__}.{name} is not NeMo's own ({method!r}): tdt_fused cannot be "
                                  "combined with another seam on the joint or the loss")
+
+
+def _defined_in(function, path: Path) -> bool:
+    """Whether the function's code lives in path (a file, or a directory tree)."""
+    code = getattr(function, "__code__", None)
+    if code is None:
+        return False
+    where = Path(code.co_filename).resolve()
+    return where == path.resolve() or where.is_relative_to(path.resolve())
 
 
 def loss_spec(joint) -> Spec:
