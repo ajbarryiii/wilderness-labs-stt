@@ -1,0 +1,762 @@
+# Stage 2c term list: chemistry (plans/synthetic.md "Terms"). Written by
+# synthetic/termbuild.py; the split (targeted / held out) is synthetic/vocab.py's, not this file's.
+# Sections: core vocabulary written from general domain knowledge; terms from the program's
+# technical lists; terms from a CC0 knowledge base (alias syn-terms-kb, private registry). Everyday
+# single words (frequent in general transcribed speech) are left out on purpose.
+# --- core vocabulary
+enthalpy
+enthalpy change
+standard enthalpy of formation
+enthalpy of reaction
+enthalpy of vaporization
+entropy change
+Gibbs free energy
+free energy change
+Helmholtz free energy
+internal energy
+chemical potential
+fugacity
+activity coefficient
+heat capacity
+specific heat capacity
+calorimetry
+bomb calorimeter
+Hess's law
+Born-Haber cycle
+lattice energy
+bond dissociation energy
+exothermic reaction
+endothermic reaction
+spontaneous reaction
+second law of thermodynamics
+first law of thermodynamics
+third law of thermodynamics
+adiabatic process
+isothermal expansion
+isobaric process
+reversible process
+Carnot cycle
+equation of state
+ideal gas law
+van der Waals equation
+compressibility factor
+partial pressure
+Dalton's law of partial pressures
+Raoult's law
+Henry's law
+colligative properties
+osmotic pressure
+boiling point elevation
+freezing point depression
+vapor pressure
+phase diagram
+triple point
+critical point
+Clausius-Clapeyron equation
+phase transition
+Boltzmann distribution
+Boltzmann constant
+partition function
+statistical mechanics
+Maxwell-Boltzmann distribution
+mean free path
+equilibrium constant
+reaction quotient
+Le Chatelier's principle
+dynamic equilibrium
+chemical equilibrium
+solubility product
+common ion effect
+van 't Hoff equation
+rate constant
+rate law
+rate-determining step
+reaction order
+first-order reaction
+second-order reaction
+zero-order reaction
+pseudo-first-order
+integrated rate law
+half-life
+reaction mechanism
+elementary step
+reaction intermediate
+transition state
+activated complex
+transition state theory
+collision theory
+activation energy
+Arrhenius equation
+Arrhenius plot
+pre-exponential factor
+frequency factor
+steady-state approximation
+pre-equilibrium approximation
+Michaelis-Menten kinetics
+catalyst
+homogeneous catalysis
+heterogeneous catalysis
+catalytic converter
+enzyme kinetics
+reaction coordinate
+potential energy surface
+Eyring equation
+electrochemical cell
+galvanic cell
+electrolytic cell
+standard reduction potential
+standard electrode potential
+Nernst equation
+Faraday constant
+anode
+cathode
+salt bridge
+redox reaction
+oxidation state
+oxidizing agent
+reducing agent
+half-reaction
+electrolysis
+Schrodinger equation
+wave function
+atomic orbital
+molecular orbital
+molecular orbital theory
+valence bond theory
+orbital hybridization
+sigma bond
+pi bond
+covalent bond
+ionic bond
+hydrogen bond
+van der Waals forces
+London dispersion forces
+dipole moment
+electronegativity
+ionization energy
+electron affinity
+valence electrons
+electron configuration
+Pauli exclusion principle
+Hund's rule
+aufbau principle
+Lewis structure
+resonance structure
+formal charge
+VSEPR theory
+bond angle
+bond length
+bond order
+paramagnetic
+diamagnetic
+crystal field theory
+ligand
+coordination compound
+chelating agent
+stoichiometry
+limiting reagent
+theoretical yield
+percent yield
+mole fraction
+molarity
+molality
+Avogadro's number
+molar mass
+empirical formula
+molecular formula
+titration
+equivalence point
+titrant
+buffer solution
+Henderson-Hasselbalch equation
+acid dissociation constant
+conjugate base
+conjugate acid
+Bronsted-Lowry acid
+Lewis acid
+Lewis base
+strong acid
+weak acid
+amphoteric
+precipitate
+precipitation reaction
+solubility
+saturated solution
+supersaturated solution
+solvent
+solute
+organic synthesis
+functional group
+hydrocarbon
+alkane
+alkene
+alkyne
+aromatic compound
+aromaticity
+benzene ring
+cycloalkane
+alcohol functional group
+hydroxyl group
+carbonyl group
+carboxylic acid
+ester
+ether
+ketone
+aldehyde
+amine
+amide
+nitrile
+haloalkane
+nucleophile
+electrophile
+nucleophilic substitution
+electrophilic addition
+elimination reaction
+carbocation
+leaving group
+stereochemistry
+chirality
+chiral center
+enantiomer
+diastereomer
+racemic mixture
+stereoisomer
+structural isomer
+cis-trans isomerism
+conformational analysis
+esterification
+saponification
+hydrolysis
+polymerization
+addition polymer
+condensation polymer
+monomer
+spectroscopy
+NMR spectroscopy
+nuclear magnetic resonance
+infrared spectroscopy
+UV-visible spectroscopy
+mass spectrometry
+gas chromatography
+liquid chromatography
+high-performance liquid chromatography
+thin-layer chromatography
+retention time
+absorbance
+Beer-Lambert law
+spectrophotometer
+chemical shift
+periodic table
+noble gas
+alkali metal
+alkaline earth metal
+transition metal
+halogen
+lanthanide
+actinide
+isotope
+allotrope
+sodium hydroxide
+hydrochloric acid
+sulfuric acid
+nitric acid
+acetic acid
+ammonia
+methane
+ethanol
+methanol
+acetone
+benzene
+toluene
+carbon monoxide
+carbon dioxide
+hydrogen peroxide
+potassium permanganate
+sodium chloride
+calcium carbonate
+# --- from terms/technical
+atom
+atoms
+atomic
+molecule
+molecules
+molecular
+isotopes
+spectrometer
+chromatography
+entropy
+chemistry
+chemical reaction
+catalysts
+oxidation
+reduction reaction
+polymer
+polymers
+organic chemistry
+inorganic chemistry
+biochemistry
+hydrogen
+oxygen atom
+nitrogen
+helium
+carbon atom
+silicon dioxide
+ph
+acidity
+nanoparticles
+electron
+electrons
+proton
+protons
+neutron
+neutrons
+radioactive
+radioactivity
+quantum mechanics
+kinetic energy
+potential energy
+thermodynamics
+thermal conductivity
+corrosion
+fuel cell
+lithium-ion
+lithium ion battery
+alloy
+alloys
+# --- from the knowledge base (syn-terms-kb)
+gold
+iron
+silver
+oxygen
+copper
+carbon
+aluminium
+sulfur
+lithium
+tin
+sodium
+mercury
+calcium
+beryllium
+neon
+zinc
+magnesium
+potassium
+uranium
+chlorine
+fluorine
+phosphorus
+boron
+argon
+titanium
+chromium
+arsenic
+cobalt
+iodine
+manganese
+nickel
+platinum
+krypton
+barium
+gallium
+vanadium
+radium
+bromine
+francium
+radon
+selenium
+cadmium
+scandium
+strontium
+antimony
+caesium
+germanium
+rubidium
+xenon
+bismuth
+tungsten
+iridium
+niobium
+plutonium
+palladium
+polonium
+molybdenum
+osmium
+astatine
+hafnium
+tantalum
+tellurium
+yttrium
+technetium
+indium
+rhodium
+ruthenium
+thorium
+zirconium
+actinium
+neptunium
+lanthanum
+rhenium
+thallium
+europium
+cerium
+hassium
+rutherfordium
+lutetium
+samarium
+seaborgium
+californium
+dubnium
+einsteinium
+protactinium
+Friedel-Crafts reaction
+Diels-Alder reaction
+Cannizzaro reaction
+Grignard reaction
+Wurtz reaction
+Belousov-Zhabotinsky reaction
+Wittig reaction
+Hofmann elimination
+Hofmann rearrangement
+Mannich reaction
+Sabatier reaction
+Suzuki reaction
+Clemmensen reduction
+Michael reaction
+Knoevenagel condensation
+Kolbe-Schmitt reaction
+Ziegler-Natta catalyst
+Perkin reaction
+Sandmeyer reaction
+Wolff-Kishner reduction
+Heck reaction
+Hunsdiecker reaction
+Mitsunobu reaction
+Reimer-Tiemann reaction
+Walden inversion
+Williamson ether synthesis
+Beckmann rearrangement
+Blanc chloromethylation
+Finkelstein reaction
+Gabriel synthesis
+Hell-Volhard-Zelinsky halogenation
+Stille reaction
+Birch reduction
+Fenton's reagent
+Jones oxidation
+Ullmann reaction
+Chichibabin reaction
+Dieckmann condensation
+Reformatsky reaction
+Rosenmund reduction
+Sonogashira coupling
+Swern oxidation
+nitroaldol reaction
+Appel reaction
+Baeyer-Villiger oxidation
+Bamberger rearrangement
+Claisen rearrangement
+Curtius rearrangement
+Kolbe electrolysis
+Michaelis-Arbuzov reaction
+Sharpless epoxidation
+Wurtz-Fittig reaction
+Baylis-Hillman reaction
+Bouveault-Blanc reduction
+Darzens reaction
+Fries rearrangement
+Gattermann reaction
+Leuckart reaction
+Neber rearrangement
+Nef reaction
+Skraup reaction
+Wolff rearrangement
+Chugaev elimination
+Cope reaction
+Cope rearrangement
+Favorskii rearrangement
+Ivanov reaction
+Nazarov cyclization reaction
+Ritter reaction
+Ugi reaction
+Vilsmeier-Haack reaction
+Acyloin condensation
+Biginelli reaction
+Favorskii reaction
+Fischer indole synthesis
+Gewald reaction
+Horner-Wadsworth-Emmons reaction
+Negishi coupling
+Paal-Knorr synthesis
+Pfitzner-Moffatt oxidation
+Pictet-Spengler reaction
+Sarett oxidation
+Schotten-Baumann reaction
+Strecker degradation
+Allan-Robinson reaction
+Arndt-Eistert reaction
+Bosch reaction
+Briggs-Rauscher reaction
+Bucherer reaction
+Buchwald-Hartwig amination
+Dakin-West reaction
+Duff reaction
+Glaser coupling
+Haber-Weiss reaction
+Hinsberg reaction
+Krapcho decarboxylation
+Kumada coupling
+McMurry reaction
+Oppenauer oxidation
+Staudinger reaction
+Wagner-Meerwein rearrangement
+Andrussow process
+Barbier reaction
+Barton reaction
+Brook rearrangement
+Castro-Stephens coupling
+Eschweiler-Clarke reaction
+Hantzsch pyridine synthesis
+Hayashi rearrangement
+Julia olefination
+McLafferty rearrangement
+Mukaiyama aldol addition
+Passerini reaction
+Peterson olefination
+Pinner reaction
+Prins reaction
+Pummerer rearrangement
+Robinson annulation
+catalysis
+ionization
+acid-base reaction
+pyrolysis
+chemical synthesis
+neutralization
+chain reaction
+phosphorescence
+substitution reaction
+addition reaction
+halogenation
+condensation reaction
+heat of combustion
+alkylation
+hydration reaction
+double displacement reaction
+photodissociation
+chemical decomposition
+reversible reaction
+chelation
+galvanization
+autocatalysis
+protonation
+acylation
+gasification
+dehydration reaction
+elementary reaction
+Transamination
+click chemistry
+isomerization
+organic reaction
+carboxylation
+hydroxylation
+deprotonation
+exergonic reaction
+endergonic reaction
+aldol reaction
+carbonylation
+Intramolecular reaction
+oxidative addition
+transmetalation
+amination
+carbonatation
+catalytic cycle
+comproportionation
+crystal bar process
+desulfurization
+concerted reaction
+photodegradation
+salinity
+chemical affinity
+dissociation constant
+normality
+reaction rate constant
+electrochemical potential
+mass fraction
+volume fraction
+dispersity
+specific rotation
+grand potential
+extent of reaction
+osmolality
+vapor quality
+degree of dissociation
+electrolytic conductivity
+oxidation number
+allotropy
+amphoterism
+hygroscopy
+flash point
+reaction rate
+chemical polarity
+tautomerism
+autoignition temperature
+amphiphilicity
+degree of unsaturation
+bond strength
+evaporation
+diffusion
+boiling
+sublimation
+condensation
+melting
+convection
+ideal gas
+black body
+heat engine
+surface tension
+dew point
+phase change
+freezing
+crystallization
+molar gas constant
+enthalpy of fusion
+thermal energy
+calorimeter
+thermal expansion
+isothermal process
+latent heat
+thermodynamic equilibrium
+Curie temperature
+azeotrope
+isochoric process
+vaporization
+compressibility
+refrigerant
+thermal insulation
+thermodynamic temperature
+thermoelectric effect
+thermodynamic cycle
+deposition
+refrigeration
+Rankine cycle
+advection
+law of thermodynamics
+thermodynamic process
+Stefan-Boltzmann constant
+metastability
+supercooling
+isolated system
+Otto cycle
+real gas
+state function
+Joule-Thomson effect
+heat equation
+supercritical fluid
+dissipative system
+exergy
+irreversible process
+isotherm
+thermodynamic potential
+Brayton cycle
+Prandtl number
+coefficient of thermal expansion
+isentropic process
+thermodynamic free energy
+thermodynamic state
+Diesel cycle
+polytropic process
+standard state
+Grashof number
+equipartition theorem
+mass transfer
+Lennard-Jones potential
+Newton's law of cooling
+dissipation
+heat capacity ratio
+Peltier effect
+chemical species
+non-equilibrium thermodynamics
+thermoelectric generator
+Seebeck effect
+negative temperature
+quasistatic process
+Atkinson cycle
+Biot number for heat transfer
+Kullback-Leibler divergence
+Rayleigh number
+magnetic refrigeration
+superheating
+Carnot's theorem
+Debye model
+free particle
+nucleation
+Clausius theorem
+Fourier number for heat transfer
+Boyle's law
+Avogadro's law
+Stefan-Boltzmann law
+Charles's law
+zeroth law of thermodynamics
+Gay-Lussac's law
+Clausius-Clapeyron relation
+Kirchhoff's law of thermal radiation
+Dulong-Petit law
+Rayleigh-Jeans law
+Graham's law
+Maxwell relations
+thermogravimetric analysis
+Einstein solid
+Gibbs paradox
+Landauer's principle
+Onsager reciprocal relations
+Theorem of corresponding states
+Antoine equation
+Mayer's relation
+principle of maximum entropy
+Kelvin equation
+chemical element
+chemical compound
+nonmetal
+chemical substance
+valence
+chemical property
+coordination number
+transport phenomenon
+steric effects
+chemical process
+electron donor
+rate equation
+electron acceptor
+chemical law
+phase-transfer catalyst
+chemical group
+molecularity
+coalescence
+redox
+charge carrier
+organic compound
+cracking
+vinylogy
+quantitative analysis
+analyte
+qualitative chemical analysis
+analytical chemical technique
+density functional theory
+orbital
+pseudopotential
+Coulomb operator
+intercalation
+inductive effect
+coordination geometry
+Trans effect
+cell culture
+X-ray spectroscopy
+Winogradsky column
+degasification
+G banding
+ribosome profiling
+cell disruption
+electrochromatography
+flash photolysis
+ultracentrifugation

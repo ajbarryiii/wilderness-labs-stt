@@ -1,0 +1,28 @@
+# Stage 2c label forms: finance (plans/synthetic.md "Text", hygiene; synthetic/forms.py).
+# "written<TAB>conventional": a written form of a term and the conventional form the label uses. Matched
+# case-insensitively on whole tokens, longest first. The two sides may differ only in letter case and in a hyphen
+# versus a space, so the scorer's normalized words never change. ASCII only. Curated by hand (2026-10-24) from a
+# review of the pilot's labels; doubtful items (ordinary-word senses, noun versus modifier uses) are left out.
+ebitda	EBITDA
+ebit	EBIT
+gaap	GAAP
+non gaap	non-GAAP
+non-gaap	non-GAAP
+fx	FX
+gdp	GDP
+arr	ARR
+cagr	CAGR
+gmv	GMV
+roa	ROA
+roic	ROIC
+nyse	NYSE
+dow jones	Dow Jones
+sarbanes oxley	Sarbanes-Oxley
+sarbanes-oxley	Sarbanes-Oxley
+high yield bond	high-yield bond
+high yield bonds	high-yield bonds
+price to earnings	price-to-earnings
+pre tax	pre-tax
+risk free rate	risk-free rate
+exchange traded fund	exchange-traded fund
+exchange traded funds	exchange-traded funds

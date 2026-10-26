@@ -1,0 +1,186 @@
+# Mathematics core vocabulary, written from general domain knowledge (builder input for terms/synthetic/mathematics.txt).
+# Linear algebra
+eigenvalue
+eigenvector
+eigendecomposition
+eigenspace
+characteristic polynomial
+singular value decomposition
+singular values
+matrix inverse
+inverse matrix
+matrix transpose
+determinant
+trace of a matrix
+rank of a matrix
+null space
+column space
+row space
+row reduction
+reduced row echelon form
+Gaussian elimination
+LU decomposition
+QR decomposition
+Cholesky decomposition
+orthogonal matrix
+symmetric matrix
+diagonal matrix
+identity matrix
+triangular matrix
+positive definite
+positive semidefinite
+linear independence
+linearly independent
+linear combination
+vector space
+subspace
+basis vectors
+orthonormal basis
+Gram-Schmidt process
+inner product
+dot product
+cross product
+projection matrix
+linear transformation
+change of basis
+matrix multiplication
+spectral theorem
+Markov matrix
+# Calculus and analysis
+derivative
+partial derivative
+gradient vector
+Jacobian matrix
+Hessian matrix
+chain rule
+product rule
+quotient rule
+implicit differentiation
+definite integral
+indefinite integral
+antiderivative
+integration by parts
+fundamental theorem of calculus
+Taylor series
+Maclaurin series
+power series
+radius of convergence
+limit of a function
+L'Hopital's rule
+continuous function
+differentiable function
+local maximum
+local minimum
+saddle point
+Lagrange multiplier
+multivariable calculus
+double integral
+line integral
+divergence theorem
+Stokes' theorem
+Fourier series
+Fourier transform
+Laplace transform
+ordinary differential equation
+partial differential equation
+initial value problem
+boundary value problem
+separation of variables
+numerical integration
+Newton's method
+Riemann sum
+epsilon delta
+# Probability and statistics
+probability distribution
+probability density function
+cumulative distribution function
+probability mass function
+random variable
+expected value
+conditional probability
+joint distribution
+marginal distribution
+independent events
+Bayes' theorem
+law of total probability
+normal distribution
+standard normal distribution
+binomial distribution
+Poisson distribution
+exponential distribution
+uniform distribution
+Bernoulli trial
+geometric distribution
+chi-squared distribution
+Student's t-distribution
+central limit theorem
+law of large numbers
+standard deviation
+variance
+covariance
+covariance matrix
+correlation coefficient
+sample mean
+sample variance
+sampling distribution
+standard error
+confidence interval
+hypothesis test
+null hypothesis
+alternative hypothesis
+p-value
+significance level
+type one error
+type two error
+statistical power
+t-test
+chi-squared test
+analysis of variance
+linear regression
+least squares
+ordinary least squares
+regression coefficient
+residuals
+coefficient of determination
+maximum likelihood estimation
+likelihood function
+Bayesian inference
+prior distribution
+posterior distribution
+Markov chain
+Monte Carlo simulation
+bootstrap resampling
+unbiased estimator
+moment generating function
+median
+interquartile range
+z-score
+outlier
+# Discrete mathematics and algebra
+combinatorics
+permutation
+binomial coefficient
+pigeonhole principle
+mathematical induction
+proof by contradiction
+set theory
+power set
+bijection
+injective function
+surjective function
+equivalence relation
+modular arithmetic
+greatest common divisor
+prime factorization
+group theory
+abelian group
+isomorphism
+homomorphism
+vector field
+complex number
+imaginary unit
+polynomial
+quadratic formula
+logarithm
+exponential function
+asymptote

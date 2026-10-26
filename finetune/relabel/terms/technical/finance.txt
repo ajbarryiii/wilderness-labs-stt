@@ -1,0 +1,225 @@
+# Finance: corporate finance, earnings reporting, markets, banking and economics.
+revenue
+revenues
+earnings per share
+eps
+ebitda
+adjusted ebitda
+ebit
+operating income
+operating margin
+gross margin
+net income
+net loss
+net revenue
+free cash flow
+cash flow
+operating cash flow
+capital expenditure
+capital expenditures
+capex
+opex
+operating expenses
+balance sheet
+income statement
+cash flow statement
+fiscal year
+fiscal quarter
+first quarter
+second quarter
+third quarter
+fourth quarter
+year over year
+quarter over quarter
+full year guidance
+consensus estimate
+analyst
+analysts
+earnings call
+conference call
+shareholders
+shareholder
+stockholders
+dividend
+dividends
+share repurchase
+buyback
+buybacks
+stock buyback
+market capitalization
+market cap
+valuation
+private equity
+venture capital
+liquidity
+deleveraging
+debt
+net debt
+debt to equity
+credit facility
+revolving credit facility
+term loan
+treasury
+treasuries
+yield curve
+interest rate
+interest rates
+basis points
+bps
+federal reserve
+inflation
+deflation
+recession
+gdp
+gross domestic product
+monetary policy
+fiscal policy
+quantitative easing
+amortization
+depreciation
+impairment
+goodwill
+write-down
+accounts receivable
+accounts payable
+working capital
+inventory
+inventories
+gross profit
+profitability
+profit margin
+margin expansion
+cost of goods sold
+cogs
+sg&a
+selling general and administrative
+r&d
+research and development
+headcount
+synergies
+acquisition
+acquisitions
+merger
+mergers
+divestiture
+spin-off
+ipo
+initial public offering
+underwriting
+hedge fund
+hedge funds
+hedging
+derivatives contract
+options contract
+stock options
+equity compensation
+stock-based compensation
+portfolio
+asset management
+assets under management
+aum
+wealth management
+investment banking
+retail banking
+commercial banking
+net interest income
+net interest margin
+loan loss provisions
+provision for credit losses
+credit risk
+default rate
+credit rating
+underwriting margin
+insurance premiums
+premiums
+reinsurance
+combined ratio
+roi
+return on investment
+return on equity
+roe
+return on assets
+roa
+return on invested capital
+roic
+compound annual growth rate
+cagr
+annual recurring revenue
+arr
+monthly recurring revenue
+churn
+churn rate
+customer acquisition cost
+lifetime value
+average revenue per user
+arpu
+gaap
+non-gaap
+ifrs
+sec filing
+10-k
+10-q
+8-k
+sarbanes-oxley
+audit
+auditor
+tax rate
+effective tax rate
+pre-tax
+after-tax
+diluted shares
+diluted earnings per share
+share count
+outstanding shares
+stock price
+share price
+nasdaq
+nyse
+s&p 500
+dow jones
+index fund
+etf
+exchange traded fund
+mutual fund
+commodity
+commodities
+currency
+foreign exchange
+fx
+exchange rate
+exchange rates
+headwinds
+tailwinds
+macroeconomic
+macro environment
+cryptocurrency
+bitcoin
+ethereum
+fintech
+payment volume
+transaction volume
+gross merchandise volume
+gmv
+take rate
+same-store sales
+comparable sales
+like for like
+foot traffic
+e-commerce
+ecommerce
+supply chain disruption
+pricing power
+price increases
+cost inflation
+
+# --- spelling variants (2026-10-24): joined, split or hyphenated forms of a term listed above, attested in the
+# dev and eval references and reviewed for collisions; terms.variant_key makes each one term with its listed form.
+cashflow
+free cashflow
+operating cashflow
+pretax
+cap ex
+head count
+de-leveraging
+macro-economic
+re-insurance

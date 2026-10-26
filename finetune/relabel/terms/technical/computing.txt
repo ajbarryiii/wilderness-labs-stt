@@ -1,0 +1,298 @@
+# Computing: software, hardware, networking, data and machine learning. Everyday words with common
+# non-technical senses (data, system, network, cloud, model, ...) are left out; phrases containing them are kept.
+algorithm
+algorithms
+algorithmic
+api
+apis
+application programming interface
+backend
+back end
+frontend
+front end
+bandwidth
+latency
+throughput
+cpu
+gpu
+gpus
+tpu
+processor
+microprocessor
+multicore
+semiconductor
+transistor
+transistors
+cache
+caching
+compiler
+compilers
+interpreter
+runtime
+kernel
+operating system
+linux
+unix
+windows server
+macos
+ios
+android
+virtual machine
+virtualization
+hypervisor
+docker
+kubernetes
+microservices
+serverless
+cloud computing
+data center
+datacenter
+server
+servers
+database
+databases
+sql
+nosql
+postgresql
+mysql
+mongodb
+redis
+schema
+indexing
+encryption
+decryption
+cryptography
+cryptographic
+public key
+private key
+hash function
+hashing
+blockchain
+cybersecurity
+malware
+ransomware
+phishing
+firewall
+authentication
+authorization
+two-factor authentication
+password manager
+tcp
+udp
+http
+https
+ip address
+dns
+router
+routers
+ethernet
+wi-fi
+wifi
+bluetooth
+5g
+lte
+web browser
+javascript
+typescript
+python
+java
+golang
+kotlin
+ruby on rails
+php
+html
+css
+json
+xml
+yaml
+repository
+github
+git
+version control
+open source
+source code
+codebase
+debugging
+debugger
+refactoring
+unit test
+unit tests
+continuous integration
+devops
+software engineering
+software developer
+programming language
+programming
+programmer
+object oriented
+functional programming
+recursion
+recursive
+data structure
+data structures
+linked list
+binary tree
+hash table
+graph neural network
+machine learning
+deep learning
+neural network
+neural networks
+artificial intelligence
+ai
+large language model
+large language models
+llm
+llms
+language model
+language models
+transformer
+transformers
+attention mechanism
+self-attention
+embedding
+embeddings
+fine-tuning
+fine tuning
+pre-training
+pretraining
+pretrained
+training data
+training set
+test set
+validation set
+overfitting
+underfitting
+regularization
+dropout
+gradient descent
+stochastic gradient descent
+backpropagation
+loss function
+optimizer
+hyperparameter
+hyperparameters
+learning rate
+batch size
+epoch
+epochs
+classifier
+regression
+clustering
+supervised learning
+unsupervised learning
+reinforcement learning
+self-supervised
+convolutional neural network
+cnn
+recurrent neural network
+rnn
+lstm
+bert
+gpt
+encoder
+decoder
+encoder decoder
+sequence to sequence
+tokenizer
+tokenization
+benchmark
+benchmarks
+dataset
+datasets
+annotation
+annotations
+annotator
+annotators
+corpus
+corpora
+natural language processing
+nlp
+computer vision
+speech recognition
+automatic speech recognition
+asr
+text to speech
+machine translation
+named entity recognition
+sentiment analysis
+word embeddings
+state of the art
+f1 score
+bleu score
+precision and recall
+word error rate
+quantization
+pruning
+distillation
+knowledge distillation
+floating point
+fpga
+asic
+firmware
+operating systems
+user interface
+ui
+ux
+user experience
+software as a service
+saas
+platform as a service
+iot
+internet of things
+robotics
+robot
+robots
+autonomous vehicles
+self-driving
+augmented reality
+virtual reality
+quantum computing
+qubit
+qubits
+supercomputer
+high performance computing
+parallel computing
+distributed systems
+distributed computing
+scalability
+scalable
+analytics
+big data
+data science
+data scientist
+data pipeline
+data warehouse
+etl
+spreadsheet
+javascript framework
+node.js
+web application
+mobile app
+smartphone
+smartphones
+semiconductors
+chipset
+silicon
+nanometer
+moore's law
+memory bandwidth
+solid state drive
+ssd
+hard drive
+terabyte
+terabytes
+gigabyte
+gigabytes
+megabyte
+petabyte
+gigahertz
+megahertz
+
+# --- spelling variants (2026-10-24): joined, split or hyphenated forms of a term listed above, attested in the
+# dev and eval references and reviewed for collisions; terms.variant_key makes each one term with its listed form.
+data set
+data sets
+finetuning
+pre-trained
+cyber security

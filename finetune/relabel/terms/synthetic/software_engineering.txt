@@ -1,0 +1,545 @@
+# Stage 2c term list: software engineering (plans/synthetic.md "Terms"). Written by
+# synthetic/termbuild.py; the split (targeted / held out) is synthetic/vocab.py's, not this file's.
+# Sections: core vocabulary written from general domain knowledge; terms from the program's
+# technical lists; terms from a CC0 knowledge base (alias syn-terms-kb, private registry). Everyday
+# single words (frequent in general transcribed speech) are left out on purpose.
+# --- core vocabulary
+dependency injection
+inversion of control
+design pattern
+singleton pattern
+factory method
+observer pattern
+adapter pattern
+decorator pattern
+strategy pattern
+model view controller
+microservice architecture
+monolithic architecture
+service-oriented architecture
+REST API
+GraphQL
+message queue
+publish subscribe
+event sourcing
+event-driven architecture
+idempotent
+race condition
+deadlock
+mutex
+semaphore
+thread pool
+garbage collector
+memory leak
+stack overflow
+null pointer exception
+segmentation fault
+type system
+static typing
+dynamic typing
+type inference
+generics
+polymorphism
+encapsulation
+abstract class
+interface segregation
+single responsibility principle
+SOLID principles
+unit testing
+integration testing
+regression testing
+end-to-end testing
+test-driven development
+behavior-driven development
+code coverage
+mock object
+test fixture
+continuous deployment
+continuous delivery
+pull request
+merge conflict
+code review
+feature branch
+trunk-based development
+semantic versioning
+dependency management
+package manager
+build system
+static analysis
+linter
+technical debt
+code smell
+big O notation
+time complexity
+space complexity
+binary search
+quicksort
+merge sort
+heap sort
+hash map
+priority queue
+binary heap
+trie
+graph traversal
+breadth-first search
+depth-first search
+Dijkstra's algorithm
+topological sort
+dynamic programming
+memoization
+greedy algorithm
+divide and conquer
+concurrency
+parallelism
+asynchronous programming
+coroutine
+event loop
+callback function
+load balancer
+reverse proxy
+content delivery network
+containerization
+container orchestration
+infrastructure as code
+observability
+distributed tracing
+blue-green deployment
+canary release
+feature flag
+rollback
+service level objective
+incident postmortem
+version control system
+commit history
+rebase
+cherry-pick
+code refactoring
+object-relational mapping
+database migration
+database index
+query optimizer
+transaction isolation
+ACID transactions
+eventual consistency
+CAP theorem
+sharding
+replication lag
+caching strategy
+cache invalidation
+rate limiting
+authentication token
+access control list
+input validation
+SQL injection
+cross-site scripting
+buffer overflow
+regular expression
+command-line interface
+software development kit
+integrated development environment
+source control
+code generation
+just-in-time compilation
+bytecode
+abstract syntax tree
+lexical analysis
+parser generator
+functional programming
+object-oriented programming
+pure function
+immutable data
+higher-order function
+lambda expression
+closure
+recursion depth
+tail recursion
+# --- from terms/technical
+algorithm
+algorithms
+algorithmic
+api
+apis
+application programming interface
+backend
+back end
+frontend
+front end
+bandwidth
+latency
+throughput
+cpu
+gpu
+gpus
+tpu
+processor
+microprocessor
+multicore
+semiconductor
+transistor
+transistors
+cache
+caching
+compiler
+compilers
+interpreter
+runtime
+kernel
+operating system
+linux
+unix
+windows server
+macos
+ios
+android
+virtual machine
+virtualization
+hypervisor
+docker
+kubernetes
+microservices
+serverless
+cloud computing
+data center
+datacenter
+server
+servers
+database
+databases
+sql
+nosql
+postgresql
+mysql
+mongodb
+redis
+schema
+indexing
+encryption
+decryption
+cryptography
+cryptographic
+public key
+private key
+hash function
+hashing
+blockchain
+cybersecurity
+malware
+ransomware
+phishing
+firewall
+authentication
+authorization
+two-factor authentication
+password manager
+tcp
+udp
+http
+https
+ip address
+dns
+router
+routers
+ethernet
+wi-fi
+wifi
+bluetooth
+lte
+web browser
+javascript
+typescript
+python
+java
+golang
+kotlin
+ruby on rails
+php
+html
+css
+json
+xml
+yaml
+repository
+github
+git
+version control
+open source
+source code
+codebase
+debugging
+debugger
+refactoring
+unit test
+unit tests
+continuous integration
+devops
+software engineering
+software developer
+programming language
+programmer
+object oriented
+recursion
+recursive
+data structure
+data structures
+linked list
+binary tree
+hash table
+graph neural network
+machine learning
+deep learning
+neural network
+neural networks
+artificial intelligence
+ai
+large language model
+large language models
+llm
+llms
+language model
+language models
+transformer
+transformers
+attention mechanism
+self-attention
+embedding
+embeddings
+fine-tuning
+pre-training
+pretraining
+pretrained
+training data
+training set
+test set
+validation set
+overfitting
+underfitting
+regularization
+dropout
+gradient descent
+stochastic gradient descent
+backpropagation
+loss function
+optimizer
+hyperparameter
+hyperparameters
+learning rate
+batch size
+epoch
+epochs
+classifier
+regression
+clustering
+supervised learning
+unsupervised learning
+reinforcement learning
+self-supervised
+convolutional neural network
+cnn
+recurrent neural network
+rnn
+lstm
+bert
+gpt
+encoder
+decoder
+encoder decoder
+sequence to sequence
+tokenizer
+tokenization
+benchmark
+benchmarks
+dataset
+datasets
+annotation
+annotations
+annotator
+annotators
+corpus
+corpora
+natural language processing
+nlp
+computer vision
+speech recognition
+automatic speech recognition
+asr
+text to speech
+machine translation
+named entity recognition
+sentiment analysis
+word embeddings
+state of the art
+bleu score
+precision and recall
+word error rate
+quantization
+pruning
+distillation
+knowledge distillation
+floating point
+fpga
+asic
+firmware
+operating systems
+user interface
+ui
+ux
+user experience
+software as a service
+saas
+platform as a service
+iot
+internet of things
+robotics
+robot
+robots
+autonomous vehicles
+self-driving
+augmented reality
+virtual reality
+quantum computing
+qubit
+qubits
+supercomputer
+high performance computing
+parallel computing
+distributed systems
+distributed computing
+scalability
+scalable
+analytics
+big data
+data science
+data scientist
+data pipeline
+data warehouse
+etl
+spreadsheet
+javascript framework
+web application
+mobile app
+smartphone
+smartphones
+semiconductors
+chipset
+silicon
+nanometer
+moore's law
+memory bandwidth
+solid state drive
+ssd
+hard drive
+terabyte
+terabytes
+gigabyte
+gigabytes
+megabyte
+petabyte
+gigahertz
+megahertz
+# --- from the knowledge base (syn-terms-kb)
+memento pattern
+monad
+state pattern
+template method pattern
+resource acquisition is initialization
+data transfer object
+lazy loading
+publish-subscribe pattern
+hexagonal architecture
+reactor pattern
+data binding
+front controller
+command pattern
+chain-of-responsibility pattern
+visitor pattern
+mediator pattern
+interpreter pattern
+iterator pattern
+null object pattern
+active record pattern
+data access object
+model-view-viewmodel
+model-view-presenter
+data mapper pattern
+service locator
+busy waiting
+priority inversion
+double-checked locking
+thread-local storage
+binary search tree
+B-tree
+red-black tree
+graph data structure
+hash tree
+disjoint-set data structure
+splay tree
+adjacency list
+Fibonacci heap
+R-tree
+k-d tree
+dynamic array
+quadtree
+segment tree
+bubble sort
+insertion sort
+selection sort
+heapsort
+shellsort
+radix sort
+counting sort
+bucket sort
+odd-even sort
+structured programming
+imperative programming
+logic programming
+procedural programming
+declarative programming
+generic programming
+aspect-oriented programming
+metaprogramming
+event-driven programming
+reflective programming
+concurrent computing
+MapReduce
+prototype-based programming
+design by contract
+component-based software engineering
+array programming
+agent-oriented programming
+stream processing
+divide-and-conquer algorithm
+copy-on-write
+brute-force search
+randomized algorithm
+Las Vegas algorithm
+recursive-descent parser
+Monte Carlo algorithm
+Paxos
+agile software development
+software development methodology
+software testing
+software deployment
+requirements engineering
+coding convention
+infinite loop
+heisenbug
+logic error
+software regression
+test automation
+scrum
+development and operations
+software design pattern
+subroutine
+extreme programming
+control flow
+abstract data type
+modular programming
+pair programming
+
+# --- spelling variants (2026-10-24): joined, split or hyphenated forms of a term listed above, attested in the
+# dev and eval references and reviewed for collisions; terms.variant_key makes each one term with its listed form.
+data set
+data sets
+finetuning
+pre-trained
+cyber security

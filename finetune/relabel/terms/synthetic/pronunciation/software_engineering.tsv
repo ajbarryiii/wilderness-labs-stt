@@ -1,0 +1,55 @@
+# Stage 2c pronunciation lexicon: software engineering (plans/synthetic.md "Speech", Pronunciation; synthetic/pronounce.py).
+# One token per line, matched case-insensitively against whole tokens of the TTS input only; the label never changes.
+# "token" alone: spelled out with letter names. "token<TAB>respelling": said as a word, as in real speech.
+# Curated by hand from the domain's term list (short single-word terms, all-capital and vowel-less tokens) and the
+# pilot's sentences. All-capital tokens not listed here are spelled out by default.
+acid	acid
+ai
+api
+asic	eh sick
+asr
+bert	bert
+cap	cap
+cnn
+cpu
+css
+devops	dev ops
+dns
+etl
+fpga
+github	git hub
+golang	go lang
+gpt
+gpu
+graphql	graph cue el
+html
+http
+https
+ios
+iot
+json	jay son
+llm
+lstm
+lte
+macos	mac oh ess
+mapreduce	map reduce
+mysql	my ess cue el
+nlp
+nosql	no ess cue el
+php
+ram	ram
+redis	reddis
+rest	rest
+rnn
+saas	sass
+solid	solid
+sql
+ssd
+tcp
+tpu
+udp
+ui
+ux
+wifi	why fye
+xml
+yaml	yamel

@@ -279,3 +279,9 @@ pytorch_model*.bin
 # Superseded local drafts of the published Kea-T card.
 /finetune/parakeet-ternary/hf/INFERENCE_PUBLICATION_NOTES.md
 /finetune/parakeet-ternary/hf/MODEL_CARD_WITH_INFERENCE_DRAFT.md
+
+# Private data registry and source configs (kept off GitHub)
+finetune/relabel/private
+
+# Design plans live in a private planning space (a local symlink, never committed)
+finetune/relabel/plans

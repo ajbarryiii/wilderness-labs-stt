@@ -1,0 +1,150 @@
+# Software engineering core vocabulary, written from general domain knowledge (builder input for terms/synthetic/software_engineering.txt).
+dependency injection
+inversion of control
+design pattern
+singleton pattern
+factory method
+observer pattern
+adapter pattern
+decorator pattern
+strategy pattern
+model view controller
+microservice architecture
+monolithic architecture
+service-oriented architecture
+REST API
+GraphQL
+message queue
+publish subscribe
+event sourcing
+event-driven architecture
+idempotent
+race condition
+deadlock
+mutex
+semaphore
+thread pool
+garbage collector
+memory leak
+stack overflow
+null pointer exception
+segmentation fault
+type system
+static typing
+dynamic typing
+type inference
+generics
+polymorphism
+encapsulation
+abstract class
+interface segregation
+single responsibility principle
+SOLID principles
+unit testing
+integration testing
+regression testing
+end-to-end testing
+test-driven development
+behavior-driven development
+code coverage
+mock object
+test fixture
+continuous deployment
+continuous delivery
+pull request
+merge conflict
+code review
+feature branch
+trunk-based development
+semantic versioning
+dependency management
+package manager
+build system
+static analysis
+linter
+technical debt
+code smell
+big O notation
+time complexity
+space complexity
+binary search
+quicksort
+merge sort
+heap sort
+hash map
+priority queue
+binary heap
+trie
+graph traversal
+breadth-first search
+depth-first search
+Dijkstra's algorithm
+topological sort
+dynamic programming
+memoization
+greedy algorithm
+divide and conquer
+concurrency
+parallelism
+asynchronous programming
+coroutine
+event loop
+callback function
+load balancer
+reverse proxy
+content delivery network
+containerization
+container orchestration
+infrastructure as code
+observability
+distributed tracing
+blue-green deployment
+canary release
+feature flag
+rollback
+service level objective
+incident postmortem
+version control system
+commit history
+rebase
+cherry-pick
+code refactoring
+object-relational mapping
+database migration
+database index
+query optimizer
+transaction isolation
+ACID transactions
+eventual consistency
+CAP theorem
+sharding
+replication lag
+caching strategy
+cache invalidation
+rate limiting
+authentication token
+access control list
+input validation
+SQL injection
+cross-site scripting
+buffer overflow
+regular expression
+command-line interface
+software development kit
+integrated development environment
+source control
+code generation
+just-in-time compilation
+bytecode
+abstract syntax tree
+lexical analysis
+parser generator
+functional programming
+object-oriented programming
+pure function
+immutable data
+higher-order function
+lambda expression
+closure
+recursion depth
+tail recursion
