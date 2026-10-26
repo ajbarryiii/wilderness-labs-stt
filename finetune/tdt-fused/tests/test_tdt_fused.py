@@ -1,5 +1,5 @@
-"""Contract tests for tdt_fused (train.py --tdt-fused-kernel): NeMo's fused joint and TDT loss in
-one call per batch, without the [B, T, U, V] joint output.
+"""Contract tests for tdt_fused, a train.py seam: NeMo's fused joint and TDT loss in one call per
+batch, without the [B, T, U, V] joint output. finetune/parakeet-ternary is never modified.
 
 Reference: NeMo's own RNNTJoint fused path (fuse_loss_wer, sub-batches of fused_batch_size rows)
 with the numba TDT loss as train.prepare_tdt_loss() patches it, on the same module and inputs;
@@ -8,28 +8,34 @@ gradients w.r.t. every joint parameter and both inputs (the encoder and predicti
 outputs, so df and dg through the projections). Synthetic cases cover variable T and U with
 padding, empty transcripts, T < U (duration-0 emissions), single-row batches, sigma, other
 duration sets, chunk splits, the omega (plain RNN-T) branch and the reductions. Peak CUDA memory
-must grow with B*T*U per-cell scalars, not with the joint's 1030 outputs per cell. The trainer
-hook (train.compute_losses under BF16 autocast) and the flag plumbing (default off, recorded,
-resume check, refusals) run on test_train's tiny model.
+must grow with B*T*U per-cell scalars, not with the joint's 1030 outputs per cell. The seam
+(tdt_fused.installed(): train.compute_losses and train.TRAINING_SOURCES replaced and restored, its
+source hash recorded, other seams on the joint or the loss refused) runs on the train module
+directly, and train.compute_losses / train.train_step under BF16 autocast on test_train's tiny model.
 
 Tolerances (TOL_*): each is >= 5x the reference's own measured noise floor (comment next to it);
 NegativeControlTest shows each still catches a real defect.
 
-Run (GPU): finetune/parakeet-ternary/python -m unittest discover -s finetune/parakeet-ternary/tests -p test_tdt_fused.py -v
+Run (GPU): finetune/tdt-fused/python -m unittest discover -s finetune/tdt-fused/tests -v
 """
 from __future__ import annotations
 
-import argparse
+import hashlib
 import math
 import os
 import random
+import sys
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import torch
 
-import paths
+import paths  # finetune/parakeet-ternary
 import train
+import tdt_fused
+
+sys.path.insert(0, str(paths.HERE / "tests"))  # test_train: tiny_model, WORDS (imported lazily)
 
 HAS_CUDA = torch.cuda.is_available()
 DURATIONS = (0, 1, 2, 3, 4)  # the model's (Kea-T NeMo log); sigma and omega likewise
@@ -128,7 +134,6 @@ def run(joint, batch: dict, fused: bool, fused_batch_size: int | None = None, au
     dec = batch["dec"].clone().requires_grad_(True)
     with torch.autocast("cuda", dtype=torch.bfloat16, enabled=autocast):
         if fused:
-            import tdt_fused
             loss = tdt_fused.joint_loss(joint, enc, dec, batch["enc_len"], batch["tokens"], batch["token_len"])
         else:
             loss = joint(encoder_outputs=enc, decoder_outputs=dec, encoder_lengths=batch["enc_len"],
@@ -170,59 +175,80 @@ class _Case(unittest.TestCase):
         self.assertTrue(all(torch.isfinite(g).all() for g in out["grads"].values()), label)
 
 
-# ----------------------------------------------------------------------------- flag plumbing (CPU)
+# ----------------------------------------------------------------------------- the seam (CPU)
 
-class FlagTest(unittest.TestCase):
-    def test_default_off_recorded_and_resume_checked(self) -> None:
-        base = ["--arm", "P3", "--lr", "1e-4", "--run-name", "x", "--max-steps", "2"]
-        off, on = train.parse_args(base), train.parse_args(base + ["--tdt-fused-kernel"])
-        self.assertIs(off.tdt_fused_kernel, False)
-        self.assertIs(on.tdt_fused_kernel, True)
-        # A checkpoint written before the flag existed resumes with the flag off, and only then.
-        older = {k: v for k, v in vars(off).items() if k != "tdt_fused_kernel"}
-        self.assertEqual(train.resume_mismatches(older, off), [])
-        self.assertTrue(train.resume_mismatches(older, on))
-        self.assertTrue(train.resume_mismatches(vars(off), on))
-        self.assertIn("parakeet-ternary/tdt_fused.py", train.TRAINING_SOURCES)
+class SeamTest(unittest.TestCase):
+    def test_installed_replaces_and_restores(self) -> None:
+        original = (train.compute_losses, train.TRAINING_SOURCES)
+        with tdt_fused.installed():
+            self.assertIs(train.compute_losses, tdt_fused.compute_losses)
+            self.assertEqual(train.TRAINING_SOURCES, original[1] + (tdt_fused.SOURCE,))
+        self.assertIs(train.compute_losses, original[0])
+        self.assertIs(train.TRAINING_SOURCES, original[1])
+        with self.assertRaises(KeyError), tdt_fused.installed():
+            raise KeyError("inside")
+        self.assertIs(train.compute_losses, original[0])
+        self.assertIs(train.TRAINING_SOURCES, original[1])
 
-    def test_refuses_the_other_joint_memory_flags(self) -> None:
-        import tdt_fused
-        for other in ({"tdt_chunked_backward": True}, {"joint_recompute": True}, {"fused_batch_size": 8}):
-            args = argparse.Namespace(tdt_fused_kernel=True, **other)
-            with self.assertRaisesRegex(ValueError, "tdt-fused-kernel"):
-                tdt_fused.configure(mock.Mock(), args)
+    def test_records_its_source_hash_and_settings(self) -> None:
+        digest = hashlib.sha256(Path(tdt_fused.__file__).read_bytes()).hexdigest()
+        self.assertEqual((paths.HERE.parent / tdt_fused.SOURCE).resolve(), Path(tdt_fused.__file__).resolve())
+        self.assertNotIn(tdt_fused.SOURCE, train.training_source_hashes())
+        with tdt_fused.installed():
+            self.assertEqual(train.training_source_hashes()[tdt_fused.SOURCE], digest)
+        settings = tdt_fused.settings()
+        self.assertEqual(settings["source"], tdt_fused.SOURCE)
+        self.assertEqual(settings["source_sha256"], digest)
+        self.assertEqual(settings["chunk_cells"], tdt_fused.CHUNK_CELLS)
+        self.assertIn("triton", settings)
 
-    def test_off_configures_nothing(self) -> None:
-        import tdt_fused
-        student = argparse.Namespace(joint=torch.nn.Module())
-        self.assertIsNone(tdt_fused.configure(student, argparse.Namespace(tdt_fused_kernel=False)))
-        self.assertIsNone(tdt_fused.configure(student, argparse.Namespace()))
-        self.assertFalse(tdt_fused.enabled(student.joint))
+    def test_refuses_another_seam_on_compute_losses(self) -> None:
+        def other(*_, **__):
+            raise AssertionError("never called")
+
+        with mock.patch.object(train, "compute_losses", other), self.assertRaisesRegex(ValueError, "compute_losses"):
+            tdt_fused.replacements()
+        with tdt_fused.installed(), self.assertRaisesRegex(ValueError, "compute_losses"):
+            tdt_fused.replacements()
 
 
 @unittest.skipUnless(HAS_CUDA, "the TDT loss is CUDA-only")
 class RefusalTest(unittest.TestCase):
     def test_refuses_what_it_does_not_implement(self) -> None:
-        import tdt_fused
         batch = make_batch(ROWS[:2], **SMALL)
         with self.assertRaisesRegex(ValueError, "dropout"):
-            tdt_fused.enable(make_joint(**SMALL, dropout=0.2))
+            run(make_joint(**SMALL, dropout=0.2), batch, fused=True)
         joint = make_joint(**SMALL)
         loss = joint.loss._loss
         for attr, value, pattern in (("fastemit_lambda", 0.01, "fastemit"), ("clamp", 1.0, "clamp")):
             with mock.patch.object(loss, attr, value), self.assertRaisesRegex(ValueError, pattern):
-                tdt_fused.enable(joint)
+                run(joint, batch, fused=True)
         with mock.patch.object(joint, "masking_prob", 0.1), self.assertRaisesRegex(ValueError, "masking"):
-            tdt_fused.enable(joint)
+            run(joint, batch, fused=True)
         with mock.patch.object(joint, "log_softmax", True), self.assertRaisesRegex(ValueError, "log_softmax"):
-            tdt_fused.enable(joint)
-        # Dropout switched back on after enabling is refused at the call, in training mode.
-        joint = make_joint(**SMALL)
-        tdt_fused.enable(joint)
-        self.assertTrue(tdt_fused.enabled(joint))
+            run(joint, batch, fused=True)
         joint.joint_net.insert(1, torch.nn.Dropout(0.1))
         with self.assertRaisesRegex(ValueError, "dropout"):
             run(joint, batch, fused=True)
+
+    def test_refuses_other_replacements_of_the_joint_or_loss(self) -> None:
+        """tdt_fused computes the joint and the loss itself: any other seam on them (an instance or a
+        class attribute replaced, e.g. the sibling joint-memory changes) would be bypassed silently."""
+        from nemo.collections.asr.losses.rnnt import RNNTLoss
+        from nemo.collections.asr.modules.rnnt import RNNTJoint
+        batch = make_batch(ROWS[:2], **SMALL)
+        joint = make_joint(**SMALL)
+        original = RNNTJoint.joint_after_projection
+        cases = [(joint, "joint_after_projection", lambda f, g: original(joint, f, g)),
+                 (RNNTJoint, "joint_after_projection", lambda self, f, g: original(self, f, g)),
+                 (RNNTJoint, "project_encoder", lambda self, x: self.enc(x)),
+                 (joint.loss, "forward", lambda *a, **k: None),
+                 (RNNTLoss, "forward", lambda *a, **k: None),
+                 (type(joint.loss._loss), "forward", lambda *a, **k: None)]
+        for target, name, value in cases:
+            with self.subTest(f"{getattr(target, '__name__', type(target).__name__)}.{name}"):
+                with mock.patch.object(target, name, value, create=True), self.assertRaisesRegex(ValueError, name):
+                    run(joint, batch, fused=True)
 
 
 # ----------------------------------------------------------------------------- equivalence (FP32)
@@ -230,7 +256,6 @@ class RefusalTest(unittest.TestCase):
 @unittest.skipUnless(HAS_CUDA, "the TDT loss is CUDA-only")
 class EquivalenceTest(_Case):
     def check(self, rows, label: str, chunk_cells: int | None = None, seed: int = 0, **joint_kw) -> None:
-        import tdt_fused
         joint = make_joint(**SMALL, seed=seed, **joint_kw)
         batch = make_batch(rows, **SMALL, seed=seed)
         ref = run(joint, batch, fused=False)
@@ -323,7 +348,6 @@ class MemoryTest(unittest.TestCase):
         (B*T*(U+1)) separates per-cell scalars from a per-cell [1030] tensor. Each path runs once
         first, so one-time allocations (cuBLAS workspace) do not count. The same measurement of
         NeMo's path is the negative control."""
-        import tdt_fused
         joint = make_joint(**REAL, logit_scale=8.0, fused_batch_size=4)
         sizes = [((300, 40),) * 4, ((300, 160),) * 4]  # 49k and 193k cells, 1200 frames each
         cells = [sum(t * (u + 1) for t, u in rows) for rows in sizes]
@@ -382,19 +406,15 @@ def decoder_only_tiny_model():
 
 
 def hook_run(student, batch: dict, fused: bool, fused_batch_size: int = 4, loss_scale: float = 1.0) -> dict:
-    """train.compute_losses + backward with the fused loss enabled or not; same seeds every call."""
-    import tdt_fused
+    """train.compute_losses + backward with the seam installed or not; same seeds every call."""
+    import contextlib
     student.joint.set_fused_batch_size(fused_batch_size)
-    if fused:
-        tdt_fused.enable(student.joint)
-    try:
+    with tdt_fused.installed() if fused else contextlib.nullcontext():
         train.seed_everything(7, student)
         student.zero_grad(set_to_none=True)
         loss, tdt, enc = train.compute_losses(student, batch["audio"], batch["audio_len"], batch["tokens"],
                                               batch["token_len"], TrainerHookTest.RECIPE)
         (loss * loss_scale).backward()
-    finally:
-        tdt_fused.disable(student.joint)
     assert enc is None and loss is tdt
     return {"loss": float(loss) * loss_scale, "dtype": loss.dtype, "shape": tuple(loss.shape),
             "grads": {n: p.grad.double().cpu() for n, p in student.named_parameters() if p.requires_grad}}
@@ -402,7 +422,7 @@ def hook_run(student, batch: dict, fused: bool, fused_batch_size: int = 4, loss_
 
 @unittest.skipUnless(HAS_CUDA, "the TDT loss is CUDA-only")
 class TrainerHookTest(_Case):
-    """The decoder-only recipe (relabel/train_decoder.py: trainable prediction and joint networks,
+    """train.compute_losses / train.train_step with the seam installed. The decoder-only recipe (relabel/train_decoder.py: trainable prediction and joint networks,
     frozen encoder in eval mode), whose GPU path is deterministic; df still reaches joint.enc."""
     RECIPE = {"encoder_matching": False, "train_pred_joint": True, "quantized": False}
 
@@ -416,7 +436,7 @@ class TrainerHookTest(_Case):
     def omega_modules(student) -> list:
         return [student.loss._loss, student.joint.loss._loss]
 
-    def test_flag_on_matches_flag_off_under_bf16_autocast(self) -> None:
+    def test_seam_matches_nemo_under_bf16_autocast(self) -> None:
         for seed in (0, 1):
             batch = tiny_batch(self.student, seed=seed)
             ref, out = hook_run(self.student, batch, fused=False), hook_run(self.student, batch, fused=True)
@@ -425,27 +445,26 @@ class TrainerHookTest(_Case):
             self.assertEqual(out["grads"].keys(), ref["grads"].keys())
             self.assert_matches(ref, out, TOL_BF16_MODEL, f"tiny model seed {seed}")
 
-    def test_train_step_runs_with_the_flag(self) -> None:
+    def test_train_step_runs_with_the_seam(self) -> None:
         import types
-        import tdt_fused
-        student = decoder_only_tiny_model()  # NeMo models cannot be deep-copied
-        record = tdt_fused.configure(student, argparse.Namespace(tdt_fused_kernel=True))
-        self.assertTrue(tdt_fused.enabled(student.joint))
-        self.assertEqual(record["chunk_cells"], tdt_fused.CHUNK_CELLS)
+        student = decoder_only_tiny_model()
         optimizer, scheduler = train.make_optimizer(student, 1e-4, 10)
         ctx = types.SimpleNamespace(student=student, recipe=self.RECIPE, optimizer=optimizer,
                                     scheduler=scheduler, state=types.SimpleNamespace(step=0))
         batch = tiny_batch(student, seed=2) | {"teacher_enc": None, "teacher_len": None}
         trainable = [p for group in optimizer.param_groups for p in group["params"]]
         before = [p.detach().clone() for p in trainable]
-        with mock.patch.object(type(student.joint), "forward", side_effect=AssertionError("joint called")):
+        with tdt_fused.installed(), mock.patch.object(type(student.joint), "forward",
+                                                      side_effect=AssertionError("NeMo's fused joint called")):
             values = train.train_step(ctx, batch, trainable)
         self.assertTrue(all(math.isfinite(v) for v in values.values()), values)
         self.assertTrue(any(not torch.equal(a, p) for a, p in zip(before, trainable)))
+        self.assertNotIn("forward", vars(student.joint))  # nothing left on the model
 
-    def test_flag_off_never_consults_the_fused_loss(self) -> None:
-        import tdt_fused
+    def test_without_the_seam_the_trainer_is_untouched(self) -> None:
         batch = tiny_batch(self.student, seed=3)
+        with tdt_fused.installed():
+            pass
         with mock.patch.object(tdt_fused, "joint_loss", side_effect=AssertionError("fused path used")):
             calls = []
             original = type(self.student.joint).forward
