@@ -44,6 +44,9 @@ REASONS = ("no_sentence", "form_symbols", "form_length", "tokenizer", "no_target
            "denylist", "duplicate", "near_duplicate")
 REQUIRED_HELDOUT_PARTS = ("medical-b", "lectures-a", "stem-chem", "stem-math", "stem-cs")
 NEAR_JACCARD = 0.7
+# labeling.filters.map_text's version for the spoken text: the curly quote and dash mapping of filters versions 1-2
+# (version 3's punctuation mapping is for C2's labels; the synthetic text keeps its own form rules)
+SPOKEN_MAP_VERSION = 2
 MINHASH_BANDS, MINHASH_ROWS = 10, 3
 _ALLOWED = re.compile(r"[A-Za-z .,;:?!'\"-]+")
 _PRIME = (1 << 61) - 1
@@ -164,7 +167,7 @@ def normalized_rows(records: Sequence[dict], forms=None) -> list[dict]:
     out = []
     for r in sorted(records, key=lambda r: r["id"]):
         sent = extract_sentence(r.get("raw"))
-        spoken = map_text(sent) if sent else ""
+        spoken = map_text(sent, version=SPOKEN_MAP_VERSION) if sent else ""
         label, subs = forms.apply(spoken)
         out.append({"id": r["id"], "domain": r["domain"], "register": r.get("register"),
                     "requested": list(r["requested"]), "sentence": sent, "spoken": spoken, "label": label,

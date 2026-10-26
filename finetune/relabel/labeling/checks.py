@@ -29,11 +29,15 @@ the confidence signals' cost: the same clips decoded once with and once without 
 or cap flag) that differ (labeling plan "GPU probe", 2026-10-24). vLLM's prefix and multimodal caches are reset before
 each timed pass, so no pass is served from an earlier one.
 
-Gate to stage 3: consistency (above); drops per source (all filters <= 5%, hallucination guard <= 2%, both by
-distinct ids and by occurrences in the journal; a larger drop stops and is reported); completeness (every id
+Gate to stage 3: consistency (above); drops per source (all filters <= 5%, hallucination guard <= 2%, or the source's
+limit in HALLUCINATION_LIMIT_BY_SOURCE: 4% for yodas, amended 2026-10-26; both by distinct ids and by occurrences in
+the journal; a larger drop stops and is reported); completeness (every id
 occurrence of the first TOTAL_BATCHES batches has exactly one record, no unexplained missing ids, no id
 conflicts, and an independent replay of the first 1,000 batches gives the same journal); spot check files (100
-seeded random records per source, with B0's labels and a confidence summary when the labels have the signals).
+seeded random records per source, with B0's labels and a confidence summary when the labels have the signals); and the
+run's labels under the current filters version (item "filters"; a run labeled under an earlier one is re-filtered
+first, c2.refilter, labeling plan "Filters" amended 2026-10-25). The checks qualify a run under its contract without
+the filters version, which decides only dispositions from stored outputs.
 """
 from __future__ import annotations
 
@@ -49,6 +53,9 @@ from pathlib import Path
 from labeling import c2, layout, shards
 
 MAX_DROP, MAX_HALLUCINATION = 0.05, 0.02
+# per-source hallucination-guard limits instead of MAX_HALLUCINATION (labeling plan "Gate to stage 3" item 2, amended
+# 2026-10-26: the source yodas only, not its subsets yodas-tech and yodas-med; every total-drop limit stays MAX_DROP)
+HALLUCINATION_LIMIT_BY_SOURCE = {"yodas": 0.04}
 WER_POINTS = 0.05
 GATE_VERSION = 2          # consistency results: 2 = hallucination-guard exclusion (2026-10-25); 1 had no "gate_version"
 GUARD_ALLOWANCE_MIN, GUARD_ALLOWANCE_SHARE = 2, 0.005
@@ -283,9 +290,12 @@ def evaluate_equivalence(check_dir: Path, coverage=None) -> dict:
         coverage = filters.Coverage(filters.b0_tokenizer_file(layout.relabel_root() / "caches" / "labeling"))
     norm = {name: {i: _normalize(t) for i, (t, _) in d.items()} for name, d in lab.items()}
 
+    version = c2.load_run(check_dir / "vllm")["filters_version"]
+
     def disp(i: str, label: str) -> str:
         r = pool[i]
-        return filters.check(r["duration"], label, r["reference"], r["reference_kind"], b0[i], coverage)["disposition"]
+        return filters.check(r["duration"], label, r["reference"], r["reference_kind"], b0[i], coverage,
+                             version=version)["disposition"]
 
     sig = compare_signals(teacher_signals(check_dir / "vllm"), teacher_signals(check_dir / "vllm-resumed"))
     identical = lab["vllm"] == lab["vllm-resumed"] and sig["token_ids_identical"]
@@ -331,16 +341,17 @@ def guard_allowance(n_clips: int) -> int:
     return max(GUARD_ALLOWANCE_MIN, math.ceil(round(n_clips * GUARD_ALLOWANCE_SHARE, 9)))
 
 
-def guard_rejects(duration: float, label: str, reference: str) -> bool:
-    """Whether the hallucination guard (filter 3) rejects a transcript, applied as C2 applies it to a label with a human
-    reference (so the B0 rule does not apply; tokenizer coverage is filter 4, not the guard)."""
+def guard_rejects(duration: float, label: str, reference: str, version: int) -> bool:
+    """Whether the hallucination guard (filter 3) rejects a transcript, applied as C2 applies it under filters `version`
+    to a label with a human reference (so the B0 rule does not apply; tokenizer coverage is filter 4, not the guard)."""
     from labeling import filters
-    reasons = filters.check(duration, label, reference, "human", None, lambda _: True)["reasons"]
+    reasons = filters.check(duration, label, reference, "human", None, lambda _: True, version=version)["reasons"]
     return any(r in filters.HALLUCINATION for r in reasons)
 
 
 def evaluate_consistency(check_dir: Path, run_name: str = "run", stage1_dir: Path | None = None) -> dict:
-    """Gate item 1 (gate_version 2, labeling plan amendment 2026-10-25): see GUARD_CRITERION. The unfiltered WERs
+    """Gate item 1 (gate_version 2, labeling plan amendment 2026-10-25): see GUARD_CRITERION. The guard is filter 3 under
+    the check run's filters version (run.json), so a stored result re-evaluates to itself. The unfiltered WERs
     (`*_unfiltered`; stage 1's from its summary.json on the full population) are reported next to the compared ones."""
     import relabel_paths
     check_dir = Path(check_dir)
@@ -349,6 +360,8 @@ def evaluate_consistency(check_dir: Path, run_name: str = "run", stage1_dir: Pat
     summary = json.loads((stage1_dir / "summary.json").read_text())
     pool = _pool_rows(check_dir / "pool")
     lab = _teacher_outputs(check_dir / run_name)
+    run = c2.load_run(check_dir / run_name)
+    version = run["filters_version"]
     if set(lab) != set(pool):
         raise RuntimeError(f"incomplete decode ({len(lab)} of {len(pool)} clips)")
     sets = {}
@@ -365,8 +378,8 @@ def evaluate_consistency(check_dir: Path, run_name: str = "run", stage1_dir: Pat
         hyps = {r["id"]: r["hyp"] for r in stage1["records"]}
         wer_all = corpus_wer([(refs[i], lab[i][0]) for i in ids])
         ref_all = summary["sets"][name]["wer"] if not limit else corpus_wer([(refs[i], hyps[i]) for i in ids])
-        bad_run = {i for i in ids if guard_rejects(pool[i]["duration"], lab[i][0], refs[i])}
-        bad_s1 = {i for i in ids if guard_rejects(pool[i]["duration"], hyps[i], refs[i])}
+        bad_run = {i for i in ids if guard_rejects(pool[i]["duration"], lab[i][0], refs[i], version)}
+        bad_s1 = {i for i in ids if guard_rejects(pool[i]["duration"], hyps[i], refs[i], version)}
         kept = [i for i in ids if i not in bad_run | bad_s1]
         wer = corpus_wer([(refs[i], lab[i][0]) for i in kept])
         ref_wer = corpus_wer([(refs[i], hyps[i]) for i in kept])
@@ -380,8 +393,7 @@ def evaluate_consistency(check_dir: Path, run_name: str = "run", stage1_dir: Pat
                       "guard_rejected_stage1": len(bad_s1), "guard_allowance": allowance,
                       "ok": diff is not None and abs(diff) <= WER_POINTS and len(bad_run) <= len(bad_s1) + allowance}
     engine = json.loads(next((check_dir / run_name / "work" / "teacher").glob("*.json")).read_text())["engine"]
-    run = c2.load_run(check_dir / run_name)
-    full = info.get("limit") is None and sorted(sets) == sorted(relabel_paths.SETS)
+    full =info.get("limit") is None and sorted(sets) == sorted(relabel_paths.SETS)
     result = {"passed": all(s["ok"] for s in sets.values()), "gate_version": GATE_VERSION,
               "criterion": GUARD_CRITERION, "full_population": full, "sets": sets,
               "points": WER_POINTS, "engine": engine, "run": run, "contract": c2.contract(run),
@@ -669,20 +681,28 @@ def split_step(run_dir: Path, n_clips: int = SPLIT_CLIPS, engine=None) -> dict:
     return out
 
 
+def _label_contract(contract: dict | None) -> dict | None:
+    """A contract without its filters version: what produces the labels. Filters decide only dispositions, from stored
+    outputs, and a finished run is re-filtered on CPU (c2.refilter)."""
+    return None if contract is None else {k: v for k, v in contract.items() if k != "filters_version"}
+
+
 def qualifies(run_contract: dict, consistency: dict, equivalence: dict | None) -> tuple[bool, list[str]]:
     """Whether checks qualify a run under run_contract (c2.contract): a passing consistency result on the full
-    stage 1 population under the identical contract, and for vLLM a passing equivalence check under it too."""
+    stage 1 population under the identical contract, and for vLLM a passing equivalence check under it too. The
+    filters version is not compared (_label_contract): the checks qualify the labels' producer, and the gate checks the
+    run's filters version itself."""
     why = []
     if not (consistency and consistency.get("passed")):
         why.append("consistency did not pass")
     elif not consistency.get("full_population") or consistency.get("limit") is not None:
         why.append("consistency result is a limited (smoke) run")
-    elif consistency.get("contract") != run_contract:
+    elif _label_contract(consistency.get("contract")) != _label_contract(run_contract):
         why.append("consistency ran under another contract")
     if run_contract["engine"].get("kind") == "vllm":
         if not (equivalence and equivalence.get("passed")):
             why.append("equivalence check did not pass")
-        elif equivalence.get("contract") != run_contract:
+        elif _label_contract(equivalence.get("contract")) != _label_contract(run_contract):
             why.append("equivalence check ran under another contract")
     return not why, why
 
@@ -742,13 +762,14 @@ def drop_table(labels: dict[int, tuple], journal_counts: dict[int, int]) -> dict
         for r in reasons:
             c["reasons_ids"][r] = c["reasons_ids"].get(r, 0) + 1
             c["reasons_occ"][r] = c["reasons_occ"].get(r, 0) + n
-    for c in t.values():
+    for src, c in t.items():
         c["drop_rate_ids"] = c["ids_rejected"] / c["ids"] if c["ids"] else 0.0
         c["drop_rate_occurrences"] = c["occ_rejected"] / c["occurrences"] if c["occurrences"] else 0.0
         c["hallucination_rate_ids"] = c["ids_hallucination"] / c["ids"] if c["ids"] else 0.0
         c["hallucination_rate_occurrences"] = c["occ_hallucination"] / c["occurrences"] if c["occurrences"] else 0.0
+        c["hallucination_limit"] = HALLUCINATION_LIMIT_BY_SOURCE.get(src, MAX_HALLUCINATION)
         c["ok"] = max(c["drop_rate_ids"], c["drop_rate_occurrences"]) <= MAX_DROP and \
-            max(c["hallucination_rate_ids"], c["hallucination_rate_occurrences"]) <= MAX_HALLUCINATION
+            max(c["hallucination_rate_ids"], c["hallucination_rate_occurrences"]) <= c["hallucination_limit"]
     return t
 
 
@@ -897,6 +918,7 @@ def spot_check(run_dir: Path, out_dir: Path, per_source: int = layout.SPOT_CHECK
 def gate(pinned: dict, pool_dir: Path, run_dir: Path, consistency_result: Path, out_dir: Path,
          total_batches: int = layout.TOTAL_BATCHES, stream_factory=None, equivalence_result: Path | None = None,
          audio_hash: bool = True) -> dict:
+    from labeling import filters
     out_dir = Path(out_dir)
     cons = json.loads(Path(consistency_result).read_text())
     eq = json.loads(Path(equivalence_result).read_text()) if equivalence_result else None
@@ -907,12 +929,16 @@ def gate(pinned: dict, pool_dir: Path, run_dir: Path, consistency_result: Path, 
     rep = independent_replay(pinned, pool_dir, min(layout.INDEPENDENT_REPLAY_BATCHES, total_batches), stream_factory)
     spots = spot_check(run_dir, out_dir, pool_dir=pool_dir)
     items = {"consistency": engine_same, "drops": all(c["ok"] for c in drops.values()),
-             "completeness": comp["ok"] and rep["ok"], "spot_check_written": bool(spots)}
+             "completeness": comp["ok"] and rep["ok"], "spot_check_written": bool(spots),
+             "filters": run["filters_version"] == filters.VERSION}
     result = {"passed": all(items.values()), "items": items, "consistency": {"passed": cons["passed"],
               "qualifies_this_run": engine_same, "why_not": why, "sets": cons["sets"],
-              "equivalence": None if eq is None else {"passed": eq["passed"]}}, "drops": drops,
+              "equivalence": None if eq is None else {"passed": eq["passed"]}},
+              "filters": {"run": run["filters_version"], "current": filters.VERSION, "refilter": run.get("refilter")},
+              "drops": drops,
               "completeness": comp, "independent_replay": rep, "spot_check": spots,
               "thresholds": {"drop": MAX_DROP, "hallucination": MAX_HALLUCINATION,
+                             "hallucination_by_source": dict(HALLUCINATION_LIMIT_BY_SOURCE),
                              "drop_rates": "both by distinct ids and by journal occurrences"}}
     write_json(out_dir / "result.json", result)
     return result

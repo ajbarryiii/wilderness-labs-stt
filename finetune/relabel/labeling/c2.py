@@ -30,11 +30,34 @@ Steps (each its own process, since vLLM lives in its own environment):
     merge     filters and label shards for groups with both (CPU)
     chunk     one chunk job: holds the parakeet GPU lock for its own duration only, runs teacher (until
               --budget-minutes x TEACHER_SHARE), then b0 and merge for the groups the teacher finished
+    refilter  (CPU) the current filters version over a finished run's stored outputs, into a new run directory
+
+merge applies the filters version recorded in run.json (filters_version), so a run stays under the version it was
+started with even when filters.VERSION moves on. Re-filtering (labeling plan Part C "Filters", amended 2026-10-25 and
+2026-10-26): `refilter --run-dir labels/<T*>/<run> [--out D]` recomputes every record's training text (`text`, the
+label mapped under the new version: version 3 maps punctuation B0 lacks), normalized words (`norm`: version 3 scores
+the mapped text), disposition, reasons and filter values (human_wer, b0_wer, words_per_second) under filters.VERSION
+from what the run stored (raw label, B0's raw label, duration, reference kind) and the reference in the record's C1
+shard, as merge computes them, into a new run directory (default the sibling <run>-f<VERSION>; it must be under
+$RELABEL_ROOT). Each stored text and norm must be what the source version derives from its raw label. The source may
+itself be a re-filtered run (main-f2 to version 3; its default output is then main-f2-f3):
+
+    run.json                    the source's, with the new filters_version and "refilter" (the source directory, its
+                                filters version, the SHA-256 of its manifest's shard list and, for a re-filtered
+                                source, its own "refilter" as source_refilter); a re-run refuses a different one
+    shards/<k>.labels.parquet   every other column copied unchanged, and <k>.json as merge writes it plus
+                                filters_version and source_sha256 (the source shard's SHA-256)
+    manifest.json               as finish writes it
+
+The source run is only read. refilter refuses a run that is not complete (no manifest.json, so never a run C2 is still
+writing) or that is already at the current version; it resumes at shard granularity, skipping shards whose meta names
+the source shard's SHA-256. The new directory has no work/ or groups/, and the labeling steps refuse it.
 """
 from __future__ import annotations
 
 import argparse
 import concurrent.futures as cf
+import hashlib
 import json
 import os
 import subprocess
@@ -231,6 +254,14 @@ def _read_parquet(path: Path) -> list[dict]:
     return pq.read_table(path).to_pylist()
 
 
+def _labeling_run(run_dir: Path) -> dict:
+    """run.json of a run the labeling steps may write (not a refilter output)."""
+    run = load_run(run_dir)
+    if "refilter" in run:
+        raise RuntimeError(f"{run_dir} is a refiltered run: the labeling steps do not run on it")
+    return run
+
+
 def _done(run_dir: Path, step: str, g: int) -> bool:
     return (Path(run_dir) / "work" / step / f"{gname(g)}.json").exists()
 
@@ -294,7 +325,7 @@ class FakeTeacher:
 def teacher_step(run_dir: Path, deadline: float | None = None, stop_after_groups: int | None = None,
                  engine=None) -> dict:
     run_dir = Path(run_dir)
-    run = load_run(run_dir)
+    run = _labeling_run(run_dir)
     pool_dir = _abs(run["pool_dir"])
     todo = [(g, ks) for g, ks in enumerate(groups(pool_dir, run["group_shards"])) if not _done(run_dir, "teacher", g)]
     done = []
@@ -337,7 +368,7 @@ def teacher_step(run_dir: Path, deadline: float | None = None, stop_after_groups
 
 def b0_step(run_dir: Path, labeler=None, deadline: float | None = None) -> dict:
     run_dir = Path(run_dir)
-    run = load_run(run_dir)
+    run = _labeling_run(run_dir)
     pool_dir = _abs(run["pool_dir"])
     todo = [(g, ks) for g, ks in enumerate(groups(pool_dir, run["group_shards"]))
             if _done(run_dir, "teacher", g) and not _done(run_dir, "b0", g)]
@@ -386,7 +417,7 @@ def merge_step(run_dir: Path, coverage=None) -> dict:
     import evaluate  # finetune/parakeet-ternary
     from labeling import filters
     run_dir = Path(run_dir)
-    run = load_run(run_dir)
+    run = _labeling_run(run_dir)
     want = wants_signals(run["engine"])
     pool_dir = _abs(run["pool_dir"])
     done = []
@@ -418,7 +449,7 @@ def merge_step(run_dir: Path, coverage=None) -> dict:
                 sig = None if tr.get("token_ids") is None else {k: tr[k] for k in SIGNAL_KEYS}
                 check_signals(sig, want, r["id"])
                 res = filters.check(r["duration"], tr["raw"], r["reference"], r["reference_kind"], b[r["id"]],
-                                    coverage)
+                                    coverage, version=run["filters_version"])
                 v = res["values"]
                 records.append({"id": r["id"], "source": r["source"], "duration": r["duration"],
                                 "reference_kind": r["reference_kind"], "raw": res["raw"], "text": res["text"],
@@ -432,24 +463,30 @@ def merge_step(run_dir: Path, coverage=None) -> dict:
                                | dict(zip(SIGNAL_COLUMNS, (tr.get(k) for k in SIGNAL_KEYS))))
             path = run_dir / "shards" / f"{shards.shard_name(k)}.labels.parquet"
             sha = _write_parquet(path, records, label_schema())
-            per: dict[str, dict] = {}
-            for rec in records:
-                c = per.setdefault(rec["source"], {"records": 0, "kept": 0, "reasons": {}, "hallucination": 0})
-                c["records"] += 1
-                c["kept"] += rec["disposition"] == "kept"
-                for reason in rec["reasons"]:
-                    c["reasons"][reason] = c["reasons"].get(reason, 0) + 1
-                c["hallucination"] += any(x in filters.HALLUCINATION for x in rec["reasons"])
-            write_json(path.with_name(f"{shards.shard_name(k)}.json"),
-                       {"shard": k, "group": g, "records": len(records), "sha256": sha, "by_source": per,
-                        "audio_seconds": sum(rec["duration"] for rec in records),
-                        "signal_tokens": sum(len(rec["t_token_ids"] or ()) for rec in records),
-                        "signal_bytes": _signal_bytes(path)})
+            write_json(path.with_name(f"{shards.shard_name(k)}.json"), _shard_meta(path, k, g, records, sha))
             counts[k] = len(records)
         write_json(run_dir / "groups" / f"{gname(g)}.json", {"group": g, "shards": ks, "records": counts,
                                                               "merge_s": time.perf_counter() - t0})
         done.append(g)
     return {"groups": done}
+
+
+def _shard_meta(path: Path, k: int, g: int, records: list[dict], sha: str) -> dict:
+    """<k>.json of a label shard: record count, SHA-256, counts per source, audio seconds and the signals' size."""
+    from labeling import filters
+    per: dict[str, dict] = {}
+    for rec in records:
+        c = per.setdefault(rec["source"], {"records": 0, "kept": 0, "reasons": {}, "hallucination": 0,
+                                           "rate_confirmed": 0})
+        c["records"] += 1
+        c["kept"] += rec["disposition"] == "kept"
+        for reason in rec["reasons"]:
+            c["reasons"][reason] = c["reasons"].get(reason, 0) + 1
+        c["hallucination"] += any(x in filters.HALLUCINATION for x in rec["reasons"])
+        c["rate_confirmed"] += filters.rate_confirmed(rec["words_per_second"], rec["reasons"])
+    return {"shard": k, "group": g, "records": len(records), "sha256": sha, "by_source": per,
+            "audio_seconds": sum(rec["duration"] for rec in records),
+            "signal_tokens": sum(len(rec["t_token_ids"] or ()) for rec in records), "signal_bytes": _signal_bytes(path)}
 
 
 def finish(run_dir: Path) -> dict:
@@ -461,25 +498,31 @@ def finish(run_dir: Path) -> dict:
     missing = [g for g in range(len(gs)) if not (run_dir / "groups" / f"{gname(g)}.json").exists()]
     if missing or not pool_complete(pool_dir):
         return {"complete": False, "groups": len(gs), "groups_missing": len(missing), "pool_complete": pool_complete(pool_dir)}
+    manifest = _write_manifest(run_dir, run, [k for ks in gs for k in ks])
+    return {"complete": True, "records": manifest["records"]}
+
+
+def _write_manifest(run_dir: Path, run: dict, ks: list[int]) -> dict:
+    """manifest.json over label shards ks (each checked against its meta's SHA-256)."""
     files, totals = [], {}
     sig = {"tokens": 0, "bytes": 0, "audio_seconds": 0.0}
-    for ks in gs:
-        for k in ks:
-            meta = json.loads((run_dir / "shards" / f"{shards.shard_name(k)}.json").read_text())
-            sig["tokens"] += meta.get("signal_tokens", 0)
-            sig["bytes"] += meta.get("signal_bytes", 0)
-            sig["audio_seconds"] += meta.get("audio_seconds", 0.0)
-            path = run_dir / "shards" / f"{shards.shard_name(k)}.labels.parquet"
-            if shards.sha256_file(path) != meta["sha256"]:
-                raise RuntimeError(f"{path}: SHA-256 differs from its meta")
-            files.append({"shard": k, "file": path.name, "sha256": meta["sha256"], "records": meta["records"]})
-            for src, c in meta["by_source"].items():
-                t = totals.setdefault(src, {"records": 0, "kept": 0, "reasons": {}, "hallucination": 0})
-                t["records"] += c["records"]
-                t["kept"] += c["kept"]
-                t["hallucination"] += c["hallucination"]
-                for r, n in c["reasons"].items():
-                    t["reasons"][r] = t["reasons"].get(r, 0) + n
+    for k in ks:
+        meta = json.loads((run_dir / "shards" / f"{shards.shard_name(k)}.json").read_text())
+        sig["tokens"] += meta.get("signal_tokens", 0)
+        sig["bytes"] += meta.get("signal_bytes", 0)
+        sig["audio_seconds"] += meta.get("audio_seconds", 0.0)
+        path = run_dir / "shards" / f"{shards.shard_name(k)}.labels.parquet"
+        if shards.sha256_file(path) != meta["sha256"]:
+            raise RuntimeError(f"{path}: SHA-256 differs from its meta")
+        files.append({"shard": k, "file": path.name, "sha256": meta["sha256"], "records": meta["records"]})
+        for src, c in meta["by_source"].items():
+            t = totals.setdefault(src, {"records": 0, "kept": 0, "reasons": {}, "hallucination": 0, "rate_confirmed": 0})
+            t["records"] += c["records"]
+            t["kept"] += c["kept"]
+            t["hallucination"] += c["hallucination"]
+            t["rate_confirmed"] += c.get("rate_confirmed", 0)   # metas written before filters version 2 lack it
+            for r, n in c["reasons"].items():
+                t["reasons"][r] = t["reasons"].get(r, 0) + n
     hours = sig["audio_seconds"] / 3600
     sig |= {"on": wants_signals(run["engine"]), "bytes_per_audio_hour": sig["bytes"] / hours if hours else None,
             "tokens_per_audio_hour": sig["tokens"] / hours if hours else None,
@@ -488,7 +531,109 @@ def finish(run_dir: Path) -> dict:
     manifest = {"complete": True, "run": run, "shards": files, "records": sum(f["records"] for f in files),
                 "by_source_distinct_ids": totals, "signals": sig}
     write_json(run_dir / "manifest.json", manifest)
-    return {"complete": True, "records": manifest["records"]}
+    return manifest
+
+
+# --- re-filtering (labeling plan Part C "Filters", amended 2026-10-25 and 2026-10-26) ---------------
+
+def refilter_dir(run_dir: Path, version: int | None = None) -> Path:
+    """refilter's default output: the run's sibling named for the target filters version, by default the current one
+    (main -> main-f3)."""
+    from labeling import filters
+    run_dir = Path(run_dir)
+    return run_dir.with_name(f"{run_dir.name}-f{filters.VERSION if version is None else version}")
+
+
+def _complete_shards(run_dir: Path, run: dict) -> list[dict]:
+    """The manifest's shard list of a finished run; refuses a run that is not complete."""
+    path = run_dir / "manifest.json"
+    if not path.exists() or not json.loads(path.read_text()).get("complete"):
+        raise RuntimeError(f"{run_dir} is not complete (no manifest.json; finish writes it once every group is done)")
+    files = json.loads(path.read_text())["shards"]
+    pool_dir = _abs(run["pool_dir"])
+    if not pool_complete(pool_dir) or [f["shard"] for f in files] != shards.committed(pool_dir):
+        raise RuntimeError(f"{run_dir} is not complete (its manifest does not list every C1 shard)")
+    return files
+
+
+def refilter(run_dir: Path, out_dir: Path | None = None, coverage=None, *, version: int | None = None) -> dict:
+    """Filters `version` (default filters.VERSION, the only one the CLI applies) over a finished run's stored outputs,
+    into out_dir (see the module docstring)."""
+    from labeling import filters
+    version = filters.VERSION if version is None else version
+    if version not in filters.VERSIONS:
+        raise ValueError(f"unknown filters version {version!r}")
+    run_dir = Path(run_dir)
+    out_dir = Path(out_dir) if out_dir is not None else refilter_dir(run_dir, version)
+    if out_dir.resolve() == run_dir.resolve():
+        raise ValueError("refilter writes a new run directory, not into its source")
+    if not out_dir.resolve().is_relative_to(layout.relabel_root().resolve()):
+        raise ValueError(f"{out_dir} is not under $RELABEL_ROOT")
+    run = load_run(run_dir)
+    source_version = run["filters_version"]
+    if source_version >= version:
+        raise RuntimeError(f"{run_dir} is already under filters version {source_version}")
+    listed = _complete_shards(run_dir, run)
+    pool_dir = _abs(run["pool_dir"])
+    # the source's label shards (number, file, SHA-256, records), not its manifest file, which finish may re-render
+    digest = hashlib.sha256(json.dumps(listed, sort_keys=True).encode()).hexdigest()
+    provenance = {"source_run_dir": _rel(run_dir), "source_filters_version": source_version,
+                  "source_shards_sha256": digest}
+    if "refilter" in run:                      # a re-filtered source (e.g. main-f2): keep where its labels came from
+        provenance["source_refilter"] = run["refilter"]
+    new = run | {"filters_version": version, "refilter": provenance}
+    path = out_dir / "run.json"
+    if path.exists():
+        if json.loads(path.read_text()) != new:
+            raise RuntimeError(f"{path} exists with different settings")
+    else:
+        write_json(path, new)
+    if coverage is None:
+        coverage = filters.Coverage(filters.b0_tokenizer_file(layout.relabel_root() / "caches" / "labeling"))
+    done, skipped = [], 0
+    for f in listed:
+        k, name = f["shard"], shards.shard_name(f["shard"])
+        src = run_dir / "shards" / f"{name}.labels.parquet"
+        src_meta = json.loads(src.with_name(f"{name}.json").read_text())
+        dst = out_dir / "shards" / src.name
+        dst_meta = dst.with_name(f"{name}.json")
+        if dst_meta.exists():
+            m = json.loads(dst_meta.read_text())
+            if m.get("source_sha256") != src_meta["sha256"] or shards.sha256_file(dst) != m["sha256"]:
+                raise RuntimeError(f"{dst}: written from another source shard, or differs from its meta")
+            skipped += 1
+            continue
+        if shards.sha256_file(src) != src_meta["sha256"] or src_meta["sha256"] != f["sha256"]:
+            raise RuntimeError(f"{src}: SHA-256 differs from its meta")
+        old = _read_parquet(src)
+        rows = shards.read_audio(shards.paths(pool_dir, k)["audio"],
+                                 columns=("id", "source", "duration", "reference", "reference_kind"))
+        if [r["id"] for r in rows] != [r["id"] for r in old]:
+            raise RuntimeError(f"{src}: its ids are not C1 shard {k}'s, in order")
+        records = []
+        for rec, r in zip(old, rows):
+            if (rec["source"], rec["duration"], rec["reference_kind"]) != (r["source"], r["duration"], r["reference_kind"]):
+                raise RuntimeError(f"{rec['id']}: the record's source, duration or reference kind differs from C1's")
+            res = filters.check(rec["duration"], rec["raw"], r["reference"], rec["reference_kind"], rec["b0_raw"],
+                                coverage, version=version)
+            src_forms = filters.label_texts(rec["raw"], version=source_version)
+            if (src_forms["raw"], src_forms["text"], src_forms["norm"]) != (rec["raw"], rec["text"], rec["norm"]):
+                raise RuntimeError(f"{rec['id']}: the stored label text is not what the filters derive from its raw label")
+            v = res["values"]
+            # the training text and the scored words are the new version's (version 3 changed both), for every record
+            records.append(rec | {"text": res["text"], "norm": res["norm"], "disposition": res["disposition"],
+                                  "reasons": res["reasons"], "human_wer": v.get("human_wer"), "b0_wer": v.get("b0_wer"),
+                                  "words_per_second": v.get("words_per_second")})
+        sha = _write_parquet(dst, records, label_schema())
+        write_json(dst_meta, _shard_meta(dst, k, src_meta["group"], records, sha)
+                   | {"filters_version": version, "source_sha256": src_meta["sha256"]})
+        done.append(k)
+        _log(f"refilter shard {k}: {len(records)} records, {sum(x['disposition'] == 'kept' for x in records)} kept")
+    manifest = _write_manifest(out_dir, new, [f["shard"] for f in listed])
+    before = json.loads((run_dir / "manifest.json").read_text())["by_source_distinct_ids"]
+    after = manifest["by_source_distinct_ids"]
+    return {"out": str(out_dir), "refiltered": done, "skipped": skipped, "records": manifest["records"],
+            "kept": {src: [before[src]["kept"], after[src]["kept"]] for src in sorted(after)}}
 
 
 # --- chunk driver ----------------------------------------------------------------------------------
@@ -513,7 +658,7 @@ def chunk(run_dir: Path, budget_minutes: float, lock_wait: float, runner=subproc
     """One chunk job: holds the parakeet GPU lock for its own duration only (score_teacher.gpu_lock)."""
     import score_teacher
     run_dir = Path(run_dir)
-    run = load_run(run_dir)
+    run = _labeling_run(run_dir)
     t0 = time.time()
     deadline = t0 + budget_minutes * 60 * TEACHER_SHARE
     with score_teacher.gpu_lock(f"relabel labeling c2 {run_dir.name}", lock_wait):
@@ -541,6 +686,9 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("--run-dir", required=True, type=Path)
     c.add_argument("--budget-minutes", type=float, default=layout.CHUNK_MINUTES)
     c.add_argument("--lock-wait", type=float, default=1800.0)
+    r = sub.add_parser("refilter", help="the current filters version over a finished run, into a new run directory")
+    r.add_argument("--run-dir", required=True, type=Path)
+    r.add_argument("--out", type=Path, help="the new run directory (default: the sibling <run-dir>-f<filters version>)")
     args = parser.parse_args(argv)
     layout.require_mount()
     if args.cmd == "teacher":
@@ -551,6 +699,8 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(merge_step(args.run_dir)["groups"]))
     elif args.cmd == "finish":
         print(json.dumps(finish(args.run_dir)))
+    elif args.cmd == "refilter":
+        print(json.dumps(refilter(args.run_dir, args.out), indent=1))
     else:
         print(json.dumps(chunk(args.run_dir, args.budget_minutes, args.lock_wait)))
     return 0
