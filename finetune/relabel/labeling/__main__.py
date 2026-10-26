@@ -17,7 +17,8 @@ Checks and C2 (GPU jobs hold the parakeet GPU lock for their own duration):
     equivalence --vllm-setting I --tf-setting J --declared-vram-gb V [--dir D]
     select                                          the C2 engine and setting from probes and checks
     c2-init --run NAME --engine ... --declared-vram-gb V   labels/<T*>/<NAME>/run.json
-    (chunks: ./python -m labeling.c2 chunk --run-dir labels/<T*>/<NAME>)
+    (chunks: ./python -m labeling.c2 chunk --run-dir labels/<T*>/<NAME>; a finished run under older filters:
+     ./python -m labeling.c2 refilter --run-dir labels/<T*>/<NAME>, into labels/<T*>/<NAME>-f<filters version>)
     gate --run NAME --consistency PATH [--equivalence PATH]   the gate to stage 3 (labeling/gate/<NAME>/)
     status
 """

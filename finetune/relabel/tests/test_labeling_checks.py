@@ -324,6 +324,27 @@ class Consistency(unittest.TestCase):
         self.assertFalse(r["passed"])
         self.assertTrue((d / "result-run.json").exists())
 
+    def test_the_guard_applies_the_runs_filters_version(self):
+        """ami_dev:000 at 1 s: both transcripts are over 6 words per second and within WER 0.2 of the reference, so the
+        guard rejects them under filters version 1 and accepts them under version 2 (labeling plan "Filters",
+        amended 2026-10-25)."""
+        for version, excluded in ((1, 1), (2, 0)):
+            d = self.root / f"cons-filters-v{version}"
+            rows = [clip_row(i, name, ref, "human", seconds=1.0 if i == "ami_dev:000" else 2.0)
+                    for name in ("ami_dev", "voxpopuli_dev")
+                    for i, ref in sorted((x["id"], x["ref"]) for x in
+                                         json.loads((self.s1 / f"{name}.json").read_text())["records"])[:10]]
+            checks.write_rows_as_shards(rows, d / "pool", 25)
+            c2.write_json(d / "pool" / "materialized.json", {})
+            c2.write_json(d / "set.json", {"sets": {n: {"manifest_sha256": "m"} for n in ("ami_dev", "voxpopuli_dev")},
+                                           "limit": 10})
+            c2.init_run(d / "run", pool_dir=d / "pool", engine={"kind": "fake"}, group_shards=2,
+                        b0_batch_seconds=60.0, declared_vram_gb=None, extra={"filters_version": version})
+            write_outputs(d / "run", d / "pool", {r["id"]: r["reference"] for r in rows})
+            s = checks.evaluate_consistency(d, stage1_dir=self.s1)["sets"]["ami_dev"]
+            self.assertEqual((s["excluded"], s["guard_rejected_run"], s["guard_rejected_stage1"]),
+                             (excluded, excluded, excluded), version)
+
     def test_allowance(self):
         self.assertEqual([checks.guard_allowance(n) for n in (1, 30, 400, 401, 2000, 13098)], [2, 2, 2, 3, 10, 66])
 
@@ -406,6 +427,14 @@ class Selection(unittest.TestCase):
         self.assertFalse(checks.qualifies(on, cons(off), {"passed": True, "contract": on})[0])
         self.assertFalse(checks.qualifies(on, cons(on), {"passed": True, "contract": off})[0])
         self.assertTrue(checks.qualifies(on, cons(on), {"passed": True, "contract": on})[0])
+
+    def test_checks_qualify_the_engine_whatever_the_filters_version(self):
+        """The checks qualify what produces the labels; filters only decide dispositions and are re-applied on CPU
+        (c2.refilter), so a run re-filtered under a later version is still qualified by checks run under an earlier one."""
+        k1 = contract(self.v1, declared=15.0)
+        k2 = k1 | {"filters_version": 2}
+        self.assertTrue(checks.qualifies(k2, cons(k1), {"passed": True, "contract": k1})[0])
+        self.assertFalse(checks.qualifies(k2 | {"group_shards": 2}, cons(k1), {"passed": True, "contract": k1})[0])
 
     def test_qualifies(self):
         k = contract(self.v1, declared=15.0)
@@ -797,6 +826,36 @@ class Gate(unittest.TestCase):
                             stream_factory=self.make, audio_hash=False)
             self.assertFalse(r["items"]["consistency"])
             self.assertFalse(r["passed"])
+
+    def test_a_refiltered_run_passes_and_a_run_under_older_filters_does_not(self):
+        """A run labeled under filters version 1, with its checks run under version 1 (as production's), fails the gate
+        only on item "filters"; re-filtered (c2.refilter) it passes under the same checks."""
+        refs = {}
+        for k in shards.committed(self.pool):
+            for r in shards.read_audio(shards.paths(self.pool, k)["audio"]):
+                refs[r["pcm_sha256"]] = r["reference"] or ""
+        v1 = self.root / "labels-v1"
+        c2.init_run(v1, pool_dir=self.pool, engine={"kind": "fake"}, group_shards=2, b0_batch_seconds=60.0,
+                    declared_vram_gb=None, extra={"filters_version": 1})
+        c2.teacher_step(v1, engine=RefTeacher(refs))
+        c2.b0_step(v1, labeler=RefB0(refs))
+        c2.merge_step(v1, coverage=lambda t: True)
+        self.assertTrue(c2.finish(v1)["complete"])
+        cons_v1 = self.root / "cons-v1.json"
+        cons_v1.write_text(json.dumps(cons(c2.contract(c2.load_run(v1))) | {"sets": {}}))
+        old = checks.gate(self.pin, self.pool, v1, cons_v1, self.root / "gate-v1", total_batches=12,
+                          stream_factory=self.make, audio_hash=False)
+        self.assertEqual({k for k, v in old["items"].items() if not v}, {"filters"})
+        self.assertFalse(old["passed"])
+        self.assertEqual((old["filters"]["run"], old["filters"]["current"]), (1, 2))
+        out = self.root / "labels-v1-f2"
+        c2.refilter(v1, out, coverage=lambda t: True)
+        r = checks.gate(self.pin, self.pool, out, cons_v1, self.root / "gate-v1-f2", total_batches=12,
+                        stream_factory=self.make, audio_hash=False)
+        self.assertTrue(r["passed"], (r["items"], r["consistency"]))
+        self.assertTrue(r["completeness"]["ok"])
+        self.assertEqual(r["filters"]["run"], 2)
+        self.assertEqual(r["filters"]["refilter"]["source_filters_version"], 1)
 
     def test_tampered_c1_audio_fails_completeness(self):
         import shutil

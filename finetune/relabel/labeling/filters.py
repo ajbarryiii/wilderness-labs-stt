@@ -4,7 +4,9 @@
 2. Where a human transcript exists (reference_kind "human", non-empty): normalized WER(human, T*) <= 0.5
    (`human_wer_gt_0.5`; evaluate.utterance_wer, as parakeet-ternary teacher.drop_reason does today).
 3. Hallucination guard, every source (normalized label words, the evaluation normalizer):
-   - more than 6 words per second of audio (`words_per_second_gt_6`);
+   - more than 6 words per second of audio (`words_per_second_gt_6`), unless an independent transcript confirms the
+     label: normalized WER(confirmer, T*) <= 0.2, the confirmer being the human transcript where there is one, else
+     B0's label (values "rate_confirmed"; version 2, labeling plan Part C "Filters", amended 2026-10-25);
    - a repeated n-gram loop: any 3-gram occurring >= 4 times when the label has <= 30 words, or the same word
      repeated >= 5 times in a row (`ngram_loop`);
    - for utterances without a human transcript: normalized WER(B0 greedy, T*) > 0.8, B0's label as the
@@ -14,6 +16,10 @@
 
 Every rule is evaluated (flags record each failure); the disposition is "kept" iff no rule fails, with the
 failing reasons in filter order. The stored training text is the mapped label (`text`).
+
+Versions (run.json filters_version; every caller names one): 1 has no confirmation of the words-per-second rule, 2 has
+it. C2's merge applies its run's version, so a run labeled under version 1 stays consistent; c2.refilter re-applies the
+current version to a finished run's stored outputs.
 """
 from __future__ import annotations
 
@@ -28,6 +34,7 @@ MAX_WORDS_PER_SECOND = 6.0
 LOOP_NGRAM, LOOP_COUNT, LOOP_MAX_WORDS = 3, 4, 30
 REPEAT_RUN = 5
 MAX_B0_WER = 0.8
+CONFIRM_WER = 0.2
 TEXT_MAP = {"‘": "'", "’": "'", "‚": "'", "‛": "'", "′": "'",
             "“": '"', "”": '"', "„": '"', "‟": '"', "″": '"',
             "‐": "-", "‑": "-", "‒": "-", "–": "-", "—": "-", "―": "-", "−": "-"}
@@ -36,7 +43,8 @@ REASONS = ("duration_out_of_range", "empty_label", "human_wer_gt_0.5", "words_pe
 FILTER_OF = {"duration_out_of_range": 1, "empty_label": 1, "human_wer_gt_0.5": 2, "words_per_second_gt_6": 3,
              "ngram_loop": 3, "b0_wer_gt_0.8": 3, "tokenizer_coverage": 4}
 HALLUCINATION = tuple(r for r, f in FILTER_OF.items() if f == 3)
-VERSION = 1
+VERSIONS = (1, 2)
+VERSION = 2
 
 
 def map_text(text: str) -> str:
@@ -90,10 +98,18 @@ def b0_tokenizer_file(cache_dir: Path) -> Path:
     return out
 
 
+def rate_confirmed(words_per_second: float | None, reasons) -> bool:
+    """Whether a stored record's words-per-second rule was waived by a confirming transcript (from its columns)."""
+    fast = words_per_second is None or words_per_second > MAX_WORDS_PER_SECOND   # None: infinite (zero duration)
+    return fast and "words_per_second_gt_6" not in reasons
+
+
 def check(duration: float, label: str | None, reference: str | None, reference_kind: str | None,
-          b0_label: str | None, coverage) -> dict:
-    """Filter flags and disposition of one utterance (T*'s raw label; B0's raw label)."""
+          b0_label: str | None, coverage, *, version: int) -> dict:
+    """Filter flags and disposition of one utterance (T*'s raw label; B0's raw label) under filters `version`."""
     import evaluate  # finetune/parakeet-ternary
+    if version not in VERSIONS:
+        raise ValueError(f"unknown filters version {version!r}")
     raw = (label or "").strip()
     text = map_text(raw)
     norm = evaluate.normalize(raw).strip() if raw else ""
@@ -109,14 +125,18 @@ def check(duration: float, label: str | None, reference: str | None, reference_k
         values["human_wer"] = evaluate.utterance_wer(reference, raw)
         if values["human_wer"] > MAX_HUMAN_WER:
             reasons.append("human_wer_gt_0.5")
-    if values["words_per_second"] > MAX_WORDS_PER_SECOND:
-        reasons.append("words_per_second_gt_6")
-    if ngram_loop(words):
-        reasons.append("ngram_loop")
     if not human:
         values["b0_wer"] = evaluate.utterance_wer(b0_label or "", raw)
-        if values["b0_wer"] > MAX_B0_WER:
-            reasons.append("b0_wer_gt_0.8")
+    if values["words_per_second"] > MAX_WORDS_PER_SECOND:
+        if version >= 2:
+            # an infinite WER (B0 empty, or a reference that normalizes to nothing) never confirms
+            values["rate_confirmed"] = values["human_wer" if human else "b0_wer"] <= CONFIRM_WER
+        if not values.get("rate_confirmed"):
+            reasons.append("words_per_second_gt_6")
+    if ngram_loop(words):
+        reasons.append("ngram_loop")
+    if not human and values["b0_wer"] > MAX_B0_WER:
+        reasons.append("b0_wer_gt_0.8")
     if raw and not coverage(text):
         reasons.append("tokenizer_coverage")
     values = {k: (None if isinstance(v, float) and not math.isfinite(v) else v) for k, v in values.items()}
