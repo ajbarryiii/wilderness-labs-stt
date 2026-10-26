@@ -35,12 +35,12 @@ Steps (each its own process, since vLLM lives in its own environment):
 merge applies the filters version recorded in run.json (filters_version), so a run stays under the version it was
 started with even when filters.VERSION moves on. Re-filtering (labeling plan Part C "Filters", amended 2026-10-25 and
 2026-10-26): `refilter --run-dir labels/<T*>/<run> [--out D]` recomputes every record's training text (`text`, the
-label mapped under the new version: version 3 maps punctuation B0 lacks), disposition, reasons and filter values
-(human_wer, b0_wer, words_per_second) under filters.VERSION from what the run stored (raw label, B0's raw label,
-duration, reference kind) and the reference in the record's C1 shard, as merge computes them, into a new run directory
-(default the sibling <run>-f<VERSION>; it must be under $RELABEL_ROOT). Each stored text must be the source version's
-mapping of its raw label. The source may itself be a re-filtered run (main-f2 to version 3; its default output is then
-main-f2-f3):
+label mapped under the new version: version 3 maps punctuation B0 lacks), normalized words (`norm`: version 3 scores
+the mapped text), disposition, reasons and filter values (human_wer, b0_wer, words_per_second) under filters.VERSION
+from what the run stored (raw label, B0's raw label, duration, reference kind) and the reference in the record's C1
+shard, as merge computes them, into a new run directory (default the sibling <run>-f<VERSION>; it must be under
+$RELABEL_ROOT). Each stored text and norm must be what the source version derives from its raw label. The source may
+itself be a re-filtered run (main-f2 to version 3; its default output is then main-f2-f3):
 
     run.json                    the source's, with the new filters_version and "refilter" (the source directory, its
                                 filters version, the SHA-256 of its manifest's shard list and, for a re-filtered
@@ -616,13 +616,13 @@ def refilter(run_dir: Path, out_dir: Path | None = None, coverage=None, *, versi
                 raise RuntimeError(f"{rec['id']}: the record's source, duration or reference kind differs from C1's")
             res = filters.check(rec["duration"], rec["raw"], r["reference"], rec["reference_kind"], rec["b0_raw"],
                                 coverage, version=version)
-            stored = (res["raw"], filters.map_text(res["raw"], version=source_version), res["norm"])
-            if stored != (rec["raw"], rec["text"], rec["norm"]):
+            src_forms = filters.label_texts(rec["raw"], version=source_version)
+            if (src_forms["raw"], src_forms["text"], src_forms["norm"]) != (rec["raw"], rec["text"], rec["norm"]):
                 raise RuntimeError(f"{rec['id']}: the stored label text is not what the filters derive from its raw label")
             v = res["values"]
-            # the training text is the new version's mapping (version 3 changed it), for every record
-            records.append(rec | {"text": res["text"], "disposition": res["disposition"], "reasons": res["reasons"],
-                                  "human_wer": v.get("human_wer"), "b0_wer": v.get("b0_wer"),
+            # the training text and the scored words are the new version's (version 3 changed both), for every record
+            records.append(rec | {"text": res["text"], "norm": res["norm"], "disposition": res["disposition"],
+                                  "reasons": res["reasons"], "human_wer": v.get("human_wer"), "b0_wer": v.get("b0_wer"),
                                   "words_per_second": v.get("words_per_second")})
         sha = _write_parquet(dst, records, label_schema())
         write_json(dst_meta, _shard_meta(dst, k, src_meta["group"], records, sha)

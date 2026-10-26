@@ -21,13 +21,20 @@
    fails this rule.
 
 Every rule is evaluated (flags record each failure); the disposition is "kept" iff no rule fails, with the
-failing reasons in filter order. The stored training text is the mapped label (`text`); filters 1-3 score the raw
-label with the evaluation normalizer under every version.
+failing reasons in filter order. The stored training text is the mapped label (`text`).
+
+What filters 2-3 score ("T*" above, and `norm`, the normalized words): versions 1 and 2 the raw label; version 3 the
+mapped text `text` (labeling plan Part C "Filters", amended 2026-10-26). The evaluation normalizer deletes bracketed
+text, so scoring the raw label would leave the words of a parenthetical, which version 3 keeps as training text,
+unchecked; scored from `text`, they are compared with the reference or B0's label and counted in words per second.
+Mapped symbols ("plus", "degrees") are scored as words, as B0, whose vocabulary has no symbols, writes them. Filter 1
+always looks at the raw label (`empty_label` iff it is empty); a raw label that maps to empty text is scored as an
+empty hypothesis and fails filter 4.
 
 Versions (run.json filters_version; every caller names one, of `check` and of `map_text`): 1 has no confirmation of the
-words-per-second rule, 2 has it, 3 adds the punctuation mapping (versions 1 and 2 map alike). C2's merge applies its
-run's version, so a run labeled under version 1 stays consistent; c2.refilter re-applies the current version to a
-finished run's stored outputs, the stored text included.
+words-per-second rule, 2 has it, 3 adds the punctuation mapping and scores filters 2-3 on the mapped text (versions 1
+and 2 map alike). C2's merge applies its run's version, so a run labeled under version 1 stays consistent; c2.refilter
+re-applies the current version to a finished run's stored outputs, the stored text and normalized words included.
 """
 from __future__ import annotations
 
@@ -122,15 +129,24 @@ def rate_confirmed(words_per_second: float | None, reasons) -> bool:
     return fast and "words_per_second_gt_6" not in reasons
 
 
+def label_texts(label: str | None, *, version: int) -> dict:
+    """A label's raw (stripped), stored training (`text`) and normalized (`norm`) forms under filters `version`, and
+    `scored`, what filters 2-3 score: the raw label under versions 1-2, the mapped text under 3 (module docstring)."""
+    import evaluate  # finetune/parakeet-ternary
+    raw = (label or "").strip()
+    text = map_text(raw, version=version)
+    scored = text if version >= 3 else raw
+    return {"raw": raw, "text": text, "scored": scored, "norm": evaluate.normalize(scored).strip() if scored else ""}
+
+
 def check(duration: float, label: str | None, reference: str | None, reference_kind: str | None,
           b0_label: str | None, coverage, *, version: int) -> dict:
     """Filter flags and disposition of one utterance (T*'s raw label; B0's raw label) under filters `version`."""
     import evaluate  # finetune/parakeet-ternary
     if version not in VERSIONS:
         raise ValueError(f"unknown filters version {version!r}")
-    raw = (label or "").strip()
-    text = map_text(raw, version=version)
-    norm = evaluate.normalize(raw).strip() if raw else ""
+    forms = label_texts(label, version=version)
+    raw, text, scored, norm = forms["raw"], forms["text"], forms["scored"], forms["norm"]
     words = norm.split()
     reasons = []
     values: dict = {"words": len(words), "words_per_second": len(words) / duration if duration > 0 else math.inf}
@@ -140,11 +156,11 @@ def check(duration: float, label: str | None, reference: str | None, reference_k
         reasons.append("empty_label")
     human = reference_kind == "human" and isinstance(reference, str) and bool(reference.strip())
     if human:
-        values["human_wer"] = evaluate.utterance_wer(reference, raw)
+        values["human_wer"] = evaluate.utterance_wer(reference, scored)
         if values["human_wer"] > MAX_HUMAN_WER:
             reasons.append("human_wer_gt_0.5")
     if not human:
-        values["b0_wer"] = evaluate.utterance_wer(b0_label or "", raw)
+        values["b0_wer"] = evaluate.utterance_wer(b0_label or "", scored)
     if values["words_per_second"] > MAX_WORDS_PER_SECOND:
         if version >= 2:
             # an infinite WER (B0 empty, or a reference that normalizes to nothing) never confirms

@@ -345,6 +345,13 @@ class Consistency(unittest.TestCase):
             self.assertEqual((s["excluded"], s["guard_rejected_run"], s["guard_rejected_stage1"]),
                              (excluded, excluded, excluded), version)
 
+    def test_the_guard_scores_the_mapped_text_under_version_3(self):
+        """guard_rejects passes the run's version to filters.check, so under version 3 a parenthetical's words, which
+        the normalizer deletes from the raw label, count toward words per second."""
+        label = "patient stable (alpha beta gamma delta epsilon zeta)"
+        for version, rejected in ((1, False), (2, False), (3, True)):
+            self.assertEqual(checks.guard_rejects(1.0, label, "patient stable", version), rejected, version)
+
     def test_allowance(self):
         self.assertEqual([checks.guard_allowance(n) for n in (1, 30, 400, 401, 2000, 13098)], [2, 2, 2, 3, 10, 66])
 

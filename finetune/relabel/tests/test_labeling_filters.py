@@ -186,7 +186,7 @@ class Filter4(unittest.TestCase):
         def cov(text):
             seen.append(text)
             return "’" not in text
-        r = check("Don’t", coverage=cov)
+        r = check("Don’t", coverage=cov, b0="don't")      # B0 writes the plain apostrophe its vocabulary has
         self.assertEqual(seen, ["Don't"])
         self.assertEqual(r["text"], "Don't")
         self.assertEqual(r["disposition"], "kept")
@@ -295,46 +295,130 @@ class PunctuationMapping(unittest.TestCase):
         self.assertIn("empty_label", r["reasons"])
         self.assertNotIn("tokenizer_coverage", r["reasons"])
 
-    def test_filters_1_to_3_are_those_of_version_2(self):
+    def test_a_label_that_maps_to_nothing_is_scored_as_an_empty_hypothesis(self):
+        """Filters 2-3 score the empty mapped text: no words, WER as evaluate.utterance_wer gives for an empty
+        hypothesis (1 against a non-empty reference, 0 against an empty one)."""
+        r = check('"', ref="hello there", kind="human", version=3)
+        self.assertEqual((r["norm"], r["values"]["words"], r["values"]["words_per_second"]), ("", 0, 0.0))
+        self.assertEqual(r["values"]["human_wer"], 1.0)
+        self.assertEqual(r["reasons"], ["human_wer_gt_0.5", "tokenizer_coverage"])
+        r = check('"*"', b0="", version=3)
+        self.assertEqual((r["values"]["b0_wer"], r["reasons"]), (0.0, ["tokenizer_coverage"]))
+        r = check("()", b0="something was said", version=3)
+        self.assertEqual(r["values"]["b0_wer"], 1.0)
+        self.assertEqual(r["reasons"], ["b0_wer_gt_0.8", "tokenizer_coverage"])
+
+    def test_labels_without_mapped_characters_check_alike(self):
+        """A raw label no mapping changes (none of the mapped characters, NFKC and the curly quote and dash mapping
+        included, and no whitespace run or space before punctuation) gets the same check output under versions 2 and
+        3."""
         fast = words(19)                                               # 6.3 words per second in 3 s
         cases = [
-            ('She said, "I\'m bored."', 3.0, None, None, None),
-            ("72.28% (386,815) of Denver", 3.0, "72.28% 386,815 of Denver", "human", None),
-            ("U.S. News & World Report", 3.0, None, None, "us news and world report"),
-            ("Q&A", 1.5, "q and a", "human", None),
-            ("C++ provides", 2.0, None, None, "see plus plus provides"),
-            ('"yes yes yes yes yes"', 5.0, None, None, None),
-            (f'"{fast}"', 3.0, None, None, substituted(fast, 5)),
-            (f"({fast})", 3.0, fast, "human", None),
-            (f"[{fast}]", 3.0, None, None, substituted(fast, 1)),
-            ('"', 3.0, None, None, None),
-            ('"', 3.0, None, None, ""),
+            ("She said, I'm bored.", 3.0, None, None, None),
+            ("72.28% of Denver", 3.0, "72.28% of denver", "human", None),
+            ("U.S. News, World Report", 3.0, None, None, "us news world report"),
+            ("yes yes yes yes yes", 5.0, None, None, None),
+            (fast, 3.0, None, None, substituted(fast, 5)),
+            (fast, 3.0, fast, "human", None),
+            (fast, 3.0, None, None, substituted(fast, 1)),
+            (fast, 3.0, None, None, ""),
             ("", 3.0, None, None, ""),
             ("   ", 3.0, "something said", "human", None),
-            (" “Hello” ", 0.5, None, None, None),
-            ("“Hello”", 31.0, "hello", "human", None),
+            ("Hello", 0.5, None, None, None),
+            ("hello", 31.0, "hello", "human", None),
             ("これは100円です。", 3.0, None, None, "this is one hundred yen"),
-            ("item #5 & <b>", 3.0, None, None, None),
-            ("[music] _intro_ ; °", 40.0, None, None, "music intro degrees"),
-            ("completely (different) words; here", 3.0, "the patient was given blood", "human", None),
-            ("(hello) there", 3.0, None, None, ""),
-            ("f(x) dx = 3 § 2", 3.0, "pseudo label", "pseudo", "f x dx equals three section two"),
-            ("@home + away", 3.0, None, None, "at home plus away"),
-            ("go (to) the go to the go [to] the go to the", 10.0, None, None, None),
+            ("item #5 is <b> ready", 3.0, None, None, "item five is ready"),
+            ("a \\ b | c ~ d `e`", 3.0, None, None, "a b c d e"),
+            ("the café is naïve", 3.0, "the cafe is naive", "human", None),
+            ("Don't stop - now...", 3.0, None, None, "don't stop now"),
+            ("completely different words here", 3.0, "the patient was given blood", "human", None),
+            ("hello there", 3.0, None, None, ""),
+            ("go to the go to the go to the go to the", 10.0, None, None, None),
+            ("alpha beta gamma delta", 3.0, "pseudo label", "pseudo", "one two three four five"),
         ]
         for label, duration, ref, kind, b0 in cases:
+            self.assertEqual(filters.map_text(label, version=3), label.strip(), label)
             v2 = check(label, duration=duration, ref=ref, kind=kind, b0=b0, coverage=b0_like, version=2)
             v3 = check(label, duration=duration, ref=ref, kind=kind, b0=b0, coverage=b0_like, version=3)
-            other = lambda r: [x for x in r["reasons"] if x != "tokenizer_coverage"]
-            self.assertEqual(other(v3), other(v2), label)
-            self.assertEqual((v3["raw"], v3["norm"], v3["values"]), (v2["raw"], v2["norm"], v2["values"]), label)
-            self.assertEqual({k: v for k, v in v3["flags"].items() if k != "tokenizer_coverage"},
-                             {k: v for k, v in v2["flags"].items() if k != "tokenizer_coverage"}, label)
-            self.assertEqual(v3["text"], filters.map_text(v3["raw"], version=3), label)
-            self.assertEqual(v3["disposition"], "rejected" if v3["reasons"] else "kept", label)
-        # the set exercises both rules: some labels fail filters 1-3, some only coverage under version 2
-        self.assertTrue(any(check(c[0], duration=c[1], ref=c[2], kind=c[3], b0=c[4], coverage=b0_like,
-                                  version=2)["reasons"] == ["tokenizer_coverage"] for c in cases))
+            self.assertEqual(v3, v2, label)
+        # the set exercises every filter
+        seen = {x for c in cases for x in check(c[0], duration=c[1], ref=c[2], kind=c[3], b0=c[4], coverage=b0_like,
+                                                version=3)["reasons"]}
+        self.assertEqual(seen, set(filters.REASONS))
+
+    def test_whitespace_clean_up_changes_only_the_text(self):
+        for label in ("hello  there ,  friend", "wait . what ?", "one\t two : three !"):
+            v2 = check(label, b0="hello there friend", coverage=b0_like, version=2)
+            v3 = check(label, b0="hello there friend", coverage=b0_like, version=3)
+            self.assertNotEqual(v3["text"], v2["text"])
+            self.assertEqual({k: v for k, v in v3.items() if k != "text"}, {k: v for k, v in v2.items() if k != "text"})
+
+    # version 3 scores filters 2-3 on the mapped text: the evaluation normalizer deletes bracketed text
+    PAREN = "the bridge (Monument of Remembrance and the old town hall) opened"
+
+    def test_the_normalizer_deletes_bracketed_text(self):
+        self.assertEqual(check(self.PAREN, version=2)["norm"], "the bridge opened")
+        self.assertEqual(check(self.PAREN, version=3)["norm"],
+                         "the bridge monument of remembrance and the old town hall opened")
+
+    def test_a_parenthetical_b0_did_not_hear_scores_against_b0(self):
+        b0 = "the bridge opened"
+        v2 = check(self.PAREN, kind=None, b0=b0, version=2)
+        v3 = check(self.PAREN, kind=None, b0=b0, version=3)
+        self.assertEqual((v2["values"]["b0_wer"], v2["disposition"]), (0.0, "kept"))
+        self.assertGreater(v3["values"]["b0_wer"], v2["values"]["b0_wer"])
+        self.assertGreater(v3["values"]["b0_wer"], 0.8)
+        self.assertEqual(v3["reasons"], ["b0_wer_gt_0.8"])
+        short = "the bridge (of Remembrance) opened"                   # 2 insertions against 3 words
+        r = check(short, kind=None, b0=b0, version=3)
+        self.assertAlmostEqual(r["values"]["b0_wer"], 2 / 3)
+        self.assertEqual(check(short, kind=None, b0=b0, version=2)["values"]["b0_wer"], 0.0)
+
+    def test_a_parenthetical_against_a_human_transcript(self):
+        ref = "the bridge opened"
+        self.assertEqual(check(self.PAREN, ref=ref, kind="human", version=2)["disposition"], "kept")
+        r = check(self.PAREN, ref=ref, kind="human", version=3)
+        self.assertGreater(r["values"]["human_wer"], 0.5)
+        self.assertEqual(r["reasons"], ["human_wer_gt_0.5"])
+
+    def test_a_parenthetical_b0_also_heard_is_kept(self):
+        b0 = "the bridge monument of remembrance and the old town hall opened"
+        r = check(self.PAREN, kind=None, b0=b0, version=3)
+        self.assertEqual((r["values"]["b0_wer"], r["disposition"], r["reasons"]), (0.0, "kept", []))
+        self.assertEqual(r["text"], "the bridge Monument of Remembrance and the old town hall opened")
+        r = check(self.PAREN, ref=b0, kind="human", version=3)
+        self.assertEqual((r["values"]["human_wer"], r["disposition"]), (0.0, "kept"))
+
+    def test_bracketed_words_count_toward_words_per_second(self):
+        label = f"{words(10)} ({words(10, 'xyz')})"                 # 20 words in 3 s under version 3
+        v3_text = filters.map_text(label, version=3)
+        b0 = substituted(v3_text, 5)                                   # WER 0.25: confirms nothing, under 0.8
+        v2 = check(label, b0=b0, version=2)
+        v3 = check(label, b0=b0, version=3)
+        self.assertEqual((v2["values"]["words"], v3["values"]["words"]), (10, 20))
+        self.assertAlmostEqual(v3["values"]["words_per_second"], 20 / 3)
+        self.assertNotIn("words_per_second_gt_6", v2["reasons"])
+        self.assertEqual(v3["reasons"], ["words_per_second_gt_6"])
+        self.assertIs(v3["values"]["rate_confirmed"], False)
+        r = check(label, b0=v3_text, version=3)                       # B0 heard the parenthetical: confirmed
+        self.assertEqual((r["values"]["rate_confirmed"], r["disposition"]), (True, "kept"))
+
+    def test_mapped_symbols_are_scored_as_words(self):
+        import evaluate
+        for label, b0 in (("C++ provides", "c plus plus provides"), ("salt & pepper", "salt and pepper"),
+                          ("between 49° and 51° N.", "between forty nine degrees and fifty one degrees n")):
+            r = check(label, kind=None, b0=b0, version=3)
+            self.assertEqual((r["norm"], r["values"]["b0_wer"]), (evaluate.normalize(b0).strip(), 0.0), label)
+            self.assertGreater(check(label, kind=None, b0=b0, version=2)["values"]["b0_wer"], 0, label)
+
+    def test_curly_quotes_are_scored_mapped(self):
+        """The curly quote and dash mapping (every version) now also applies to what filters 2-3 score: the normalizer
+        splits a word at a curly apostrophe, B0 writes the plain one."""
+        r3 = check("Don’t stop", kind=None, b0="don't stop", version=3)
+        r2 = check("Don’t stop", kind=None, b0="don't stop", version=2)
+        self.assertEqual(r3["values"]["b0_wer"], 0.0)
+        self.assertGreater(r2["values"]["b0_wer"], 0.0)
+        self.assertEqual(r3["text"], r2["text"])
 
     @unittest.skipUnless(paths.MODEL_FILE.exists(), "B0 .nemo not available")
     def test_b0_tokenizer_covers_the_mapped_examples(self):

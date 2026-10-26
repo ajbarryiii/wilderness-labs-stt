@@ -333,10 +333,22 @@ class RefilterVersion3(unittest.TestCase):
         self.assertEqual(out["c:hash"]["reasons"], ["tokenizer_coverage"])
         self.assertEqual(out["c:jp"]["reasons"], ["b0_wer_gt_0.8", "tokenizer_coverage"])
         self.assertEqual(out["c:loop"]["reasons"], ["ngram_loop"])
-        changed = {"disposition", "reasons", "text"}
+        # filters 2-3 score the mapped text under version 3: norm and the filter values are recomputed from it
+        for i, r in out.items():
+            src, ref, kind, seconds, label, b0 = CLIPS3[i]
+            res = filters.check(seconds, label, ref, kind, b0, b0_like, version=3)
+            self.assertEqual(r["norm"], res["norm"], i)
+            self.assertEqual(r["norm"], filters.label_texts(r["raw"], version=3)["norm"], i)
+            self.assertEqual((r["human_wer"], r["b0_wer"], r["words_per_second"]),
+                             (res["values"].get("human_wer"), res["values"].get("b0_wer"),
+                              res["values"].get("words_per_second")), i)
+        self.assertEqual(v1["c:paren"]["norm"], "72% said yes")                     # the normalizer drops (...)
+        self.assertEqual(out["c:paren"]["norm"], "72% of denver said yes")
+        changed = {"disposition", "reasons", "text", "norm", "human_wer", "b0_wer", "words_per_second"}
         for i, r in v1.items():
             self.assertEqual({k: v for k, v in out[i].items() if k not in changed},
                              {k: v for k, v in r.items() if k not in changed}, i)
+        self.assertNotEqual({i: r["norm"] for i, r in out.items()}, {i: r["norm"] for i, r in v1.items()})
 
     def test_refiltered_records_equal_a_version_3_merge_of_the_same_outputs(self):
         for p in sorted((self.v3 / "shards").glob("*.labels.parquet")):
@@ -359,23 +371,29 @@ class RefilterVersion3(unittest.TestCase):
     def test_the_source_run_is_untouched(self):
         self.assertEqual(files(self.v1), self.v1_files)
 
-    def test_refuses_a_source_whose_stored_text_is_not_its_versions_mapping(self):
-        """The stored text must be the source version's mapping of the stored raw label (here: a version 1 run whose
-        text was written under version 3's mapping)."""
-        bad = self.root / "labels" / "main-badtext"
+    def tampered(self, name: str, column: str) -> Path:
+        """A copy of the version 1 run whose first record with a different `column` under version 3 has version 3's
+        (metas re-signed)."""
+        bad = self.root / "labels" / name
         shutil.copytree(self.v1, bad)
         p = bad / "shards" / "00000.labels.parquet"
         rows = table(p)
-        rows[0]["text"] = filters.map_text(rows[0]["raw"], version=3)
-        self.assertNotEqual(rows[0]["text"], rows[0]["raw"])
+        j = next(j for j, r in enumerate(rows) if filters.label_texts(r["raw"], version=3)[column] != r[column])
+        rows[j][column] = filters.label_texts(rows[j]["raw"], version=3)[column]
         sha = c2._write_parquet(p, rows, c2.label_schema())
         meta_path = p.with_name("00000.json")
         meta_path.write_text(json.dumps(json.loads(meta_path.read_text()) | {"sha256": sha}))
         m = json.loads((bad / "manifest.json").read_text())
         m["shards"][0]["sha256"] = sha
         (bad / "manifest.json").write_text(json.dumps(m))
-        with self.assertRaisesRegex(RuntimeError, "stored label text"):
-            c2.refilter(bad, coverage=b0_like)
+        return bad
+
+    def test_refuses_a_source_whose_stored_text_is_not_its_versions_mapping(self):
+        """The stored text and norm must be what the source version derives from the stored raw label (here: a version
+        1 run whose text, or norm, was written under version 3)."""
+        for column in ("text", "norm"):
+            with self.assertRaisesRegex(RuntimeError, "stored label text"):
+                c2.refilter(self.tampered(f"main-bad{column}", column), coverage=b0_like)
 
 
 if __name__ == "__main__":
