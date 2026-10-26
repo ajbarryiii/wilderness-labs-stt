@@ -42,12 +42,15 @@ from pathlib import Path
 
 import torch
 
-import joint_recompute
 import paths
 import train
-from test_train import HAS_CUDA, tiny_model
 
-TRAIN_ATTRIBUTES = dict(vars(train))  # identity snapshot: the seam must never modify train
+# Identity snapshot of train before the seam module is imported (the seam must never modify
+# train, at import or at use); test_train imports nothing that patches train.
+TRAIN_ATTRIBUTES = dict(vars(train))
+
+import joint_recompute  # noqa: E402
+from test_train import HAS_CUDA, tiny_model  # noqa: E402
 
 HIDDEN, VOCAB, EXTRA, ENC, PRED = 640, 1024, 5, 64, 32  # the pinned joint's H and outputs
 
@@ -114,8 +117,8 @@ class SeamTest(unittest.TestCase):
         self.assertTrue(joint_recompute.is_enabled(student.joint))
         digest = hashlib.sha256(Path(joint_recompute.__file__).read_bytes()).hexdigest()
         self.assertEqual(record, {"joint_recompute": True, "module_sha256": digest})
-        for name in joint_recompute.SOURCES:
-            self.assertTrue((paths.HERE.parent / name).samefile(joint_recompute.__file__))
+        self.assertEqual(joint_recompute.SOURCES, ("parakeet-ternary/joint_recompute.py",))
+        self.assertTrue((paths.HERE.parent / joint_recompute.SOURCES[0]).samefile(joint_recompute.__file__))
         joint_recompute.disable(student.joint)
         self.assertNotIn("joint_after_projection", vars(student.joint))
         with self.assertRaises(RuntimeError):
