@@ -188,6 +188,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--probe-steps", type=int,
                         help="throughput/memory probe: 2 worst-case (30 s utterance) updates, "
                              "then N timed updates; writes probe.json (no eval/checkpoint/export)")
+    parser.add_argument("--tdt-bf16-grads", action="store_true", default=None,
+                        help="keep the TDT loss's saved label gradient in bf16 (tdt_bf16_grads.py); "
+                             "off (None) by default")
     parser.add_argument("--no-powerlog", action="store_true")
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--smoke", action="store_true",
@@ -1196,6 +1199,8 @@ class Context:
         self.stream, self.evaluator, self.quant, self.device = stream, evaluator, quant, device
         self.label_fn = label_fn or local_module("teacher").teacher_label_batch
         self.tdt_kernel_sha256 = prepare_tdt_loss()
+        self.tdt_bf16_grads_sha256 = (local_module("tdt_bf16_grads").install(student)
+                                      if getattr(args, "tdt_bf16_grads", None) else None)
         self.recipe = recipe_of(args)
         self.ramp = ramp_steps(args.max_steps) if self.recipe["quantized"] else None
         self.optimizer, self.scheduler = make_optimizer(student, args.lr, args.max_steps)
@@ -1806,7 +1811,8 @@ def main(argv: list[str] | None = None) -> None:
                           "training_source_hashes": training_source_hashes(),
                           "versions": versions(), "determinism": determinism, "model_file": str(paths.MODEL_FILE),
                           "numba_cuda": {**NUMBA_CUDA,
-                                         "tdt_grad_kernel_patched_sha256": ctx.tdt_kernel_sha256},
+                                         "tdt_grad_kernel_patched_sha256": ctx.tdt_kernel_sha256,
+                                         "tdt_bf16_grads_patched_sha256": ctx.tdt_bf16_grads_sha256},
                           "stream": stream_identity(args, ctx.stream),
                           "stream_state_at_start": ctx.stream.state_dict(),
                           "bucketing": {"pool_batches": POOL_BATCHES,

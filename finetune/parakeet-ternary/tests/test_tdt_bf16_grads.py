@@ -31,9 +31,10 @@ difference under test is therefore the deliberate rounding, not run-to-run noise
   1 % defect required of the negative controls, so the analytic bound is the tolerance and
   (a) plus the output-gradient bound carry the exact proof. Negative controls: a 1 % scaled
   and a dropped-sub-batch gradient fail both checks.
-- held memory after the forward pass: falls by sum(B*T*U*1025) * 2 bytes (half of the fp32
-  label gradients) within max(5x the flag-off repeat difference, 512 B per sub-batch: the
-  allocator rounds each block to 512 B).
+- held memory after the forward pass (after a warm-up call): falls by sum(B*T*U*1025) * 2
+  bytes (half of the fp32 label gradients) within max(5x the flag-off repeat difference,
+  512 B per sub-batch: the allocator rounds each block to 512 B). Measured: repeat
+  difference 0 B, drop 256 B under the expectation.
 
 Shapes are the pinned model's joint (encoder 1024, prediction 640, joint hidden 640,
 1024 tokens + blank + 5 durations, sub-batches of 4, sigma 0.02, mean_volume reduction) with
@@ -256,6 +257,7 @@ class Bf16GradsTest(unittest.TestCase):
         forward and backward are 16 * 200 * 41 * 1025 * 4 bytes; the flag holds half."""
         case = JointCase(seed=3, rows=16, lengths=(200, 40))
         expected = 16 * 200 * 41 * (VOCAB + 1) * 2
+        case.held_bytes(tdt_loss(0.0))  # warm-up: first-call workspaces (cuBLAS, numba) persist
         off_a, peak_off = case.held_bytes(tdt_loss(0.0))
         off_b, _ = case.held_bytes(tdt_loss(0.0))
         on, peak_on = case.held_bytes(self.installed(0.0))
