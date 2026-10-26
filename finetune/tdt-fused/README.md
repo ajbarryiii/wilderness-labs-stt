@@ -41,7 +41,7 @@ p > 0, `masking_prob`, adapters, an explicit joint `log_softmax`, FastEmit, grad
 ## Semantics
 
 The loss and gradients are NeMo's: the same transitions and duration-0 rules, sigma, the joint's
-`RNNTLoss.reduce` (mean_batch for Parakeet), under BF16 autocast the joint in BF16 as NeMo runs it
+`RNNTLoss.reduce` (mean_volume for Parakeet-TDT-0.6B-v2), under BF16 autocast the joint in BF16 as NeMo runs it
 and the loss in FP32. omega draws once per loss call, as in NeMo, so with one call per batch the
 plain RNN-T branch is chosen for a whole batch (about 10% of steps) instead of per 4-row
 sub-batch: the same expected loss with a larger step-to-step variance.
