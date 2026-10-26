@@ -117,6 +117,7 @@ TRAINING_SOURCES = ("parakeet-ternary/train.py", "parakeet-ternary/quant.py",
                     "parakeet-ternary/stream.py", "parakeet-ternary/teacher.py",
                     "parakeet-ternary/evaluate.py", "parakeet-ternary/export.py",
                     "parakeet-ternary/data.py", "parakeet-ternary/paths.py",
+                    "parakeet-ternary/joint_recompute.py",
                     "whisper-ternary/quant.py", "whisper-ternary/wer.py")
 # Arguments that may differ between the original invocation and a resume.
 RESUME_ALLOWED_CHANGES = ("ckpt_minutes", "eval_batch_size", "no_powerlog", "overwrite")
@@ -142,6 +143,8 @@ SUMMARY_TYPES = {"run_name": str, "arm": str, "recipe": str, "lr": float, "max_s
                  "train_pred_joint": bool, "ramp_steps": int, "warmup_steps": int,
                  "audio_seconds_seen": float, "smoke": bool, "started_utc": str,
                  "finished_utc": str}
+# Arguments added after runs had started, with the value a checkpoint that predates them ran.
+ADDED_ARG_DEFAULTS = {"joint_recompute": False}
 # Arguments that must match for a checkpoint to be resumed (the rest are operational).
 RESUME_KEYS = ("arm", "recipe", "lr", "max_steps", "train", "stream", "batch_seconds", "seed",
                "eval_every", "dev_limit", "smoke", "select")
@@ -175,6 +178,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         help="padded audio seconds per batch (batch size x longest utterance)")
     parser.add_argument("--grad-checkpointing", action="store_true",
                         help="recompute each encoder layer in the backward pass")
+    parser.add_argument("--joint-recompute", action="store_true",
+                        help="recompute the joint's [B, T, U, H] hidden activations in the "
+                             "backward pass (joint_recompute.py)")
     parser.add_argument("--eval-every", type=int, help="default: max_steps // 10")
     parser.add_argument("--select", choices=SELECT, default="final",
                         help="model scored and exported: final = the last checkpoint (step == "
@@ -1116,6 +1122,7 @@ def check_checkpoints_readable(run: Path) -> None:
 
 def comparable_args(args) -> dict:
     values = vars(args) if isinstance(args, argparse.Namespace) else dict(args)
+    values = {**ADDED_ARG_DEFAULTS, **values}
     return {k: v for k, v in values.items() if k not in RESUME_ALLOWED_CHANGES}
 
 
@@ -1542,8 +1549,8 @@ def run_probe(ctx: Context, steps: int) -> dict:
     ctx.optimizer.zero_grad(set_to_none=True)
     result = {"arm": args.arm, "recipe": args.recipe, "batch_seconds": args.batch_seconds,
               "grad_checkpointing": args.grad_checkpointing, "stream": args.stream,
-              "status": status, "peak_memory": peaks, "timed_steps": len(seconds),
-              "drop_counts": dict(ctx.state.drop_counts)}
+              "joint_recompute": args.joint_recompute, "status": status, "peak_memory": peaks,
+              "timed_steps": len(seconds), "drop_counts": dict(ctx.state.drop_counts)}
     if seconds:
         total = sum(sum(v) for v in phases.values())
         result.update({k + "_mean": sum(v) / len(v) for k, v in phases.items()})
@@ -1745,6 +1752,8 @@ def build_context(args, run: Path, device: str = "cuda") -> tuple[Context, dict]
     student.to(device)
     if args.grad_checkpointing:
         enable_grad_checkpointing(student.encoder)
+    if args.joint_recompute:
+        local_module("joint_recompute").enable(student.joint)
     teacher = load_teacher(load_pretrained(device))
     evaluator = None if args.probe_steps else DevEvaluator(args.dev_limit, args.eval_batch_size,
                                                            device)
@@ -1862,6 +1871,7 @@ def main(argv: list[str] | None = None) -> None:
                        "seed": args.seed, "batch_seconds": args.batch_seconds, "train": args.train,
                        "stream": config["stream"], **recipe_of(args),
                        "grad_checkpointing": args.grad_checkpointing,
+                       "joint_recompute": getattr(args, "joint_recompute", False),
                        "eval_every": args.eval_every,
                        "source_hashes": training_source_hashes(),  # the finishing session's
                        "quantized_modules_sha256": config.get("quantized_modules_sha256"),
