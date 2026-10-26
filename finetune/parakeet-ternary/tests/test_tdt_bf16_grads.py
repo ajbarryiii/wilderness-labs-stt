@@ -26,7 +26,8 @@ difference under test is therefore the deliberate rounding, not run-to-run noise
   an empirical regression limit for this fixture, not a propagated bound (a relative bound
   on the output gradient does not carry through the backward GEMMs, which can cancel). Its
   size: 2**-7 is the largest relative change the output bound allows any one element
-  (1 ulp <= 2**-7 |g|), and 2**-6 * max|ref| is two bf16 ulps of the tensor's largest element.
+  (1 ulp <= 2**-7 |g|), and 2**-6 * max|ref| is 2 to 4 bf16 ulps of the tensor's largest
+  element (depending on its significand).
   Measured on this case (2026-10-26): relative L2 0.9e-4 to 4.1e-3 and elementwise up to
   7.6e-3 * max|ref|, the same size as re-running the flag-off reference with a different,
   mathematically equivalent sub-batch size (relative L2 up to 5.8e-3). A 5x margin over
