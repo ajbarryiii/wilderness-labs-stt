@@ -12,16 +12,52 @@ inputs and backward is the same graph, so loss and gradients equal the plain joi
 exactly wherever the plain joint is itself reproducible (tests/test_joint_recompute.py; on
 real batches neither is bitwise run to run, and the deviation stays within that spread).
 
-The method is replaced on the instance, so NeMo's joint() and forward(), and every caller
-of the joint (the fused loop, a per-sub-batch backward, decoding), go through it. Without
-gradients (decoding, export) it is the plain method.
+The method is replaced on the joint instance only; train.py and NeMo are not modified. Every
+caller of the joint (NeMo's fused loop, a per-sub-batch backward, decoding) goes through it;
+without gradients (decoding, export) it is the plain method.
+
+Seam for a consuming trainer (train.py itself is frozen):
+1. add_arguments(parser) registers --joint-recompute (default off) on the consumer's parser;
+2. after the model is built and on its device, configure(student, args.joint_recompute)
+   applies it and returns the provenance record, which the consumer stores with its run
+   configuration; with the flag off the model is untouched;
+3. the consumer appends SOURCES to train.TRAINING_SOURCES through its seam;
+4. a resume must refuse a change of the flag, and a checkpoint recorded before the flag
+   existed counts as off (also in any fallback that compares only a stored resume key).
+
+Composition with the other TDT-memory seams: a per-sub-batch backward
+(tdt_chunked.joint_loss) still calls joint.joint(...) per sub-batch, so the recompute applies
+inside it; its torch.autograd.grad runs with autocast off, and the recompute replays the
+forward's autocast state (checkpoint records it), as tested here. A patch of the TDT loss
+instance acts downstream of the joint output and is independent. Order of application
+does not matter.
 """
 from __future__ import annotations
 
+import argparse
+import hashlib
+from pathlib import Path
 import types
 
 import torch
 from torch.utils.checkpoint import checkpoint
+
+SOURCES = ("parakeet-ternary/joint_recompute.py",)  # relative to finetune/, for train.TRAINING_SOURCES
+
+
+def add_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--joint-recompute", action="store_true",
+                        help="recompute the joint's [B, T, U, H] hidden activations in the backward "
+                             "pass (joint_recompute.py)")
+
+
+def configure(student, enabled: bool) -> dict:
+    """Apply --joint-recompute to a built model; returns the provenance record."""
+    record = {"joint_recompute": bool(enabled)}
+    if enabled:
+        enable(student.joint)
+        record["module_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    return record
 
 
 def _joint_after_projection(self, f: torch.Tensor, g: torch.Tensor) -> torch.Tensor:
@@ -52,3 +88,10 @@ def enable(joint: torch.nn.Module) -> None:
                          "update their running statistics twice per step")
     # A bound method (not a closure): deepcopy rebinds it to the copy.
     joint.joint_after_projection = types.MethodType(_joint_after_projection, joint)
+
+
+def disable(joint: torch.nn.Module) -> None:
+    """Undo enable(): the joint is the plain NeMo joint again."""
+    if not is_enabled(joint):
+        raise RuntimeError("joint recompute is not enabled on this joint")
+    del joint.joint_after_projection

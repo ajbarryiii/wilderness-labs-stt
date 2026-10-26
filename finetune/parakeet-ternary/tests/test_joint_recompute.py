@@ -2,13 +2,15 @@
 recomputed in the backward pass instead of being kept from the forward.
 
 Contract under test:
-- off by default; with the flag off build_context leaves the joint untouched; a resume
-  that would change the setting is refused (a checkpoint written before the flag existed
-  counts as off);
+- the seam: add_arguments registers --joint-recompute, off by default; configure leaves
+  the model untouched with the flag off and returns the provenance record; the train
+  module is never modified (its attributes are the same objects after every test);
 - loss, joint output and the gradients of every joint parameter and of the joint's
   inputs equal the flag-off ones exactly (torch.equal), in FP32 and under BF16 autocast,
   and through train.compute_losses (NeMo's fused sub-batch loop, the TDT loss, encoder
-  grad checkpointing) for the full-model, frozen-joint and decoder-only recipes. Exact,
+  grad checkpointing) for the full-model, frozen-joint and decoder-only recipes, and when
+  the backward is a torch.autograd.grad taken with autocast off (as the per-sub-batch
+  backward tdt_chunked.joint_loss takes it). Exact,
   not within a tolerance: the recompute re-runs the same kernels on the same inputs (same
   shapes, so the same GEMM algorithms) and backward is the same graph, so nothing is
   reassociated; any difference is a bug;
@@ -22,23 +24,30 @@ Contract under test:
 - refusals: a module without joint_after_projection, a joint already wrapped, a joint
   containing BatchNorm (the recompute would update its running statistics twice).
 
+Not tested here: resume refusal of a flag change, which is the consuming trainer's
+(joint_recompute's module docstring). train.py and its tests are byte-frozen (M1
+provenance, finetune/parakeet-binary/tests/test_provenance.py).
+
 Run: finetune/parakeet-ternary/python -m unittest discover -s finetune/parakeet-ternary/tests -v
 """
 from __future__ import annotations
 
+import argparse
 import copy
 import gc
-import tempfile
+import hashlib
+import types
 import unittest
 from pathlib import Path
-from unittest import mock
 
 import torch
 
 import joint_recompute
 import paths
 import train
-from test_train import HAS_CUDA, TEST_ROOT, SyntheticStream, make_args, tiny_model
+from test_train import HAS_CUDA, tiny_model
+
+TRAIN_ATTRIBUTES = dict(vars(train))  # identity snapshot: the seam must never modify train
 
 HIDDEN, VOCAB, EXTRA, ENC, PRED = 640, 1024, 5, 64, 32  # the pinned joint's H and outputs
 
@@ -90,41 +99,27 @@ def synthetic_inputs(b: int, t: int, u: int, seed: int = 1):
     return enc, dec, weight
 
 
-class FlagTest(unittest.TestCase):
-    def test_default_off(self) -> None:
-        self.assertFalse(make_args().joint_recompute)
-        argv = ["--arm", "P2", "--lr", "1e-3", "--run-name", "x", "--max-steps", "2",
-                "--joint-recompute"]
-        self.assertTrue(train.parse_args(argv).joint_recompute)
+class SeamTest(unittest.TestCase):
+    def test_add_arguments(self) -> None:
+        parser = argparse.ArgumentParser()
+        joint_recompute.add_arguments(parser)
+        self.assertFalse(parser.parse_args([]).joint_recompute)
+        self.assertTrue(parser.parse_args(["--joint-recompute"]).joint_recompute)
 
-    def test_resume_refuses_a_change(self) -> None:
-        off, on = make_args(), make_args(joint_recompute=True)
-        self.assertEqual(train.resume_mismatches(vars(off), off), [])
-        self.assertEqual(train.resume_mismatches(vars(on), on), [])
-        self.assertTrue(train.resume_mismatches(vars(off), on))
-        self.assertTrue(train.resume_mismatches(vars(on), off))
-        # A checkpoint written before the flag existed trained without it.
-        legacy = {k: v for k, v in vars(off).items() if k != "joint_recompute"}
-        self.assertEqual(train.resume_mismatches(legacy, off), [])
-        self.assertTrue(train.resume_mismatches(legacy, on))
-
-    def test_resume_payload_check(self) -> None:
-        """Through load_resume_payload, for checkpoints with recorded arguments and for the
-        oldest ones, which record only the resume key."""
-        paths.require_mount()
-        off, on = make_args(), make_args(joint_recompute=True)
-        TEST_ROOT.mkdir(parents=True, exist_ok=True)
-        for recorded, payload in ((off, {"args": vars(off)}), (on, {"args": vars(on)}),
-                                  (off, {})):
-            with tempfile.TemporaryDirectory(dir=TEST_ROOT) as tmp:
-                run = Path(tmp)
-                train.save_checkpoint(run, {"step": 3, "resume_key": train.resume_key(recorded),
-                                            **payload})
-                self.assertEqual(train.load_resume_payload(run, recorded)["step"], 3)
-                other = on if recorded is off else off
-                with self.assertRaises(SystemExit) as exit_:
-                    train.load_resume_payload(run, other)
-                self.assertEqual(exit_.exception.code, train.EXIT_RESUME_MISMATCH)
+    def test_configure(self) -> None:
+        student = types.SimpleNamespace(joint=synthetic_joint())
+        self.assertEqual(joint_recompute.configure(student, False), {"joint_recompute": False})
+        self.assertNotIn("joint_after_projection", vars(student.joint))
+        record = joint_recompute.configure(student, True)
+        self.assertTrue(joint_recompute.is_enabled(student.joint))
+        digest = hashlib.sha256(Path(joint_recompute.__file__).read_bytes()).hexdigest()
+        self.assertEqual(record, {"joint_recompute": True, "module_sha256": digest})
+        for name in joint_recompute.SOURCES:
+            self.assertTrue((paths.HERE.parent / name).samefile(joint_recompute.__file__))
+        joint_recompute.disable(student.joint)
+        self.assertNotIn("joint_after_projection", vars(student.joint))
+        with self.assertRaises(RuntimeError):
+            joint_recompute.disable(student.joint)
 
     def test_refusals(self) -> None:
         with self.assertRaises(TypeError):
@@ -169,6 +164,26 @@ class SyntheticJointTest(unittest.TestCase):
             self.assert_same(joint_step(ref, enc, dec, weight, autocast, seed=5),
                              joint_step(rec, enc, dec, weight, autocast, seed=5),
                              f"autocast={autocast}")
+
+    def test_grad_with_autocast_off(self) -> None:
+        """The per-sub-batch backward's pattern (tdt_chunked.joint_loss): forward under BF16
+        autocast, then torch.autograd.grad with autocast off; the recompute must replay the
+        forward's autocast state."""
+        enc, dec, weight = synthetic_inputs(3, 40, 15)
+        results = []
+        for joint in pair(p=0.3):
+            torch.manual_seed(5)
+            e, d = enc.clone().requires_grad_(True), dec.clone().requires_grad_(True)
+            with torch.autocast("cuda", dtype=torch.bfloat16):
+                out = joint.joint(e, d)
+                loss = (out.float() * weight).sum()
+            params = list(joint.parameters())
+            with torch.autocast("cuda", enabled=False):
+                grads = torch.autograd.grad(loss, [e, d] + params)
+            results.append([loss.detach()] + [g.cpu() for g in grads])
+        self.assertEqual(results[0][1].dtype, torch.float32)
+        for i, (a, b) in enumerate(zip(*results)):
+            self.assertTrue(torch.equal(a.cpu(), b.cpu()), f"item {i}")
 
     def test_dropout_mask_reproduced(self) -> None:
         enc, dec, weight = synthetic_inputs(3, 40, 15)
@@ -248,8 +263,7 @@ class TrainingPathTest(unittest.TestCase):
         model.cuda()
         if recipe != "decoder-only":
             train.enable_grad_checkpointing(model.encoder)
-        if recompute:
-            joint_recompute.enable(model.joint)
+        self.assertEqual(joint_recompute.configure(model, recompute)["joint_recompute"], recompute)
         return model, flags
 
     def step(self, recipe: str, recompute: bool) -> dict:
@@ -291,26 +305,15 @@ class TrainingPathTest(unittest.TestCase):
             self.assertTrue(any(k.startswith("joint.") for k in a["grads"]) == (recipe != "frozen-joint"))
             self.assertTrue(torch.equal(a["next_draw"], b["next_draw"]), f"{recipe}: RNG")
 
-    def test_build_context_hook(self) -> None:
-        """Flag off: the joint is untouched; on: wrapped. Encoder checkpointing either way."""
-        teacher = train.load_teacher(tiny_model())
-        for flag in (False, True):
-            argv = ["--arm", "A1", "--recipe", "P3", "--train", "pilot", "--lr", "1e-3",
-                    "--run-name", "hook", "--max-steps", "3", "--probe-steps", "1",
-                    "--stream", "local-librispeech", "--grad-checkpointing", "--no-powerlog"]
-            args = train.parse_args(argv + (["--joint-recompute"] if flag else []))
-            with mock.patch.object(train, "verify_base", return_value={}), \
-                    mock.patch.object(train, "load_pretrained", side_effect=lambda *_: tiny_model()), \
-                    mock.patch.object(train, "load_teacher", return_value=teacher), \
-                    mock.patch.object(train, "open_stream", return_value=SyntheticStream()):
-                TEST_ROOT.mkdir(parents=True, exist_ok=True)
-                with tempfile.TemporaryDirectory(dir=TEST_ROOT) as tmp:
-                    ctx, _ = train.build_context(args, Path(tmp))
-            self.assertEqual(joint_recompute.is_enabled(ctx.student.joint), flag)
-            self.assertEqual("joint_after_projection" in vars(ctx.student.joint), flag)
-            self.assertTrue(all("forward" in vars(layer) for layer in ctx.student.encoder.layers))
-            del ctx
-            torch.cuda.empty_cache()
+
+class ZTrainRestoredTest(unittest.TestCase):
+    """Runs last (unittest orders classes by name): train's attributes are the objects it had
+    when this module was imported, after every test above."""
+
+    def test_train_module_untouched(self) -> None:
+        self.assertEqual(TRAIN_ATTRIBUTES.keys(), vars(train).keys())
+        changed = [k for k, v in vars(train).items() if TRAIN_ATTRIBUTES[k] is not v]
+        self.assertEqual(changed, [])
 
 
 if __name__ == "__main__":

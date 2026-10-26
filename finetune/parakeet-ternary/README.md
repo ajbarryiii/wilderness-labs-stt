@@ -331,15 +331,6 @@ step boundary (a checkpoint takes 30-45 s, inside systemd's 90 s stop timeout) a
 76. Rerunning the same command resumes. Never pass `--overwrite` unless a run is to be
 discarded.
 
-`--joint-recompute` (off by default; `joint_recompute.py`) recomputes the joint's hidden
-activations, relu(enc_proj + dec_proj), in the backward pass instead of keeping them from
-the forward: for every sub-batch of NeMo's fused joint loop that frees B x T x U x 640
-BF16 values (2 bytes per value; 5 with joint dropout > 0) and keeps the [B, T, 640] and
-[B, U, 640] projections instead. Loss and gradients are bitwise those without it
-wherever the run without it is itself reproducible (`tests/test_joint_recompute.py`); on
-real batches neither is bitwise run to run (BF16 GPU kernels), and the difference stays
-within that run-to-run spread. A resume refuses a change of the flag.
-
 ### Data and labels per step
 
 The stream (`stream.make_training_stream(phase, seed)`, 8 download workers, spawn
