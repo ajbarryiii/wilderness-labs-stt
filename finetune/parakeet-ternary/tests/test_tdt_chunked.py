@@ -39,6 +39,7 @@ import os
 import random
 import types
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import torch
@@ -77,12 +78,15 @@ def is_joint(name: str) -> bool:
 
 
 def compare(ref: tuple, got: tuple) -> dict:
-    """loss_equal; unequal: the non-joint gradients that are not bitwise equal; and over the
-    joint's parameter gradients the worst relative L2, 1 - cosine and max |diff| / max |ref|."""
+    """nonfinite: gradients with a NaN or inf on either side; loss_equal; unequal: the non-joint
+    gradients that are not bitwise equal; and over the joint's parameter gradients the worst
+    relative L2, 1 - cosine and max |diff| / max |ref|."""
     (loss_a, grads_a), (loss_b, grads_b) = ref, got
     if grads_a.keys() != grads_b.keys():
         raise AssertionError(f"gradient sets differ: {sorted(grads_a)} vs {sorted(grads_b)}")
-    out = {"loss_equal": torch.equal(loss_a, loss_b),
+    out = {"nonfinite": sorted(k for k in grads_a if not (torch.isfinite(grads_a[k]).all()
+                                                          and torch.isfinite(grads_b[k]).all())),
+           "loss_equal": torch.equal(loss_a, loss_b),
            "loss_rel": abs(float(loss_b) - float(loss_a)) / abs(float(loss_a)),
            "unequal": sorted(k for k in grads_a if not is_joint(k)
                              and not torch.equal(grads_a[k], grads_b[k])),
@@ -106,7 +110,8 @@ def identical(ref: tuple, got: tuple) -> bool:
 
 def within(ref: tuple, got: tuple, tol: dict) -> tuple[bool, dict]:
     found = compare(ref, got)
-    ok = found["loss_equal"] and not found["unequal"] and all(found[k] <= tol[k] for k in tol)
+    ok = (not found["nonfinite"] and found["loss_equal"] and not found["unequal"]
+          and all(found[k] <= tol[k] for k in tol))
     return ok, found
 
 
@@ -232,6 +237,24 @@ class ArgsTest(unittest.TestCase):
         self.assertTrue(train.resume_mismatches(older, make_args(tdt_chunked_backward=True)))
         self.assertTrue(train.resume_mismatches(older, make_args(fused_batch_size=8)))
 
+    def test_legacy_checkpoint_without_args_refuses_the_new_settings(self) -> None:
+        """A checkpoint with only a resume_key (no recorded args) was written with both off."""
+        import shutil
+        import tempfile
+        from test_train import TEST_ROOT
+        TEST_ROOT.mkdir(parents=True, exist_ok=True)
+        run = Path(tempfile.mkdtemp(dir=TEST_ROOT))
+        try:
+            args = make_args()
+            train.save_checkpoint(run, {"step": 3, "resume_key": train.resume_key(args)})
+            self.assertEqual(train.load_resume_payload(run, args)["step"], 3)
+            for change in ({"tdt_chunked_backward": True}, {"fused_batch_size": 16}):
+                with self.assertRaises(SystemExit) as stop:
+                    train.load_resume_payload(run, make_args(**change))
+                self.assertEqual(stop.exception.code, train.EXIT_RESUME_MISMATCH, change)
+        finally:
+            shutil.rmtree(run, ignore_errors=True)
+
 
 class ConfigureTest(unittest.TestCase):
     @classmethod
@@ -255,6 +278,7 @@ class ConfigureTest(unittest.TestCase):
         self.assertEqual(model.joint.fused_batch_size, 8)
         self.assertTrue(tdt_chunked.enabled(model.joint))
         self.assertTrue(record["chunked_backward"])
+        self.assertEqual(len(record["module_sha256"]), 64)
         for bad in (0, -1, 2.5):
             with self.assertRaises(ValueError):
                 tdt_chunked.configure(tiny_model(), bad, False)
@@ -444,11 +468,16 @@ class NegativeControlTest(TinyJoint, unittest.TestCase):
                     grads[k][:8, :, :v.shape[-1]] = v
             self.assertFalse(within(ref, (dropped[0], grads), tol)[0],
                              f"bf16={bf16}: dropped sub-batch passed")
-        # In FP32 the joint tolerance alone sees a 1% error confined to the joint's gradients.
+        # In FP32 the joint tolerance alone sees a 1% error confined to the joint's gradients;
+        # a non-finite joint gradient fails at any tolerance.
         batch = synthetic(12, 96, 24, seed=10)
         ref = run("fused", self.joint, batch, 4)
         joint_only = (ref[0], {k: v * 1.01 if is_joint(k) else v for k, v in ref[1].items()})
         self.assertFalse(within(ref, joint_only, TOL_FP32)[0], "1% joint gradient scale passed")
+        name = next(filter(is_joint, ref[1]))
+        for bad in (float("nan"), float("inf")):
+            broken = (ref[0], {**ref[1], name: torch.full_like(ref[1][name], bad)})
+            self.assertFalse(within(ref, broken, TOL_REAL)[0], f"{bad} joint gradient passed")
 
 
 @unittest.skipUnless(HAS_CUDA, "the TDT loss is CUDA-only")

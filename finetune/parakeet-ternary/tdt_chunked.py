@@ -26,6 +26,9 @@ RNN-T/TDT branches are chosen. Not supported: double backward, compute_wer.
 """
 from __future__ import annotations
 
+import hashlib
+from pathlib import Path
+
 import torch
 
 ATTR = "tdt_chunked_backward"  # set on the joint by configure; train.compute_losses reads it
@@ -41,11 +44,13 @@ def configure(student, fused_batch_size: int | None, chunked: bool) -> dict:
         if type(fused_batch_size) is not int or fused_batch_size < 1:
             raise ValueError(f"fused_batch_size must be a positive int, not {fused_batch_size!r}")
         joint.set_fused_batch_size(fused_batch_size)
+    record = {"chunked_backward": bool(chunked), "fused_batch_size": joint.fused_batch_size,
+              "fused_batch_size_default": default, "reduction": joint.loss.reduction}
     if chunked:
         check_supported(joint)
         setattr(joint, ATTR, True)
-    return {"chunked_backward": bool(chunked), "fused_batch_size": joint.fused_batch_size,
-            "fused_batch_size_default": default, "reduction": joint.loss.reduction}
+        record["module_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    return record
 
 
 def enabled(joint) -> bool:
