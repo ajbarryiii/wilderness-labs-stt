@@ -20,6 +20,7 @@ Run (GPU): finetune/tdt-fused/python -m unittest discover -s finetune/tdt-fused/
 """
 from __future__ import annotations
 
+import functools
 import hashlib
 import math
 import os
@@ -206,8 +207,15 @@ class SeamTest(unittest.TestCase):
         def other(*_, **__):
             raise AssertionError("never called")
 
-        with mock.patch.object(train, "compute_losses", other), self.assertRaisesRegex(ValueError, "compute_losses"):
-            tdt_fused.replacements()
+        @functools.wraps(train.compute_losses)  # keeps __module__, __name__ and __qualname__ (review round 3)
+        def wrapped(*args, **kwargs):
+            return original(*args, **kwargs)
+
+        original = train.compute_losses
+        for replacement in (other, wrapped):
+            with mock.patch.object(train, "compute_losses", replacement), \
+                    self.assertRaisesRegex(ValueError, "compute_losses"):
+                tdt_fused.replacements()
         with tdt_fused.installed(), self.assertRaisesRegex(ValueError, "compute_losses"):
             tdt_fused.replacements()
 
@@ -234,12 +242,27 @@ class RefusalTest(unittest.TestCase):
     def test_refuses_other_replacements_of_the_joint_or_loss(self) -> None:
         """tdt_fused computes the joint and the loss itself: any other seam on them (an instance or a
         class attribute replaced, e.g. the sibling joint-memory changes) would be bypassed silently."""
+        import wrapt
         from nemo.collections.asr.losses.rnnt import RNNTLoss
         from nemo.collections.asr.modules.rnnt import RNNTJoint
         batch = make_batch(ROWS[:2], **SMALL)
         joint = make_joint(**SMALL)
         original = RNNTJoint.joint_after_projection
-        cases = [(joint, "joint_after_projection", lambda f, g: original(joint, f, g)),
+        loss_forward = RNNTLoss.forward
+
+        @functools.wraps(loss_forward)  # keeps __module__ (review round 3): must still be refused
+        def scaled_loss(self, *args, **kwargs):
+            return 1.1 * loss_forward(self, *args, **kwargs)
+
+        @functools.wraps(original)
+        def wrapped_joint(self, f, g):
+            return original(self, f, g)
+
+        # A wrapt wrapper (as NeMo's own typecheck) proxies even __code__ to the wrapped function.
+        proxied = wrapt.FunctionWrapper(loss_forward, lambda wrapped, _, args, kwargs: 1.1 * wrapped(*args, **kwargs))
+        cases = [(RNNTLoss, "forward", scaled_loss), (RNNTJoint, "joint_after_projection", wrapped_joint),
+                 (RNNTLoss, "forward", proxied),
+                 (joint, "joint_after_projection", lambda f, g: original(joint, f, g)),
                  (RNNTJoint, "joint_after_projection", lambda self, f, g: original(self, f, g)),
                  (RNNTJoint, "project_encoder", lambda self, x: self.enc(x)),
                  (joint.loss, "forward", lambda *a, **k: None),
