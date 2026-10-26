@@ -118,6 +118,8 @@ TRAINING_SOURCES = ("parakeet-ternary/train.py", "parakeet-ternary/quant.py",
                     "parakeet-ternary/evaluate.py", "parakeet-ternary/export.py",
                     "parakeet-ternary/data.py", "parakeet-ternary/paths.py",
                     "whisper-ternary/quant.py", "whisper-ternary/wer.py")
+# Arguments added after runs were recorded, with the value an older record means.
+ADDED_ARG_DEFAULTS = {"tdt_chunked_backward": False, "fused_batch_size": None}
 # Arguments that may differ between the original invocation and a resume.
 RESUME_ALLOWED_CHANGES = ("ckpt_minutes", "eval_batch_size", "no_powerlog", "overwrite")
 # DESIGN.md "Distillation variants": the recipe flags each arm must have (M1, A1: per recipe).
@@ -175,6 +177,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         help="padded audio seconds per batch (batch size x longest utterance)")
     parser.add_argument("--grad-checkpointing", action="store_true",
                         help="recompute each encoder layer in the backward pass")
+    parser.add_argument("--tdt-chunked-backward", action="store_true",
+                        help="backward through the TDT joint and loss one sub-batch at a time "
+                             "(tdt_chunked.py): peak memory of one sub-batch, not the batch")
+    parser.add_argument("--fused-batch-size", type=positive_int,
+                        help="rows per sub-batch of the fused TDT joint (default: the model's)")
     parser.add_argument("--eval-every", type=int, help="default: max_steps // 10")
     parser.add_argument("--select", choices=SELECT, default="final",
                         help="model scored and exported: final = the last checkpoint (step == "
@@ -194,6 +201,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         help="plumbing run: 20 steps, eval every 10 on 16 utterances per set")
     args = parser.parse_args(argv)
     return resolve_args(args, parser)
+
+
+def positive_int(value: str) -> int:
+    n = int(value)
+    if n < 1:
+        raise argparse.ArgumentTypeError(f"must be a positive integer, not {value}")
+    return n
 
 
 def resolve_args(args: argparse.Namespace, parser: argparse.ArgumentParser | None = None
@@ -955,9 +969,13 @@ def compute_losses(student, audio: torch.Tensor, audio_len: torch.Tensor, tokens
         grad_ctx = contextlib.nullcontext() if recipe["train_pred_joint"] else torch.no_grad()
         with grad_ctx:
             dec, _, _ = student.decoder(targets=tokens, target_length=token_len)
-        tdt, _, _, _ = student.joint(encoder_outputs=enc, decoder_outputs=dec,
-                                     encoder_lengths=enc_len, transcripts=tokens,
-                                     transcript_lengths=token_len, compute_wer=False)
+        if getattr(student.joint, "tdt_chunked_backward", False):  # tdt_chunked.configure
+            tdt = local_module("tdt_chunked").joint_loss(student.joint, enc, dec, enc_len, tokens,
+                                                         token_len)
+        else:
+            tdt, _, _, _ = student.joint(encoder_outputs=enc, decoder_outputs=dec,
+                                         encoder_lengths=enc_len, transcripts=tokens,
+                                         transcript_lengths=token_len, compute_wer=False)
     if tdt.dim() != 0:
         raise RuntimeError(f"TDT loss is not a scalar (shape {tuple(tdt.shape)}); "
                            f"loss reduction is {student.loss.reduction!r}")
@@ -1123,6 +1141,7 @@ def resume_mismatches(recorded: dict, args) -> list[str]:
     """Differences between the checkpoint's recorded invocation and this one, other than
     RESUME_ALLOWED_CHANGES."""
     old, new = comparable_args(recorded), comparable_args(args)
+    old = {**{k: v for k, v in ADDED_ARG_DEFAULTS.items() if k in new}, **old}
     return [f"--{k.replace('_', '-')} {old.get(k)!r} -> {new.get(k)!r}"
             for k in sorted(set(old) | set(new)) if old.get(k) != new.get(k)]
 
@@ -1742,6 +1761,8 @@ def build_context(args, run: Path, device: str = "cuda") -> tuple[Context, dict]
         quantized = list(quant.quantize_parakeet(student))
     params = configure_trainable(student, recipe)
     params["verified"] = verify_recipe(student, recipe, quant)
+    tdt_joint = local_module("tdt_chunked").configure(student, args.fused_batch_size,
+                                                      args.tdt_chunked_backward)
     student.to(device)
     if args.grad_checkpointing:
         enable_grad_checkpointing(student.encoder)
@@ -1752,7 +1773,7 @@ def build_context(args, run: Path, device: str = "cuda") -> tuple[Context, dict]
     info = {"base": base, "quantized_modules": quantized,
             "quantized_modules_sha256": (hashlib.sha256(json.dumps(sorted(quantized)).encode())
                                          .hexdigest() if quantized else None),
-            "trainable": params,
+            "trainable": params, "tdt_joint": tdt_joint,
             "parameter_accounting": quant.parameter_accounting(student) if quant else None}
     return ctx, info
 
@@ -1862,6 +1883,7 @@ def main(argv: list[str] | None = None) -> None:
                        "seed": args.seed, "batch_seconds": args.batch_seconds, "train": args.train,
                        "stream": config["stream"], **recipe_of(args),
                        "grad_checkpointing": args.grad_checkpointing,
+                       "tdt_joint": config.get("tdt_joint"),
                        "eval_every": args.eval_every,
                        "source_hashes": training_source_hashes(),  # the finishing session's
                        "quantized_modules_sha256": config.get("quantized_modules_sha256"),

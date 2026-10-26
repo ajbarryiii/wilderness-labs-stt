@@ -473,6 +473,25 @@ finite differences. Gradient checkpointing wraps each conformer layer
 recompute (identical dropout masks), and BatchNorm running statistics are restored after
 the recompute, so checkpointing is bit-identical to no checkpointing (tested).
 
+### TDT joint sub-batches (`--fused-batch-size`, `--tdt-chunked-backward`)
+
+NeMo's fused joint computes the TDT loss in sub-batches of `fused_batch_size` rows (the
+model's own value, 4, unless `--fused-batch-size N` sets it), but every sub-batch's joint
+activations and FP32 TDT gradient stay alive until `loss.backward()`, so peak memory grows
+with the whole batch. `--tdt-chunked-backward` (`tdt_chunked.py`, off by default) takes
+each sub-batch's gradients w.r.t. the encoder output, the prediction-network output and
+the joint's parameters right after its loss and frees its graph, so the joint's peak
+memory is one sub-batch's; `train_step`'s single `loss.backward()` then applies them. Same
+NeMo calls on the same sub-batches: loss and encoder/prediction-network gradients are
+bitwise equal to the fused path, the joint's parameter gradients equal up to summation
+order (FP32 instead of NeMo's bf16 sum of autocast's cached weight casts), and the TDT
+loss's omega draw (one per sub-batch) is unchanged, so a given `--fused-batch-size`
+chooses the same RNN-T/TDT branches either way. Supports the mean_volume (this model's),
+mean_batch, mean and sum reductions; refuses double backward and WER computation. Both
+settings are recorded in `config.json` (`args`, `tdt_joint`) and `summary.json`, and a
+resume with either changed is refused (exit 78). `tests/test_tdt_chunked.py` holds the
+contract tests (`TDT_CHUNKED_REAL_MODEL=1` adds the bf16 check on the pinned model).
+
 ### Measured throughput and memory (Phase 0)
 
 Probe: `train.py --probe-steps` (2 untimed worst-case updates on 30 s utterances, built by
