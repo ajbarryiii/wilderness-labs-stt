@@ -108,6 +108,24 @@ class FlagTest(unittest.TestCase):
         self.assertEqual(train.resume_mismatches(legacy, off), [])
         self.assertTrue(train.resume_mismatches(legacy, on))
 
+    def test_resume_payload_check(self) -> None:
+        """Through load_resume_payload, for checkpoints with recorded arguments and for the
+        oldest ones, which record only the resume key."""
+        paths.require_mount()
+        off, on = make_args(), make_args(joint_recompute=True)
+        TEST_ROOT.mkdir(parents=True, exist_ok=True)
+        for recorded, payload in ((off, {"args": vars(off)}), (on, {"args": vars(on)}),
+                                  (off, {})):
+            with tempfile.TemporaryDirectory(dir=TEST_ROOT) as tmp:
+                run = Path(tmp)
+                train.save_checkpoint(run, {"step": 3, "resume_key": train.resume_key(recorded),
+                                            **payload})
+                self.assertEqual(train.load_resume_payload(run, recorded)["step"], 3)
+                other = on if recorded is off else off
+                with self.assertRaises(SystemExit) as exit_:
+                    train.load_resume_payload(run, other)
+                self.assertEqual(exit_.exception.code, train.EXIT_RESUME_MISMATCH)
+
     def test_refusals(self) -> None:
         with self.assertRaises(TypeError):
             joint_recompute.enable(torch.nn.Linear(2, 2))

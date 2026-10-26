@@ -1144,7 +1144,9 @@ def load_resume_payload(run: Path, args) -> dict | None:
     recorded = payload.get("args")
     problems = (resume_mismatches(recorded, args) if recorded is not None else
                 [f"{k}: {payload['resume_key'].get(k)!r} -> {v!r}"
-                 for k, v in resume_key(args).items() if payload["resume_key"].get(k) != v])
+                 for k, v in resume_key(args).items() if payload["resume_key"].get(k) != v]
+                + [f"{k}: {d!r} -> {getattr(args, k, d)!r}"  # the checkpoint predates k
+                   for k, d in ADDED_ARG_DEFAULTS.items() if getattr(args, k, d) != d])
     if problems:
         log(f"refusing to resume {run}: the arguments differ from the checkpoint's: "
             f"{'; '.join(problems)}. Rerun with the original arguments.")

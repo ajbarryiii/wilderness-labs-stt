@@ -9,7 +9,8 @@ recomputes the grid when it first needs it (checkpoint's early stop ends the rec
 the output Linear's saved input exists, so the [B, T, U, V] GEMM is not repeated). The RNG
 state is preserved, so dropout masks match; the recompute runs the same kernels on the same
 inputs and backward is the same graph, so loss and gradients equal the plain joint's
-exactly (tests/test_joint_recompute.py).
+exactly wherever the plain joint is itself reproducible (tests/test_joint_recompute.py; on
+real batches neither is bitwise run to run, and the deviation stays within that spread).
 
 The method is replaced on the instance, so NeMo's joint() and forward(), and every caller
 of the joint (the fused loop, a per-sub-batch backward, decoding), go through it. Without
