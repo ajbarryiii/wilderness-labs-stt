@@ -274,7 +274,7 @@ class EquivalenceTest(_Case):
                         target_lengths=batch["token_len"])
         loss.backward()
         grads = {"enc": enc.grad, "dec": dec.grad} | {n: p.grad for n, p in joint.named_parameters()}
-        ref = {"loss": float(loss), "grads": {k: v.double().cpu() for k, v in grads.items()}}
+        ref = {"loss": loss.item(), "grads": {k: v.double().cpu() for k, v in grads.items()}}
         self.assert_matches(ref, run(joint, batch, fused=True), TOL_FP32, "TDTLossPytorch")
 
 
@@ -420,10 +420,9 @@ class TrainerHookTest(_Case):
             self.assert_matches(ref, out, TOL_BF16_MODEL, f"tiny model seed {seed}")
 
     def test_train_step_runs_with_the_flag(self) -> None:
-        import copy
         import types
         import tdt_fused
-        student = copy.deepcopy(self.student)
+        student = decoder_only_tiny_model()  # NeMo models cannot be deep-copied
         record = tdt_fused.configure(student, argparse.Namespace(tdt_fused_kernel=True))
         self.assertTrue(tdt_fused.enabled(student.joint))
         self.assertEqual(record["chunk_cells"], tdt_fused.CHUNK_CELLS)

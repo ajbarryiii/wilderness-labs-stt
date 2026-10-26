@@ -83,6 +83,7 @@ TRAINING_SOURCES = ("parakeet-ternary/train.py", "parakeet-ternary/quant.py",
                     "parakeet-ternary/stream.py", "parakeet-ternary/teacher.py",
                     "parakeet-ternary/evaluate.py", "parakeet-ternary/export.py",
                     "parakeet-ternary/data.py", "parakeet-ternary/paths.py",
+                    "parakeet-ternary/tdt_fused.py",
                     "whisper-ternary/quant.py", "whisper-ternary/wer.py")
 # DESIGN.md "Distillation variants": flag values per arm (M1 and A1 follow their recipe).
 RECIPE_FLAGS = {"P1": {"encoder_matching": False, "train_pred_joint": False},
