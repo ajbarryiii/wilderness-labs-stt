@@ -1,3 +1,10 @@
+# The encoder functions below (attention, conv_module, block, encode and embed) are adapted from vLLM 0.32.0,
+# vllm/model_executor/models/granite_speech.py (GraniteSpeechConformerAttention, GraniteSpeechConformerConvModule,
+# GraniteSpeechConformerBlock, GraniteSpeechCTCEncoder and GraniteSpeechForConditionalGeneration._process_audio_input).
+# Copyright contributors to the vLLM project. Licensed under the Apache License, Version 2.0
+# (https://www.apache.org/licenses/LICENSE-2.0); this file's other code is under the repository's licence.
+# Modified 2026-10-25: each clip in a batch is masked and zero-padded to its own length, the attention output projection
+# gets a contiguous input, and the convolutions use shape-independent kernels (see the module docstring).
 """Per-clip Granite speech encoder for vLLM (labeling plan "Engine", 2026-10-25): a clip's audio embedding no longer
 depends on the clips it shares a scheduler step with.
 
