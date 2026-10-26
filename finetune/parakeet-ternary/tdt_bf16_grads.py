@@ -10,8 +10,9 @@ moves that rounding before the multiplication by the upstream gradient:
 
 The product stays in fp32 (the original backward casts the upstream gradient to the saved
 tensor's dtype, which would round s to bf16 as well; the patch multiplies in fp32 instead),
-which bounds the change of every label-gradient element to one bf16 ulp. The five duration
-gradients pass through an fp32 log_softmax backward and stay fp32. The argument needs bf16
+which bounds the change of every label-gradient element to one bf16 ulp. The saved duration
+gradients feed an fp32 log_softmax backward and stay fp32, so the duration columns of the
+gradient w.r.t. the joint's output are unchanged. The argument needs bf16
 logits: install() makes each patched loss refuse logits of any other dtype.
 
 The patch is a source rebuild of _TDTNumba (asserted text replacements, nothing else

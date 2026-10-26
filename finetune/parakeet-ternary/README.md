@@ -481,8 +481,9 @@ the forward pass and holds it until backward, for every fused sub-batch. With
 on the model's TDT loss) that tensor is held in bf16, halving it. Under the trainer's bf16
 autocast the gradient reaching the bf16 logits is rounded to bf16 anyway, so this moves
 one rounding: the loss is bitwise unchanged, every label element of the gradient w.r.t. the
-joint's output stays within one bf16 ulp, and the five duration gradients stay fp32 and
-unchanged (`tests/test_tdt_bf16_grads.py`, both omega branches). The patched loss refuses
+joint's output stays within one bf16 ulp, the saved duration gradients stay fp32, and the
+five duration columns of the gradient w.r.t. the joint's output are bitwise unchanged
+(`tests/test_tdt_bf16_grads.py`, both omega branches). The patched loss refuses
 logits that are not bf16. The flag is recorded in the run's args (a run cannot resume with
 it switched) and the patched source's SHA-256 in `config.json`
 (`numba_cuda.tdt_bf16_grads_patched_sha256`).
