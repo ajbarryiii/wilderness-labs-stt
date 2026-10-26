@@ -61,8 +61,9 @@ TOL_BF16_REAL = dict(loss_rel=1.2e-3, grad_rel_l2=7.5e-2, grad_max_rel=0.55, cos
 # floors loss 6.0e-5, whole-gradient L2 5.6e-3, per-tensor max element 8.2e-3, cosine gap 1.5e-5;
 # a plain repeat alone reaches 4.5e-5, 4.1e-3, 8.1e-3, 8.4e-6 (the GPU path is not deterministic).
 TOL_BF16_MODEL = dict(loss_rel=3e-4, grad_rel_l2=2.8e-2, grad_max_rel=4.1e-2, cosine_gap=7.7e-5)
-# Peak-memory slope (bytes per lattice cell): the fused loss keeps a few FP32 scalars per cell;
-# NeMo keeps at least the FP32 [.., 1030] gradient (4120 B/cell) per cell.
+# Peak-memory slope (bytes per lattice cell): the fused loss keeps FP32 scalars per cell (alpha,
+# beta, 8 statistics, 8 coefficients: 72 B), measured 92 B/cell with the per-token tensors; NeMo
+# keeps at least the FP32 [.., 1030] gradient (4120 B/cell) per cell, measured 15.7 KB/cell.
 MAX_FUSED_BYTES_PER_CELL = 512
 MIN_MATERIALIZED_BYTES_PER_CELL = 4 * 1030
 
@@ -317,19 +318,24 @@ def _peak_bytes(joint, batch: dict, fused: bool) -> int:
 @unittest.skipUnless(HAS_CUDA, "the TDT loss is CUDA-only")
 class MemoryTest(unittest.TestCase):
     def test_peak_memory_grows_with_cells_not_vocabulary(self) -> None:
-        """Peak CUDA memory of forward + backward (BF16 autocast, real joint sizes) at two batch
-        sizes; the slope per lattice cell (B*T*(U+1)) separates per-cell scalars from a per-cell
-        [1030] tensor. The same measurement of NeMo's path is the negative control."""
+        """Peak CUDA memory of forward + backward (BF16 autocast, real joint sizes) for transcripts of
+        two lengths at the same B and T, so per-frame costs cancel: the slope per extra lattice cell
+        (B*T*(U+1)) separates per-cell scalars from a per-cell [1030] tensor. Each path runs once
+        first, so one-time allocations (cuBLAS workspace) do not count. The same measurement of
+        NeMo's path is the negative control."""
         import tdt_fused
         joint = make_joint(**REAL, logit_scale=8.0, fused_batch_size=4)
-        # Every row larger than the chunk budget, so both sizes run full chunks.
-        sizes = [((250, 80),) * 2, ((350, 120),) * 5]
+        sizes = [((300, 40),) * 4, ((300, 160),) * 4]  # 49k and 193k cells, 1200 frames each
         cells = [sum(t * (u + 1) for t, u in rows) for rows in sizes]
         slope = {}
-        for fused in (True, False):
-            with mock.patch.object(tdt_fused, "CHUNK_CELLS", 4096):
-                peaks = [_peak_bytes(joint, make_batch(rows, **REAL, pad_t=0, pad_u=0), fused) for rows in sizes]
-            slope[fused] = (peaks[1] - peaks[0]) / (cells[1] - cells[0])
+        with mock.patch.object(tdt_fused, "CHUNK_CELLS", 4096):  # full chunks at both sizes
+            for fused in (True, False):
+                batches = [make_batch(rows, **REAL, pad_t=0, pad_u=0) for rows in sizes]
+                _peak_bytes(joint, batches[0], fused)
+                peaks = [_peak_bytes(joint, batch, fused) for batch in batches]
+                self.assertGreater(min(peaks), 0)
+                slope[fused] = (peaks[1] - peaks[0]) / (cells[1] - cells[0])
+        self.assertGreater(slope[True], 0, slope)
         self.assertLess(slope[True], MAX_FUSED_BYTES_PER_CELL, slope)
         self.assertGreater(slope[False], MIN_MATERIALIZED_BYTES_PER_CELL, slope)
 

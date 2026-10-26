@@ -8,7 +8,7 @@ until loss.backward(). Here the TDT recursions need only per-cell scalars: the l
 the 1025 label logits, the blank and target logits and the duration log-softmax. So:
 
 - forward: the lattice cells (b, t, u) are cut into chunks of at most CHUNK_CELLS cells (rows of
-  similar lengths grouped, long rows split along T); per chunk the joint hidden state
+  similar lengths grouped, long rows split along T; never less than one frame); per chunk the joint hidden state
   h = relu(f + g) and z = Linear_out(h) are computed exactly as NeMo does (same ops and dtypes)
   and reduced by a Triton kernel to the per-cell scalars; then one Triton launch runs the alpha
   recursion of every row (NeMo's compute_tdt_alphas_kernel, or compute_alphas_kernel on the omega
@@ -143,7 +143,8 @@ def tdt_losses(f: torch.Tensor, g: torch.Tensor, weight: torch.Tensor, bias: tor
 
 def plan_chunks(lens_t: list[int], lens_u1: list[int], budget: int) -> list[tuple[int, int, int, int, int]]:
     """(b0, b1, t0, t1, u1) chunks over rows sorted by length: consecutive rows while their padded
-    cells fit the budget, a row larger than the budget split along T."""
+    cells fit the budget, a row larger than the budget split along T. A chunk holds at least one
+    frame of one row, so its size is at most max(budget, U+1) cells."""
     chunks, b, rows = [], 0, len(lens_t)
     while b < rows:
         t, u = lens_t[b], lens_u1[b]
