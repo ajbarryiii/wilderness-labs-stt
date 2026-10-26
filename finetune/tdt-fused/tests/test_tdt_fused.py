@@ -279,6 +279,7 @@ def fresh_tdt_fused():
     import importlib.util
     spec = importlib.util.spec_from_file_location("tdt_fused_fresh", tdt_fused.__file__)
     module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module  # dataclasses look their module up there
     spec.loader.exec_module(module)
     return module
 

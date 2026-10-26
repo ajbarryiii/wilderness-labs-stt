@@ -70,8 +70,8 @@ STATS = 3  # per-cell statistics before the duration log-probs: lse, logp(blank)
 # Joint methods this path stands in for or relies on: any replacement of them is refused.
 JOINT_METHODS = ("forward", "joint", "joint_after_projection", "project_encoder", "project_prednet")
 # The originals as this module found them. A replacement is refused by identity (functools.wraps
-# keeps a wrapper's module and name, a wrapt wrapper even its __code__) and by code location (a
-# replacement made before this import).
+# keeps a wrapper's module and name, a wrapt wrapper even its __code__) and, made before this
+# import too, by provenance (_own: every wrapper layer and the function itself are NeMo's code).
 _COMPUTE_LOSSES = train.compute_losses
 _NEMO_DIR = Path(nemo.__file__).resolve().parent
 _NEMO_METHODS = {(cls, name): inspect.getattr_static(cls, name)
@@ -92,7 +92,7 @@ class Spec:
 def replacements() -> list[tuple]:
     """(object, attribute, value) for the consumer's seam; train.compute_losses must be train.py's own."""
     current = train.compute_losses
-    if (current is not _COMPUTE_LOSSES or not _defined_in(current, Path(train.__file__))
+    if (current is not _COMPUTE_LOSSES or not _own(current, Path(train.__file__), wrappers=False)
             or SOURCE in train.TRAINING_SOURCES):
         raise ValueError(f"train.compute_losses is already replaced ({current!r}) or tdt_fused is installed: "
                          "tdt_fused cannot be combined with another compute_losses seam")
@@ -156,18 +156,24 @@ def _check_not_replaced(joint) -> None:
                 raise ValueError(f"{type(obj).__name__}.{name} is replaced on the instance: tdt_fused cannot be "
                                  "combined with another seam on the joint or the loss")
             method = inspect.getattr_static(type(obj), name)
-            if method is not _NEMO_METHODS[(cls, name)] or not _defined_in(method, _NEMO_DIR):
+            if method is not _NEMO_METHODS[(cls, name)] or not _own(method, _NEMO_DIR):
                 raise ValueError(f"{type(obj).__name__}.{name} is not NeMo's own ({method!r}): tdt_fused cannot be "
                                  "combined with another seam on the joint or the loss")
 
 
-def _defined_in(function, path: Path) -> bool:
-    """Whether the function's code lives in path (a file, or a directory tree)."""
-    code = getattr(function, "__code__", None)
-    if code is None:
+def _own(function, path: Path, wrappers: bool = True) -> bool:
+    """Whether function is a plain function whose code lives in path (a file or a directory tree),
+    inside wrapt layers (NeMo's typecheck) whose wrapper functions do too, if wrappers is set. A
+    functools.wraps or wrapt wrapper from elsewhere fails, whatever it copies from what it wraps."""
+    while hasattr(function, "_self_wrapper") and hasattr(function, "__wrapped__"):  # a wrapt layer
+        if not wrappers or not _own(function._self_wrapper, path):
+            return False
+        function = function.__wrapped__
+    function = getattr(function, "__func__", function)  # a bound method (typecheck's wrapped_call)
+    if not isinstance(function, types.FunctionType):
         return False
-    where = Path(code.co_filename).resolve()
-    return where == path.resolve() or where.is_relative_to(path.resolve())
+    where, path = Path(function.__code__.co_filename).resolve(), path.resolve()
+    return where == path or where.is_relative_to(path)
 
 
 def loss_spec(joint) -> Spec:
