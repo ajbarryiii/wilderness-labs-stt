@@ -274,6 +274,51 @@ class RefusalTest(unittest.TestCase):
                     run(joint, batch, fused=True)
 
 
+def fresh_tdt_fused():
+    """A new instance of the tdt_fused module, imported now (as a consumer importing it late would)."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("tdt_fused_fresh", tdt_fused.__file__)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+@unittest.skipUnless(HAS_CUDA, "the TDT loss is CUDA-only")
+class ImportOrderTest(unittest.TestCase):
+    """Replacements made before tdt_fused is imported are refused too (review round 4): the check
+    does not trust what it captured at import, only NeMo's and train.py's own code."""
+
+    def test_replacements_installed_before_the_import(self) -> None:
+        import wrapt
+        from nemo.collections.asr.losses.rnnt import RNNTLoss
+        batch = make_batch(ROWS[:2], **SMALL)
+        joint = make_joint(**SMALL)
+        forward, compute = RNNTLoss.forward, train.compute_losses
+
+        @functools.wraps(forward)
+        def wrapped(self, *args, **kwargs):
+            return 1.1 * forward(self, *args, **kwargs)
+
+        scaled = wrapt.FunctionWrapper(forward, lambda inner, _, args, kwargs: 1.1 * inner(*args, **kwargs))
+        for label, value in (("functools.wraps", wrapped), ("wrapt", scaled)):
+            with self.subTest(label), mock.patch.object(RNNTLoss, "forward", value):
+                fresh = fresh_tdt_fused()
+                with self.assertRaisesRegex(ValueError, "forward"):
+                    fresh.joint_loss(joint, batch["enc"], batch["dec"], batch["enc_len"], batch["tokens"],
+                                     batch["token_len"])
+        proxied = wrapt.FunctionWrapper(compute, lambda inner, _, args, kwargs: inner(*args, **kwargs))
+        for label, value in (("functools.wraps", functools.wraps(compute)(lambda *a, **k: compute(*a, **k))),
+                             ("wrapt", proxied)):
+            with self.subTest(label), mock.patch.object(train, "compute_losses", value):
+                fresh = fresh_tdt_fused()
+                with self.assertRaisesRegex(ValueError, "compute_losses"):
+                    fresh.replacements()
+        fresh = fresh_tdt_fused()  # nothing replaced: the fresh module accepts NeMo's and train.py's own
+        self.assertEqual(len(fresh.replacements()), 2)
+        self.assertEqual(fresh.joint_loss(joint, batch["enc"], batch["dec"], batch["enc_len"], batch["tokens"],
+                                          batch["token_len"]).dim(), 0)
+
+
 # ----------------------------------------------------------------------------- equivalence (FP32)
 
 @unittest.skipUnless(HAS_CUDA, "the TDT loss is CUDA-only")
