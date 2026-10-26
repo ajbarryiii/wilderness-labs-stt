@@ -127,6 +127,19 @@ class ScheduleTest(unittest.TestCase):
 
 
 class ArgsTest(unittest.TestCase):
+    def test_tdt_bf16_grads_flag_and_resume(self) -> None:
+        """--tdt-bf16-grads is off (None) by default, so checkpoints written before the flag
+        existed resume unchanged; a run cannot resume with the flag switched either way."""
+        self.assertIsNone(make_args().tdt_bf16_grads)
+        self.assertTrue(train.parse_args(["--arm", "P1", "--lr", "1", "--run-name", "x",
+                                          "--max-steps", "5", "--tdt-bf16-grads"]).tdt_bf16_grads)
+        old = {k: v for k, v in vars(make_args()).items() if k != "tdt_bf16_grads"}
+        self.assertEqual(train.resume_mismatches(old, make_args()), [])
+        self.assertEqual(train.resume_mismatches(old, make_args(tdt_bf16_grads=True)),
+                         ["--tdt-bf16-grads None -> True"])
+        self.assertEqual(train.resume_mismatches(vars(make_args(tdt_bf16_grads=True)), make_args()),
+                         ["--tdt-bf16-grads True -> None"])
+
     def test_recipes(self) -> None:
         self.assertEqual(make_args(arm="P1").recipe, "P1")
         self.assertEqual(train.recipe_of(make_args(arm="P3")),
