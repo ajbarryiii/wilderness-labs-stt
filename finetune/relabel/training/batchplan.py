@@ -54,7 +54,16 @@ before the cut. The cut runs over ENTRIES instead of journal occurrences:
   share_basis, key_rule, draw_rule}, and stats.synthetic; stats are of the unaugmented audio as served (synthetic
   rows at their stored length), stats.by_key at the keys.
 
+Cut engines (`engine`, CLI --cut): "numpy" (cut(), the default) or "bend", finetune/bend-planner's binary (a Bend 2
+implementation of the cut contract with its laws proved; build it per its README). The bend engine writes the cut's
+inputs to a temporary directory under $RELABEL_ROOT/tmp (on the data mount), runs the planner, also runs cut() and
+refuses the plan unless order.u32 and offsets.u32 are byte-identical to numpy's; the temporary directory is removed
+either way. Since the cut is checked before anything is written, a refused cut writes no plan, and a plan
+directory (plan.json included) is the same whichever engine produced it. Which engine ran is not part of the plan;
+the CLI prints it.
+
     ./python -m training.batchplan build --pools N        the production plan over pools 0 .. N-1
+                     [--cut bend [--planner PATH] [--threads N]]
     ./python -m training.batchplan stats --plan DIR       counts and padding
     ./python -m training.batchplan materialize ...        training/poolaudio.py
     ./python -m training.batchplan probe ...              training/replay_probe.py
@@ -66,7 +75,9 @@ import hashlib
 import json
 import os
 import shutil
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -94,6 +105,9 @@ SYN_DRAW_RULE = ("synthetic.mixing.plan(real seconds per pool, clip seconds, see
                  "pools in order, clips in the seeded clip order")
 SYN_SHARE_BASIS = "all real occurrences of the pool (teacher-independent)"
 FILES_V2 = FILES + ("entries.u32",)
+ENGINES = ("numpy", "bend")
+BEND_PLANNER = Path(__file__).resolve().parents[2] / "bend-planner" / "build" / "planner"
+BEND_BUILD = "nix develop <repo> -c bend planner.bend -o build/planner (in finetune/bend-planner)"
 
 
 class PlanError(RuntimeError):
@@ -202,6 +216,61 @@ def cut(samples: np.ndarray, pools: np.ndarray, budget: int) -> tuple[np.ndarray
     return order, np.asarray(offsets, dtype=np.int64), np.asarray(batch_pools, dtype=np.int64)
 
 
+def bend_cut(samples: np.ndarray, pools: np.ndarray, budget: int, planner: Path | None = None,
+             threads: int | None = None) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """cut() by the Bend planner (default BEND_PLANNER), refused unless numpy's cut is byte-identical."""
+    layout.require_mount()
+    want = cut(samples, pools, budget)                    # validates the input; the cross-check
+    planner = (BEND_PLANNER if planner is None else Path(planner)).absolute()   # never looked up on PATH
+    if not (planner.is_file() and os.access(planner, os.X_OK)):
+        raise PlanError(f"no Bend planner at {planner}; build it with {BEND_BUILD}")
+    if threads is not None and int(threads) < 1:
+        raise PlanError(f"threads {threads} is not positive")
+    area = layout.relabel_root() / "tmp"
+    area.mkdir(parents=True, exist_ok=True)
+    tmp = Path(tempfile.mkdtemp(prefix="bend-cut-", dir=area))
+    try:
+        s, p, o, f = (tmp / n for n in ("samples.u32", "pools.u32", "order.u32", "offsets.u32"))
+        s.write_bytes(_u32(samples))
+        p.write_bytes(_u32(pools))
+        argv = [str(planner), str(s), str(p), str(int(budget)), str(o), str(f)]
+        if threads is not None:
+            argv += ["--threads", str(int(threads))]     # bend 2.0.37's runtime option (bend-planner README)
+        try:
+            proc = subprocess.run(argv, capture_output=True, text=True)
+        except OSError as e:
+            raise PlanError(f"the Bend planner {planner} did not run: {e}") from e
+        if proc.returncode:
+            raise PlanError(f"the Bend planner exited {proc.returncode}: {proc.stderr.strip()}")
+        got = []
+        for path, w in ((o, want[0]), (f, want[1])):
+            raw = path.read_bytes() if path.exists() else b""
+            if len(raw) != 4 * len(w):
+                raise PlanError(f"the Bend planner wrote {len(raw)} bytes of {path.name}, not {4 * len(w)}")
+            got.append(raw)
+        if got[0] != _u32(want[0]) or got[1] != _u32(want[1]):
+            raise PlanError("the Bend planner's cut differs from numpy's; refusing the plan")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    order, offsets = (np.frombuffer(b, dtype="<u4").astype(np.int64) for b in got)
+    batch_pools = np.searchsorted(offsets, np.asarray(pools, dtype=np.int64)).astype(np.int64)
+    if not np.array_equal(batch_pools, want[2]):
+        raise PlanError("the Bend planner's batches do not split at numpy's pool boundaries")
+    return order, offsets, batch_pools
+
+
+def engine_cut(samples: np.ndarray, pools: np.ndarray, budget: int, engine: str = "numpy",
+               planner: Path | None = None, threads: int | None = None) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """cut() by `engine` (module docstring, "Cut engines"); planner and threads are the bend engine's."""
+    if engine == "numpy":
+        if planner is not None or threads is not None:
+            raise PlanError("planner and threads belong to the bend engine")
+        return cut(samples, pools, budget)
+    if engine == "bend":
+        return bend_cut(samples, pools, budget, planner=planner, threads=threads)
+    raise PlanError(f"unknown cut engine {engine!r} (one of {', '.join(ENGINES)})")
+
+
 def shuffle(batch_pools: np.ndarray, seed: int) -> np.ndarray:
     out = np.empty(int(batch_pools[-1]), dtype=np.int64)
     for p, (lo, hi) in enumerate(zip(batch_pools[:-1].tolist(), batch_pools[1:].tolist())):
@@ -264,8 +333,9 @@ def _rel(path: Path) -> str:
 
 
 def compute(pool_dir: Path, n_pools: int, *, pool_batches: int = POOL_BATCHES, budget: int = BUDGET_SAMPLES,
-            seed: int = SEED, config_id: str | None = None) -> tuple[dict, dict[str, bytes]]:
-    """(plan.json body, file bytes) of the plan over pools 0 .. n_pools - 1 (nothing written)."""
+            seed: int = SEED, config_id: str | None = None, engine: str = "numpy", planner: Path | None = None,
+            threads: int | None = None) -> tuple[dict, dict[str, bytes]]:
+    """(plan.json body, file bytes) of the plan over pools 0 .. n_pools - 1 (no plan written; the cut by `engine`)."""
     if n_pools < 1 or pool_batches < 1:
         raise PlanError("n_pools and pool_batches must be positive")
     end = journal_end(pool_dir)
@@ -279,7 +349,7 @@ def compute(pool_dir: Path, n_pools: int, *, pool_batches: int = POOL_BATCHES, b
     if int(samples.max()) > budget:
         raise PlanError(f"a clip of {int(samples.max())} samples exceeds the budget {budget}")
     pools = pool_starts(batch, n_pools, pool_batches)
-    order, offsets, bpools = cut(samples, pools, budget)
+    order, offsets, bpools = engine_cut(samples, pools, budget, engine, planner, threads)
     shuf = shuffle(bpools, seed)
     data = {"samples.u32": _u32(samples), "pools.u32": _u32(pools), "order.u32": _u32(order),
             "offsets.u32": _u32(offsets), "batch_pools.u32": _u32(bpools), "shuffle.u32": _u32(shuf)}
@@ -323,7 +393,8 @@ def clip_samples(clips) -> list[int]:
 
 def compute_synthetic(pool_dir: Path, n_pools: int, clips, *, pool_batches: int = POOL_BATCHES,
                       budget: int = BUDGET_SAMPLES, seed: int = SEED, syn_seed: int | None = None,
-                      share: float | None = None, config_id: str | None = None) -> tuple[dict, dict[str, bytes]]:
+                      share: float | None = None, config_id: str | None = None, engine: str = "numpy",
+                      planner: Path | None = None, threads: int | None = None) -> tuple[dict, dict[str, bytes]]:
     """(plan.json body, file bytes) of the version 2 plan: the base plan's pools plus a synthetic draw per pool,
     cut together (module docstring)."""
     from synthetic import layout as slayout
@@ -332,7 +403,7 @@ def compute_synthetic(pool_dir: Path, n_pools: int, clips, *, pool_batches: int 
     syn_seed = slayout.SEED if syn_seed is None else int(syn_seed)
     share = slayout.SYNTHETIC_SHARE if share is None else float(share)
     base_body, base = compute(pool_dir, n_pools, pool_batches=pool_batches, budget=budget, seed=seed,
-                              config_id=config_id)
+                              config_id=config_id, engine=engine, planner=planner, threads=threads)
     real = np.frombuffer(base["samples.u32"], dtype="<u4").astype(np.int64)
     rpools = np.frombuffer(base["pools.u32"], dtype="<u4").astype(np.int64)
     csamples = clip_samples(clips)
@@ -347,7 +418,7 @@ def compute_synthetic(pool_dir: Path, n_pools: int, clips, *, pool_batches: int 
         keys += real[a:b].tolist() + [ckeys[c] for c in draws[p]]
         pools.append(len(entries))
     keys_a, pools_a = np.asarray(keys, dtype=np.int64), np.asarray(pools, dtype=np.int64)
-    order, offsets, bpools = cut(keys_a, pools_a, budget)
+    order, offsets, bpools = engine_cut(keys_a, pools_a, budget, engine, planner, threads)
     shuf = shuffle(bpools, seed)
     data = {"samples.u32": _u32(keys_a), "pools.u32": _u32(pools_a), "order.u32": _u32(order),
             "offsets.u32": _u32(offsets), "batch_pools.u32": _u32(bpools), "shuffle.u32": _u32(shuf),
@@ -379,8 +450,9 @@ def compute_synthetic(pool_dir: Path, n_pools: int, clips, *, pool_batches: int 
 
 def build(pool_dir: Path, out_dir: Path, n_pools: int, clips=None, **kw) -> "Plan":
     """Write the plan into out_dir (atomically: a temporary sibling, then a rename); with `clips` (a
-    synthetic.mixing.ClipPool) the version 2 plan. An existing plan is kept if it is the same plan and refused
-    otherwise."""
+    synthetic.mixing.ClipPool) the version 2 plan; `kw` are compute's, the cut engine included. Nothing is written
+    unless the plan is computed (and, with engine="bend", cross-checked). An existing plan is kept if it is the same
+    plan and refused otherwise."""
     out_dir = Path(out_dir)
     body, data = compute(pool_dir, n_pools, **kw) if clips is None else compute_synthetic(pool_dir, n_pools, clips, **kw)
     meta = _dumps(body)
@@ -561,6 +633,10 @@ def main(argv: list[str] | None = None) -> int:
     b.add_argument("--out", type=Path, help="a smoke plan directory under $RELABEL_ROOT/smoke/")
     b.add_argument("--synthetic-run", help="the version 2 plan of stage 2c's synthetic arms, drawn from this "
                                            "generation run's clip pool (synthetic/runs/<run>)")
+    b.add_argument("--cut", choices=ENGINES, default="numpy", help="the cut engine (default numpy; module docstring)")
+    b.add_argument("--planner", type=Path, help="--cut bend: the Bend planner binary "
+                                                "(default finetune/bend-planner/build/planner)")
+    b.add_argument("--threads", type=int, help="--cut bend: the planner's runtime threads")
     s = sub.add_parser("stats")
     s.add_argument("--plan", type=Path)
     s.add_argument("--pools", type=int)
@@ -576,6 +652,8 @@ def main(argv: list[str] | None = None) -> int:
         return replay_probe.main(rest)
     if rest:
         ap.error(f"unrecognized arguments: {rest}")
+    if args.cmd == "build" and args.cut != "bend" and (args.planner is not None or args.threads is not None):
+        ap.error("--planner and --threads need --cut bend")
     layout.require_mount()
     pool, cid, _ = _c1_and_config()
     if args.cmd == "build":
@@ -585,9 +663,13 @@ def main(argv: list[str] | None = None) -> int:
         if args.synthetic_run:
             from synthetic import mixing
             clips = mixing.ClipPool.load(args.synthetic_run)
-        plan = build(pool, args.out or production_dir(cid, args.pools, clips=clips), args.pools, clips=clips,
-                     config_id=cid)
-        print(json.dumps({"dir": _rel(plan.dir), **plan.identity(), "stats": plan.meta["stats"]}, indent=1))
+        try:
+            plan = build(pool, args.out or production_dir(cid, args.pools, clips=clips), args.pools, clips=clips,
+                         config_id=cid, engine=args.cut, planner=args.planner, threads=args.threads)
+        except PlanError as e:                            # nothing was written
+            raise SystemExit(f"batchplan build: {e}")
+        print(json.dumps({"dir": _rel(plan.dir), "cut": args.cut, **plan.identity(), "stats": plan.meta["stats"]},
+                         indent=1))
         return 0
     clips = None
     if args.synthetic_run:
