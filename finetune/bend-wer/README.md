@@ -175,20 +175,20 @@ results. That was 1,083 files, 1,838,153 utterances, 28.4M reference words and 7
 
 The input is the largest saved score set: a 39,341-utterance test set with 969,328 reference words
 and 27.0M table cells. Each time is the median of 5 runs (3 for the wrapper), and peak RSS comes from
-GNU time. The machine has 32 threads, and other work was light (load average about 2). Every Bend
+GNU time. The machine has 32 threads, and other work was light (load average 2 to 4). Every Bend
 run was byte-identical to `edit_counts`' counts.
 
 | Program | Threads | Wall | Peak RSS | vs Python |
 | --- | --- | --- | --- | --- |
-| `wer.edit_counts` loop (Python) | 1 | 2.93 s | 149 MB | 1.0x |
-| `bend-wer` native | 1 | 2.38 s | 62 MB | 1.2x |
-| `bend-wer` native | 2 | 1.24 s | 62 MB | 2.4x |
+| `wer.edit_counts` loop (Python) | 1 | 2.90 s | 150 MB | 1.0x |
+| `bend-wer` native | 1 | 2.39 s | 62 MB | 1.2x |
+| `bend-wer` native | 2 | 1.24 s | 62 MB | 2.3x |
 | `bend-wer` native | 4 | 0.65 s | 62 MB | 4.5x |
-| `bend-wer` native | 8 | 0.36 s | 62 MB | 8.1x |
+| `bend-wer` native | 8 | 0.36 s | 63 MB | 8.1x |
 | `bend-wer` native | 16 | 0.21 s | 63 MB | 14x |
 | `bend_wer.edit_counts_many` | 1 | 2.63 s | 179 MB | 1.1x |
-| `bend_wer.edit_counts_many` | 8 | 0.59 s | 179 MB | 5.0x |
-| `bend_wer.edit_counts_many` | 16 | 0.46 s | 180 MB | 6.4x |
+| `bend_wer.edit_counts_many` | 8 | 0.60 s | 179 MB | 4.8x |
+| `bend_wer.edit_counts_many` | 16 | 0.46 s | 180 MB | 6.3x |
 
 The rows measure different things:
 
@@ -198,7 +198,7 @@ The rows measure different things:
 - The wrapper rows add the Python side: ids for 1.94M words, the temporary files and reading the
   counts back. That is about 0.25 s here.
 
-Single-threaded, a cell costs about 88 ns in Bend and 108 ns in Python. A cost-only version of the
+Single-threaded, a cell costs about 88 ns in Bend and 107 ns in Python. A cost-only version of the
 same table, with no counts in the cells, ran at about 47 ns a cell. The counts make each cell a
 heap node rather than an unboxed number, and that accounts for the difference.
 
