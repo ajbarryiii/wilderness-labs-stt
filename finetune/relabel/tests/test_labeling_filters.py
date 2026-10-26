@@ -249,6 +249,13 @@ class PunctuationMapping(unittest.TestCase):
         self.assertEqual(m("a; b"), "a, b")
         self.assertEqual(m("a&b+c=d@e°f§g"), "a and b plus c equals d at e degrees f section g")
         self.assertEqual(m("  a \t ( b )  ,  c . d ? e ! f : g  "), "a b, c. d? e! f: g")
+        # a space before "." stays when a digit follows it (a decimal like .5); otherwise it is removed
+        self.assertEqual(m("costs .5 dollars"), "costs .5 dollars")
+        self.assertEqual(m("ends at 3 ."), "ends at 3.")
+        self.assertEqual(m("word ."), "word.")
+        self.assertEqual(m("(x) ."), "x.")
+        self.assertEqual(m("(costs) .5 dollars"), "costs .5 dollars")
+        self.assertEqual(m("a ,5 b ?5 c !5 d :5"), "a,5 b?5 c!5 d:5")
         self.assertEqual(m("a — b – c"), "a - b - c")                      # dashes: the version 1 mapping only
         self.assertEqual(m("＆"), "and")                                    # NFKC first
 

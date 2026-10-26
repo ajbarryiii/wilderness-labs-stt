@@ -16,7 +16,8 @@
    Part C "Filters", amended 2026-10-26) extends the mapping, after TEXT_MAP, with characters B0's vocabulary lacks
    (PUNCT_MAP): `" *` are removed, `( ) [ ] { } _` become a space, `;` becomes `,`, `& + = @ ° §` become the words
    " and ", " plus ", " equals ", " at ", " degrees ", " section "; then runs of whitespace become one space, a space
-   before `, . ? ! :` is removed and the text is stripped. Every other character is unchanged (so `# < > \\ | ~`,
+   before `, . ? ! :` is removed (but not before a `.` followed by a digit: "costs .5 dollars" stays) and the text is
+   stripped. Every other character is unchanged (so `# < > \\ | ~`,
    backtick, non-Latin scripts and diacritics B0 lacks still fail), and a non-empty label that maps to empty text
    fails this rule.
 
@@ -61,7 +62,7 @@ FILTER_OF = {"duration_out_of_range": 1, "empty_label": 1, "human_wer_gt_0.5": 2
 HALLUCINATION = tuple(r for r, f in FILTER_OF.items() if f == 3)
 PUNCT_MAP = {'"': "", "*": "", "(": " ", ")": " ", "[": " ", "]": " ", "{": " ", "}": " ", "_": " ", ";": ",",
              "&": " and ", "+": " plus ", "=": " equals ", "@": " at ", "°": " degrees ", "§": " section "}
-_SPACE_BEFORE_PUNCT = re.compile(r" ([,.?!:])")
+_SPACE_BEFORE_PUNCT = re.compile(r" ([,?!:]|\.(?!\d))")      # not before a "." that starts a decimal (.5)
 VERSIONS = (1, 2, 3)
 VERSION = 3
 
