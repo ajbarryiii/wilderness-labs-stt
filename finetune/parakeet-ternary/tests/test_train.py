@@ -139,6 +139,14 @@ class ArgsTest(unittest.TestCase):
                          ["--tdt-bf16-grads None -> True"])
         self.assertEqual(train.resume_mismatches(vars(make_args(tdt_bf16_grads=True)), make_args()),
                          ["--tdt-bf16-grads True -> None"])
+        # A checkpoint without recorded args (resume_key only) predates the flag: it resumes
+        # with the flag off and is refused with it on.
+        legacy = {"resume_key": train.resume_key(make_args())}
+        with mock.patch.object(train, "load_for_resume", return_value=legacy):
+            self.assertIs(train.load_resume_payload(Path("run"), make_args()), legacy)
+            with mock.patch.object(train, "log"), self.assertRaises(SystemExit) as stop:
+                train.load_resume_payload(Path("run"), make_args(tdt_bf16_grads=True))
+        self.assertEqual(stop.exception.code, train.EXIT_RESUME_MISMATCH)
 
     def test_recipes(self) -> None:
         self.assertEqual(make_args(arm="P1").recipe, "P1")

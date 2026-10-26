@@ -1141,6 +1141,8 @@ def load_resume_payload(run: Path, args) -> dict | None:
     problems = (resume_mismatches(recorded, args) if recorded is not None else
                 [f"{k}: {payload['resume_key'].get(k)!r} -> {v!r}"
                  for k, v in resume_key(args).items() if payload["resume_key"].get(k) != v])
+    if recorded is None and getattr(args, "tdt_bf16_grads", None):  # such checkpoints predate the flag
+        problems.append("tdt_bf16_grads: None -> True")
     if problems:
         log(f"refusing to resume {run}: the arguments differ from the checkpoint's: "
             f"{'; '.join(problems)}. Rerun with the original arguments.")

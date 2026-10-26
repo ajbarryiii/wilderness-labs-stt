@@ -22,15 +22,16 @@ difference under test is therefore the deliberate rounding, not run-to-run noise
 - gradients w.r.t. the joint's parameters and inputs: (a) bitwise what the unchanged autograd
   graph gives when the flag-on output gradient is fed into the flag-off graph (so the flag
   changes nothing but that rounding), and (b) relative L2 <= 2**-7 and elementwise
-  |diff| <= 2**-6 * max|ref|. 2**-7 is the bound's largest relative change of any output
-  gradient element (1 ulp <= 2**-7 |g|), carried to the whole tensor; the elementwise bound is
-  two bf16 ulps of the tensor's largest element (the backward GEMMs round their bf16 outputs
-  once more). Measured on this case (2026-10-26): relative L2 0.9e-4 to 4.1e-3, the same size
-  as re-running the flag-off reference with a different, mathematically equivalent sub-batch
-  size (up to 5.8e-3). A 5x margin over either would exceed 1e-2 and could not catch the
-  1 % defect required of the negative controls, so the analytic bound is the tolerance and
-  (a) plus the output-gradient bound carry the exact proof. Negative controls: a 1 % scaled
-  and a dropped-sub-batch gradient fail both checks.
+  |diff| <= 2**-6 * max|ref|. (a) with the output-gradient bound is the exact proof; (b) is
+  an empirical regression limit for this fixture, not a propagated bound (a relative bound
+  on the output gradient does not carry through the backward GEMMs, which can cancel). Its
+  size: 2**-7 is the largest relative change the output bound allows any one element
+  (1 ulp <= 2**-7 |g|), and 2**-6 * max|ref| is two bf16 ulps of the tensor's largest element.
+  Measured on this case (2026-10-26): relative L2 0.9e-4 to 4.1e-3 and elementwise up to
+  7.6e-3 * max|ref|, the same size as re-running the flag-off reference with a different,
+  mathematically equivalent sub-batch size (relative L2 up to 5.8e-3). A 5x margin over
+  either would exceed 1e-2 and could not catch the 1 % defect required of the negative
+  controls. Negative controls: a 1 % scaled and a dropped-sub-batch gradient fail both checks.
 - held memory after the forward pass (after a warm-up call): falls by sum(B*T*U*1025) * 2
   bytes (half of the fp32 label gradients) within max(5x the flag-off repeat difference,
   512 B per sub-batch: the allocator rounds each block to 512 B). Measured: repeat
