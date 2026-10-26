@@ -165,6 +165,12 @@ class JointCase:
         return held, peak
 
 
+class SourcesTest(unittest.TestCase):
+    def test_is_a_training_source(self) -> None:
+        """Run source checks (sweep, resume guards) cover the patch module."""
+        self.assertIn("parakeet-ternary/tdt_bf16_grads.py", train.TRAINING_SOURCES)
+
+
 @unittest.skipUnless(HAS_CUDA, "TDT loss is CUDA-only")
 class Bf16GradsTest(unittest.TestCase):
     @classmethod

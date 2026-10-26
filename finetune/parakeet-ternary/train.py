@@ -117,6 +117,7 @@ TRAINING_SOURCES = ("parakeet-ternary/train.py", "parakeet-ternary/quant.py",
                     "parakeet-ternary/stream.py", "parakeet-ternary/teacher.py",
                     "parakeet-ternary/evaluate.py", "parakeet-ternary/export.py",
                     "parakeet-ternary/data.py", "parakeet-ternary/paths.py",
+                    "parakeet-ternary/tdt_bf16_grads.py",
                     "whisper-ternary/quant.py", "whisper-ternary/wer.py")
 # Arguments that may differ between the original invocation and a resume.
 RESUME_ALLOWED_CHANGES = ("ckpt_minutes", "eval_batch_size", "no_powerlog", "overwrite")
