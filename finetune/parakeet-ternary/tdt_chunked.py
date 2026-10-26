@@ -23,7 +23,8 @@ for a unit incoming gradient. Equal to the fused path up to floating-point order
 joint's parameter gradients are summed over sub-batches in FP32 (NeMo's single backward
 sums the bf16 gradients of autocast's cached weight casts, then casts once). The TDT loss's
 omega draw (one random.uniform per loss call) happens per sub-batch in the same order, so
-the same RNN-T/TDT branches are chosen. Not supported: double backward, compute_wer.
+the same RNN-T/TDT branches are chosen. Not supported: double backward, and compute_wer
+when a gradient is needed (without one, the call goes to NeMo).
 
 Seam. Nothing in the train module is replaced: enable(joint) replaces the forward method of
 one joint instance, and train.compute_losses, which calls student.joint(..., compute_wer=False),
@@ -103,7 +104,8 @@ def _forward(self, encoder_outputs, decoder_outputs, encoder_lengths=None, trans
     """RNNTJoint.forward with the fused loss computed by joint_loss. NeMo's signature: its
     typecheck asks for keywords, but export disables typechecking and RNNTDecoderJoint calls
     the joint positionally (after _prepare_for_export turned fuse_loss_wer off)."""
-    if not self.fuse_loss_wer or decoder_outputs is None:
+    if not self.fuse_loss_wer or decoder_outputs is None or not _needs_grad(self, encoder_outputs,
+                                                                            decoder_outputs):
         return _nemo_forward(self, encoder_outputs=encoder_outputs, decoder_outputs=decoder_outputs,
                              encoder_lengths=encoder_lengths, transcripts=transcripts,
                              transcript_lengths=transcript_lengths, compute_wer=compute_wer,
@@ -114,6 +116,11 @@ def _forward(self, encoder_outputs, decoder_outputs, encoder_lengths=None, trans
                       transcript_lengths, compute_wer=compute_wer)
     self.hypotheses = None
     return loss, None, None, None
+
+
+def _needs_grad(joint, encoder_outputs, decoder_outputs) -> bool:
+    return torch.is_grad_enabled() and (encoder_outputs.requires_grad or decoder_outputs.requires_grad
+                                        or any(p.requires_grad for p in joint.parameters()))
 
 
 def _nemo_forward(joint, **kwargs):
@@ -162,8 +169,7 @@ def joint_loss(joint, encoder_outputs: torch.Tensor, decoder_outputs: torch.Tens
         raise ValueError("the chunked TDT backward does not compute WER (compute_wer=True)")
     check_supported(joint)
     params = [p for p in joint.parameters() if p.requires_grad]
-    if not (torch.is_grad_enabled() and (encoder_outputs.requires_grad or decoder_outputs.requires_grad
-                                         or params)):
+    if not _needs_grad(joint, encoder_outputs, decoder_outputs):
         loss, _, _, _ = _nemo_forward(joint, encoder_outputs=encoder_outputs,
                                       decoder_outputs=decoder_outputs, encoder_lengths=encoder_lengths,
                                       transcripts=transcripts, transcript_lengths=transcript_lengths,

@@ -574,7 +574,8 @@ class TrainerTest(unittest.TestCase):
         self.assertTrue(ok, f"frozen prediction/joint: {found}")
 
     def test_other_joint_calls_go_to_nemo(self) -> None:
-        """No decoder outputs (NeMo's WER-only call) and no gradient: NeMo's own forward."""
+        """No decoder outputs (NeMo's WER-only call) and no gradient (evaluation, with or
+        without WER, review round 5): NeMo's own forward and its complete return tuple."""
         model = self.student(2, True)
         lab = self.labeled(model)
         enc = torch.randn(len(self.texts), 64, 40, device="cuda")
@@ -588,13 +589,25 @@ class TrainerTest(unittest.TestCase):
                 random.seed(3)  # the same omega draws in both calls
                 got = model.joint(encoder_outputs=enc, decoder_outputs=dec, encoder_lengths=enc_len,
                                   transcripts=lab["tokens"], transcript_lengths=lab["token_len"])
+                random.seed(3)
+                got_wer = model.joint(encoder_outputs=enc, decoder_outputs=dec, encoder_lengths=enc_len,
+                                      transcripts=lab["tokens"], transcript_lengths=lab["token_len"],
+                                      compute_wer=True)
         function.apply.assert_not_called()
         tdt_chunked.disable(model.joint)
         random.seed(3)
         with torch.no_grad():
             ref = model.joint(encoder_outputs=enc, decoder_outputs=dec, encoder_lengths=enc_len,
                               transcripts=lab["tokens"], transcript_lengths=lab["token_len"])
+            random.seed(3)
+            ref_wer = model.joint(encoder_outputs=enc, decoder_outputs=dec, encoder_lengths=enc_len,
+                                  transcripts=lab["tokens"], transcript_lengths=lab["token_len"],
+                                  compute_wer=True)
         self.assertTrue(torch.equal(got[0], ref[0]))
+        self.assertEqual(len(got_wer), 4)
+        self.assertTrue(all(x is not None for x in got_wer), got_wer)
+        for a, b in zip(got_wer, ref_wer):
+            self.assertTrue(torch.equal(torch.as_tensor(a), torch.as_tensor(b)), (got_wer, ref_wer))
 
     def test_export_wrapper_runs_with_typechecking_off(self) -> None:
         """NeMo's export path: _prepare_for_export turns the fused loss off, typechecking is
