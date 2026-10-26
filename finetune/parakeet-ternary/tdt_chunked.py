@@ -114,7 +114,7 @@ def _forward(self, encoder_outputs, decoder_outputs, encoder_lengths=None, trans
         raise ValueError("the fused joint needs encoder and transcript lengths")
     loss = joint_loss(self, encoder_outputs, decoder_outputs, encoder_lengths, transcripts,
                       transcript_lengths, compute_wer=compute_wer)
-    self.hypotheses = None
+    self.hypotheses = [] if keep_hypotheses else None  # as NeMo's fused forward without WER
     return loss, None, None, None
 
 

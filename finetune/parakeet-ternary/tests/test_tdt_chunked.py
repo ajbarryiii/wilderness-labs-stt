@@ -609,6 +609,21 @@ class TrainerTest(unittest.TestCase):
         for a, b in zip(got_wer, ref_wer):
             self.assertTrue(torch.equal(torch.as_tensor(a), torch.as_tensor(b)), (got_wer, ref_wer))
 
+    def test_hypotheses_as_nemo_sets_them(self) -> None:
+        """A gradient call without WER: hypotheses [] with keep_hypotheses, else None, as
+        NeMo's fused forward (review round 6)."""
+        lab = self.labeled(self.student(2, False))
+        enc = torch.randn(len(self.texts), 64, 40, device="cuda", requires_grad=True)
+        enc_len = torch.full((len(self.texts),), 40, device="cuda")
+        for chunked in (False, True):
+            model = self.student(2, chunked)
+            dec, _, _ = model.decoder(targets=lab["tokens"], target_length=lab["token_len"])
+            for keep in (False, True):
+                model.joint(encoder_outputs=enc, decoder_outputs=dec, encoder_lengths=enc_len,
+                            transcripts=lab["tokens"], transcript_lengths=lab["token_len"],
+                            keep_hypotheses=keep)
+                self.assertEqual(model.joint.hypotheses, [] if keep else None, (chunked, keep))
+
     def test_export_wrapper_runs_with_typechecking_off(self) -> None:
         """NeMo's export path: _prepare_for_export turns the fused loss off, typechecking is
         disabled, and RNNTDecoderJoint calls the joint positionally (review round 4)."""
