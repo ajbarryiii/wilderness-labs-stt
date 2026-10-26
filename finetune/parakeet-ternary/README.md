@@ -473,6 +473,24 @@ finite differences. Gradient checkpointing wraps each conformer layer
 recompute (identical dropout masks), and BatchNorm running statistics are restored after
 the recompute, so checkpointing is bit-identical to no checkpointing (tested).
 
+### Fused joint + TDT loss (`--tdt-fused-kernel`, off by default)
+
+NeMo's fused joint calls the TDT loss once per sub-batch of 4 rows, and each sub-batch keeps
+its FP32 `[rows, T, U+1, 1030]` gradient until `loss.backward()`. With `--tdt-fused-kernel`,
+`compute_losses` calls `tdt_fused.joint_loss` instead: one loss call per batch, the joint
+computed in chunks of at most `tdt_fused.CHUNK_CELLS` lattice cells and reduced at once to
+per-cell scalars, one Triton launch each for the alpha and beta recursions of every row, and
+the chunk's logits recomputed in the backward pass. Memory grows with B x T x (U+1) scalars
+instead of 1030 values per cell. The loss and gradients are NeMo's (same transitions, sigma,
+reduction; under BF16 autocast the joint runs in BF16 as NeMo's does, the loss in FP32).
+omega draws once per loss call, as in NeMo, so with one call per batch the plain RNN-T branch
+is chosen for a whole batch (about 10% of steps) instead of for 4-row sub-batches: the same
+expected loss with a larger step-to-step variance. The flag is recorded in `config.json` and
+`summary.json` and checked on resume; it is refused together with `--tdt-chunked-backward`,
+`--joint-recompute` or `--fused-batch-size`, and with joint dropout, `masking_prob`, adapters,
+FastEmit or gradient clamping. `tests/test_tdt_fused.py` checks it against NeMo's fused joint
+and numba loss and against `TDTLossPytorch`.
+
 ### Measured throughput and memory (Phase 0)
 
 Probe: `train.py --probe-steps` (2 untimed worst-case updates on 30 s utterances, built by
