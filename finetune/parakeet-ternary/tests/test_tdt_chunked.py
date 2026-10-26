@@ -256,6 +256,14 @@ class ArgsTest(unittest.TestCase):
             shutil.rmtree(run, ignore_errors=True)
 
 
+class SourcesTest(unittest.TestCase):
+    def test_module_is_a_training_source(self) -> None:
+        """Its hash is recorded and checked with the other training sources (sweep.py mirrors
+        the list; test_train checks the two are equal)."""
+        self.assertIn("parakeet-ternary/tdt_chunked.py", train.TRAINING_SOURCES)
+        self.assertIn("parakeet-ternary/tdt_chunked.py", train.training_source_hashes())
+
+
 class ConfigureTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:

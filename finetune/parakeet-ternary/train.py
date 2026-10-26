@@ -117,6 +117,7 @@ TRAINING_SOURCES = ("parakeet-ternary/train.py", "parakeet-ternary/quant.py",
                     "parakeet-ternary/stream.py", "parakeet-ternary/teacher.py",
                     "parakeet-ternary/evaluate.py", "parakeet-ternary/export.py",
                     "parakeet-ternary/data.py", "parakeet-ternary/paths.py",
+                    "parakeet-ternary/tdt_chunked.py",
                     "whisper-ternary/quant.py", "whisper-ternary/wer.py")
 # Arguments added after runs were recorded, with the value an older record means.
 ADDED_ARG_DEFAULTS = {"tdt_chunked_backward": False, "fused_batch_size": None}
