@@ -596,6 +596,26 @@ class TrainerTest(unittest.TestCase):
                               transcripts=lab["tokens"], transcript_lengths=lab["token_len"])
         self.assertTrue(torch.equal(got[0], ref[0]))
 
+    def test_export_wrapper_runs_with_typechecking_off(self) -> None:
+        """NeMo's export path: _prepare_for_export turns the fused loss off, typechecking is
+        disabled, and RNNTDecoderJoint calls the joint positionally (review round 4)."""
+        from nemo.collections.asr.modules.rnnt import RNNTDecoderJoint
+        from nemo.core.classes.common import typecheck
+        outputs = []
+        for chunked in (True, False):
+            model = self.student(2, chunked).eval()
+            self.assertEqual(tdt_chunked.enabled(model.joint), chunked)
+            for part in (model.decoder, model.joint):
+                part._prepare_for_export(noreplace=True)
+            wrapper = RNNTDecoderJoint(model.decoder, model.joint)
+            torch.manual_seed(0)
+            example = [x.cuda() if torch.is_tensor(x) else x for x in wrapper.input_example()]
+            with typecheck.disable_checks(), torch.no_grad():
+                outputs.append(wrapper(*example))
+        self.assertEqual(len(outputs[0]), len(outputs[1]))
+        for got, ref in zip(*outputs):
+            self.assertTrue(torch.equal(got, ref))
+
     def test_flag_off_never_reaches_the_module(self) -> None:
         model = self.student(None, False)
         self.assertEqual(model.joint.fused_batch_size, tiny_model().joint.fused_batch_size)

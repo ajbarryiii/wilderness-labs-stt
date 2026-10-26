@@ -29,7 +29,8 @@ Seam. Nothing in the train module is replaced: enable(joint) replaces the forwar
 one joint instance, and train.compute_losses, which calls student.joint(..., compute_wer=False),
 then gets joint_loss's scalar (as (loss, None, None, None)); train.train_step's single
 loss.backward() applies the stored gradients. Every other call of the joint (no
-fuse_loss_wer, no decoder outputs: decoding, export) goes to NeMo's own forward. A consumer:
+fuse_loss_wer, no decoder outputs, no gradient: decoding, export, evaluation) goes to NeMo's
+own forward. A consumer:
 
 1. add_arguments(parser): --tdt-chunked-backward (default off) and --fused-batch-size N
    (default None: the model's own, 4);
@@ -97,9 +98,11 @@ def configure(student, fused_batch_size: int | None, chunked: bool) -> dict:
     return record
 
 
-def _forward(self, *, encoder_outputs, decoder_outputs, encoder_lengths=None, transcripts=None,
+def _forward(self, encoder_outputs, decoder_outputs, encoder_lengths=None, transcripts=None,
              transcript_lengths=None, compute_wer=False, keep_hypotheses=False):
-    """RNNTJoint.forward with the fused loss computed by joint_loss (keyword-only, as NeMo's)."""
+    """RNNTJoint.forward with the fused loss computed by joint_loss. NeMo's signature: its
+    typecheck asks for keywords, but export disables typechecking and RNNTDecoderJoint calls
+    the joint positionally (after _prepare_for_export turned fuse_loss_wer off)."""
     if not self.fuse_loss_wer or decoder_outputs is None:
         return _nemo_forward(self, encoder_outputs=encoder_outputs, decoder_outputs=decoder_outputs,
                              encoder_lengths=encoder_lengths, transcripts=transcripts,
