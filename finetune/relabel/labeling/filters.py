@@ -12,18 +12,27 @@
    - for utterances without a human transcript: normalized WER(B0 greedy, T*) > 0.8, B0's label as the
      reference (`b0_wer_gt_0.8`).
 4. Tokenizer coverage: after NFKC and the fixed mapping of curly quotes and dashes (TEXT_MAP), the label must
-   tokenize with B0's SentencePiece model without the unknown id (`tokenizer_coverage`).
+   tokenize with B0's SentencePiece model without the unknown id (`tokenizer_coverage`). Version 3 (labeling plan
+   Part C "Filters", amended 2026-10-26) extends the mapping, after TEXT_MAP, with characters B0's vocabulary lacks
+   (PUNCT_MAP): `" *` are removed, `( ) [ ] { } _` become a space, `;` becomes `,`, `& + = @ ° §` become the words
+   " and ", " plus ", " equals ", " at ", " degrees ", " section "; then runs of whitespace become one space, a space
+   before `, . ? ! :` is removed and the text is stripped. Every other character is unchanged (so `# < > \\ | ~`,
+   backtick, non-Latin scripts and diacritics B0 lacks still fail), and a non-empty label that maps to empty text
+   fails this rule.
 
 Every rule is evaluated (flags record each failure); the disposition is "kept" iff no rule fails, with the
-failing reasons in filter order. The stored training text is the mapped label (`text`).
+failing reasons in filter order. The stored training text is the mapped label (`text`); filters 1-3 score the raw
+label with the evaluation normalizer under every version.
 
-Versions (run.json filters_version; every caller names one): 1 has no confirmation of the words-per-second rule, 2 has
-it. C2's merge applies its run's version, so a run labeled under version 1 stays consistent; c2.refilter re-applies the
-current version to a finished run's stored outputs.
+Versions (run.json filters_version; every caller names one, of `check` and of `map_text`): 1 has no confirmation of the
+words-per-second rule, 2 has it, 3 adds the punctuation mapping (versions 1 and 2 map alike). C2's merge applies its
+run's version, so a run labeled under version 1 stays consistent; c2.refilter re-applies the current version to a
+finished run's stored outputs, the stored text included.
 """
 from __future__ import annotations
 
 import math
+import re
 import unicodedata
 from collections import Counter
 from pathlib import Path
@@ -43,13 +52,22 @@ REASONS = ("duration_out_of_range", "empty_label", "human_wer_gt_0.5", "words_pe
 FILTER_OF = {"duration_out_of_range": 1, "empty_label": 1, "human_wer_gt_0.5": 2, "words_per_second_gt_6": 3,
              "ngram_loop": 3, "b0_wer_gt_0.8": 3, "tokenizer_coverage": 4}
 HALLUCINATION = tuple(r for r, f in FILTER_OF.items() if f == 3)
-VERSIONS = (1, 2)
-VERSION = 2
+PUNCT_MAP = {'"': "", "*": "", "(": " ", ")": " ", "[": " ", "]": " ", "{": " ", "}": " ", "_": " ", ";": ",",
+             "&": " and ", "+": " plus ", "=": " equals ", "@": " at ", "°": " degrees ", "§": " section "}
+_SPACE_BEFORE_PUNCT = re.compile(r" ([,.?!:])")
+VERSIONS = (1, 2, 3)
+VERSION = 3
 
 
-def map_text(text: str) -> str:
-    text = unicodedata.normalize("NFKC", text)
-    return "".join(TEXT_MAP.get(c, c) for c in text).strip()
+def map_text(text: str, *, version: int) -> str:
+    """The stored training text of a raw label under filters `version` (module docstring, filter 4)."""
+    if version not in VERSIONS:
+        raise ValueError(f"unknown filters version {version!r}")
+    text = "".join(TEXT_MAP.get(c, c) for c in unicodedata.normalize("NFKC", text))
+    if version >= 3:
+        text = " ".join("".join(PUNCT_MAP.get(c, c) for c in text).split())
+        text = _SPACE_BEFORE_PUNCT.sub(r"\1", text)
+    return text.strip()
 
 
 def ngram_loop(words: list[str]) -> bool:
@@ -111,7 +129,7 @@ def check(duration: float, label: str | None, reference: str | None, reference_k
     if version not in VERSIONS:
         raise ValueError(f"unknown filters version {version!r}")
     raw = (label or "").strip()
-    text = map_text(raw)
+    text = map_text(raw, version=version)
     norm = evaluate.normalize(raw).strip() if raw else ""
     words = norm.split()
     reasons = []
@@ -137,8 +155,11 @@ def check(duration: float, label: str | None, reference: str | None, reference_k
         reasons.append("ngram_loop")
     if not human and values["b0_wer"] > MAX_B0_WER:
         reasons.append("b0_wer_gt_0.8")
-    if raw and not coverage(text):
-        reasons.append("tokenizer_coverage")
+    if raw:
+        # version 3: a label the mapping empties (e.g. a lone quotation mark) has no training text
+        covered = bool(text) and coverage(text) if version >= 3 else coverage(text)
+        if not covered:
+            reasons.append("tokenizer_coverage")
     values = {k: (None if isinstance(v, float) and not math.isfinite(v) else v) for k, v in values.items()}
     if "b0_wer" in values and values["b0_wer"] is None:
         values["b0_wer_infinite"] = True

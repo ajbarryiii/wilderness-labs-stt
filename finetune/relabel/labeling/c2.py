@@ -33,15 +33,18 @@ Steps (each its own process, since vLLM lives in its own environment):
     refilter  (CPU) the current filters version over a finished run's stored outputs, into a new run directory
 
 merge applies the filters version recorded in run.json (filters_version), so a run stays under the version it was
-started with even when filters.VERSION moves on. Re-filtering (labeling plan Part C "Filters", amended 2026-10-25):
-`refilter --run-dir labels/<T*>/<run> [--out D]` recomputes every record's disposition, reasons and filter values
+started with even when filters.VERSION moves on. Re-filtering (labeling plan Part C "Filters", amended 2026-10-25 and
+2026-10-26): `refilter --run-dir labels/<T*>/<run> [--out D]` recomputes every record's training text (`text`, the
+label mapped under the new version: version 3 maps punctuation B0 lacks), disposition, reasons and filter values
 (human_wer, b0_wer, words_per_second) under filters.VERSION from what the run stored (raw label, B0's raw label,
 duration, reference kind) and the reference in the record's C1 shard, as merge computes them, into a new run directory
-(default the sibling <run>-f<VERSION>; it must be under $RELABEL_ROOT):
+(default the sibling <run>-f<VERSION>; it must be under $RELABEL_ROOT). Each stored text must be the source version's
+mapping of its raw label. The source may itself be a re-filtered run (main-f2 to version 3; its default output is then
+main-f2-f3):
 
     run.json                    the source's, with the new filters_version and "refilter" (the source directory, its
-                                filters version and the SHA-256 of its manifest's shard list); a re-run refuses a
-                                different one
+                                filters version, the SHA-256 of its manifest's shard list and, for a re-filtered
+                                source, its own "refilter" as source_refilter); a re-run refuses a different one
     shards/<k>.labels.parquet   every other column copied unchanged, and <k>.json as merge writes it plus
                                 filters_version and source_sha256 (the source shard's SHA-256)
     manifest.json               as finish writes it
@@ -531,13 +534,14 @@ def _write_manifest(run_dir: Path, run: dict, ks: list[int]) -> dict:
     return manifest
 
 
-# --- re-filtering (labeling plan Part C "Filters", amended 2026-10-25) ------------------------------
+# --- re-filtering (labeling plan Part C "Filters", amended 2026-10-25 and 2026-10-26) ---------------
 
-def refilter_dir(run_dir: Path) -> Path:
-    """refilter's default output: the run's sibling named for the current filters version (main -> main-f2)."""
+def refilter_dir(run_dir: Path, version: int | None = None) -> Path:
+    """refilter's default output: the run's sibling named for the target filters version, by default the current one
+    (main -> main-f3)."""
     from labeling import filters
     run_dir = Path(run_dir)
-    return run_dir.with_name(f"{run_dir.name}-f{filters.VERSION}")
+    return run_dir.with_name(f"{run_dir.name}-f{filters.VERSION if version is None else version}")
 
 
 def _complete_shards(run_dir: Path, run: dict) -> list[dict]:
@@ -552,25 +556,32 @@ def _complete_shards(run_dir: Path, run: dict) -> list[dict]:
     return files
 
 
-def refilter(run_dir: Path, out_dir: Path | None = None, coverage=None) -> dict:
-    """filters.VERSION over a finished run's stored outputs, into out_dir (see the module docstring)."""
+def refilter(run_dir: Path, out_dir: Path | None = None, coverage=None, *, version: int | None = None) -> dict:
+    """Filters `version` (default filters.VERSION, the only one the CLI applies) over a finished run's stored outputs,
+    into out_dir (see the module docstring)."""
     from labeling import filters
+    version = filters.VERSION if version is None else version
+    if version not in filters.VERSIONS:
+        raise ValueError(f"unknown filters version {version!r}")
     run_dir = Path(run_dir)
-    out_dir = Path(out_dir) if out_dir is not None else refilter_dir(run_dir)
+    out_dir = Path(out_dir) if out_dir is not None else refilter_dir(run_dir, version)
     if out_dir.resolve() == run_dir.resolve():
         raise ValueError("refilter writes a new run directory, not into its source")
     if not out_dir.resolve().is_relative_to(layout.relabel_root().resolve()):
         raise ValueError(f"{out_dir} is not under $RELABEL_ROOT")
     run = load_run(run_dir)
-    if run["filters_version"] >= filters.VERSION:
-        raise RuntimeError(f"{run_dir} is already under filters version {run['filters_version']}")
+    source_version = run["filters_version"]
+    if source_version >= version:
+        raise RuntimeError(f"{run_dir} is already under filters version {source_version}")
     listed = _complete_shards(run_dir, run)
     pool_dir = _abs(run["pool_dir"])
     # the source's label shards (number, file, SHA-256, records), not its manifest file, which finish may re-render
     digest = hashlib.sha256(json.dumps(listed, sort_keys=True).encode()).hexdigest()
-    new = run | {"filters_version": filters.VERSION,
-                 "refilter": {"source_run_dir": _rel(run_dir), "source_filters_version": run["filters_version"],
-                              "source_shards_sha256": digest}}
+    provenance = {"source_run_dir": _rel(run_dir), "source_filters_version": source_version,
+                  "source_shards_sha256": digest}
+    if "refilter" in run:                      # a re-filtered source (e.g. main-f2): keep where its labels came from
+        provenance["source_refilter"] = run["refilter"]
+    new = run | {"filters_version": version, "refilter": provenance}
     path = out_dir / "run.json"
     if path.exists():
         if json.loads(path.read_text()) != new:
@@ -604,16 +615,18 @@ def refilter(run_dir: Path, out_dir: Path | None = None, coverage=None) -> dict:
             if (rec["source"], rec["duration"], rec["reference_kind"]) != (r["source"], r["duration"], r["reference_kind"]):
                 raise RuntimeError(f"{rec['id']}: the record's source, duration or reference kind differs from C1's")
             res = filters.check(rec["duration"], rec["raw"], r["reference"], rec["reference_kind"], rec["b0_raw"],
-                                coverage, version=filters.VERSION)
-            if (res["raw"], res["text"], res["norm"]) != (rec["raw"], rec["text"], rec["norm"]):
+                                coverage, version=version)
+            stored = (res["raw"], filters.map_text(res["raw"], version=source_version), res["norm"])
+            if stored != (rec["raw"], rec["text"], rec["norm"]):
                 raise RuntimeError(f"{rec['id']}: the stored label text is not what the filters derive from its raw label")
             v = res["values"]
-            records.append(rec | {"disposition": res["disposition"], "reasons": res["reasons"],
+            # the training text is the new version's mapping (version 3 changed it), for every record
+            records.append(rec | {"text": res["text"], "disposition": res["disposition"], "reasons": res["reasons"],
                                   "human_wer": v.get("human_wer"), "b0_wer": v.get("b0_wer"),
                                   "words_per_second": v.get("words_per_second")})
         sha = _write_parquet(dst, records, label_schema())
         write_json(dst_meta, _shard_meta(dst, k, src_meta["group"], records, sha)
-                   | {"filters_version": filters.VERSION, "source_sha256": src_meta["sha256"]})
+                   | {"filters_version": version, "source_sha256": src_meta["sha256"]})
         done.append(k)
         _log(f"refilter shard {k}: {len(records)} records, {sum(x['disposition'] == 'kept' for x in records)} kept")
     manifest = _write_manifest(out_dir, new, [f["shard"] for f in listed])

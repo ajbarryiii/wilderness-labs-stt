@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 
 import devsets
-from labeling import c2, checks, config, replay, shards
+from labeling import c2, checks, config, filters, replay, shards
 from labeling_fixtures import World, relabel_root
 from test_labeling_c2 import RefB0, RefTeacher, table
 
@@ -705,6 +705,51 @@ class Drops(unittest.TestCase):
         self.assertAlmostEqual(t["s"]["hallucination_rate_ids"], 0.03)
         self.assertFalse(t["s"]["ok"])
 
+    # --- per-source hallucination limit (labeling plan "Gate to stage 3" item 2, amended 2026-10-26) ---
+
+    @staticmethod
+    def source(src: str, n: int, hallucination: int, other: int = 0, base: int = 0) -> dict:
+        """n ids of src: `hallucination` rejected by the guard (B0 rule), `other` by another filter, the rest kept."""
+        out = {}
+        for j in range(n):
+            reasons = ("b0_wer_gt_0.8",) if j < hallucination else \
+                ("tokenizer_coverage",) if j < hallucination + other else ()
+            out[base + j] = (src, not reasons, reasons)
+        return out
+
+    def test_the_limits(self):
+        self.assertEqual((checks.MAX_DROP, checks.MAX_HALLUCINATION), (0.05, 0.02))
+        self.assertEqual(checks.HALLUCINATION_LIMIT_BY_SOURCE, {"yodas": 0.04})
+
+    def test_yodas_hallucination_limit_is_4_percent(self):
+        labels = self.source("yodas", 1000, 36)                                    # 3.6%
+        labels |= self.source("yodas-tech", 1000, 21, base=10_000)                 # 2.1%
+        labels |= self.source("yodas-med", 1000, 36, base=20_000)                  # 3.6%
+        labels |= self.source("librispeech", 1000, 19, base=30_000)                # 1.9%
+        labels |= self.source("ami", 1000, 21, base=40_000)                        # 2.1%
+        t = checks.drop_table(labels, {i: 1 for i in labels})
+        self.assertAlmostEqual(t["yodas"]["hallucination_rate_ids"], 0.036)
+        self.assertEqual({s: c["ok"] for s, c in t.items()},
+                         {"yodas": True, "yodas-tech": False, "yodas-med": False, "librispeech": True, "ami": False})
+        self.assertEqual({s: c["hallucination_limit"] for s, c in t.items()},
+                         {"yodas": 0.04, "yodas-tech": 0.02, "yodas-med": 0.02, "librispeech": 0.02, "ami": 0.02})
+        self.assertFalse(checks.drop_table(self.source("yodas", 1000, 41), {})["yodas"]["ok"])          # 4.1%
+        self.assertTrue(checks.drop_table(self.source("yodas", 1000, 40), {})["yodas"]["ok"])           # 4.0%
+
+    def test_yodas_limit_by_occurrences_too(self):
+        labels = self.source("yodas", 1000, 36)
+        occ = {i: 1 for i in labels} | {0: 6}                       # by occurrences: 41/1005 = 4.08%
+        t = checks.drop_table(labels, occ)
+        self.assertGreater(t["yodas"]["hallucination_rate_occurrences"], 0.04)
+        self.assertFalse(t["yodas"]["ok"])
+
+    def test_yodas_total_drop_stays_5_percent(self):
+        t = checks.drop_table(self.source("yodas", 1000, 30, other=21), {})       # guard 3.0%, total 5.1%
+        self.assertAlmostEqual(t["yodas"]["drop_rate_ids"], 0.051)
+        self.assertFalse(t["yodas"]["ok"])
+        t = checks.drop_table(self.source("yodas", 1000, 30, other=20), {})       # total 5.0%
+        self.assertTrue(t["yodas"]["ok"])
+
 
 class Gate(unittest.TestCase):
     @classmethod
@@ -745,6 +790,11 @@ class Gate(unittest.TestCase):
         r = self.gate()
         self.assertTrue(r["passed"], (r["items"], r["consistency"]))
         self.assertTrue(r["independent_replay"]["same_sequence"])
+        th = r["thresholds"]
+        self.assertEqual((th["drop"], th["hallucination"], th["hallucination_by_source"]), (0.05, 0.02, {"yodas": 0.04}))
+        self.assertTrue(r["drops"])
+        for src, c in r["drops"].items():
+            self.assertEqual(c["hallucination_limit"], 0.04 if src == "yodas" else 0.02, src)
         files = sorted((self.root / "gate" / "spotcheck").glob("*.txt"))
         self.assertTrue(files)
         text = files[0].read_text()
@@ -847,14 +897,14 @@ class Gate(unittest.TestCase):
                           stream_factory=self.make, audio_hash=False)
         self.assertEqual({k for k, v in old["items"].items() if not v}, {"filters"})
         self.assertFalse(old["passed"])
-        self.assertEqual((old["filters"]["run"], old["filters"]["current"]), (1, 2))
-        out = self.root / "labels-v1-f2"
+        self.assertEqual((old["filters"]["run"], old["filters"]["current"]), (1, filters.VERSION))
+        out = self.root / f"labels-v1-f{filters.VERSION}"
         c2.refilter(v1, out, coverage=lambda t: True)
-        r = checks.gate(self.pin, self.pool, out, cons_v1, self.root / "gate-v1-f2", total_batches=12,
+        r = checks.gate(self.pin, self.pool, out, cons_v1, self.root / "gate-v1-refiltered", total_batches=12,
                         stream_factory=self.make, audio_hash=False)
         self.assertTrue(r["passed"], (r["items"], r["consistency"]))
         self.assertTrue(r["completeness"]["ok"])
-        self.assertEqual(r["filters"]["run"], 2)
+        self.assertEqual(r["filters"]["run"], filters.VERSION)
         self.assertEqual(r["filters"]["refilter"]["source_filters_version"], 1)
 
     def test_tampered_c1_audio_fails_completeness(self):

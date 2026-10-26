@@ -51,6 +51,8 @@ def records(run_dir: Path) -> dict[str, dict]:
 
 
 class Refilter(unittest.TestCase):
+    """Version 1 to version 2 (the rate confirmation); refilter's target version is named, so these semantics hold
+    whatever filters.VERSION is."""
     @classmethod
     def setUpClass(cls):
         cls.tmp = tempfile.TemporaryDirectory()
@@ -62,10 +64,10 @@ class Refilter(unittest.TestCase):
         checks.write_rows_as_shards(rows, cls.pool, 2)                     # 5 shards, 3 groups of 2 shards
         c2.write_json(cls.pool / "materialized.json", {})
         cls.v1 = cls.labeled("v1", version=1)
-        cls.v2 = cls.labeled("v2")
+        cls.v2 = cls.labeled("v2", version=2)
         cls.v1_files = files(cls.v1)
         cls.out = cls.root / "labels" / "v1-f2"
-        cls.result = c2.refilter(cls.v1, cls.out, coverage=cover)
+        cls.result = c2.refilter(cls.v1, cls.out, coverage=cover, version=2)
 
     @classmethod
     def labeled(cls, name: str, version: int | None = None, finish: bool = True) -> Path:
@@ -121,7 +123,7 @@ class Refilter(unittest.TestCase):
     def test_the_new_run_records_its_filters_version_and_source(self):
         run = c2.load_run(self.out)
         src = c2.load_run(self.v1)
-        self.assertEqual(run["filters_version"], filters.VERSION)
+        self.assertEqual(run["filters_version"], 2)
         self.assertEqual(run["refilter"]["source_filters_version"], 1)
         self.assertEqual(run["refilter"]["source_run_dir"], "labels/v1")
         listed = json.loads((self.v1 / "manifest.json").read_text())["shards"]
@@ -153,14 +155,14 @@ class Refilter(unittest.TestCase):
 
     def test_idempotent_and_resumable_per_shard(self):
         out = self.root / "labels" / "v1-f2-resume"
-        c2.refilter(self.v1, out, coverage=cover)
+        c2.refilter(self.v1, out, coverage=cover, version=2)
         before = files(out) | {"manifest.json": (out / "manifest.json").read_bytes()}
-        again = c2.refilter(self.v1, out, coverage=cover)
+        again = c2.refilter(self.v1, out, coverage=cover, version=2)
         self.assertEqual((again["refiltered"], again["skipped"]), ([], 5))
         self.assertEqual(files(out) | {"manifest.json": (out / "manifest.json").read_bytes()}, before)
         (out / "shards" / "00003.json").unlink()                  # interrupted after shard 3's records, before its meta
         (out / "manifest.json").unlink()
-        resumed = c2.refilter(self.v1, out, coverage=cover)
+        resumed = c2.refilter(self.v1, out, coverage=cover, version=2)
         self.assertEqual(resumed["refiltered"], [3])
         self.assertEqual(files(out) | {"manifest.json": (out / "manifest.json").read_bytes()}, before)
 
@@ -170,10 +172,10 @@ class Refilter(unittest.TestCase):
         src = self.root / "labels" / "v1-rerendered"
         shutil.copytree(self.v1, src)
         out = self.root / "labels" / "v1-rerendered-f2"
-        c2.refilter(src, out, coverage=cover)
+        c2.refilter(src, out, coverage=cover, version=2)
         m = json.loads((src / "manifest.json").read_text())
         (src / "manifest.json").write_text(json.dumps(m | {"note": "re-rendered"}, indent=2))
-        self.assertEqual(c2.refilter(src, out, coverage=cover)["refiltered"], [])
+        self.assertEqual(c2.refilter(src, out, coverage=cover, version=2)["refiltered"], [])
 
     def test_refuses_an_output_outside_the_relabel_root(self):
         with tempfile.TemporaryDirectory() as elsewhere:
@@ -195,9 +197,16 @@ class Refilter(unittest.TestCase):
             c2.refilter(d, out, coverage=cover)
         self.assertFalse(out.exists())
 
-    def test_refuses_a_run_already_at_the_current_version(self):
+    def test_refuses_a_run_already_at_the_target_version(self):
         with self.assertRaisesRegex(RuntimeError, "already"):
-            c2.refilter(self.v2, self.root / "labels" / "v2-f2", coverage=cover)
+            c2.refilter(self.v2, self.root / "labels" / "v2-f2", coverage=cover, version=2)
+        current = self.labeled("current")                               # init_run: filters.VERSION
+        self.assertEqual(c2.load_run(current)["filters_version"], filters.VERSION)
+        with self.assertRaisesRegex(RuntimeError, "already"):
+            c2.refilter(current, self.root / "labels" / "current-f", coverage=cover)
+        with self.assertRaisesRegex(ValueError, "version"):
+            c2.refilter(self.v1, self.root / "labels" / "v1-f9", coverage=cover, version=9)
+        self.assertFalse((self.root / "labels" / "v1-f9").exists())
 
     def test_refuses_its_own_directory_and_another_runs_output(self):
         with self.assertRaises(ValueError):
@@ -207,7 +216,7 @@ class Refilter(unittest.TestCase):
         run = json.loads((other / "run.json").read_text()) | {"b0": {"batch_seconds": 30.0}}
         (other / "run.json").write_text(json.dumps(run))
         with self.assertRaisesRegex(RuntimeError, "different settings"):
-            c2.refilter(other, self.out, coverage=cover)
+            c2.refilter(other, self.out, coverage=cover, version=2)
 
     def test_refuses_a_label_shard_that_differs_from_its_meta(self):
         bad = self.root / "labels" / "v1-tampered"
@@ -226,7 +235,147 @@ class Refilter(unittest.TestCase):
                 step()
 
     def test_default_output_is_a_sibling_named_for_the_version(self):
-        self.assertEqual(c2.refilter_dir(Path("labels/t/main")), Path("labels/t/main-f2"))
+        self.assertEqual(c2.refilter_dir(Path("labels/t/main")), Path(f"labels/t/main-f{filters.VERSION}"))
+        self.assertEqual(c2.refilter_dir(Path("labels/t/main")), Path("labels/t/main-f3"))
+        self.assertEqual(c2.refilter_dir(Path("labels/t/main"), version=2), Path("labels/t/main-f2"))
+
+
+# --- filters version 3: punctuation mapping (labeling plan Part C "Filters", amended 2026-10-26) ---
+
+B0_LACKS = set('"#&()*+;<=>@[\\]_{|}~`')
+
+
+def b0_like(text: str) -> bool:
+    """A stand-in for B0's tokenizer coverage: ASCII without the characters B0's vocabulary lacks."""
+    return all(c.isascii() and c not in B0_LACKS for c in text)
+
+
+QUOTE = 'She said, "I\'m bored."'
+PAREN = "seventy two percent (of Denver) said yes"
+# id -> (source, reference, reference_kind, seconds, T* label, B0 label)
+CLIPS3 = {
+    "c:quote": ("c", "she said i'm bored", "human", 3.0, QUOTE, "she said i'm bored"),
+    "c:paren": ("c", None, None, 3.0, PAREN, "seventy two percent of denver said yes"),
+    "c:both": ("c", None, None, 3.0, f'"{PAREN}" [sic]', "seventy two percent of denver said yes sic"),
+    "c:hash": ("c", None, None, 3.0, "item #5 is ready", "item five is ready"),
+    "c:jp": ("c", None, None, 3.0, "これは100円です。", "nothing alike here at all"),
+    "c:loop": ("c", None, None, 5.0, '"yes yes yes yes yes"', "yes yes yes yes yes"),
+    "d:plain": ("d", "hello there friend", "human", 2.0, "hello there friend", "hello there friend"),
+    "d:amp": ("d", "salt and pepper please", "human", 2.0, "salt & pepper please", "salt and pepper please"),
+}
+KEPT3 = {"c:quote", "c:paren", "c:both", "d:plain", "d:amp"}      # under version 3
+
+
+class RefilterVersion3(unittest.TestCase):
+    """Re-filtering to version 3 recomputes the stored training text (`text`) of every record, kept or rejected, with
+    version 3's mapping; filters 1-3 and every other column are unchanged."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.root = Path(cls.tmp.name)
+        cls.ctx = relabel_root(cls.root)
+        cls.ctx.__enter__()
+        cls.pool = cls.root / "pool"
+        rows = [clip_row(i, src, ref, kind, seconds) for i, (src, ref, kind, seconds, _, _) in CLIPS3.items()]
+        checks.write_rows_as_shards(rows, cls.pool, 3)                     # 3 shards, 2 groups
+        c2.write_json(cls.pool / "materialized.json", {})
+        cls.v1 = cls.labeled("main", 1)
+        cls.v2 = cls.labeled("v2", 2)
+        cls.v3 = cls.labeled("v3", 3)
+        cls.v1_files = files(cls.v1)
+        cls.result = c2.refilter(cls.v1, coverage=b0_like)              # the default: main-f3, filters.VERSION
+        cls.out = cls.root / "labels" / "main-f3"
+        cls.v12 = cls.root / "labels" / "main-f2"
+        c2.refilter(cls.v1, cls.v12, coverage=b0_like, version=2)
+        cls.v123 = cls.root / "labels" / "main-f2-f3"
+        cls.result_v123 = c2.refilter(cls.v12, coverage=b0_like)
+
+    @classmethod
+    def labeled(cls, name: str, version: int) -> Path:
+        d = cls.root / "labels" / name
+        c2.init_run(d, pool_dir=cls.pool, engine=ENGINE, group_shards=2, b0_batch_seconds=60.0, declared_vram_gb=None,
+                    extra={"filters_version": version})
+        write_outputs(d, cls.pool, {i: c[4] for i, c in CLIPS3.items()}, b0={i: c[5] for i, c in CLIPS3.items()},
+                      signals={i: fake_signals(c[4]) for i, c in CLIPS3.items()})
+        c2.merge_step(d, coverage=b0_like)
+        assert c2.finish(d)["complete"]
+        return d
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.ctx.__exit__(None, None, None)
+        cls.tmp.cleanup()
+
+    def test_merge_maps_under_the_runs_version(self):
+        for run, version in ((self.v1, 1), (self.v2, 2), (self.v3, 3)):
+            for i, r in records(run).items():
+                self.assertEqual(r["text"], filters.map_text(CLIPS3[i][4], version=version), (version, i))
+        v1, v3 = records(self.v1), records(self.v3)
+        self.assertEqual(v1["c:quote"]["text"], QUOTE)                         # version 1 keeps the quotes
+        self.assertEqual(v1["c:quote"]["reasons"], ["tokenizer_coverage"])
+        self.assertEqual(v3["c:quote"]["text"], "She said, I'm bored.")
+        self.assertEqual({i for i, r in v3.items() if r["disposition"] == "kept"}, KEPT3)
+        self.assertEqual({i for i, r in v1.items() if r["disposition"] == "kept"}, {"d:plain"})
+
+    def test_refilter_to_version_3_recomputes_the_text_of_every_record(self):
+        self.assertEqual(self.result["out"], str(self.out))
+        out, v1 = records(self.out), records(self.v1)
+        self.assertEqual(set(out), set(CLIPS3))
+        for i, r in out.items():
+            self.assertEqual(r["text"], filters.map_text(r["raw"], version=3), i)
+        self.assertEqual(out["c:quote"]["text"], "She said, I'm bored.")
+        self.assertEqual(out["c:paren"]["text"], "seventy two percent of Denver said yes")
+        self.assertEqual(out["c:both"]["text"], "seventy two percent of Denver said yes sic")
+        self.assertEqual(out["c:loop"]["text"], "yes yes yes yes yes")                         # rejected, mapped too
+        self.assertEqual(out["d:amp"]["text"], "salt and pepper please")
+        self.assertEqual({i for i, r in out.items() if r["disposition"] == "kept"}, KEPT3)
+        self.assertEqual(out["c:hash"]["reasons"], ["tokenizer_coverage"])
+        self.assertEqual(out["c:jp"]["reasons"], ["b0_wer_gt_0.8", "tokenizer_coverage"])
+        self.assertEqual(out["c:loop"]["reasons"], ["ngram_loop"])
+        changed = {"disposition", "reasons", "text"}
+        for i, r in v1.items():
+            self.assertEqual({k: v for k, v in out[i].items() if k not in changed},
+                             {k: v for k, v in r.items() if k not in changed}, i)
+
+    def test_refiltered_records_equal_a_version_3_merge_of_the_same_outputs(self):
+        for p in sorted((self.v3 / "shards").glob("*.labels.parquet")):
+            self.assertEqual(table(self.out / "shards" / p.name), table(p), p.name)
+            self.assertEqual(table(self.v123 / "shards" / p.name), table(p), p.name)
+        self.assertEqual(c2.load_run(self.out)["filters_version"], 3)
+        by = json.loads((self.out / "manifest.json").read_text())["by_source_distinct_ids"]
+        self.assertEqual((by["c"]["kept"], by["d"]["kept"]), (3, 2))
+        self.assertEqual(self.result["kept"], {"c": [0, 3], "d": [1, 2]})
+
+    def test_refilter_from_a_version_2_refiltered_run(self):
+        run = c2.load_run(self.v123)
+        self.assertEqual(run["filters_version"], 3)
+        self.assertEqual(run["refilter"]["source_run_dir"], "labels/main-f2")
+        self.assertEqual(run["refilter"]["source_filters_version"], 2)
+        self.assertEqual(run["refilter"]["source_refilter"], c2.load_run(self.v12)["refilter"])
+        self.assertNotIn("source_refilter", c2.load_run(self.out)["refilter"])     # a labeled source has none
+        self.assertEqual(c2.contract(run), c2.contract(c2.load_run(self.v1)) | {"filters_version": 3})
+
+    def test_the_source_run_is_untouched(self):
+        self.assertEqual(files(self.v1), self.v1_files)
+
+    def test_refuses_a_source_whose_stored_text_is_not_its_versions_mapping(self):
+        """The stored text must be the source version's mapping of the stored raw label (here: a version 1 run whose
+        text was written under version 3's mapping)."""
+        bad = self.root / "labels" / "main-badtext"
+        shutil.copytree(self.v1, bad)
+        p = bad / "shards" / "00000.labels.parquet"
+        rows = table(p)
+        rows[0]["text"] = filters.map_text(rows[0]["raw"], version=3)
+        self.assertNotEqual(rows[0]["text"], rows[0]["raw"])
+        sha = c2._write_parquet(p, rows, c2.label_schema())
+        meta_path = p.with_name("00000.json")
+        meta_path.write_text(json.dumps(json.loads(meta_path.read_text()) | {"sha256": sha}))
+        m = json.loads((bad / "manifest.json").read_text())
+        m["shards"][0]["sha256"] = sha
+        (bad / "manifest.json").write_text(json.dumps(m))
+        with self.assertRaisesRegex(RuntimeError, "stored label text"):
+            c2.refilter(bad, coverage=b0_like)
 
 
 if __name__ == "__main__":

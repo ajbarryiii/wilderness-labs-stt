@@ -29,8 +29,9 @@ the confidence signals' cost: the same clips decoded once with and once without 
 or cap flag) that differ (labeling plan "GPU probe", 2026-10-24). vLLM's prefix and multimodal caches are reset before
 each timed pass, so no pass is served from an earlier one.
 
-Gate to stage 3: consistency (above); drops per source (all filters <= 5%, hallucination guard <= 2%, both by
-distinct ids and by occurrences in the journal; a larger drop stops and is reported); completeness (every id
+Gate to stage 3: consistency (above); drops per source (all filters <= 5%, hallucination guard <= 2%, or the source's
+limit in HALLUCINATION_LIMIT_BY_SOURCE: 4% for yodas, amended 2026-10-26; both by distinct ids and by occurrences in
+the journal; a larger drop stops and is reported); completeness (every id
 occurrence of the first TOTAL_BATCHES batches has exactly one record, no unexplained missing ids, no id
 conflicts, and an independent replay of the first 1,000 batches gives the same journal); spot check files (100
 seeded random records per source, with B0's labels and a confidence summary when the labels have the signals); and the
@@ -52,6 +53,9 @@ from pathlib import Path
 from labeling import c2, layout, shards
 
 MAX_DROP, MAX_HALLUCINATION = 0.05, 0.02
+# per-source hallucination-guard limits instead of MAX_HALLUCINATION (labeling plan "Gate to stage 3" item 2, amended
+# 2026-10-26: the source yodas only, not its subsets yodas-tech and yodas-med; every total-drop limit stays MAX_DROP)
+HALLUCINATION_LIMIT_BY_SOURCE = {"yodas": 0.04}
 WER_POINTS = 0.05
 GATE_VERSION = 2          # consistency results: 2 = hallucination-guard exclusion (2026-10-25); 1 had no "gate_version"
 GUARD_ALLOWANCE_MIN, GUARD_ALLOWANCE_SHARE = 2, 0.005
@@ -758,13 +762,14 @@ def drop_table(labels: dict[int, tuple], journal_counts: dict[int, int]) -> dict
         for r in reasons:
             c["reasons_ids"][r] = c["reasons_ids"].get(r, 0) + 1
             c["reasons_occ"][r] = c["reasons_occ"].get(r, 0) + n
-    for c in t.values():
+    for src, c in t.items():
         c["drop_rate_ids"] = c["ids_rejected"] / c["ids"] if c["ids"] else 0.0
         c["drop_rate_occurrences"] = c["occ_rejected"] / c["occurrences"] if c["occurrences"] else 0.0
         c["hallucination_rate_ids"] = c["ids_hallucination"] / c["ids"] if c["ids"] else 0.0
         c["hallucination_rate_occurrences"] = c["occ_hallucination"] / c["occurrences"] if c["occurrences"] else 0.0
+        c["hallucination_limit"] = HALLUCINATION_LIMIT_BY_SOURCE.get(src, MAX_HALLUCINATION)
         c["ok"] = max(c["drop_rate_ids"], c["drop_rate_occurrences"]) <= MAX_DROP and \
-            max(c["hallucination_rate_ids"], c["hallucination_rate_occurrences"]) <= MAX_HALLUCINATION
+            max(c["hallucination_rate_ids"], c["hallucination_rate_occurrences"]) <= c["hallucination_limit"]
     return t
 
 
@@ -933,6 +938,7 @@ def gate(pinned: dict, pool_dir: Path, run_dir: Path, consistency_result: Path, 
               "drops": drops,
               "completeness": comp, "independent_replay": rep, "spot_check": spots,
               "thresholds": {"drop": MAX_DROP, "hallucination": MAX_HALLUCINATION,
+                             "hallucination_by_source": dict(HALLUCINATION_LIMIT_BY_SOURCE),
                              "drop_rates": "both by distinct ids and by journal occurrences"}}
     write_json(out_dir / "result.json", result)
     return result
