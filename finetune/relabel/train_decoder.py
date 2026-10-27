@@ -22,7 +22,7 @@ carry the cleaning block; `train --no-cleaning` (and `chunk --no-cleaning`, pass
 uncleaned labels for a run that must reproduce a pre-cleaning result.
 
 Repetition rejection (training/repetition.py, rule "repetition" v1, after the B-T lr3e-5 NaN at step 2839): every
-arm's store, the B0-label controls included, rejects the ids whose T* label holds a run of 10 or more immediately
+arm's store, the B0-label controls included, rejects the ids whose T* label holds a run of 32 or more immediately
 repeated token n-grams (n <= 6), as part of T*'s disposition mask, so the controls drop the same ids. The rule's
 identity (with the SHA-256 of the rejected ids) is in the store identity, hence labels_sha256, and is its own resume
 key (`repetition`): a run made without the rule is refused on resume (exit 78), not mixed; a chunk runs nothing

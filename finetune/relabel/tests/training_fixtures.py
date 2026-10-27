@@ -6,8 +6,8 @@ engines): T* outputs the clip's reference, except "" (rejected: empty_label) for
 "b0 " + the reference. Every id of batch REJECTED_BATCH is rejected, so that batch is fully rejected.
 
 With hallucinate=True, T* also hallucinates a repetition that passes the filters (one word, as the real ones):
-on the first id of batch HALLUCINATED_BATCH the reference + HALLUCINATED (10 repeats of the token "r" under the
-students' tokenizer), on its second the reference + NEAR_MISS (9 repeats). The ids are `hallucinated`, `near_miss`.
+on the first id of batch HALLUCINATED_BATCH the reference + HALLUCINATED (32 repeats of the token "r" under the
+students' tokenizer), on its second the reference + NEAR_MISS (31 repeats). The ids are `hallucinated`, `near_miss`.
 """
 from __future__ import annotations
 
@@ -20,8 +20,8 @@ from labeling_fixtures import World
 TOTAL, PER_SHARD = 14, 4
 REJECTED_BATCH = 3
 HALLUCINATED_BATCH = 5
-HALLUCINATED = " Wu" + "r" * 11          # "▁W ur" + "r" x 10
-NEAR_MISS = " Wu" + "r" * 10             # "▁W ur" + "r" x 9
+HALLUCINATED = " Wu" + "r" * 33          # "▁W ur" + "r" x 32
+NEAR_MISS = " Wu" + "r" * 32             # "▁W ur" + "r" x 31
 
 
 class ScriptedEngine:

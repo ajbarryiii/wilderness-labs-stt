@@ -317,7 +317,7 @@ class RepetitionRule(Chunk):
 
     def test_chunk_refuses_a_finished_run_of_another_rule(self):
         """A finished run is not resumed, so the resume check never sees it: the chunk checks its recorded rule."""
-        rule = {"name": "repetition", "version": 1, "n": [1, 6], "threshold": 10, "rejected": 26}
+        rule = {"name": "repetition", "version": 1, "n": [1, 6], "threshold": 32, "rejected": 26}
         calls = []
         run = lambda cmd, cwd=None: calls.append(cmd) or types.SimpleNamespace(returncode=0)   # noqa: E731
         for item in td.ORDER[:2]:
@@ -336,7 +336,7 @@ class RepetitionRule(Chunk):
         self.assertEqual(td.chunk("RUN", 110.0, runner=run), train.EXIT_RESUME_MISMATCH)
 
     def test_the_report_refuses_runs_of_different_rules(self):
-        rule = {"name": "repetition", "version": 1, "n": [1, 6], "threshold": 10, "rejected": 26}
+        rule = {"name": "repetition", "version": 1, "n": [1, 6], "threshold": 32, "rejected": 26}
         self.finish_with_rule(("B-T", 1e-5), rule)
         self.finish_with_rule(("B-0", 1e-5), rule)
         self.assertEqual(rep.label_rule(), rule)

@@ -145,8 +145,8 @@ class Repetition(Fixture):
         self.assertEqual((h["disposition"], n["disposition"]), ("kept", "kept"))
         self.assertTrue(h["text"].endswith(HALLUCINATED) and n["text"].endswith(NEAR_MISS))
         spec = repetition_spec(None)
-        self.assertEqual(spec.repeats(h["text"]), (10, 1))
-        self.assertEqual(spec.repeats(n["text"]), (9, 1))
+        self.assertEqual(spec.repeats(h["text"]), (32, 1))
+        self.assertEqual(spec.repeats(n["text"]), (31, 1))
         self.assertEqual(spec.repeats(h["b0_raw"])[0], 1)
         self.assertIn(self.w.hallucinated, self.w.batch_ids(HALLUCINATED_BATCH))
 
@@ -157,7 +157,7 @@ class Repetition(Fixture):
             self.assertTrue(plain.kept(self.w.hallucinated))
             self.assertFalse(ruled.kept(self.w.hallucinated), label_set)
             self.assertIsNone(ruled.text(self.w.hallucinated))
-            self.assertTrue(ruled.kept(self.w.near_miss), label_set)              # 9 repeats: below the threshold
+            self.assertTrue(ruled.kept(self.w.near_miss), label_set)              # 31 repeats: below the threshold
             others = [i for b in range(THROUGH) for i in self.w.batch_ids(b) if i != self.w.hallucinated]
             self.assertEqual([ruled.text(i) for i in others], [plain.text(i) for i in others])
             self.assertEqual(ruled.identity["kept"], plain.identity["kept"] - 1)
@@ -169,11 +169,11 @@ class Repetition(Fixture):
         self.assertEqual(block, b0.identity["repetition"])
         self.assertEqual(block, spec.identity([self.w.hallucinated]))
         self.assertEqual((block["name"], block["version"], block["threshold"], block["n"], block["rejected"]),
-                         ("repetition", 1, 10, [1, 6], 1))
+                         ("repetition", 1, 32, [1, 6], 1))
         self.assertNotIn("repetition", plain.identity)
         self.assertNotEqual(t.identity["sha256"], plain.identity["sha256"])
-        # another rule: another identity, with another rejected set (threshold 9) or the same one (n up to 1)
-        lower = self.store("T*", repetition=repetition_spec(self.cache().with_suffix(".t9"), threshold=9))
+        # another rule: another identity, with another rejected set (threshold 31) or the same one (n up to 1)
+        lower = self.store("T*", repetition=repetition_spec(self.cache().with_suffix(".t31"), threshold=31))
         self.assertEqual(lower.identity["repetition"]["rejected"], 2)
         self.assertNotEqual(lower.identity["repetition"]["rejected_sha256"], block["rejected_sha256"])
         unigram = self.store("T*", repetition=repetition_spec(self.cache().with_suffix(".n1"), n_max=1))
@@ -197,7 +197,7 @@ class Repetition(Fixture):
         cached = json.loads(path.read_text())
         self.assertEqual(cached["rule"], repetition_spec(None).rule())
         self.assertEqual(sorted(cached["shards"]), [shards.shard_name(k) for k in range(3)])
-        self.assertEqual(cached["shards"][shards.shard_name(1)]["rejected"], [[self.w.hallucinated, 10, 1]])
+        self.assertEqual(cached["shards"][shards.shard_name(1)]["rejected"], [[self.w.hallucinated, 32, 1]])
         with mock.patch.object(trep.Repetition, "evaluate", side_effect=AssertionError("recomputed")):
             again = self.store("T*", repetition=repetition_spec(path))     # the T* store reads the same cache
         self.assertEqual(again.identity["repetition"], first.identity["repetition"])

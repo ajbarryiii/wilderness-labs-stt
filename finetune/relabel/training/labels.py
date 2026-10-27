@@ -24,7 +24,7 @@ choices artifact of another label run contract or tables, or whose recorded span
 cleaning=None the texts and the identity are exactly the uncleaned ones.
 
 Repetition rejection (rule "repetition" v1, training/repetition.py): with `repetition` (a Repetition spec), an id whose
-T* label (the record's `text` as stored, before cleaning, whichever label set is read) has a run of 10 or more
+T* label (the record's `text` as stored, before cleaning, whichever label set is read) has a run of 32 or more
 immediately repeated token n-grams (n <= 6) is rejected as part of T*'s mask: no label (None) in either label set,
 never cleaned. The rule's result per label shard comes from its cache when the cache entry is of this rule, label run
 contract and shard SHA-256 (else it is computed from the shard's `text` column and cached). The identity gains

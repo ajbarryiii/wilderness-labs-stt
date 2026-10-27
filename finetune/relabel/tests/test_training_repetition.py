@@ -1,5 +1,5 @@
 """Contract tests: repetition rejection, rule "repetition" version 1 (training/repetition.py): the run length of an
-immediately repeated token n-gram (n = 1..6, in repeats of the n-gram), the threshold (10, inclusive), the students'
+immediately repeated token n-gram (n = 1..6, in repeats of the n-gram), the threshold (32, inclusive), the students'
 tokenizer and the rule's identity. The label store's use of the rule is in test_training_data.py."""
 from __future__ import annotations
 
@@ -58,9 +58,12 @@ class RunLength(unittest.TestCase):
         self.assertEqual([(int(r), int(n)) for r, n in zip(repeats, ns)], [trep.longest_repeat(s) for s in seqs])
 
     def test_threshold_is_inclusive(self):
-        self.assertEqual((trep.THRESHOLD, trep.N_MAX, trep.VERSION, trep.NAME), (10, 6, 1, "repetition"))
-        self.assertFalse(trep.rejects(9))
-        self.assertTrue(trep.rejects(10))
+        # Contract (architect, 2026-10-27): threshold 32, in the gap between genuine labels (up to 13 repeats in
+        # main-f3) and the hallucinations (105 and more); the version stays 1 (nothing trained with threshold 10)
+        self.assertEqual((trep.THRESHOLD, trep.N_MAX, trep.VERSION, trep.NAME), (32, 6, 1, "repetition"))
+        self.assertFalse(trep.rejects(31))
+        self.assertTrue(trep.rejects(32))
+        self.assertFalse(trep.rejects(13))
         self.assertFalse(trep.rejects(0))
 
 
@@ -83,26 +86,29 @@ class Tokenized(unittest.TestCase):
         r = self.spec.repeats
         self.assertEqual(r(""), (0, 0))
         self.assertEqual(r("no no no"), (3, 1))                                    # a genuine short repetition
-        self.assertEqual(r("Okay. Wu" + "r" * 10 + "."), (9, 1))                  # "▁W ur" then 9 "r"
-        self.assertEqual(r("Okay. Wu" + "r" * 11 + "."), (10, 1))
-        self.assertEqual(r("so " + "uh, " * 10 + "right"), (10, 2))              # "▁uh ," ten times
-        self.assertEqual(r("so " + "uh, " * 9 + "right"), (9, 2))
+        self.assertEqual(r("So, " + "no way " * 13 + "I'm never stopping."), (13, 2))   # genuine, kept
+        self.assertEqual(r("Okay. Wu" + "r" * 32 + "."), (31, 1))                 # "▁W ur" then 31 "r"
+        self.assertEqual(r("Okay. Wu" + "r" * 33 + "."), (32, 1))
+        self.assertEqual(r("so " + "uh, " * 32 + "right"), (32, 2))              # "▁uh ," 32 times
+        self.assertEqual(r("so " + "uh, " * 31 + "right"), (31, 2))
         self.assertEqual(r("I shouldn't be surprised. Wu" + "r" * 487), (486, 1))
 
     def test_rejected_labels(self):
-        rejected = self.spec.evaluate(["a", "b", "c", "d", "e"], ["kept", "kept", "kept", "rejected", "kept"],
-                                      ["no no no", "Wu" + "r" * 11, "uh, " * 10, "Wu" + "r" * 40, ""])
-        self.assertEqual(rejected["rejected"], [["b", 10, 1], ["c", 10, 2]])     # d: not kept by T*
-        self.assertEqual(rejected["kept"], 4)
+        rejected = self.spec.evaluate(["a", "b", "c", "d", "e", "f", "g"],
+                                      ["kept", "kept", "kept", "rejected", "kept", "kept", "kept"],
+                                      ["no no no", "Wu" + "r" * 33, "uh, " * 32, "Wu" + "r" * 40, "",
+                                       "no way " * 13, "Wu" + "r" * 32])
+        self.assertEqual(rejected["rejected"], [["b", 32, 1], ["c", 32, 2]])     # d: not kept by T*
+        self.assertEqual(rejected["kept"], 6)
 
     def test_identity_names_the_rule_and_the_rejected_set(self):
         a = self.spec.identity(["y", "x"])
         self.assertEqual({k: a[k] for k in ("name", "version", "n", "threshold", "tokenizer_sha256", "rejected")},
-                         {"name": "repetition", "version": 1, "n": [1, 6], "threshold": 10,
+                         {"name": "repetition", "version": 1, "n": [1, 6], "threshold": 32,
                           "tokenizer_sha256": trep.TOKENIZER_SHA256, "rejected": 2})
         self.assertEqual(a, self.spec.identity(["x", "y"]))                        # the sorted set
         self.assertNotEqual(a["rejected_sha256"], self.spec.identity(["x"])["rejected_sha256"])
-        other = trep.Repetition(tokenizer_file(), threshold=20)
+        other = trep.Repetition(tokenizer_file(), threshold=10)
         self.assertNotEqual(other.identity(["x", "y"]), a)
         self.assertEqual(other.identity(["x", "y"])["rejected_sha256"], a["rejected_sha256"])
 

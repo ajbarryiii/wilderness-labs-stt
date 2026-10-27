@@ -48,7 +48,7 @@ import numpy as np
 NAME = "repetition"
 VERSION = 1
 N_MAX = 6
-THRESHOLD = 10
+THRESHOLD = 32                   # genuine labels reach 13 repeats in main-f3, the hallucinations 105 and more
 LABEL = "T* text as stored (before label cleaning), kept ids"
 # Kea-B's export tokenizer.model (binary_test_paths.PINNED_FILES); B0's .nemo holds the same file
 TOKENIZER_SHA256 = "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0"
