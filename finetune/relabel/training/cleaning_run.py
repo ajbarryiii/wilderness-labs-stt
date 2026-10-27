@@ -1006,7 +1006,7 @@ class TransformersScorer:
             idx = order[s:s + self.batch]
             enc = self.tok([_chat(self.tok, users[k]) for k in idx], return_tensors="pt", padding=True).to(self.device)
             with torch.inference_mode():
-                logits = self.model(**enc).logits[:, -1, :].float()
+                logits = self.model(**enc, logits_to_keep=1).logits[:, -1, :].float()   # not batch×length×vocab
             for row, k in zip(logits, idx):
                 out[k] = _softmax([float(row[t]) for t in self.letters[:n_options[k]]])
         return out
