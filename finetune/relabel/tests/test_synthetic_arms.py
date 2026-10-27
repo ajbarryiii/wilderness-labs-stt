@@ -648,9 +648,6 @@ class Report(unittest.TestCase):
         with mock.patch.object(td, "root", lambda: cls.root):
             dirs = {"A": td.run_dir("B-T", lr), "TS": td.run_dir("B-TS", lr), "TSn": td.run_dir("B-TSn", lr)}
             stems = {"A": ts.stem_dir("B-T", lr), "TS": ts.stem_dir("B-TS", lr), "TSn": ts.stem_dir("B-TSn", lr)}
-            td.write_json(ts.selection_path("B-T"), {"arm": "B-T", "selected": lr, "selected_name": "lr3e-5",
-                                                    "selection_h4": {"lr1e-5": 7.0, "lr3e-5": 6.5, "lr1e-4": 6.8},
-                                                    "rule": "lowest selection-part H4"})
         for m, d in dirs.items():
             for i, (name, ids) in enumerate(cls.H4_IDS.items()):
                 recs = [{"id": x, "ref_norm": "one two three four", "hyp_norm": "one two three four", "S": int(k % 3 == 0
@@ -672,25 +669,67 @@ class Report(unittest.TestCase):
         ids = {n: set(v) for n, v in cls.H4_IDS.items()}
         fake_split = types.SimpleNamespace(sha256="s", ids=lambda name, part: ids[name])
         cov = {"underpowered": ["chemistry"], "complete": True, "totals": None, "path": "c", "min_targeted": 100}
+        cls.h4 = {"lr1e-5": 7.0, "lr3e-5": 6.5, "lr1e-4": 6.8}       # selection-part H4 of the three B-T runs
         patches = [mock.patch.object(td, "root", lambda: cls.root),
+                   mock.patch.object(td, "part_wer", lambda out, split, part: {"h4": cls.h4[out.name]}),
+                   mock.patch.object(td.relabel_paths, "require_mount", lambda: None),
                    mock.patch.object(srep.devsplit, "load", lambda *a, **k: fake_split),
                    mock.patch.object(srep.devsplit, "dev_manifests", lambda: {}),
                    mock.patch.object(srep.vocab.Split, "load", lambda *a, **k: cls.split),
                    mock.patch.object(srep, "coverage_info", lambda split: cov),
                    mock.patch.object(srep, "check_recordings", lambda part: 3),
                    mock.patch.object(srep.layout, "split_path", lambda: srep.layout.relabel_root() / "split.json")]
+        cls.patches = patches
         for p in patches:
             p.start()
-        try:
-            cls.result = srep.analyze_all()
-            cls.text = srep.markdown(cls.result)
-        finally:
-            for p in patches:
-                p.stop()
+        for other in (1e-5, 1e-4):                         # the other two B-T runs; then freeze as training does
+            td.write_json(td.run_dir("B-T", other) / "summary.json", {"steps": 5})
+        ts.frozen_selection("B-T")
+        cls.result = srep.analyze_all()
+        cls.text = srep.markdown(cls.result)
 
     @classmethod
     def tearDownClass(cls):
+        for p in cls.patches:
+            p.stop()
         cls.tmp.cleanup()
+
+    def test_a_rerun_selected_t_star_run_is_refused(self):
+        """Regression (review r1): a selected T* run rerun after the selection was frozen (its summary changed)."""
+        path = td.run_dir("B-T", 3e-5) / "summary.json"
+        saved = path.read_bytes()
+        try:
+            td.write_json(path, {"steps": 5, "rerun": True})
+            with self.assertRaises(RuntimeError):
+                srep.analyze_all()
+        finally:
+            path.write_bytes(saved)
+        self.assertEqual(srep.analyze_all()["students"]["B"]["status"], "complete")
+
+    def test_a_selection_that_moved_is_refused(self):
+        """Regression (review r1): the three runs now select another learning rate than the frozen one."""
+        try:
+            self.h4["lr1e-4"] = 6.0
+            with self.assertRaises(RuntimeError):
+                srep.analyze_all()
+        finally:
+            self.h4["lr1e-4"] = 6.8
+
+    def test_the_2c_section_uses_the_2b_sections_learning_rate(self):
+        """Regression (review r1): main refuses, writing nothing, when the 2b section selects another rate."""
+        out = self.root / "RESULTS.md"
+        for lr, refused in ((1e-4, True), (3e-5, False)):
+            r2b = {"selection": {"B-T": {"selected": lr}, "T-T": {"selected": None}}}
+            with mock.patch.object(srep.drep, "analyze_all", lambda: r2b), \
+                    mock.patch.object(srep.drep, "markdown", lambda r: "2b\n"):
+                if refused:
+                    with self.assertRaises(RuntimeError):
+                        srep.main(out)
+                    self.assertFalse(out.exists())
+                    self.assertFalse((td.root() / "results-synthetic.json").exists())
+                else:
+                    self.assertEqual(srep.main(out), 0)
+                    self.assertTrue(out.read_text().startswith("2b\n"))
 
     def test_one_student_complete_the_other_waiting_for_its_selection(self):
         b, t = self.result["students"]["B"], self.result["students"]["T"]

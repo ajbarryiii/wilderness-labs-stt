@@ -4,7 +4,9 @@ RESULTS-decoder-only.md (written after stage 2b's, decoder_report.markdown, in t
     ./python train_synthetic.py report [--out PATH]      (CPU; reads $RELABEL_ROOT/decoder-only/ and the term split)
 
 Models, per student: A, the selected T* run of stage 2b (decoder-only/selection/<s>-T.json), and TS and TSn, the
-student's synthetic arms at A's learning rate.
+student's synthetic arms at A's learning rate. Before any result is read, the frozen selection is revalidated
+against the runs as training revalidates it (validated_selection), and main refuses, writing nothing, unless the
+2c section's learning rate of each T* arm is the one the 2b section selects (check_selections).
 
 Term recall (real speech only): eval-stem (decoder-only/eval-stem/<arm>/<lr>/) and dev-technical (each run's
 domain/), per (domain, side) of the frozen term split (synthetic/terms/split.json; vocab.Split.matcher), each
@@ -219,13 +221,35 @@ def reference_counts(tables: dict[str, RecallTable]) -> dict:
     return {d: {s: int(sum(t.occurrences[(d, s)].sum() for t in tables.values())) for s in SIDES} for d in DOMAINS}
 
 
-def student_result(s: str, split: devsplit.Split, term_split: vocab.Split, cov: dict) -> dict:
+def validated_selection(t_arm: str) -> dict | None:
+    """The frozen selection of a T* arm, revalidated against its runs as training revalidates it
+    (train_synthetic.frozen_selection: the selection recomputed from the three runs, and their summaries' SHA-256,
+    must equal the frozen record); None before it is frozen. A rerun or changed run is refused (RuntimeError), so
+    a report never pairs a run's new scores with eval-stem scores or 2c runs of the frozen one."""
+    if not ts.selection_path(t_arm).exists():
+        return None
+    try:
+        return ts.frozen_selection(t_arm)
+    except ts.NotReady as error:
+        raise RuntimeError(f"{t_arm}: a run of the frozen selection is gone or unfinished ({error})") from error
+
+
+def check_selections(r2b: dict, r: dict) -> None:
+    """The 2c section's learning rate of each T* arm is the one the 2b section selects (RuntimeError otherwise)."""
+    for t_arm, sel in r["selection"].items():
+        if sel is not None and r2b["selection"][t_arm]["selected"] != sel["selected"]:
+            raise RuntimeError(f"{t_arm}: the 2b section selects {r2b['selection'][t_arm]['selected']}, the 2c "
+                               f"section uses {sel['selected']}")
+
+
+def student_result(s: str, split: devsplit.Split, term_split: vocab.Split, cov: dict, selection: dict | None) -> dict:
+    """selection: the student's validated_selection."""
     t_arm = f"{s}-T"
     arms = {"TS": f"{s}-TS", "TSn": f"{s}-TSn"}
     out = {"student": s, "name": td.STUDENTS[s]["name"], "t_arm": t_arm, "arms": arms}
-    lr = ts.selected_lr(t_arm)
-    if lr is None:
+    if selection is None:
         return out | {"status": f"the {t_arm} learning rate is not selected yet"}
+    lr = float(selection["selected"])
     dirs = {"A": td.run_dir(t_arm, lr), "TS": td.run_dir(arms["TS"], lr), "TSn": td.run_dir(arms["TSn"], lr)}
     stems = {"A": ts.stem_dir(t_arm, lr), "TS": ts.stem_dir(arms["TS"], lr), "TSn": ts.stem_dir(arms["TSn"], lr)}
     missing = [f"{m} run" for m, d in dirs.items() if not (d / "summary.json").exists()]
@@ -248,7 +272,7 @@ def student_result(s: str, split: devsplit.Split, term_split: vocab.Split, cov: 
     counts = reference_counts(tables)
     summaries = {m: json.loads((d / "summary.json").read_text()) for m, d in dirs.items()}
     return out | {"status": "complete", "dirs": {m: str(d.relative_to(td.root())) for m, d in dirs.items()},
-                  "lr_selection": json.loads(ts.selection_path(t_arm).read_text()),
+                  "lr_selection": selection,
                   "h4": h4, "recall": recall, "domain_wer": wer, "claims": claims(h4, recall),
                   "reference_occurrences": counts,
                   "coverage_matches_scored_references": counts == {d: (cov["totals"] or {}).get(d) for d in DOMAINS},
@@ -278,6 +302,7 @@ def run_table() -> list[dict]:
 
 def analyze_all() -> dict:
     split = devsplit.load(td.split_path(), devsplit.dev_manifests())
+    selections = {t: validated_selection(t) for t in dict.fromkeys(ts.BASE.values())}   # before any result is read
     term_split = vocab.Split.load()
     cov = coverage_info(term_split)
     recordings = {}
@@ -288,8 +313,8 @@ def analyze_all() -> dict:
             "term_split": {"path": str(layout.split_path().relative_to(layout.relabel_root())),
                            "entries": len(term_split.entries)},
             "coverage": cov, "recordings": recordings,
-            "selection": {t: drep._json(ts.selection_path(t)) for t in dict.fromkeys(ts.BASE.values())},
-            "students": {s: student_result(s, split, term_split, cov) for s in td.STUDENTS},
+            "selection": selections,
+            "students": {s: student_result(s, split, term_split, cov, selections[f"{s}-T"]) for s in td.STUDENTS},
             "runs": run_table(),
             "probes": {s: drep._json(td.root() / "synthetic-probe" / f"{s}.json") for s in td.STUDENTS}}
 
@@ -382,6 +407,7 @@ def main(out: Path | None = None) -> int:
     relabel_paths.require_mount()
     r2b = drep.analyze_all()
     r = analyze_all()
+    check_selections(r2b, r)                              # nothing is written on a mismatch
     td.write_json(td.root() / "results.json", r2b)
     td.write_json(td.root() / "results-synthetic.json", r)
     path = Path(out) if out else td.root() / "RESULTS-decoder-only.md"
