@@ -193,6 +193,19 @@ class Choose(World):
         self.assertEqual(r["prompts"], self.spans["unique_prompts"])
         self.assertTrue(r["all_identical"])
 
+    def test_reassembly_after_disabling_a_set_counts_only_current_prompts(self):
+        both = self.write_tables(self.root / "tables-two-sets",
+                                 {**TABLES, "choices.tsv": "human\thumane\npseudo\tsudo\n"})
+        work = self.root / "cleaning" / "two-sets" / "v1"
+        R.spans(self.w.labels_dir, work, tables_dir=both)
+        R.choose(work, FakeScorer(), block=4, tables_dir=both, run_dir=self.w.labels_dir)
+        spans = R.spans(self.w.labels_dir, work, tables_dir=self.tables)       # "pseudo" disabled
+        self.assertGreater(len(R._decided(work)[0]), spans["unique_prompts"])  # cached decisions of the removed set
+        m = R.assemble(work, self.w.labels_dir, tables_dir=self.tables)
+        self.assertEqual(m["unique_prompts"], spans["unique_prompts"])
+        self.assertEqual(pq.read_table(work / "choices.parquet").to_pylist(),
+                         pq.read_table(self.work / "choices.parquet").to_pylist())
+
     def test_spans_of_other_tables_are_refused(self):
         other = self.write_tables(self.root / "tables-other", {**TABLES, "forms.tsv": "b0\tB0\n# changed\n"})
         with self.assertRaises(RuntimeError):
