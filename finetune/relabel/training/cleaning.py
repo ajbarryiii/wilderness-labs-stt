@@ -514,6 +514,7 @@ class Cleaning:
     def edits(self, text: str, item_id: str, label_set: str) -> tuple[str, list[Edit]]:
         """The cleaned text and its changed spans (module docstring, read-time order)."""
         if text == "":
+            self._recorded([], text, item_id, label_set)      # no spans: the artifact must record none either
             return "", []
         spans = self.spans(text)
         chosen = self._recorded(spans, text, item_id, label_set)

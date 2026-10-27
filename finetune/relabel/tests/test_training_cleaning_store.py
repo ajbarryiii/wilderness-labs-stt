@@ -5,10 +5,12 @@ refusals, LabelStore with and without cleaning, and the net-harm check."""
 from __future__ import annotations
 
 import hashlib
+import os
 import json
 import re
 import shutil
 import tempfile
+import types
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -343,6 +345,124 @@ class Check(World):
         g = r["check3"]["groups"]["choices:human|humane"]
         self.assertTrue(g["reported_not_judged"])
         self.assertFalse(g["disabled"])
+
+
+class Lease(unittest.TestCase):
+    """GPU commands respect the agent-jobs VRAM lease (AGENT_JOBS_VRAM_FRACTION) before any model is loaded."""
+
+    def env(self, lease):
+        return mock.patch.dict(os.environ, {} if lease is None else {R.LEASE_ENV: str(lease)}, clear=False)
+
+    def setUp(self):
+        self._saved = os.environ.pop(R.LEASE_ENV, None)
+
+    def tearDown(self):
+        if self._saved is not None:
+            os.environ[R.LEASE_ENV] = self._saved
+
+    def test_vllm_utilization_defaults_to_the_lease_and_refuses_more(self):
+        with self.env(None):
+            self.assertEqual(R.vllm_utilization(None), R.DEFAULT_GPU_MEMORY_UTILIZATION)
+            self.assertEqual(R.vllm_utilization(0.95), 0.95)
+        with self.env(0.5):
+            self.assertEqual(R.vllm_utilization(None), 0.5)
+            self.assertEqual(R.vllm_utilization(0.4), 0.4)
+            with self.assertRaises(RuntimeError):
+                R.vllm_utilization(0.85)
+        with self.env(0.95):
+            self.assertEqual(R.vllm_utilization(None), R.DEFAULT_GPU_MEMORY_UTILIZATION)
+
+    def test_transformers_fraction_is_the_declared_vram_capped_by_the_lease(self):
+        with self.env(None):
+            self.assertIsNone(R.transformers_fraction(None, 32.0))
+            self.assertEqual(R.transformers_fraction(8.0, 32.0), 0.25)
+        with self.env(0.5):
+            self.assertEqual(R.transformers_fraction(None, 32.0), 0.5)
+            self.assertEqual(R.transformers_fraction(16.0, 32.0), 0.5)
+            with self.assertRaises(RuntimeError):
+                R.transformers_fraction(20.0, 32.0)
+
+    def test_engines_refuse_before_loading(self):
+        with self.env(0.5):
+            with self.assertRaises(RuntimeError):
+                R.make_scorer("vllm", 0.85)
+            with mock.patch.object(R, "_gpu_total_gb", lambda: 32.0), self.assertRaises(RuntimeError):
+                R.make_scorer("transformers", declared_vram_gb=20.0)
+            self.assertEqual(R.make_scorer("vllm").gpu_memory_utilization, 0.5)
+            with self.assertRaises(RuntimeError):                  # refused before vLLM is imported
+                R.VllmScorer(0.85).load()
+
+
+class GpuCommands(World):
+    """choose / probe / determinism load and run the model only while holding the parakeet GPU lock."""
+
+    def run_cmd(self, work, events, scorer=None, busy=False, **kw):
+        import contextlib
+
+        import score_teacher
+
+        @contextlib.contextmanager
+        def lock(label, wait_s):
+            if busy:
+                raise score_teacher.LockBusy("held")
+            events.append(("lock", label))
+            try:
+                yield
+            finally:
+                events.append(("unlock", label))
+        s = scorer or EventScorer(events)
+        a = types.SimpleNamespace(engine="vllm", gpu_memory_utilization=None, declared_vram_gb=None, probe=None,
+                                  determinism=None, budget_minutes=None, labels_run="fixture", lock_wait=1.0)
+        vars(a).update(kw)
+        with mock.patch.object(score_teacher, "gpu_lock", lock), mock.patch.object(R, "make_scorer",
+                                                                                  lambda *x, **y: s), \
+                mock.patch.object(C, "TABLES_DIR", self.tables):
+            return R.gpu_command(a, work, self.w.labels_dir)
+
+    def test_model_runs_inside_the_lock(self):
+        for kw in ({"probe": 3}, {"determinism": 1.0}, {}):
+            work = self.copy(f"gpu-{len(kw)}-{list(kw)}")
+            if not kw:
+                for p in list((work / "decisions").iterdir()):
+                    p.unlink()
+            events = []
+            self.assertEqual(self.run_cmd(work, events, **kw), 0)
+            self.assertEqual(events[0][0], "lock", kw)
+            self.assertEqual(events[-1][0], "unlock", kw)
+            inner = [e for e in events[1:-1]]
+            self.assertIn("load", inner, kw)
+            self.assertTrue(all(e[0] not in ("lock", "unlock") for e in inner))
+
+    def test_a_busy_lock_runs_nothing(self):
+        import score_teacher
+        events = []
+        self.assertEqual(self.run_cmd(self.copy("busy"), events, busy=True, probe=3), score_teacher.LOCK_BUSY_EXIT)
+        self.assertEqual(events, [])
+
+    def test_a_lease_refusal_takes_no_lock(self):
+        events = []
+        a = types.SimpleNamespace(engine="vllm", gpu_memory_utilization=0.9, declared_vram_gb=None, probe=3,
+                                  determinism=None, budget_minutes=None, labels_run="fixture", lock_wait=1.0)
+        import score_teacher
+        with mock.patch.dict(os.environ, {R.LEASE_ENV: "0.5"}), \
+                mock.patch.object(score_teacher, "gpu_lock", lambda *x: events.append("lock")), \
+                self.assertRaises(RuntimeError):
+            R.gpu_command(a, self.copy("lease"), self.w.labels_dir)
+        self.assertEqual(events, [])
+
+
+class EventScorer(FakeScorer):
+    def __init__(self, events):
+        super().__init__()
+        self.events = events
+
+    def load(self):
+        self.events.append("load")
+        super().load()
+
+    def score(self, users, n_options):
+        self.events.append("score")
+        return super().score(users, n_options)
 
 
 class Canonical(unittest.TestCase):

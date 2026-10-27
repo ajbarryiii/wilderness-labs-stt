@@ -93,6 +93,9 @@ class Layer1Rules(unittest.TestCase):
         for e in tabs.layer1.entries.values():
             self.assertEqual(tabs.layer1.apply(e.output)[0], e.output)
         self.assertGreater(len(tabs.sets), 10)
+        # nouns that are not dialect spellings (cleaning plan, architect decision): left as written
+        for t in ("That shot was a gimme.", "That is my cuz."):
+            self.assertEqual(tabs.layer1.apply(t)[0], t)
         for f in C.TABLE_FILES:
             text = (C.TABLES_DIR / f).read_text()
             self.assertNotIn("/mnt", text)
@@ -262,6 +265,12 @@ class ReadTime(unittest.TestCase):
         with self.assertRaises(C.ArtifactMismatch):
             spec.clean("maybe so", "i1", "B0")                 # no rows for this label set
         self.assertEqual(spec.clean("nothing here", "i9", "T*"), "nothing here")   # no spans, no rows: fine
+
+    def test_an_empty_label_is_checked_against_the_artifact(self):
+        rows = {("B0", "e1"): [(0, 0, 5, "maybe", "maybe|may be", None)]}
+        with self.assertRaises(C.ArtifactMismatch):
+            C.Cleaning(self.t, Artifact(self.t, rows)).clean("", "e1", "B0")
+        self.assertEqual(C.Cleaning(self.t, Artifact(self.t, rows)).clean("", "e2", "B0"), "")
 
     def test_empty_text_stays_empty_and_non_empty_stays_non_empty(self):
         spec = C.Cleaning(self.t)

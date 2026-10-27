@@ -2,8 +2,15 @@
 
     ./python -m training.cleaning_run spans --labels-run RUN [--workers N]          CPU
     ./python -m training.cleaning_run choose --labels-run RUN [--engine vllm|transformers] [--probe N]
-                                     [--budget-minutes M] [--declared-vram-gb G] [--determinism F]   GPU
+                                     [--budget-minutes M] [--declared-vram-gb G] [--determinism F]
+                                     [--gpu-memory-utilization U] [--lock-wait S]                   GPU
     ./python -m training.cleaning_run assemble --labels-run RUN                     CPU
+
+The GPU commands (choose, --probe, --determinism; either engine) hold the parakeet GPU lock (score_teacher.gpu_lock)
+while the model is loaded and run, and respect the job's VRAM lease (AGENT_JOBS_VRAM_FRACTION): vLLM's
+gpu_memory_utilization defaults to the lease and a larger request is refused; transformers caps torch's per-process
+memory fraction at the declared VRAM (refused above the lease) or else at the lease. Both are checked before any
+model is loaded.
     ./python -m training.cleaning_run check --labels-run RUN [--layer1-only] [--workers N]          CPU
     ./python -m training.cleaning_run audit --labels-run RUN [--workers N]          CPU (architect's sheets)
 
@@ -902,9 +909,60 @@ def _softmax(xs: list[float]) -> list[float]:
     return [x / s for x in e]
 
 
+LEASE_ENV = "AGENT_JOBS_VRAM_FRACTION"
+DEFAULT_GPU_MEMORY_UTILIZATION = 0.85
+LOCK_WAIT = 4 * 3600.0
+
+
+def lease_fraction() -> float | None:
+    """The job's VRAM lease as a fraction of the GPU (agent-jobs sets AGENT_JOBS_VRAM_FRACTION), or None."""
+    v = os.environ.get(LEASE_ENV)
+    return float(v) if v else None
+
+
+def vllm_utilization(requested: float | None) -> float:
+    """vLLM's gpu_memory_utilization: the requested fraction (refused above the lease), else the lease, else
+    DEFAULT_GPU_MEMORY_UTILIZATION."""
+    cap = lease_fraction()
+    if requested is None:
+        return DEFAULT_GPU_MEMORY_UTILIZATION if cap is None else min(DEFAULT_GPU_MEMORY_UTILIZATION, cap)
+    if cap is not None and requested > cap + 1e-6:
+        raise RuntimeError(f"gpu_memory_utilization {requested} is above the job's VRAM lease {cap} ({LEASE_ENV})")
+    return requested
+
+
+def transformers_fraction(declared_gb: float | None, total_gb: float) -> float | None:
+    """torch's per-process memory fraction: the declared VRAM over the GPU's (refused above the lease), else the
+    lease, else None (no cap)."""
+    cap = lease_fraction()
+    if declared_gb is None:
+        return cap
+    frac = min(1.0, declared_gb / total_gb)
+    if cap is not None and frac > cap + 1e-6:
+        raise RuntimeError(f"declared VRAM {declared_gb} GB is {frac:.3f} of the GPU, above the job's VRAM lease "
+                           f"{cap} ({LEASE_ENV})")
+    return frac
+
+
+def make_scorer(engine: str, gpu_memory_utilization: float | None = None, declared_vram_gb: float | None = None):
+    """The real scorer of `engine`, its memory cap checked against the lease before anything is loaded."""
+    if engine == "vllm":
+        return VllmScorer(vllm_utilization(gpu_memory_utilization))
+    if engine == "transformers":
+        if declared_vram_gb is not None and lease_fraction() is not None:
+            transformers_fraction(declared_vram_gb, _gpu_total_gb())   # refuse now, not after a model load
+        return TransformersScorer(declared_vram_gb=declared_vram_gb)
+    raise ValueError(f"unknown engine {engine!r}")
+
+
+def _gpu_total_gb() -> float:
+    import torch
+    return torch.cuda.get_device_properties(0).total_memory / 2 ** 30
+
+
 class TransformersScorer:
     """syn-textgen under transformers (bf16): one forward pass per batch, float32 logits at the last prompt
-    position, softmax over the option letters."""
+    position, softmax over the option letters. Memory: torch's per-process fraction (transformers_fraction)."""
 
     def __init__(self, device: str = "cuda", declared_vram_gb: float | None = None, batch: int = 32):
         self.device, self.declared_vram_gb, self.batch = device, declared_vram_gb, batch
@@ -917,13 +975,12 @@ class TransformersScorer:
         place = textgen.placement(self.device)
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
-        from labeling.engines import vram_fraction
         entry = layout.source(layout.TEXTGEN)
         self.hf_id, self.revision = entry["hf_id"], entry["revision"]
         if self.device == "cuda":
-            frac = vram_fraction(self.declared_vram_gb)
-            if frac is not None:
-                torch.cuda.set_per_process_memory_fraction(frac, 0)
+            self.memory_fraction = transformers_fraction(self.declared_vram_gb, _gpu_total_gb())
+            if self.memory_fraction is not None:
+                torch.cuda.set_per_process_memory_fraction(self.memory_fraction, 0)
         self.tok = AutoTokenizer.from_pretrained(self.hf_id, revision=self.revision, padding_side="left")
         self.model = AutoModelForCausalLM.from_pretrained(self.hf_id, revision=self.revision, dtype=torch.bfloat16,
                                                           **place)
@@ -960,13 +1017,15 @@ class VllmScorer:
     restricted to the option letters (allowed_token_ids), whose processed log-probabilities are read
     (logprobs_mode "processed_logprobs", so every allowed letter is returned) and renormalized."""
 
-    def __init__(self, gpu_memory_utilization: float = 0.85, max_model_len: int = 4096, seed: int = 0):
+    def __init__(self, gpu_memory_utilization: float = DEFAULT_GPU_MEMORY_UTILIZATION, max_model_len: int = 4096,
+                 seed: int = 0):
         self.gpu_memory_utilization, self.max_model_len, self.seed = gpu_memory_utilization, max_model_len, seed
         self.llm = None
 
     def load(self) -> None:
         if self.llm is not None:
             return
+        vllm_utilization(self.gpu_memory_utilization)          # refuse above the lease before loading
         import importlib
         from labeling.engines import apply_vllm_mode, check_vllm_mode
         apply_vllm_mode(True)
@@ -1039,8 +1098,10 @@ def main(argv: list[str] | None = None) -> int:
             s.add_argument("--probe", type=int, metavar="N", help="score N prompts and report; write no decisions")
             s.add_argument("--determinism", type=float, metavar="F", help="re-score a fraction F (Check 2)")
             s.add_argument("--budget-minutes", type=float)
-            s.add_argument("--declared-vram-gb", type=float, help="transformers: the job's VRAM lease")
-            s.add_argument("--gpu-memory-utilization", type=float, default=0.85, help="vllm")
+            s.add_argument("--declared-vram-gb", type=float, help="transformers: the job's VRAM (capped by the lease)")
+            s.add_argument("--gpu-memory-utilization", type=float,
+                           help=f"vllm (default: the job's VRAM lease, at most {DEFAULT_GPU_MEMORY_UTILIZATION})")
+            s.add_argument("--lock-wait", type=float, default=LOCK_WAIT, help="seconds to wait for the GPU lock")
     a = p.parse_args(argv)
     import relabel_paths
     relabel_paths.require_mount()
@@ -1067,15 +1128,28 @@ def main(argv: list[str] | None = None) -> int:
         r = audit(run_dir, a.workers, out=out, sample_shards=sample)
         print(json.dumps({"human_reference_labels": r["human_reference_labels"], "out": str(out or C.audit_dir())}))
         return 0
-    scorer = VllmScorer(a.gpu_memory_utilization) if a.engine == "vllm" else \
-        TransformersScorer(declared_vram_gb=a.declared_vram_gb)
-    if a.probe:
-        print(json.dumps(probe(work, scorer, a.probe), indent=1))
-        return 0
-    if a.determinism:
-        print(json.dumps(determinism(work, scorer, a.determinism), indent=1))
-        return 0
-    print(json.dumps(choose(work, scorer, a.budget_minutes, run_dir=run_dir), indent=1))
+    return gpu_command(a, work, run_dir)
+
+
+def gpu_command(a, work: Path, run_dir: Path) -> int:
+    """choose / --probe / --determinism: the memory cap is checked against the job's lease first, then the model
+    is loaded and run only while holding the parakeet GPU lock (score_teacher.gpu_lock, as every relabel GPU entry
+    point does); a lock not free within --lock-wait exits score_teacher.LOCK_BUSY_EXIT."""
+    import score_teacher
+    scorer = make_scorer(a.engine, a.gpu_memory_utilization, a.declared_vram_gb)
+    mode = "probe" if a.probe else "determinism" if a.determinism else "choose"
+    try:
+        with score_teacher.gpu_lock(f"relabel cleaning {mode} {a.labels_run}", a.lock_wait):
+            if a.probe:
+                out = probe(work, scorer, a.probe)
+            elif a.determinism:
+                out = determinism(work, scorer, a.determinism)
+            else:
+                out = choose(work, scorer, a.budget_minutes, run_dir=run_dir)
+    except score_teacher.LockBusy as exc:
+        print(f"refusing to run: {exc}", file=sys.stderr)
+        return score_teacher.LOCK_BUSY_EXIT
+    print(json.dumps(out, indent=1))
     return 0
 
 

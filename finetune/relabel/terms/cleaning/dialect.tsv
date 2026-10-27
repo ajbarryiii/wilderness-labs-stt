@@ -4,12 +4,12 @@
 # A capital first letter is kept ("Gonna" -> "Going to"); capitals in the standard spelling ("I'm") are written
 # as listed.
 # Disabled by the net-harm check (cleaning plan Check 3, on the human-reference labels): 'cause, 'em, dunno, kinda,
-# sorta, and the g-dropped allowlist (judged as one class, cleaning plan v4).
+# sorta, and the g-dropped allowlist (judged as one class, cleaning plan v4). Left out: gimme ("a gimme") and cuz
+# ("my cuz", cousin).
 gonna	going to
 wanna	want to
 gotta	got to
 lemme	let me
-gimme	give me
 outta	out of
 lotta	lot of
 tryna	trying to
@@ -18,4 +18,3 @@ oughta	ought to
 i'ma	I'm going to
 imma	I'm going to
 y'all	you all
-cuz	because
