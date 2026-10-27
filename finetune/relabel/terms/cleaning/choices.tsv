@@ -3,19 +3,17 @@
 # in this order (then "can't tell"). Spans are every whole-token, case-insensitive occurrence of a member, longest
 # first, without overlaps. A member ending in "*" is option-only: offered, but it does not start a span (the
 # standard spelling in a dialect set).
+# Disabled by the net-harm check (cleaning plan Check 3, on the human-reference labels; the model's choices matched
+# the reference less often than the label as written): maybe/may be, anyway/any way, everyday/every day, gap/GAAP,
+# and get/git/Git.
 # --- same-sound spellings
-maybe	may be
-anyway	any way
-everyday	every day
 setup	set up
 login	log in
 backup	back up
 checkout	check out
 workout	work out
-gap	GAAP
 cash	cache
 # --- dialect spellings (the standard spelling is option-only)
-get*	git	Git
 you*	yeah*	ya
 because*	cos
 # --- contextual spelling-variant groups of the term lists

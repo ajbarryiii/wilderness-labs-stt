@@ -366,7 +366,8 @@ def determinism(work: Path, scorer, fraction: float = 0.01, tables_dir: Path | N
 # ----------------------------------------------------------------------------- assemble
 
 def assemble(work: Path, run_dir: Path | None, tables_dir: Path | None = None) -> dict:
-    """choices.parquet + manifest.json from spans.parquet and the decision blocks."""
+    """choices.parquet + manifest.json from spans.parquet and the decision blocks (decisions of prompts no longer
+    in the spans, e.g. of a disabled set, are ignored)."""
     import pyarrow as pa
     import pyarrow.parquet as pq
     tables = C.Tables.load(tables_dir)
@@ -400,7 +401,7 @@ def assemble(work: Path, run_dir: Path | None, tables_dir: Path | None = None) -
     manifest = {"version": C.VERSION, "label_run": meta["label_run"], "contract_sha256": meta["contract_sha256"],
                 "tables_sha256": tables.sha256, "template_sha256": C.TEMPLATE_SHA256, "threshold": C.THRESHOLD,
                 "model": {"alias": engine.get("alias"), "revision": engine.get("revision")}, "engine": engine,
-                "rows": len(sp["id"]), "file_sha256": sha, "unique_prompts": len(done),
+                "rows": len(sp["id"]), "file_sha256": sha, "unique_prompts": len(set(sp["prompt_key"])),
                 "gpu_seconds": round(sum(m["seconds"] for m in metas), 1), "blocks": len(metas)}
     write_json(work / "manifest.json", manifest)
     return manifest
