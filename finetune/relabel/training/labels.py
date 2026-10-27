@@ -15,6 +15,13 @@ without a B0 label is an error (it would change the control's population); an em
 The store refuses: a run whose run.json names another C1 directory, a missing label shard of the range, a label
 shard whose SHA-256 differs from its meta, an id recorded twice. A lookup of an id without a record raises
 KeyError (every replayed id must have one).
+
+Label cleaning (cleaning plan, stage 2a; training/cleaning.py): with `cleaning` (a loaded Cleaning spec), every kept
+text of either label set is read through cleaning.clean, which never changes which ids are kept, never returns None
+and never empties a non-empty text (an empty kept text stays empty and kept). The identity gains "cleaning"
+({version, tables_sha256, choices_sha256}, which enters identity["sha256"]) and "cleaned_labels". The store refuses a
+choices artifact of another label run contract or tables, or whose recorded spans do not match a label. With
+cleaning=None the texts and the identity are exactly the uncleaned ones.
 """
 from __future__ import annotations
 
@@ -54,7 +61,10 @@ class LabelStore:
         self.label_set = identity["label_set"]
 
     @classmethod
-    def open(cls, run_dir: Path, pool_dir: Path, *, label_set: str, through_batch: int) -> "LabelStore":
+    def open(cls, run_dir: Path, pool_dir: Path, *, label_set: str, through_batch: int,
+             cleaning=None) -> "LabelStore":
+        """cleaning: a training.cleaning.Cleaning (every kept text is read through cleaning.clean; the identity
+        gains its block, which enters identity["sha256"]) or None (the stored texts and identity, unchanged)."""
         import pyarrow.parquet as pq
         if label_set not in LABEL_SETS:
             raise ValueError(f"label set {label_set!r} is not one of {sorted(LABEL_SETS)}")
@@ -63,8 +73,12 @@ class LabelStore:
         run = c2.load_run(run_dir)
         if c2._abs(run["pool_dir"]).resolve() != pool_dir.resolve():
             raise RuntimeError(f"{run_dir} labels {run['pool_dir']}, not {pool_dir}")
+        contract = c2.contract(run)
+        contract_sha256 = hashlib.sha256(json.dumps(contract, sort_keys=True).encode()).hexdigest()
+        if cleaning is not None:
+            cleaning.bind_run(contract_sha256)
         texts: dict[str, str | None] = {}
-        listed, kept = [], 0
+        listed, kept, cleaned = [], 0, 0
         for k in needed_shards(pool_dir, through_batch):
             path = run_dir / "shards" / f"{shards.shard_name(k)}.labels.parquet"
             meta_path = path.with_name(f"{shards.shard_name(k)}.json")
@@ -85,20 +99,27 @@ class LabelStore:
                 if disposition == "kept":
                     if value is None:
                         raise RuntimeError(f"{i}: kept by T* but no {column}")
+                    if cleaning is not None:
+                        text = cleaning.clean(value, i, label_set)
+                        if text is None or (value != "" and text == ""):
+                            raise RuntimeError(f"{i}: cleaning returned {text!r} for a kept label")
+                        cleaned += text != value
+                        value = text
                     texts[i] = value
                     kept += 1
                 else:
                     texts[i] = None
             listed.append({"shard": k, "sha256": meta["sha256"], "records": meta["records"]})
-        contract = c2.contract(run)
         identity = {"run_dir": c2._rel(run_dir), "pool_dir": c2._rel(pool_dir), "teacher": run["teacher"],
                     "teacher_revision": run["teacher_revision"],
-                    "contract_sha256": hashlib.sha256(json.dumps(contract, sort_keys=True).encode()).hexdigest(),
+                    "contract_sha256": contract_sha256,
                     "label_set": label_set, "column": column, "mask": MASK, "through_batch": int(through_batch),
                     "shards": listed, "records": len(texts), "kept": kept}
-        identity["sha256"] = hashlib.sha256(json.dumps(
-            {k: identity[k] for k in ("label_set", "column", "contract_sha256", "shards")}, sort_keys=True
-        ).encode()).hexdigest()
+        hashed = {k: identity[k] for k in ("label_set", "column", "contract_sha256", "shards")}
+        if cleaning is not None:
+            identity["cleaning"] = hashed["cleaning"] = cleaning.identity()
+            identity["cleaned_labels"] = cleaned
+        identity["sha256"] = hashlib.sha256(json.dumps(hashed, sort_keys=True).encode()).hexdigest()
         return cls(texts, identity)
 
     def text(self, item_id: str) -> str | None:
