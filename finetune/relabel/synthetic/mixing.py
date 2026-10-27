@@ -19,7 +19,9 @@ arms built from the same inputs get identical clips in identical batches, and a 
 Since 2026-10-24 (synthetic plan "Mixing") the synthetic arms train on a version 2 batch plan
 (training/batchplan.py compute_synthetic), whose draw is plan() over pools and whose clips are cut together with
 the real rows; SyntheticSource (clips appended after the cut) is kept for version 1 replays only and is not used
-by the synthetic arms.
+by the synthetic arms. Their clips come from the version 2 replay itself (training/replay.py PlannedReplay with
+`synthetic` = the ClipPool), and transform_for(arm) is its `synthetic_transform`: the augmentation for TS, None
+for TSn (train_synthetic.py).
 
 SyntheticSource(pool, real_batches, keep, seed, share, augment): the `extra` object of training/replay.py:
 - items(index, real_items) -> the batch's synthetic items {"audio" float32, "duration", "id": "syn:<clip id>",
@@ -153,6 +155,18 @@ class SyntheticSource:
 
 
 ARMS = ("TS", "TSn")
+
+
+def transform_for(arm: str, seed: int = layout.SEED, augment_pool=None):
+    """The synthetic rows' transform of arm "TS" (augment.Augmenter over the TRAIN noise/RIR pool, seeded) or
+    "TSn" (None: the clips as stored). PlannedReplay refuses a transform that changes a label or makes a clip longer
+    than its planned key."""
+    from synthetic import augment
+    if arm not in ARMS:
+        raise ValueError(f"unknown synthetic arm {arm!r}; expected one of {ARMS}")
+    if arm == "TSn":
+        return None
+    return augment.Augmenter(augment_pool or augment.Pool.load(), seed=seed)
 
 
 def source_for(arm: str, replay, labels, stop: int, run: str = "full", seed: int = layout.SEED,
