@@ -7,12 +7,14 @@ the decoder-only seam, on real C1 shards and C2 label records (training_fixtures
   consumed without a step;
 - the B0-label control and the T* arm train on the same utterances, with different texts;
 - an interrupted and resumed run equals an uninterrupted one; checkpoints hold prediction and joint state only, and
-  a checkpoint of another encoder is refused.
+  a checkpoint of another encoder is refused;
+- the seam's train_step (the non-finite guard) trains bit for bit as the pinned train_step on finite steps.
 """
 from __future__ import annotations
 
 import argparse
 import copy
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -63,6 +65,7 @@ class Training(unittest.TestCase):
             eval_every=steps, select="final", dev_limit=None, eval_batch_size=8, ckpt_minutes=30.0, seed=11,
             probe_steps=None, no_powerlog=True, overwrite=False, smoke=True, student="B", label_set=label_set,
             labels_run="fixture", labels_sha256=data.labels.identity["sha256"],
+            cleaning=data.labels.identity.get("cleaning"), repetition=data.labels.identity.get("repetition"),
             plan_sha256=None, replay_sha256=data.replay.identity["sha256"], stop_batch=STOP, schedule=SCHEDULE.to_dict(),
             export_sha256="x", init_sha256="y", split_sha256="z", budget_minutes=None)
 
@@ -79,11 +82,12 @@ class Training(unittest.TestCase):
         with td.seam("B-T"):                       # the decoder-only recipe and the offline optimizer
             return td.DecoderContext(args, run, model, data, "cuda", sha)
 
-    def run_loop(self, ctx, **kw) -> list[dict]:
+    def run_loop(self, ctx, step_fn=None, **kw) -> list[dict]:
         """train.train_loop, recording at every optimizer step its batch index, lr, encoder modes, kept ids and
-        texts."""
+        texts. Each step is the seam's train_step (the guard), or step_fn."""
         seen = []
-        original = train.train_step
+        with td.seam("B-T"):
+            original = step_fn or train.train_step
 
         def step(c, labeled, trainable):
             last = c._last_batch
@@ -143,6 +147,22 @@ class Training(unittest.TestCase):
         self.assertNotEqual([s["texts"] for s in a], [s["texts"] for s in b])
         for s in b:
             self.assertTrue(all(t.startswith("b0 ") for t in s["texts"]))
+
+    def test_the_guard_trains_as_the_pinned_step(self):
+        pinned = train.train_step
+        self.assertIsNot(pinned, tseam.guarded_train_step)
+        a = self.build(self.root / "runs" / "pinned")
+        b = self.build(self.root / "runs" / "guarded")
+        self.run_loop(a, step_fn=pinned)
+        self.run_loop(b)
+        self.assertEqual(b.state.drop_counts[tseam.NONFINITE_KEY], 0)
+        for k, v in td.trained_state(a.student).items():
+            self.assertTrue(torch.equal(v, td.trained_state(b.student)[k]), k)
+        keys = ("step", "loss", "tdt", "grad_norm", "lr", "audio_seconds_seen", "rows_per_step")
+        metrics = [[{k: m[k] for k in keys} for m in map(json.loads, (c.run / "metrics.jsonl").read_text().splitlines())]
+                   for c in (a, b)]
+        self.assertEqual(metrics[0], metrics[1])
+        self.assertGreater(len(metrics[0]), 0)
 
     def test_resume_equals_an_uninterrupted_run(self):
         full = self.build(self.root / "runs" / "full")

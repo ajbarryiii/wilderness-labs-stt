@@ -17,12 +17,25 @@ store instead of the online teacher, installed by `installed(...)` and restored 
 
 OfflineData.state_dict() is what train.py records as the stream identity (config.json "stream"): a hash over
 the replay's shards, the label store's shards and label set, the schedule and the stop batch.
+
+guarded_train_step (installed as train.train_step by the stage 2b and 2c seams, not by replacements()): the pinned
+train.train_step with a non-finite guard. The pinned step clips a NaN gradient norm into NaN gradients and lets AdamW
+corrupt the weights before it raises; the guard checks the loss and the gradient norm after the clip and before
+optimizer.step(). A finite step is the pinned one, operation for operation (same clip at 1.0, same values returned).
+A non-finite one: gradients zeroed, no optimizer step (parameters and AdamW state unchanged), the scheduler still
+stepped, the skip counted in state.drop_counts[NONFINITE_KEY] (a count of steps, not rows; checkpointed with the
+state, so it resumes) and logged; train_loop's running sums of the metrics window and audio_seconds_seen are given
+back what it adds for the step, so the metrics stay finite and cover the trained steps (seconds_by_source, added by
+label_batch before the step, still counts the step's audio). The step still counts toward max_steps, so the run ends
+at its last planned batch, and the learning rate stays on the planned-batch index (label_batch sets it). A run's
+(MAX_NONFINITE_STEPS + 1)-th non-finite step raises NonfiniteSteps.
 """
 from __future__ import annotations
 
 import contextlib
 import hashlib
 import json
+import math
 
 import torch
 
@@ -97,6 +110,50 @@ def label_batch(ctx, batch: dict) -> dict | None:
     tokens, token_len = train.tokenize(ctx.student, texts, ctx.device)
     return {"audio": audio[rows], "audio_len": audio_len[rows], "tokens": tokens, "token_len": token_len,
             "teacher_enc": None, "teacher_len": None, "seconds": seconds, "rows": len(texts)}
+
+
+MAX_NONFINITE_STEPS = 3
+NONFINITE_KEY = "nonfinite_steps_skipped"
+
+
+class NonfiniteSteps(RuntimeError):
+    """More than MAX_NONFINITE_STEPS non-finite steps in one run."""
+
+
+def guarded_train_step(ctx, labeled: dict, trainable: list) -> dict:
+    """train.train_step with the non-finite guard (see the module docstring)."""
+    import train
+    loss, tdt, enc = train.compute_losses(ctx.student, labeled["audio"], labeled["audio_len"],
+                                          labeled["tokens"], labeled["token_len"], ctx.recipe,
+                                          labeled["teacher_enc"], labeled["teacher_len"])
+    ctx.optimizer.zero_grad(set_to_none=True)
+    loss.backward()
+    norm = torch.nn.utils.clip_grad_norm_(trainable, 1.0)
+    values = {"loss": loss.item(), "tdt": tdt.item(), "enc": 0.0 if enc is None else enc.item(),
+              "norm": norm.item()}
+    if all(math.isfinite(v) for v in values.values()):
+        ctx.optimizer.step()
+        ctx.scheduler.step()
+        return values
+    st = ctx.state
+    ctx.optimizer.zero_grad(set_to_none=True)
+    skipped = st.drop_counts.get(NONFINITE_KEY, 0)
+    where = f"step {st.step + 1} (planned batch {st.batches_read - 1})"
+    if skipped >= MAX_NONFINITE_STEPS:
+        raise NonfiniteSteps(f"non-finite loss or gradient norm at {where}: {values}; this run already skipped "
+                             f"{skipped} such steps (at most {MAX_NONFINITE_STEPS}): stopping, the labels or the "
+                             f"learning rate need a look")
+    ctx.scheduler.step()
+    st.drop_counts[NONFINITE_KEY] = skipped + 1
+    train.log(f"non-finite loss or gradient norm at {where}: {values}; optimizer step skipped "
+              f"({skipped + 1}/{MAX_NONFINITE_STEPS} in this run)")
+    # train_loop adds this step's values, seconds and rows to the metrics window and its seconds to
+    # audio_seconds_seen: give them back, so the skipped step is in neither
+    st.acc["n"] -= 1
+    st.acc["seconds"] -= labeled["seconds"]
+    st.acc["rows"] -= labeled["rows"]
+    st.audio_seconds_seen -= labeled["seconds"]
+    return {k: 0.0 for k in values}
 
 
 class ConstantScheduler:

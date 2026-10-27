@@ -22,6 +22,15 @@ and never empties a non-empty text (an empty kept text stays empty and kept). Th
 ({version, tables_sha256, choices_sha256}, which enters identity["sha256"]) and "cleaned_labels". The store refuses a
 choices artifact of another label run contract or tables, or whose recorded spans do not match a label. With
 cleaning=None the texts and the identity are exactly the uncleaned ones.
+
+Repetition rejection (rule "repetition" v1, training/repetition.py): with `repetition` (a Repetition spec), an id whose
+T* label (the record's `text` as stored, before cleaning, whichever label set is read) has a run of 10 or more
+immediately repeated token n-grams (n <= 6) is rejected as part of T*'s mask: no label (None) in either label set,
+never cleaned. The rule's result per label shard comes from its cache when the cache entry is of this rule, label run
+contract and shard SHA-256 (else it is computed from the shard's `text` column and cached). The identity gains
+"repetition" ({name, version, n, threshold, tokenizer_sha256, label, rejected, rejected_sha256} over the store's
+shards, which enters identity["sha256"]); "kept" counts the ids left. With repetition=None the texts and the identity
+are exactly the ones without the rule.
 """
 from __future__ import annotations
 
@@ -33,6 +42,7 @@ from labeling import c2, layout, shards
 
 LABEL_SETS = {"T*": "text", "B0": "b0_raw"}
 MASK = "T* disposition == kept (labeling/filters.py), applied to every label set"
+REPETITION_MASK = "and T*'s label passes repetition rejection (training/repetition.py), applied to every label set"
 
 
 def needed_shards(pool_dir: Path, through_batch: int) -> list[int]:
@@ -55,16 +65,19 @@ def needed_shards(pool_dir: Path, through_batch: int) -> list[int]:
 
 
 class LabelStore:
-    def __init__(self, texts: dict[str, str | None], identity: dict):
+    def __init__(self, texts: dict[str, str | None], identity: dict, repetition_rejected: dict | None = None):
         self._texts = texts
         self.identity = identity
         self.label_set = identity["label_set"]
+        self.repetition_rejected = repetition_rejected or {}      # id -> [repeats, n] (rule "repetition")
 
     @classmethod
     def open(cls, run_dir: Path, pool_dir: Path, *, label_set: str, through_batch: int,
-             cleaning=None) -> "LabelStore":
+             cleaning=None, repetition=None) -> "LabelStore":
         """cleaning: a training.cleaning.Cleaning (every kept text is read through cleaning.clean; the identity
-        gains its block, which enters identity["sha256"]) or None (the stored texts and identity, unchanged)."""
+        gains its block, which enters identity["sha256"]) or None (the stored texts and identity, unchanged).
+        repetition: a training.repetition.Repetition (the ids it rejects on their T* label have no label; the
+        identity gains its block, which enters identity["sha256"]) or None (no such rejection, identity unchanged)."""
         import pyarrow.parquet as pq
         if label_set not in LABEL_SETS:
             raise ValueError(f"label set {label_set!r} is not one of {sorted(LABEL_SETS)}")
@@ -77,8 +90,10 @@ class LabelStore:
         contract_sha256 = hashlib.sha256(json.dumps(contract, sort_keys=True).encode()).hexdigest()
         if cleaning is not None:
             cleaning.bind_run(contract_sha256)
+        if repetition is not None:
+            repetition.bind_run(contract_sha256)
         texts: dict[str, str | None] = {}
-        listed, kept, cleaned = [], 0, 0
+        listed, kept, cleaned, repeated = [], 0, 0, {}
         for k in needed_shards(pool_dir, through_batch):
             path = run_dir / "shards" / f"{shards.shard_name(k)}.labels.parquet"
             meta_path = path.with_name(f"{shards.shard_name(k)}.json")
@@ -90,6 +105,12 @@ class LabelStore:
             table = pq.read_table(path, columns=["id", "disposition", "teacher", column]).to_pydict()
             if len(table["id"]) != meta["records"]:
                 raise RuntimeError(f"{path}: {len(table['id'])} records, meta says {meta['records']}")
+            rejected = {}
+            if repetition is not None:
+                rejected = repetition.shard(
+                    shards.shard_name(k), meta["sha256"], table["id"], table["disposition"],
+                    lambda: table["text"] if column == "text" else _t_star_texts(path, table["id"]))
+                repeated.update(rejected)
             for i, disposition, teacher, value in zip(table["id"], table["disposition"], table["teacher"],
                                                       table[column]):
                 if i in texts:
@@ -99,6 +120,9 @@ class LabelStore:
                 if disposition == "kept":
                     if value is None:
                         raise RuntimeError(f"{i}: kept by T* but no {column}")
+                    if i in rejected:
+                        texts[i] = None
+                        continue
                     if cleaning is not None:
                         text = cleaning.clean(value, i, label_set)
                         if text is None or (value != "" and text == ""):
@@ -110,6 +134,8 @@ class LabelStore:
                 else:
                     texts[i] = None
             listed.append({"shard": k, "sha256": meta["sha256"], "records": meta["records"]})
+        if repetition is not None:
+            repetition.save()
         identity = {"run_dir": c2._rel(run_dir), "pool_dir": c2._rel(pool_dir), "teacher": run["teacher"],
                     "teacher_revision": run["teacher_revision"],
                     "contract_sha256": contract_sha256,
@@ -119,8 +145,11 @@ class LabelStore:
         if cleaning is not None:
             identity["cleaning"] = hashed["cleaning"] = cleaning.identity()
             identity["cleaned_labels"] = cleaned
+        if repetition is not None:
+            identity["repetition"] = hashed["repetition"] = repetition.identity(repeated)
+            identity["mask"] = f"{MASK} {REPETITION_MASK}"
         identity["sha256"] = hashlib.sha256(json.dumps(hashed, sort_keys=True).encode()).hexdigest()
-        return cls(texts, identity)
+        return cls(texts, identity, repeated)
 
     def text(self, item_id: str) -> str | None:
         """The training text of an id, or None when T* rejected it; KeyError for an id without a record."""
@@ -131,6 +160,15 @@ class LabelStore:
 
     def __len__(self) -> int:
         return len(self._texts)
+
+
+def _t_star_texts(path: Path, ids: list[str]) -> list[str | None]:
+    """The T* texts (`text`) of a label shard, in the order of `ids` (its record order)."""
+    import pyarrow.parquet as pq
+    t = pq.read_table(path, columns=["id", "text"]).to_pydict()
+    if t["id"] != list(ids):
+        raise RuntimeError(f"{path}: the records changed while it was read")
+    return t["text"]
 
 
 def production_run_dir(run: str) -> Path:

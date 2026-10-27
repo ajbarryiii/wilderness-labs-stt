@@ -4,9 +4,9 @@
     ./python train_decoder.py equivalence --student B|T                encoder-equivalence check, 20 dev clips (GPU)
     ./python train_decoder.py probe --student B|T                      100-step probe: peak VRAM, step time (GPU)
     ./python train_decoder.py train --arm B-T --lr 1e-5 --labels-run RUN [--budget-minutes 110] [--no-cleaning]
-                                                                       one chunk of one run (GPU; resumable)
+                                    [--no-repetition-reject]           one chunk of one run (GPU; resumable)
     ./python train_decoder.py score-original --student B|T             the unchanged student's scores (GPU)
-    ./python train_decoder.py chunk --labels-run RUN [--budget-minutes 110]
+    ./python train_decoder.py chunk --labels-run RUN [--budget-minutes 110] [--no-cleaning] [--no-repetition-reject]
                                                                        one chunk job: the next unfinished items in
                                                                        ORDER, each a subprocess, within the budget
     ./python train_decoder.py status | report [--out PATH]
@@ -20,6 +20,16 @@ cleaning v1 (training/cleaning.py: the committed tables and the label run's choi
 $RELABEL_ROOT/cleaning/<run>/v1/), so the store identity, hence labels_sha256, the resume check and the run info,
 carry the cleaning block; `train --no-cleaning` (and `chunk --no-cleaning`, passed to every train item) reads the
 uncleaned labels for a run that must reproduce a pre-cleaning result.
+
+Repetition rejection (training/repetition.py, rule "repetition" v1, after the B-T lr3e-5 NaN at step 2839): every
+arm's store, the B0-label controls included, rejects the ids whose T* label holds a run of 10 or more immediately
+repeated token n-grams (n <= 6), as part of T*'s disposition mask, so the controls drop the same ids. The rule's
+identity (with the SHA-256 of the rejected ids) is in the store identity, hence labels_sha256, and is its own resume
+key (`repetition`): a run made without the rule is refused on resume (exit 78), not mixed; a chunk runs nothing
+(exit 78) while a finished run records another rule (rule_mismatch), and the report refuses finished runs of different
+rules. The per-shard result is cached in $RELABEL_ROOT/cleaning/<run>/repetition-v1.json. `train
+--no-repetition-reject` (and `chunk --no-repetition-reject`) reads the labels without the rule, with exactly the
+identity of a run made before it.
 
 Training is finetune/parakeet-ternary/train.py's loop (train.main: checkpoints, resume, signals, metrics,
 summary.json), unchanged, inside seam(): training/seam.py's offline-label replacements (the batch plan's pools
@@ -52,8 +62,12 @@ module's:
 6. train.finish: the encoder must be bit-identical to the start (SHA-256); the trained prediction and joint
    tensors are written (decoder.safetensors, FP32) and scored as the export would store them (FP16) on top of the
    unchanged student export: full stage 1 dev (eval-dev/), dev-medical and dev-technical through score_domain.py's
-   settings and term recall (domain/), and the decoder-step proxy on full dev (proxy/).
+   settings and term recall (domain/), and the decoder-step proxy on full dev (proxy/). The summary's decoder_only
+   block records the non-finite steps skipped (nonfinite_skipped_steps, 0 expected) and the repetition rule.
 7. paths.RUNS: $RELABEL_ROOT/decoder-only/<arm>; train.TRAINING_SOURCES: plus this stage's sources.
+8. train.train_step: training/seam.py guarded_train_step, the pinned step on finite steps; a non-finite loss or
+   gradient norm skips the optimizer step (counted in drop_counts, in every metrics line and the summary), and a
+   fourth one stops the run.
 
 The original students are scored by score-original into decoder-only/original-<B|T>/ with the same code, and
 their dev scores must reproduce the recorded stage 1 student records within CROSSCHECK_POINTS per set.
@@ -87,6 +101,7 @@ from labeling import layout as llayout
 from training import bootstrap, decoder_steps, devsplit, schedule
 from training import cleaning as tcleaning
 from training import labels as tlabels
+from training import repetition as trep
 from training import replay as treplay
 from training import seam as tseam
 
@@ -124,7 +139,7 @@ SOURCES = ("relabel/train_decoder.py", "relabel/decoder_report.py", "relabel/tra
            "relabel/training/labels.py", "relabel/training/replay.py", "relabel/training/schedule.py",
            "relabel/training/batchplan.py", "relabel/training/poolaudio.py",
            "relabel/training/seam.py", "relabel/training/devsplit.py", "relabel/training/bootstrap.py",
-           "relabel/training/decoder_steps.py", "relabel/training/cleaning.py",
+           "relabel/training/decoder_steps.py", "relabel/training/cleaning.py", "relabel/training/repetition.py",
            "relabel/terms/cleaning/forms.tsv", "relabel/terms/cleaning/variants.tsv",
            "relabel/terms/cleaning/dialect.tsv", "relabel/terms/cleaning/choices.tsv",
            "relabel/labeling/shards.py", "relabel/labeling/c2.py",
@@ -423,6 +438,7 @@ class DecoderContext(train.Context):
         super().__init__(args, run, student, None, data, None, None, device, label_fn=_no_teacher)
         self.encoder_sha256 = encoder_sha
         self.timer: threading.Timer | None = None
+        self.state.drop_counts[tseam.NONFINITE_KEY] = 0          # in every metrics line from the start
 
     def checkpoint_payload(self) -> dict:
         payload = super().checkpoint_payload()
@@ -480,9 +496,16 @@ def label_cleaning(labels_run: str, enabled: bool = True):
     return tcleaning.production(labels_run) if enabled else None
 
 
-def offline_data(arm: str, labels_run: str, lr: float, cleaning: bool = True) -> tseam.OfflineData:
+def label_repetition(labels_run: str, enabled: bool = True):
+    """The repetition rule every arm's store applies (rule "repetition" v1 with the label run's cache), or None
+    (--no-repetition-reject)."""
+    return trep.production(labels_run) if enabled else None
+
+
+def offline_data(arm: str, labels_run: str, lr: float, cleaning: bool = True,
+                 repetition: bool = True) -> tseam.OfflineData:
     """The batch plan's pools 0-155 (materialized audio) with the arm's label set (read through label cleaning
-    unless cleaning is False) and the WSD schedule."""
+    unless cleaning is False, with repetition rejection unless repetition is False) and the WSD schedule."""
     from labeling import config as lconfig
     from labeling.__main__ import c1_dir, pinned
     from training import batchplan, poolaudio
@@ -496,7 +519,8 @@ def offline_data(arm: str, labels_run: str, lr: float, cleaning: bool = True) ->
     label_set = ARMS[arm][1]
     labels = tlabels.LabelStore.open(tlabels.production_run_dir(labels_run), pool, label_set=label_set,
                                      through_batch=plan.consumed_batches,
-                                     cleaning=label_cleaning(labels_run, cleaning))
+                                     cleaning=label_cleaning(labels_run, cleaning),
+                                     repetition=label_repetition(labels_run, repetition))
     replay = treplay.PlannedReplay(plan, pool, audio="materialized", store=poolaudio.store_dir(cid, plan.pool_batches))
     return tseam.OfflineData(replay, labels, schedule.decoder_only(lr, plan), plan.n_batches)
 
@@ -512,6 +536,8 @@ def train_parser() -> argparse.ArgumentParser:
     p.add_argument("--overwrite", action="store_true", help="discard this run's outputs and checkpoints")
     p.add_argument("--no-cleaning", action="store_true",
                    help="read the uncleaned labels (default: label cleaning v1, every arm)")
+    p.add_argument("--no-repetition-reject", action="store_true",
+                   help="keep T* labels with long repeated n-gram runs (default: rule \"repetition\" v1, every arm)")
     return p
 
 
@@ -521,7 +547,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     student, label_set = ARMS[a.arm]
     split = devsplit.load(split_path(), devsplit.dev_manifests())
     ident = ensure_student(student)
-    data = offline_data(a.arm, a.labels_run, a.lr, cleaning=not a.no_cleaning)
+    data = offline_data(a.arm, a.labels_run, a.lr, cleaning=not a.no_cleaning,
+                        repetition=not a.no_repetition_reject)
     _ACTIVE["data"] = data
     steps = data.plan["steps"]
     log(f"{a.arm} {LR_NAMES[a.lr]}: batch plan {data.replay.identity['plan_id']}, {data.replay.consumed_batches} "
@@ -534,15 +561,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ckpt_minutes=a.ckpt_minutes, seed=SEED, probe_steps=None, no_powerlog=True, overwrite=a.overwrite,
         smoke=False, student=student, label_set=label_set, labels_run=a.labels_run,
         labels_sha256=data.labels.identity["sha256"], cleaning=data.labels.identity.get("cleaning"),
-        replay_sha256=data.replay.identity["sha256"],
+        repetition=data.labels.identity.get("repetition"), replay_sha256=data.replay.identity["sha256"],
         plan_sha256=data.replay.identity["plan_sha256"], stop_batch=data.stop, schedule=data.schedule.to_dict(), export_sha256=ident["export_sha256"],
         init_sha256=ident["checkpoint_sha256"], split_sha256=split.sha256, budget_minutes=a.budget_minutes,
         deadline=a.deadline)
 
 
 EXTRA_OUTPUTS = ("decoder.safetensors", "domain", "proxy", "scores.json")
-RESUME_EXTRA = ("student", "label_set", "labels_run", "labels_sha256", "cleaning", "plan_sha256", "replay_sha256",
-                "stop_batch",
+RESUME_EXTRA = ("student", "label_set", "labels_run", "labels_sha256", "cleaning", "repetition", "plan_sha256",
+                "replay_sha256", "stop_batch",
                 "schedule",
                 "export_sha256", "init_sha256")
 
@@ -566,8 +593,9 @@ def build_context(args, run: Path, device: str = "cuda"):
     info = {"quantized_modules": [], "trainable": info["trainable"], "parameter_accounting": None,
             "model_file": info["export_source"]["weights_file"],
             "teacher": {"labels": f"offline label store ({args.label_set}: {data.labels.identity['column']}) under "
-                                  f"{tlabels.MASK}", "online_teacher": None,
-                        "cleaning": data.labels.identity.get("cleaning")},
+                                  f"{data.labels.identity['mask']}", "online_teacher": None,
+                        "cleaning": data.labels.identity.get("cleaning"),
+                        "repetition": data.labels.identity.get("repetition")},
             "bucketing": {"source": "batch plan re-cut from C1's journal (b0prime plan \"Batch plan\")",
                           "plan": data.replay.identity, "stop_batch": data.stop},
             "decoder_only": {"arm": args.arm, "student": info["student"], "export_source": info["export_source"],
@@ -615,7 +643,9 @@ def finish(ctx, config_sha: str) -> dict:
                              "lr": args.lr, "decoder_file": str(path), "decoder_sha256": source["decoder_sha256"],
                              "encoder_sha256_start": ctx.encoder_sha256, "encoder_sha256_end": end_sha,
                              "encoder_bit_identical": True, "consumed_batches": st.batches_read,
-                             "fully_rejected_batches": st.skipped_batches, "selection_part": selection,
+                             "fully_rejected_batches": st.skipped_batches,
+                             "nonfinite_skipped_steps": st.drop_counts.get(tseam.NONFINITE_KEY, 0),
+                             "repetition": ctx.stream.labels.identity.get("repetition"), "selection_part": selection,
                              "decoder_graphs_mode": mode, "split_sha256": split.sha256,
                              "proxy": scores["proxy"], "domain": scores["domain_sets"]}}
 
@@ -641,6 +671,7 @@ def seam(arm: str, deadline: float | None = None):
     items = tseam.replacements() + [
         (train, "parse_args", parse_args), (train, "build_context", build_context), (train, "finish", finish),
         (train, "recipe_of", recipe_of), (train, "set_train_modes", set_train_modes), (train, "run_eval", run_eval),
+        (train, "train_step", tseam.guarded_train_step),
         (train, "RESUME_KEYS", tuple(train.RESUME_KEYS) + RESUME_EXTRA),
         (train, "RESUME_ALLOWED_CHANGES", tuple(train.RESUME_ALLOWED_CHANGES) + ("budget_minutes", "deadline")),
         (train, "TRAINING_SOURCES", tuple(train.TRAINING_SOURCES) + SOURCES),
@@ -976,7 +1007,8 @@ def item_done(item: tuple) -> bool:
     return (run_dir(kind, value) / "summary.json").exists()
 
 
-def item_command(item: tuple, labels_run: str, minutes: float, deadline: float, cleaning: bool = True) -> list[str]:
+def item_command(item: tuple, labels_run: str, minutes: float, deadline: float, cleaning: bool = True,
+                 repetition: bool = True) -> list[str]:
     here = Path(__file__).resolve().parent
     kind, value = item
     if kind == "original":
@@ -984,14 +1016,40 @@ def item_command(item: tuple, labels_run: str, minutes: float, deadline: float, 
                 "--deadline", f"{deadline:.0f}"]
     return [str(here / "python"), str(here / "train_decoder.py"), "train", "--arm", kind, "--lr", repr(value),
             "--labels-run", labels_run, "--budget-minutes", f"{minutes:.1f}", "--deadline", f"{deadline:.0f}"] + \
-        ([] if cleaning else ["--no-cleaning"])
+        ([] if cleaning else ["--no-cleaning"]) + ([] if repetition else ["--no-repetition-reject"])
 
 
-def chunk(labels_run: str, budget_minutes: float, runner=subprocess.run, cleaning: bool = True) -> int:
+RULE_KEYS = ("name", "version", "n", "threshold")
+
+
+def rule_mismatch(item: tuple, repetition: bool = True) -> str | None:
+    """Why a finished run of `item` does not belong with this chunk's runs: its config.json records another
+    repetition rule (or none) than the chunk's setting. None when it matches, or is not finished or records nothing.
+    A finished run is never resumed, so the resume check never sees it."""
+    kind, value = item
+    path = None if kind == "original" else run_dir(kind, value) / "config.json"
+    if path is None or not item_done(item) or not path.exists():
+        return None
+    recorded = json.loads(path.read_text()).get("args", {}).get("repetition")
+    want = {"name": trep.NAME, "version": trep.VERSION, "n": [1, trep.N_MAX], "threshold": trep.THRESHOLD}
+    got = None if recorded is None else {k: recorded.get(k) for k in RULE_KEYS}
+    if got == (want if repetition else None):
+        return None
+    return f"{path.parent} finished with repetition rule {got}, this chunk runs with {want if repetition else None}"
+
+
+def chunk(labels_run: str, budget_minutes: float, runner=subprocess.run, cleaning: bool = True,
+          repetition: bool = True) -> int:
     """One chunk job: the next unfinished items of ORDER, each in its own process (which takes the parakeet GPU
-    lock for its own duration), until the budget leaves less than MIN_CHUNK_MINUTES or a run stops on it."""
+    lock for its own duration), until the budget leaves less than MIN_CHUNK_MINUTES or a run stops on it. Nothing
+    runs (exit train.EXIT_RESUME_MISMATCH) while a finished run records another repetition rule (rule_mismatch)."""
     relabel_paths.require_mount()
     devsplit.load(split_path(), devsplit.dev_manifests())
+    mismatched = [m for m in (rule_mismatch(item, repetition) for item in ORDER) if m]
+    if mismatched:
+        log("chunk: refusing to mix runs of different label rules; move these runs aside (or pass the matching "
+            "--no-repetition-reject): " + "; ".join(mismatched))
+        return train.EXIT_RESUME_MISMATCH
     t0, deadline = time.monotonic(), time.time() + budget_minutes * 60
     for item in ORDER:
         if item_done(item):
@@ -1000,7 +1058,7 @@ def chunk(labels_run: str, budget_minutes: float, runner=subprocess.run, cleanin
         if left < MIN_CHUNK_MINUTES:
             break
         log(f"chunk: {item} with {left:.0f} min left")
-        rc = runner(item_command(item, labels_run, left, deadline, cleaning),
+        rc = runner(item_command(item, labels_run, left, deadline, cleaning, repetition),
                     cwd=str(Path(__file__).resolve().parent)).returncode
         if rc != 0:
             log(f"chunk: {item} exited {rc}")
@@ -1047,6 +1105,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--labels-run", required=True)
     p.add_argument("--budget-minutes", type=float, default=CHUNK_MINUTES)
     p.add_argument("--no-cleaning", action="store_true", help="every train item reads the uncleaned labels")
+    p.add_argument("--no-repetition-reject", action="store_true",
+                   help="every train item reads the labels without repetition rejection")
     sub.add_parser("status")
     p = sub.add_parser("report")
     p.add_argument("--out", type=Path, help="RESULTS-decoder-only.md (default: $RELABEL_ROOT/decoder-only/)")
@@ -1060,7 +1120,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "score-original":
         return score_original(args.student, args.lock_wait, args.deadline)
     if args.cmd == "chunk":
-        return chunk(args.labels_run, args.budget_minutes, cleaning=not args.no_cleaning)
+        return chunk(args.labels_run, args.budget_minutes, cleaning=not args.no_cleaning,
+                     repetition=not args.no_repetition_reject)
     if args.cmd == "status":
         print(json.dumps(status(), indent=1))
         return 0

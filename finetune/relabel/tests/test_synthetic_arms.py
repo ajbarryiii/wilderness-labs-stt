@@ -69,9 +69,11 @@ class Arms(unittest.TestCase):
     def test_the_2b_arms_and_their_parser_are_unchanged(self):
         self.assertEqual(td.ARMS, {"B-T": ("B", "T*"), "B-0": ("B", "B0"), "T-T": ("T", "T*"), "T-0": ("T", "B0")})
         self.assertEqual(td.ORDER, [("original", "B"), ("original", "T")] + [(a, lr) for a in td.ARMS for lr in td.LRS])
+        # Contract change (2026-10-27, repetition rejection): the 2b resume key gains "repetition", the rule's
+        # identity (also inside labels_sha256), so a run made without the rule is not resumed under it.
         self.assertEqual(td.RESUME_EXTRA, ("student", "label_set", "labels_run", "labels_sha256", "cleaning",
-                                           "plan_sha256", "replay_sha256", "stop_batch", "schedule", "export_sha256",
-                                           "init_sha256"))
+                                           "repetition", "plan_sha256", "replay_sha256", "stop_batch", "schedule",
+                                           "export_sha256", "init_sha256"))
         self.assertNotIn("relabel/train_synthetic.py", td.SOURCES)
         for arm in ts.ARMS:                                # 2b's train command refuses the 2c arms
             with self.assertRaises(SystemExit):
@@ -80,7 +82,8 @@ class Arms(unittest.TestCase):
 
 class Seams(unittest.TestCase):
     NAMES = ("parse_args", "build_context", "finish", "recipe_of", "set_train_modes", "run_eval", "RESUME_KEYS",
-             "RESUME_ALLOWED_CHANGES", "TRAINING_SOURCES", "OUTPUTS", "Batcher", "label_batch", "make_optimizer")
+             "RESUME_ALLOWED_CHANGES", "TRAINING_SOURCES", "OUTPUTS", "Batcher", "label_batch", "make_optimizer",
+             "train_step")
 
     def snapshot(self):
         return {n: getattr(train, n) for n in self.NAMES} | {"RUNS": paths.RUNS, "gpu_lock": paths.gpu_lock}
@@ -186,7 +189,8 @@ class Args(unittest.TestCase):
     """parse_args: the selected learning rate, its record, and the 2b T* run's labels, cleaning and plan."""
 
     def setUp(self):
-        self.base = {"labels_run": "R", "labels_sha256": "L", "cleaning": {"version": 1}, "plan_sha256": "P1"}
+        self.base = {"labels_run": "R", "labels_sha256": "L", "cleaning": {"version": 1},
+                     "repetition": {"name": "repetition", "version": 1}, "plan_sha256": "P1"}
         self.sel = {"arm": "T-T", "selected": 3e-5, "selected_name": "lr3e-5", "rule": "lowest selection-part H4",
                     "selection_h4": {"lr1e-5": 7.0, "lr3e-5": 6.5, "lr1e-4": 6.8}, "split_sha256": "s",
                     "summaries_sha256": {"lr1e-5": "a", "lr3e-5": "b", "lr1e-4": "c"}}
@@ -205,11 +209,12 @@ class Args(unittest.TestCase):
             p.stop()
         td._ACTIVE.update(data=None, ctx=None)
 
-    def offline_data(self, arm, labels_run, lr, cleaning=True):
-        self.calls.append((arm, labels_run, lr, cleaning))
+    def offline_data(self, arm, labels_run, lr, cleaning=True, repetition=True):
+        self.calls.append((arm, labels_run, lr, cleaning, repetition))
         plan = types.SimpleNamespace(meta={"base_plan_sha256": "P1"}, version=bp.SYNTHETIC_VERSION)
         return types.SimpleNamespace(
-            labels=types.SimpleNamespace(identity={"sha256": "L", "cleaning": self.base["cleaning"]}, label_set="T*"),
+            labels=types.SimpleNamespace(identity={"sha256": "L", "cleaning": self.base["cleaning"],
+                                                   "repetition": self.base["repetition"]}, label_set="T*"),
             replay=types.SimpleNamespace(identity={"plan_id": "x-syn", "plan_sha256": "P2", "sha256": "RS",
                                                    "synthetic": {"clip_pool": "CP", "transform": {"seed": 1}}},
                                          consumed_batches=10, plan=plan),
@@ -218,7 +223,7 @@ class Args(unittest.TestCase):
 
     def test_the_selected_lr_and_its_record(self):
         a = ts.parse_args(["--arm", "T-TS", "--labels-run", "R"])
-        self.assertEqual(self.calls, [("T-TS", "R", 3e-5, True)])
+        self.assertEqual(self.calls, [("T-TS", "R", 3e-5, True, True)])
         self.assertEqual((a.arm, a.lr, a.run_name, a.student, a.label_set), ("T-TS", 3e-5, "lr3e-5", "T", "T*"))
         self.assertEqual((a.synthetic_arm, a.base_arm, a.synthetic_run), ("TS", "T-T", "full"))
         self.assertEqual(a.lr_selection["selected"], 3e-5)
@@ -235,7 +240,15 @@ class Args(unittest.TestCase):
     def test_cleaning_follows_the_t_star_run(self):
         self.base["cleaning"] = None
         ts.parse_args(["--arm", "B-TSn", "--labels-run", "R"])
-        self.assertEqual(self.calls[-1], ("B-TSn", "R", 3e-5, False))
+        self.assertEqual(self.calls[-1], ("B-TSn", "R", 3e-5, False, True))
+
+    def test_repetition_rejection_follows_the_t_star_run(self):
+        a = ts.parse_args(["--arm", "B-TS", "--labels-run", "R"])
+        self.assertEqual(a.repetition, self.base["repetition"])
+        self.base["repetition"] = None
+        a = ts.parse_args(["--arm", "B-TSn", "--labels-run", "R"])
+        self.assertEqual(self.calls[-1], ("B-TSn", "R", 3e-5, True, False))
+        self.assertIsNone(a.repetition)
 
     def test_refusals(self):
         with self.assertRaises(RuntimeError):                # another label run than the T* arm's

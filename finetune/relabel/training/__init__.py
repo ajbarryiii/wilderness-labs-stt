@@ -6,13 +6,16 @@ Modules:
     cleaning   label cleaning (stage 2a, cleaning plan): the committed tables, the read-time clean() and its
                identity, the layer 2 choices artifact
     cleaning_run  the cleaning runner: spans, choose (GPU), assemble, check (net harm), audit sheets
+    repetition rule "repetition": rejects ids whose T* label is a long run of a repeated token n-gram (part of
+               T*'s mask, for every label set), cached per label shard
     replay     the journal replay from C1's local shards, batch for batch the labeled sequence, with
                consumed-batch accounting, a stop batch, and an optional extra clip source (stage 2c)
     schedule   the WSD schedule on the consumed-batch index (trunk, branches)
     devsplit   the cluster-disjoint dev split (frozen manifest, hash rule) and the dev clusters
     bootstrap  the paired cluster bootstrap (H4 and per set)
     seam       train.py replacements for offline labels: the replay batcher, the label lookup in place of the
-               online teacher, the learning rate per consumed batch, the frozen-encoder train modes
+               online teacher, the learning rate per consumed batch, the frozen-encoder train modes, the
+               non-finite step guard
     decoder_steps  the decoder-step proxy (instrumented greedy TDT, checked against NeMo's tokens)
     launch.sh  chunked GPU jobs of stage 2b
 """

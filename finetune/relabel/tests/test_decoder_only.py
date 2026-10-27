@@ -3,6 +3,7 @@ learning-rate selection and claims (decoder-only plan)."""
 from __future__ import annotations
 
 import json
+import math
 import tempfile
 import types
 import unittest
@@ -172,6 +173,35 @@ class Chunk(unittest.TestCase):
         else:
             td.write_json(td.run_dir(kind, value) / "summary.json", {})
 
+    def offline_data_calls(self, calls) -> dict:
+        """offline_data(*args, **kw) for each (arm, args, kw) in calls, up to the label store; the store's
+        cleaning and repetition arguments per call."""
+        seen = {}
+
+        def store_open(run_dir, pool, *, label_set, through_batch, cleaning=None, repetition=None):
+            seen[len(seen)] = {"label_set": label_set, "cleaning": cleaning, "repetition": repetition}
+            raise RuntimeError("stop")
+        plan = types.SimpleNamespace(meta={"pinned_hash": "h"}, budget=td.BATCH_SECONDS * 16000, consumed_batches=5)
+        patches = [mock.patch("labeling.__main__.pinned", lambda: {"batch": {"batch_seconds": td.BATCH_SECONDS},
+                                                                   "pinned_hash": "h"}),
+                   mock.patch("labeling.__main__.c1_dir", lambda: Path("pool")),
+                   mock.patch("labeling.config.config_id", lambda pin: "cid"),
+                   mock.patch("training.batchplan.Plan.load", lambda d: plan),
+                   mock.patch("training.batchplan.production_dir", lambda cid, pools: Path("plan")),
+                   mock.patch.object(td.tlabels.LabelStore, "open", store_open),
+                   mock.patch.object(td.tcleaning, "production", lambda run: f"spec:{run}"),
+                   mock.patch.object(td.trep, "production", lambda run: f"rule:{run}")]
+        for p in patches:
+            p.start()
+        try:
+            for arm, args, kw in calls:
+                with self.assertRaises(RuntimeError):
+                    td.offline_data(arm, *args, **kw)
+        finally:
+            for p in patches:
+                p.stop()
+        return seen
+
     def test_runs_unfinished_items_in_order_and_stops_on_an_unfinished_run(self):
         calls = []
 
@@ -214,33 +244,11 @@ class LabelCleaning(Chunk):
             self.assertIsNone(td.label_cleaning("R", enabled=False))
 
     def test_offline_data_reads_the_store_through_the_spec(self):
-        seen = {}
-
-        def store_open(run_dir, pool, *, label_set, through_batch, cleaning):
-            seen[label_set] = cleaning
-            raise RuntimeError("stop")
-        plan = types.SimpleNamespace(meta={"pinned_hash": "h"}, budget=td.BATCH_SECONDS * 16000, consumed_batches=5)
-        patches = [mock.patch("labeling.__main__.pinned", lambda: {"batch": {"batch_seconds": td.BATCH_SECONDS},
-                                                                   "pinned_hash": "h"}),
-                   mock.patch("labeling.__main__.c1_dir", lambda: Path("pool")),
-                   mock.patch("labeling.config.config_id", lambda pin: "cid"),
-                   mock.patch("training.batchplan.Plan.load", lambda d: plan),
-                   mock.patch("training.batchplan.production_dir", lambda cid, pools: Path("plan")),
-                   mock.patch.object(td.tlabels.LabelStore, "open", store_open),
-                   mock.patch.object(td.tcleaning, "production", lambda run: f"spec:{run}")]
-        for p in patches:
-            p.start()
-        try:
-            for arm, (_, label_set) in td.ARMS.items():
-                with self.assertRaises(RuntimeError):
-                    td.offline_data(arm, "R", 1e-5)
-                self.assertEqual(seen[label_set], "spec:R", arm)
-                with self.assertRaises(RuntimeError):
-                    td.offline_data(arm, "R", 1e-5, cleaning=False)
-                self.assertIsNone(seen[label_set], arm)
-        finally:
-            for p in patches:
-                p.stop()
+        for arm, (_, label_set) in td.ARMS.items():
+            seen = self.offline_data_calls([(arm, ("R", 1e-5), {}), (arm, ("R", 1e-5), {"cleaning": False})])
+            self.assertEqual(seen[0]["label_set"], label_set)
+            self.assertEqual(seen[0]["cleaning"], "spec:R", arm)
+            self.assertIsNone(seen[1]["cleaning"], arm)
 
     def test_chunk_passes_no_cleaning_to_every_train_item(self):
         calls = []
@@ -261,6 +269,316 @@ class LabelCleaning(Chunk):
             self.assertTrue((Path(td.__file__).resolve().parent.parent / name).exists(), name)
         self.assertIn("cleaning", td.RESUME_EXTRA)
         self.assertIn("labels_sha256", td.RESUME_EXTRA)
+
+
+class RepetitionRule(Chunk):
+    """Repetition rejection (training/repetition.py, rule "repetition" v1): on by default for every arm, the B0-label
+    controls included (they drop the ids the T* label rejects); --no-repetition-reject turns it off; its identity
+    is part of labels_sha256 and its own resume key."""
+
+    def test_on_by_default_for_every_arm_with_an_explicit_off(self):
+        argv = ["--arm", "B-0", "--lr", "1e-5", "--labels-run", "R"]
+        self.assertFalse(td.train_parser().parse_args(argv).no_repetition_reject)
+        self.assertTrue(td.train_parser().parse_args(argv + ["--no-repetition-reject"]).no_repetition_reject)
+        with mock.patch.object(td.trep, "production", lambda run: ("rule", run)):
+            self.assertEqual(td.label_repetition("R"), ("rule", "R"))
+            self.assertIsNone(td.label_repetition("R", enabled=False))
+
+    def test_offline_data_passes_the_rule_to_every_arms_store(self):
+        for arm, (_, label_set) in td.ARMS.items():
+            seen = self.offline_data_calls([(arm, ("R", 1e-5), {}), (arm, ("R", 1e-5), {"repetition": False}),
+                                            (arm, ("R", 1e-5), {"cleaning": False})])
+            self.assertEqual(seen[0]["repetition"], "rule:R", arm)
+            self.assertIsNone(seen[1]["repetition"], arm)
+            self.assertEqual(seen[1]["cleaning"], "spec:R", arm)               # independent switches
+            self.assertEqual(seen[2]["repetition"], "rule:R", arm)
+
+    def test_chunk_passes_no_repetition_reject_to_every_train_item(self):
+        calls = []
+        for item in td.ORDER[:2]:
+            self.finish_item(item)
+        run = lambda cmd, cwd=None: calls.append(cmd) or types.SimpleNamespace(returncode=0)   # noqa: E731
+        td.chunk("RUN", 110.0, runner=run, repetition=False)
+        self.assertIn("--no-repetition-reject", calls[0])
+        self.assertNotIn("--no-cleaning", calls[0])
+        calls.clear()
+        td.chunk("RUN", 110.0, runner=run)
+        self.assertNotIn("--no-repetition-reject", calls[0])
+        seen = []
+        with mock.patch.object(td, "chunk", lambda run, minutes, cleaning=True, repetition=True:
+                               seen.append((cleaning, repetition)) or 0):
+            td.main(["chunk", "--labels-run", "R", "--no-repetition-reject"])
+            td.main(["chunk", "--labels-run", "R"])
+        self.assertEqual(seen, [(True, False), (True, True)])
+
+    def finish_with_rule(self, item, rule):
+        self.finish_item(item)
+        td.write_json(td.run_dir(*item) / "config.json", {"args": {"repetition": rule}})
+
+    def test_chunk_refuses_a_finished_run_of_another_rule(self):
+        """A finished run is not resumed, so the resume check never sees it: the chunk checks its recorded rule."""
+        rule = {"name": "repetition", "version": 1, "n": [1, 6], "threshold": 10, "rejected": 26}
+        calls = []
+        run = lambda cmd, cwd=None: calls.append(cmd) or types.SimpleNamespace(returncode=0)   # noqa: E731
+        for item in td.ORDER[:2]:
+            self.finish_item(item)
+        self.finish_with_rule(td.ORDER[2], None)                       # B-T lr1e-5, made without the rule
+        self.assertEqual(td.chunk("RUN", 110.0, runner=run), train.EXIT_RESUME_MISMATCH)
+        self.assertEqual(calls, [])
+        self.assertEqual(td.chunk("RUN", 110.0, runner=run, repetition=False), 0)
+        self.assertGreater(len(calls), 0)
+        calls.clear()
+        self.finish_with_rule(td.ORDER[2], rule)
+        self.assertEqual(td.chunk("RUN", 110.0, runner=run), 0)
+        self.assertGreater(len(calls), 0)
+        self.assertEqual(td.chunk("RUN", 110.0, runner=run, repetition=False), train.EXIT_RESUME_MISMATCH)
+        self.finish_with_rule(td.ORDER[2], rule | {"version": 0})
+        self.assertEqual(td.chunk("RUN", 110.0, runner=run), train.EXIT_RESUME_MISMATCH)
+
+    def test_the_report_refuses_runs_of_different_rules(self):
+        rule = {"name": "repetition", "version": 1, "n": [1, 6], "threshold": 10, "rejected": 26}
+        self.finish_with_rule(("B-T", 1e-5), rule)
+        self.finish_with_rule(("B-0", 1e-5), rule)
+        self.assertEqual(rep.label_rule(), rule)
+        self.finish_with_rule(("B-0", 1e-5), None)
+        with self.assertRaises(RuntimeError):
+            rep.label_rule()
+
+    def test_sources_and_resume_key(self):
+        self.assertIn("relabel/training/repetition.py", td.SOURCES)
+        self.assertTrue((Path(td.__file__).resolve().parent.parent / "relabel/training/repetition.py").exists())
+        self.assertIn("repetition", td.RESUME_EXTRA)
+
+    def test_parse_args_records_the_rule_and_the_labels_hash(self):
+        block = {"name": "repetition", "version": 1, "rejected": 26}
+        seen = []
+
+        def offline_data(arm, labels_run, lr, cleaning=True, repetition=True):
+            seen.append(repetition)
+            return types.SimpleNamespace(
+                labels=types.SimpleNamespace(identity={"sha256": "L", "cleaning": None, "repetition": block},
+                                             label_set="B0"),
+                replay=types.SimpleNamespace(identity={"plan_id": "p", "plan_sha256": "P", "sha256": "RS"},
+                                             consumed_batches=10),
+                plan={"steps": 7, "empty_batches": [3]}, stop=9,
+                schedule=types.SimpleNamespace(to_dict=lambda: {"peak": lr}))
+        with mock.patch.object(td, "offline_data", offline_data), \
+                mock.patch.object(td.devsplit, "dev_manifests", lambda: {}), \
+                mock.patch.object(td.devsplit, "load", lambda *a, **k: types.SimpleNamespace(sha256="s")), \
+                mock.patch.object(td, "ensure_student", lambda s: {"export_sha256": "e", "checkpoint_sha256": "c"}):
+            a = td.parse_args(["--arm", "B-0", "--lr", "1e-5", "--labels-run", "R"])
+            self.assertEqual((a.repetition, a.labels_sha256), (block, "L"))
+            td.parse_args(["--arm", "B-0", "--lr", "1e-5", "--labels-run", "R", "--no-repetition-reject"])
+        td._ACTIVE.update(data=None, ctx=None)
+        self.assertEqual(seen, [True, False])
+
+
+class ResumeRefusal(unittest.TestCase):
+    """A run directory whose checkpoint was written under another label identity (labels_sha256, the repetition
+    rule) is not resumed: train.load_resume_payload exits EXIT_RESUME_MISMATCH (78) naming the differences, and
+    run_train passes that exit on (a chunk then fails with it)."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.run = Path(self.tmp.name) / "B-T" / "lr3e-5"
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def args(self, **kw):
+        import argparse
+        a = argparse.Namespace(**{k: None for k in train.RESUME_KEYS + td.RESUME_EXTRA})
+        a.__dict__.update(arm="B-T", recipe="decoder-only", lr=3e-5, max_steps=16_000, label_set="T*",
+                          labels_run="main-f3", labels_sha256="old", repetition=None, ckpt_minutes=30.0,
+                          budget_minutes=110.0, deadline=None)
+        a.__dict__.update(kw)
+        return a
+
+    def test_another_label_identity_is_refused(self):
+        import contextlib
+        import io
+        old = self.args()
+        with td.seam("B-T"):
+            train.save_checkpoint(self.run, {"step": 2839, "args": vars(old), "resume_key": train.resume_key(old)})
+            self.assertEqual(train.load_resume_payload(self.run, self.args(budget_minutes=50.0))["step"], 2839)
+            new = self.args(labels_sha256="new", repetition={"name": "repetition", "version": 1, "rejected": 26},
+                            max_steps=15_998)
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out), self.assertRaises(SystemExit) as stop:
+                train.load_resume_payload(self.run, new)
+        self.assertEqual(stop.exception.code, train.EXIT_RESUME_MISMATCH)
+        self.assertIn("refusing to resume", out.getvalue())
+        self.assertIn("--labels-sha256 'old' -> 'new'", out.getvalue())
+        self.assertIn("--repetition None ->", out.getvalue())
+
+    def test_run_train_passes_the_refusal_on(self):
+        argv = ["--arm", "B-T", "--lr", "3e-5", "--labels-run", "R"]
+        with mock.patch.object(td, "root", lambda: Path(self.tmp.name)), \
+                mock.patch.object(td.relabel_paths, "require_mount", lambda: None), \
+                mock.patch.object(train, "main", side_effect=SystemExit(train.EXIT_RESUME_MISMATCH)), \
+                self.assertRaises(SystemExit) as stop:
+            td.run_train(argv)
+        self.assertEqual(stop.exception.code, train.EXIT_RESUME_MISMATCH)
+
+
+PINNED_TRAIN_STEP = train.train_step          # finetune/parakeet-ternary/train.py's, before any seam
+
+
+class FakeLosses:
+    """A stand-in for train.compute_losses (the TDT loss is CUDA-only): scale x the sum of squares of the trainable
+    parameters. bad = {call number: "nan-grad" (finite loss, NaN gradient) | "inf-loss"}."""
+
+    def __init__(self, scale: float = 1.0, bad: dict | None = None):
+        self.scale, self.bad, self.calls = scale, bad or {}, 0
+
+    def __call__(self, student, audio, audio_len, tokens, token_len, recipe, teacher_enc=None, teacher_len=None):
+        self.calls += 1
+        params = [p for p in student.parameters() if p.requires_grad]
+        loss = self.scale * sum(p.float().pow(2).sum() for p in params)
+        kind = self.bad.get(self.calls)
+        if kind == "nan-grad":
+            loss = loss + (params[0].sum() * 0.0).abs().sqrt()             # value 0, gradient NaN
+        elif kind == "inf-loss":
+            loss = loss + float("inf")
+        return loss, loss, None
+
+
+class NonfiniteGuard(unittest.TestCase):
+    """training/seam.py guarded_train_step, train_step of the decoder-only and synthetic arms: a finite step is the
+    pinned train_step's, bit for bit; a non-finite loss or gradient norm skips the optimizer step (gradients
+    zeroed, parameters and AdamW state unchanged), still steps the scheduler, and is counted in the run's state
+    (checkpointed); the fourth one in a run stops it."""
+
+    LABELED = {"audio": None, "audio_len": None, "tokens": None, "token_len": None, "teacher_enc": None,
+               "teacher_len": None, "seconds": 2.0, "rows": 1}
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def ctx(self, name="run", seed=0):
+        model = tiny_model(21)
+        td.configure(model)
+        args = types.SimpleNamespace(**{k: None for k in train.RESUME_KEYS + td.RESUME_EXTRA})
+        args.__dict__.update(arm="B-T", recipe="decoder-only", lr=1e-3, max_steps=100, seed=seed, label_set="T*",
+                             ckpt_minutes=30.0)
+        run = Path(self.tmp.name) / name
+        run.mkdir(parents=True, exist_ok=True)
+        train.seed_everything(seed, model)
+        with td.seam("B-T"):
+            c = td.DecoderContext(args, run, model, None, "cpu", td.encoder_sha256(model))
+        for g in c.optimizer.param_groups:
+            g["lr"] = 1e-3
+        return c
+
+    @staticmethod
+    def trainable(c):
+        return [p for g in c.optimizer.param_groups for p in g["params"]]
+
+    def step(self, fn, c, losses):
+        with mock.patch.object(train, "compute_losses", losses):
+            return fn(c, dict(self.LABELED), self.trainable(c))
+
+    def snapshot(self, c):
+        return {k: v.detach().clone() for k, v in td.trained_state(c.student).items()}
+
+    def assertSameState(self, a, b):
+        for k, v in a.items():
+            self.assertTrue(torch.equal(v, b[k]), k)
+
+    def test_the_seams_install_it(self):
+        import train_synthetic as ts
+        for seam in (td.seam("B-T"), ts.seam("B-TS")):
+            with seam:
+                self.assertIs(train.train_step, tseam.guarded_train_step)
+            self.assertIs(train.train_step, PINNED_TRAIN_STEP)
+        self.assertEqual(tseam.MAX_NONFINITE_STEPS, 3)
+
+    def test_finite_steps_are_the_pinned_train_step(self):
+        for scale in (10.0, 1e-6):                     # gradient norm far above and below the clip at 1.0
+            a, b = self.ctx("a"), self.ctx("b")
+            self.assertSameState(self.snapshot(a), self.snapshot(b))
+            for _ in range(3):
+                va = self.step(PINNED_TRAIN_STEP, a, FakeLosses(scale))
+                vb = self.step(tseam.guarded_train_step, b, FakeLosses(scale))
+                self.assertEqual(va, vb)
+                self.assertSameState(self.snapshot(a), self.snapshot(b))
+            self.assertTrue(va["norm"] > 1.0 if scale > 1 else va["norm"] < 1.0, va)
+            sa, sb = a.optimizer.state_dict(), b.optimizer.state_dict()
+            for k in sa["state"]:
+                for name, v in sa["state"][k].items():
+                    self.assertTrue(torch.equal(v, sb["state"][k][name]), (k, name))
+            self.assertEqual(a.scheduler.state_dict(), b.scheduler.state_dict())
+            self.assertEqual(b.state.drop_counts.get(tseam.NONFINITE_KEY), 0)
+
+    def test_a_non_finite_step_changes_nothing_but_the_scheduler_and_the_count(self):
+        for kind in ("nan-grad", "inf-loss"):
+            c = self.ctx(kind)
+            self.step(tseam.guarded_train_step, c, FakeLosses(1.0))          # AdamW has state
+            before, opt = self.snapshot(c), c.optimizer.state_dict()
+            steps = c.scheduler.steps
+            values = self.step(tseam.guarded_train_step, c, FakeLosses(1.0, {1: kind}))
+            self.assertSameState(before, self.snapshot(c))
+            self.assertTrue(all(p.grad is None for p in self.trainable(c)))
+            after = c.optimizer.state_dict()
+            for k in opt["state"]:
+                for name, v in opt["state"][k].items():
+                    self.assertTrue(torch.equal(v, after["state"][k][name]), (k, name))
+            self.assertEqual(c.scheduler.steps, steps + 1)
+            self.assertEqual(c.state.drop_counts[tseam.NONFINITE_KEY], 1)
+            self.assertTrue(all(math.isfinite(v) for v in values.values()), values)
+            # the next finite step trains again
+            self.step(tseam.guarded_train_step, c, FakeLosses(1.0))
+            self.assertFalse(torch.equal(next(iter(before.values())), next(iter(self.snapshot(c).values()))))
+
+    def test_the_fourth_skip_stops_the_run(self):
+        c = self.ctx()
+        for _ in range(3):
+            self.step(tseam.guarded_train_step, c, FakeLosses(1.0, {1: "nan-grad"}))
+        before = self.snapshot(c)
+        with self.assertRaises(tseam.NonfiniteSteps):
+            self.step(tseam.guarded_train_step, c, FakeLosses(1.0, {1: "nan-grad"}))
+        self.assertSameState(before, self.snapshot(c))
+        self.assertEqual(c.state.drop_counts[tseam.NONFINITE_KEY], 3)
+
+    def test_the_count_is_checkpointed_and_resumed(self):
+        a = self.ctx("ckpt")
+        self.step(tseam.guarded_train_step, a, FakeLosses(1.0))
+        self.step(tseam.guarded_train_step, a, FakeLosses(1.0, {1: "inf-loss"}))
+        a.state.step = 2
+        with td.seam("B-T"):
+            train.save_checkpoint(a.run, a.checkpoint_payload())
+        payload = train.load_checkpoint(a.run)
+        self.assertEqual(payload["state"]["drop_counts"][tseam.NONFINITE_KEY], 1)
+        b = self.ctx("ckpt")
+        with td.seam("B-T"):
+            b.restore(payload)
+        self.assertEqual(b.state.drop_counts[tseam.NONFINITE_KEY], 1)
+        self.assertEqual(b.scheduler.steps, 2)
+        for _ in range(2):
+            self.step(tseam.guarded_train_step, b, FakeLosses(1.0, {1: "nan-grad"}))
+        with self.assertRaises(tseam.NonfiniteSteps):
+            self.step(tseam.guarded_train_step, b, FakeLosses(1.0, {1: "nan-grad"}))
+
+
+class SkippedStepsReported(unittest.TestCase):
+    """The non-finite steps a run skipped (summary decoder_only.nonfinite_skipped_steps) are in both reports' run
+    tables (0 expected)."""
+
+    def test_run_tables(self):
+        import synthetic_report as srep
+        import train_synthetic as ts
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(td, "root", lambda: Path(d)):
+            for arm, lr in (("B-T", 1e-5), ("B-TS", 3e-5)):
+                td.write_json(td.run_dir(arm, lr) / "summary.json",
+                              {"steps": 5, "dev_mean_wer": 0.1, "decoder_only": {"nonfinite_skipped_steps": 0}})
+            td.write_json(ts.selection_path("B-T"), {"selected": 3e-5})
+            row = next(r for r in rep.run_table() if (r["arm"], r["lr"]) == ("B-T", "lr1e-5"))
+            self.assertEqual(row["nonfinite_skipped_steps"], 0)
+            row = next(r for r in srep.run_table() if r["arm"] == "B-TS")
+            self.assertEqual(row["nonfinite_skipped_steps"], 0)
 
 
 class Selection(unittest.TestCase):
@@ -376,6 +694,33 @@ class ContextAndCheckpoint(unittest.TestCase):
         payload["encoder_sha256"] = "0" * 64
         with td.seam("B-T"), self.assertRaises(RuntimeError):
             self.build("ckpt").restore(payload)
+
+    def test_train_loop_skips_a_non_finite_step_and_finishes_on_the_plan(self):
+        """train.train_loop through the seam (CPU; the loss is FakeLosses): a NaN gradient at the third step is
+        skipped, the run still ends at the last planned batch with a step, the learning rate of every step is its
+        planned batch's, and the metrics stay finite and leave the skipped step out."""
+        c = self.build("loop")
+        c.args.eval_every = c.args.max_steps
+        lrs, label = [], tseam.label_batch
+
+        def remember(ctx, batch):
+            out = label(ctx, batch)
+            if out is not None:
+                lrs.append((int(batch["index"]), ctx.optimizer.param_groups[0]["lr"], out["seconds"]))
+            return out
+        with td.seam("B-T"), mock.patch.object(train, "compute_losses", FakeLosses(1.0, {3: "nan-grad"})), \
+                mock.patch.object(train, "label_batch", remember):
+            train.train_loop(c)
+        self.assertEqual(c.state.step, c.args.max_steps)
+        self.assertEqual(c.state.batches_read, self.data.stop)
+        self.assertEqual(c.scheduler.steps, c.args.max_steps)
+        self.assertEqual(c.state.drop_counts[tseam.NONFINITE_KEY], 1)
+        self.assertEqual([lr for _, lr, _ in lrs], [self.data.schedule.lr(b) for b, _, _ in lrs])
+        self.assertAlmostEqual(c.state.audio_seconds_seen, sum(s for _, _, s in lrs) - lrs[2][2], places=6)
+        metrics = [json.loads(line) for line in (c.run / "metrics.jsonl").read_text().splitlines()]
+        self.assertEqual(metrics[-1]["drop_counts"][tseam.NONFINITE_KEY], 1)
+        for m in metrics:
+            self.assertTrue(all(math.isfinite(m[k]) for k in ("loss", "grad_norm", "audio_seconds_per_step")), m)
 
 
 class Deadlines(unittest.TestCase):
