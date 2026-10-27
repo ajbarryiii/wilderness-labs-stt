@@ -641,7 +641,29 @@ def _term_groups() -> list[list[str]]:
     return groups
 
 
-_GDROP = None
+EXTRA_GROUPS = (("ok", "okay"), ("alright", "all right"))   # spelling variants with no fixed standard (plan v3)
+
+
+def canonical_form(group: list[str], written: dict[str, dict[str, int]]) -> tuple[str, dict[str, int]]:
+    """The canonical spelling of a pure variant group (cleaning plan v4): the member T* writes most often across all
+    kept labels (case-insensitive count per member), ties to the group's first (term list) form; written in T*'s most
+    frequent casing of it, where a form written in lowercase or with only its first letter capitalized counts as
+    lowercase (the capitalization rule restores a sentence-initial capital). `written`: {member: {"T* <as written>":
+    count, "B0 ...": count}}. Returns (canonical, {member: T* count})."""
+    counts, casings = {}, {}
+    for m in group:
+        cas = Counter()
+        for k, n in written.get(m, {}).items():
+            if k.startswith("T* "):
+                w = k[3:]
+                cas[w.lower() if C.cased(w.lower(), w) == w else w] += n
+        counts[m], casings[m] = sum(cas.values()), cas
+    best = max(group, key=lambda m: (counts[m], -group.index(m)))
+    if not casings[best]:
+        return best, counts
+    top = max(casings[best].values())
+    tied = sorted(w for w, n in casings[best].items() if n == top)
+    return (best if best in tied else tied[0]), counts
 
 
 def _top(samples: list, n: int = FORMS_AUDIT_MATCHES) -> list:
@@ -657,19 +679,12 @@ def _top(samples: list, n: int = FORMS_AUDIT_MATCHES) -> list:
 
 
 def _audit_shard(shard):
-    import re
-
     import evaluate
-    global _GDROP
     run = _W["run"]
     A = _W["audit"]
-    if _GDROP is None:
-        _GDROP = re.compile(C._LEFT + r"[A-Za-z]+in'" + C._RIGHT)
     t = run.read(shard, LABEL_COLUMNS)
     refs = None
-    res = {"forms": defaultdict(Counter), "forms_sample": defaultdict(list), "members": defaultdict(Counter),
-           "member_sample": defaultdict(list), "gdrop": defaultdict(Counter), "gdrop_sample": defaultdict(list),
-           "ref_counts": Counter(), "ref_labels": 0, "sets": defaultdict(Counter), "set_sample": defaultdict(list)}
+    res = _audit_totals()
     for i, source, rk, texts in kept_texts(t):
         for ls, text in texts.items():
             if not text:
@@ -686,11 +701,6 @@ def _audit_shard(shard):
                 res["members"][w.lower()][f"{ls} {w}"] += 1
                 res["member_sample"][w.lower()].append((_rank("m", ls, i, m.start()), ls, _ctx(text, m.start(),
                                                                                                m.end())))
-            for m in _GDROP.finditer(text):
-                w = m.group(0)
-                res["gdrop"][w.lower()][f"{ls} {'lower' if w == w.lower() else 'capitalized'}"] += 1
-                res["gdrop_sample"][w.lower()].append((_rank("g", ls, i, m.start()), ls, _ctx(text, m.start(),
-                                                                                              m.end())))
             for sp in _W["tables"].spans(text):
                 res["sets"][sp.set.name][ls] += 1
                 res["set_sample"][sp.set.name].append((_rank("s", ls, i, sp.start), ls, _ctx(text, sp.start,
@@ -705,15 +715,25 @@ def _audit_shard(shard):
         res["ref_labels"] += 1
         for occ in A["ref_matcher"].find(evaluate.normalize(ref).split()):
             res["ref_counts"][" ".join(occ.phrase)] += 1
-    for k in ("forms_sample", "member_sample", "gdrop_sample", "set_sample"):
+    for k in _SAMPLES:
         res[k] = {w: _top(v) for w, v in res[k].items()}
     return res
+
+
+_SAMPLES = ("forms_sample", "member_sample", "set_sample")
+
+
+def _audit_totals() -> dict:
+    return {"forms": defaultdict(Counter), "forms_sample": defaultdict(list), "members": defaultdict(Counter),
+            "member_sample": defaultdict(list), "ref_counts": Counter(), "ref_labels": 0,
+            "sets": defaultdict(Counter), "set_sample": defaultdict(list)}
 
 
 def audit(run_dir: Path, workers: int = 1, tables_dir: Path | None = None, out: Path | None = None,
           sample_shards: int | None = None) -> dict:
     """The architect's sheets for the tables (cleaning plan "Layer 1": the forms audit, the variant groups and their
-    canonical forms by human-reference frequency, the dialect entries and g-dropped words, the layer 2 sets)."""
+    canonical forms (canonical_form: T*'s majority form; human-reference counts shown for information), the dialect
+    entries, the layer 2 sets)."""
     import evaluate
     import terms
     tables = C.Tables.load(tables_dir)
@@ -726,15 +746,23 @@ def audit(run_dir: Path, workers: int = 1, tables_dir: Path | None = None, out: 
         if e.table == "variants":
             table_groups.setdefault(e.group, {e.group.lower()}).add(e.key)
     extra = [[c] + sorted(k for k in keys if k != c.lower()) for c, keys in table_groups.items()]
+    extra += [list(g) for g in EXTRA_GROUPS]
     extra += [list(cs.members) for cs in tables.sets if not cs.option_only and len(cs.members) == 2]
     for g in extra:
-        if not covered & {m.lower() for m in g}:
+        keys = {m.lower() for m in g}
+        if not covered & keys:
             groups.append(g)
-            covered |= {m.lower() for m in g}
+            covered |= keys
+        else:                       # a table group with more listed forms than its term list ("pre tax")
+            for grp in groups:
+                if {m.lower() for m in grp} & keys:
+                    grp += [m for m in g if m.lower() not in {x.lower() for x in grp}]
+                    covered |= keys
+                    break
     dialect = {k: e for k, e in tables.layer1.entries.items() if e.table == "dialect"}
-    member_keys = {m.lower(): False for g in groups for m in g} | {k: e.lower_only for k, e in dialect.items()}
+    member_keys = {m.lower() for g in groups for m in g} | set(dialect)
     for cs in tables.sets:
-        member_keys.update({m.lower(): False for m in cs.members})
+        member_keys |= {m.lower() for m in cs.members}
     phrases = {}
     for g in groups:
         for m in g:
@@ -743,19 +771,17 @@ def audit(run_dir: Path, workers: int = 1, tables_dir: Path | None = None, out: 
         phrases[k] = tuple(evaluate.normalize(k).split())
         phrases[dialect[k].output] = tuple(evaluate.normalize(dialect[k].output).split())
     ref_matcher = terms.Matcher(list(phrases), evaluate.normalize)
-    A = {"forms": forms, "forms_re": C._compile({w: False for w in forms}),
-         "members_re": C._compile(member_keys), "ref_matcher": ref_matcher}
+    A = {"forms": forms, "forms_re": C._compile(forms), "members_re": C._compile(member_keys),
+         "ref_matcher": ref_matcher}
     run = Run(run_dir, sample_shards)
-    tot = {"forms": defaultdict(Counter), "forms_sample": defaultdict(list), "members": defaultdict(Counter),
-           "member_sample": defaultdict(list), "gdrop": defaultdict(Counter), "gdrop_sample": defaultdict(list),
-           "ref_counts": Counter(), "ref_labels": 0, "sets": defaultdict(Counter), "set_sample": defaultdict(list)}
+    tot = _audit_totals()
     _W["audit"] = A                                        # inherited by the forked workers
     shards = run.shards
     for n, part in enumerate(_pool_map(_audit_shard, shards, workers, (run_dir, tables_dir))):
-        for k in ("forms", "members", "gdrop", "sets"):
+        for k in ("forms", "members", "sets"):
             for w, c in part[k].items():
                 tot[k][w].update(c)
-        for k in ("forms_sample", "member_sample", "gdrop_sample", "set_sample"):
+        for k in _SAMPLES:
             for w, v in part[k].items():
                 tot[k][w] = _top(tot[k][w] + v)
         tot["ref_counts"].update(part["ref_counts"])
@@ -788,8 +814,9 @@ def _write_audit(out: Path, tables, forms, groups, dialect, phrases, tot, run) -
         summary["forms"] = rows
     canon = []
     with open(out / "variants.txt", "w", encoding="utf-8") as f:
-        f.write("# Variant groups: classification (pure = variants.tsv, contextual = choices.tsv), written counts per\n"
-                "# label set, human-reference counts (normalized words, kept ids) and sample contexts.\n")
+        f.write("# Variant groups: classification (pure = variants.tsv, contextual = choices.tsv), the canonical form by\n"
+                "# T*'s count over all kept labels (cleaning plan v4), written counts per label set, human-reference\n"
+                "# counts (normalized words, kept ids; information only) and sample contexts.\n")
         for g in groups:
             keys = [m.lower() for m in g]
             if any(k in variant_of for k in keys):
@@ -799,23 +826,26 @@ def _write_audit(out: Path, tables, forms, groups, dialect, phrases, tot, run) -
             else:
                 cls = "not in the tables"
             refc = {m: tot["ref_counts"].get(" ".join(phrases[m]), 0) for m in g}
-            best = max(g, key=lambda m: (refc[m], -g.index(m)))
-            canon.append({"group": g, "classification": cls, "reference_counts": refc, "proposed_canonical": best,
-                          "written_counts": {m: dict(tot["members"].get(m.lower(), {})) for m in g}})
-            f.write(f"\n== {' | '.join(g)}  [{cls}]\n   human references (normalized): " +
-                    ", ".join(f"{m!r} {refc[m]}" for m in g) + f"  -> canonical by frequency {best!r}\n")
+            written = {m: dict(tot["members"].get(m.lower(), {})) for m in g}
+            best, tcount = canonical_form(g, written)
+            canon.append({"group": g, "classification": cls, "t_star_counts": tcount, "proposed_canonical": best,
+                          "reference_counts": refc, "written_counts": written})
+            f.write(f"\n== {' | '.join(g)}  [{cls}]\n   T* (all kept labels): " +
+                    ", ".join(f"{m!r} {tcount[m]}" for m in g) + f"  -> canonical {best!r}; human references "
+                    "(normalized): " + ", ".join(f"{m!r} {refc[m]}" for m in g) + "\n")
             for m in g:
                 c = tot["members"].get(m.lower(), {})
                 f.write(f"   written {m!r}: " + ", ".join(f"{k} {v}" for k, v in sorted(c.items())) + "\n")
                 for _, ls, ctx in tot["member_sample"].get(m.lower(), [])[:12]:
                     f.write(f"      {ls:3s} {ctx}\n")
     with open(out / "canonical.tsv", "w", encoding="utf-8") as f:
-        f.write("group\tclassification\thuman reference counts (normalized words)\tcanonical by frequency\t"
-                "written counts in the labels\n")
+        f.write("group\tclassification\tT* counts (all kept labels, case-insensitive)\tcanonical (T* majority, T* "
+                "casing)\thuman reference counts (information only)\twritten counts in the labels\n")
         for c in canon:
             f.write("\t".join((" | ".join(c["group"]), c["classification"],
-                               ", ".join(f"{m}={n}" for m, n in c["reference_counts"].items()),
+                               ", ".join(f"{m}={n}" for m, n in c["t_star_counts"].items()),
                                c["proposed_canonical"],
+                               ", ".join(f"{m}={n}" for m, n in c["reference_counts"].items()),
                                "; ".join(f"{m}: " + ", ".join(f"{k} {v}" for k, v in sorted(w.items()))
                                          for m, w in c["written_counts"].items()))) + "\n")
     summary["variant_groups"] = canon
@@ -826,24 +856,14 @@ def _write_audit(out: Path, tables, forms, groups, dialect, phrases, tot, run) -
         for k, e in sorted(dialect.items(), key=lambda kv: -sum(tot["members"].get(kv[0], {}).values())):
             c = tot["members"].get(k, {})
             r = (tot["ref_counts"].get(" ".join(phrases[k]), 0), tot["ref_counts"].get(" ".join(phrases[e.output]), 0))
-            drows.append({"dialect": k, "standard": e.output, "lower_only": e.lower_only, "written": dict(c),
+            drows.append({"dialect": k, "standard": e.output, "written": dict(c),
                           "reference_dialect": r[0], "reference_standard": r[1]})
-            f.write(f"\n== {k!r} -> {e.output!r}{'  [lowercase only]' if e.lower_only else ''}  " +
+            f.write(f"\n== {k!r} -> {e.output!r}  " +
                     ", ".join(f"{a} {v}" for a, v in sorted(c.items())) +
                     f"; human references: dialect {r[0]}, standard {r[1]}\n")
             for _, ls, ctx in tot["member_sample"].get(k, [])[:12]:
                 f.write(f"   {ls:3s} {ctx}\n")
     summary["dialect"] = drows
-    grows = []
-    with open(out / "gdropped.tsv", "w", encoding="utf-8") as f:
-        f.write("word\tallowlisted (dialect.tsv)\tT* lower\tT* capitalized\tB0 lower\tB0 capitalized\tcontexts\n")
-        for w, c in sorted(tot["gdrop"].items(), key=lambda kv: -sum(kv[1].values())):
-            allow = w in dialect
-            grows.append({"word": w, "allowlisted": allow, **dict(c)})
-            ctxs = " || ".join(f"{ls}: {ctx}" for _, ls, ctx in tot["gdrop_sample"].get(w, [])[:5])
-            f.write("\t".join((w, "yes" if allow else "no", *(str(c.get(k, 0)) for k in (
-                "T* lower", "T* capitalized", "B0 lower", "B0 capitalized")), ctxs)) + "\n")
-    summary["gdropped"] = grows
     with open(out / "choices.txt", "w", encoding="utf-8") as f:
         f.write("# Layer 2 sets (choices.tsv): spans per label set (option-only members start no span) and samples.\n")
         for cs in tables.sets:

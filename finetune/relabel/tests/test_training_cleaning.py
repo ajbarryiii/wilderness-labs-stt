@@ -14,7 +14,7 @@ from training import cleaning as C
 FORMS = "html\tHTML\ndouble check\tdouble-check\nlithium ion\tlithium-ion\nnon gaap\tnon-GAAP\n"
 VARIANTS = "dataset\tdata set\nOK\tokay\nall right\talright\nfree cash flow\tfree cashflow\ncash flow\tcashflow\n"
 DIALECT = ("gonna\tgoing to\ni'ma\tI'm going to\n'cause\tbecause\n'em\tthem\ny'all\tyou all\n"
-           "nothin'\tnothing\tlower\ngoin'\tgoing\tlower\n")
+           "nothin'\tnothing\ngoin'\tgoing\n")
 CHOICES = "maybe\tmay be\nset up\tsetup\nget*\tgit\tGit\nyou*\tyeah*\tya\nbecause*\tcos\ngap\tGAAP2\n"
 
 
@@ -104,13 +104,15 @@ class Dialect(unittest.TestCase):
         self.assertEqual(layer1("'Cause y'all gonna get 'em, cuz"), "Because you all going to get them, cuz")
         self.assertEqual(layer1("I was goin' home with nothin'."), "I was going home with nothing.")
 
-    def test_g_dropped_allowlist_is_lowercase_only(self):
-        self.assertEqual(layer1("Nothin' at all, nothin'"), "Nothin' at all, nothing")
+    def test_dialect_forms_match_in_any_case(self):
+        # Contract change (cleaning plan v4): the lowercase-only flag of the dropped g-dropped allowlist is gone.
+        self.assertEqual(layer1("Nothin' at all, nothin'"), "Nothing at all, nothing")
+        with self.assertRaises(ValueError):
+            tables(dialect=DIALECT + "dunkin'\tdunking\tlower\n")
 
-    def test_names_and_quotes_are_not_rewritten(self):
-        tabs = tables(dialect=DIALECT + "dunkin'\tdunking\tlower\nmountain'\tmountaing\tlower\n")
+    def test_quoted_words_are_not_rewritten(self):
+        tabs = tables(dialect=DIALECT + "mountain'\tmountaing\n")
         apply = lambda t: tabs.layer1.apply(t)[0]    # noqa: E731
-        self.assertEqual(apply("Let's get Dunkin' Donuts"), "Let's get Dunkin' Donuts")
         self.assertEqual(apply("the word 'mountain' here"), "the word 'mountain' here")
         self.assertEqual(apply("she said 'I was goin' and left"), "she said 'I was goin' and left")
         self.assertEqual(apply("he wrote 'nothin'"), "he wrote 'nothin'")
@@ -123,7 +125,7 @@ class Dialect(unittest.TestCase):
         self.assertEqual(layer1("tell'em"), "tell'em")
 
     def test_a_quoted_word_keeps_both_quote_marks(self):
-        tabs = tables(dialect=DIALECT + "robin'\trobing\tlower\n")
+        tabs = tables(dialect=DIALECT + "robin'\trobing\n")
         for t in ("I said 'robin' twice", "'robin'", "x 'nothin' y", "a 'goin' b 'em' c"):
             out, edits = tabs.layer1.apply(t)
             self.assertEqual(out, t)

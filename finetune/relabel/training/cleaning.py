@@ -17,21 +17,20 @@ by one TAB; every written form is ASCII):
                                                        scorer's normalized words never change. No diacritic folding.
     variants.tsv  canonical<TAB>variant[<TAB>...]      a pure spelling-variant group (the same word in every
                                                        context): every variant becomes the canonical (first)
-                                                       form. Members differ by more than case. A canonical form
-                                                       with capitals is also enforced on its own spelling ("ok"
-                                                       -> "OK"); an all-lowercase one leaves its own casing as
+                                                       form, the form T* writes most often (cleaning plan v4).
+                                                       Members differ by more than case. A canonical form with
+                                                       capitals is also enforced on its own spelling ("ptsd" ->
+                                                       "PTSD"); an all-lowercase one leaves its own casing as
                                                        written ("Dataset").
-    dialect.tsv   dialect<TAB>standard[<TAB>lower]     a dialect or reduced spelling of a common word becomes its
-                                                       standard spelling. "lower": the dialect form matches only as
-                                                       written in lowercase (the g-dropped allowlist: "nothin'" but
-                                                       never the name "Dunkin'"). A dialect form may begin or end with
-                                                       an apostrophe ('cause, 'em, nothin').
+    dialect.tsv   dialect<TAB>standard                 a dialect or reduced spelling of a common word becomes its
+                                                       standard spelling. A dialect form may begin or end with an
+                                                       apostrophe ('cause, 'em).
     choices.tsv   member<TAB>member[<TAB>...]          one layer 2 set: spellings of the same spoken word or words,
                                                        offered to the model in this order. A member ending in "*" is
                                                        option-only: offered, but it does not start a span (the
                                                        standard spelling of a dialect set: "get*", "you*").
 
-Matching (both layers): a written form matches case-insensitively (except "lower" dialect forms) on whole tokens. A
+Matching (both layers): a written form matches case-insensitively on whole tokens. A
 token is a run of letters and digits (any script) joined by internal apostrophes or periods ("y'all", "don't",
 "index.html", "config.xml" are one token each), so a form never matches part of a token ("ya" is not found in
 "ya'll", "git" not in "Git's", "html" not in "index.html"); an edge apostrophe belongs to a form only where the form
@@ -39,7 +38,8 @@ lists it. Spaces and hyphens inside a form match literally. Scanning is left to 
 form wins; matches never overlap.
 
 Quote guard (dialect forms with an edge apostrophe): a form ending in an apostrophe is not applied when an unclosed
-single quote precedes it (the apostrophe is then the closing quote: "'goin'" and "said 'I was goin'" stay as written),
+single quote precedes it (the apostrophe is then the closing quote: with a form "goin'", "'goin'" and "said 'I was
+goin'" stay as written),
 and a form beginning with an apostrophe is not applied when the token is followed by an apostrophe ("'em'"), so a
 quote mark is never eaten. An opening single quote is an apostrophe before a token that is not the start of a listed
 leading-apostrophe form; the next token-final apostrophe closes it.
@@ -86,7 +86,6 @@ CANT_TELL = "can't tell"
 LETTERS = "ABCDEFGHIJ"
 MARK_OPEN, MARK_CLOSE = "[[", "]]"
 OPTION_ONLY = "*"
-LOWER_FLAG = "lower"
 CHOICE_COLUMNS = ("label_set", "id", "span", "start", "end", "original", "set", "options", "probs", "chosen")
 
 SYSTEM = "You are a careful copy editor of speech transcripts."
@@ -132,14 +131,12 @@ def cased(replacement: str, original: str) -> str:
     return replacement
 
 
-def _compile(keys: dict[str, bool]) -> re.Pattern | None:
-    """Whole-token alternation of keys {lowercase key: lowercase-only}, longest first."""
+def _compile(keys) -> re.Pattern | None:
+    """Case-insensitive whole-token alternation of the (lowercase) keys, longest first."""
+    keys = sorted(set(keys), key=lambda w: (-len(w), w))
     if not keys:
         return None
-    alts = []
-    for k in sorted(keys, key=lambda w: (-len(w), w)):
-        alts.append(f"(?-i:{re.escape(k)})" if keys[k] else re.escape(k))
-    return re.compile(_LEFT + "(?:" + "|".join(alts) + ")" + _RIGHT, re.IGNORECASE)
+    return re.compile(_LEFT + "(?:" + "|".join(re.escape(k) for k in keys) + ")" + _RIGHT, re.IGNORECASE)
 
 
 def _lines(text: str, name: str):
@@ -164,7 +161,6 @@ class Entry:
     output: str
     table: str         # "forms" | "variants" | "dialect"
     group: str         # the group it is screened under (the conventional / canonical form, the dialect form)
-    lower_only: bool = False
 
 
 @dataclass(frozen=True)
@@ -217,7 +213,7 @@ class Layer1:
                 other = self.entries[e.key]
                 raise ValueError(f"{e.key!r} is listed in {other.table}.tsv and {e.table}.tsv")
             self.entries[e.key] = e
-        self._re = _compile({k: e.lower_only for k, e in self.entries.items()})
+        self._re = _compile(self.entries)
         self.leading = tuple(sorted(k for k in self.entries if k.startswith("'")))
         for e in self.entries.values():
             out, edits = self.apply(e.output)
@@ -297,8 +293,8 @@ class Tables:
                     raise ValueError(f"choices.tsv: {m!r} is in two sets")
             for k in cs.triggers:
                 self.by_key[k] = cs
-        self._span_re = _compile({k: False for k in self.by_key})
-        members_re = _compile({k: False for k in member_set})
+        self._span_re = _compile(self.by_key)
+        members_re = _compile(member_set)
         for cs in self.sets:
             for m in cs.members:
                 hit = self.layer1.search(m)
@@ -352,17 +348,14 @@ class Tables:
     def _dialect(text: str) -> list[Entry]:
         out = []
         for n, fields in _lines(text, "dialect.tsv"):
-            if len(fields) not in (2, 3) or (len(fields) == 3 and fields[2] != LOWER_FLAG):
-                raise ValueError(f"dialect.tsv:{n}: expected dialect<TAB>standard[<TAB>{LOWER_FLAG}]")
-            dialect, standard = fields[:2]
-            lower = len(fields) == 3
+            if len(fields) != 2:
+                raise ValueError(f"dialect.tsv:{n}: expected dialect<TAB>standard")
+            dialect, standard = fields
             _check_side(dialect, _DIALECT, f"dialect.tsv:{n}")
             _check_side(standard, _STANDARD, f"dialect.tsv:{n}")
-            if lower and dialect != dialect.lower():
-                raise ValueError(f"dialect.tsv:{n}: a lowercase-only form must be written in lowercase")
             if dialect.lower() == standard.lower():
                 raise ValueError(f"dialect.tsv:{n}: {dialect!r} is its own standard spelling")
-            out.append(Entry(dialect.lower(), standard, "dialect", dialect.lower(), lower))
+            out.append(Entry(dialect.lower(), standard, "dialect", dialect.lower()))
         return out
 
     @staticmethod

@@ -345,6 +345,31 @@ class Check(World):
         self.assertFalse(g["disabled"])
 
 
+class Canonical(unittest.TestCase):
+    """Cleaning plan v4: a pure group's canonical form is T*'s majority form over all kept labels (case-insensitive
+    count per form), in T*'s most frequent casing, ties to the term list's first form; B0 and the human references
+    do not vote."""
+
+    def test_t_star_majority_wins_and_b0_does_not_vote(self):
+        written = {"ok": {"T* OK": 1344, "T* ok": 128, "T* Ok": 23, "B0 OK": 90000},
+                   "okay": {"T* Okay": 68096, "T* okay": 44368, "T* OKAY": 3}}
+        self.assertEqual(C_run_canonical(["ok", "okay"], written), ("okay", {"ok": 1495, "okay": 112467}))
+
+    def test_casing_is_t_stars_with_sentence_capitals_folded(self):
+        self.assertEqual(C_run_canonical(["ptsd", "p t s d"], {"ptsd": {"T* PTSD": 477, "T* ptsd": 30}})[0], "PTSD")
+        self.assertEqual(C_run_canonical(["dataset", "data set"],
+                                         {"dataset": {"T* Dataset": 50, "T* dataset": 40},
+                                          "data set": {"T* data set": 60}})[0], "dataset")
+
+    def test_ties_go_to_the_first_form(self):
+        self.assertEqual(C_run_canonical(["heap sort", "heapsort"], {})[0], "heap sort")
+        self.assertEqual(C_run_canonical(["a b", "ab"], {"a b": {"T* a b": 3}, "ab": {"T* ab": 3}})[0], "a b")
+
+
+def C_run_canonical(group, written):
+    return R.canonical_form(group, written)
+
+
 class Screen(unittest.TestCase):
     @staticmethod
     def norm(text: str) -> str:

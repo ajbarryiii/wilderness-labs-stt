@@ -1,17 +1,18 @@
 # Label cleaning, layer 1: pure spelling-variant groups (cleaning plan "Layer 1"; training/cleaning.py).
 # "canonical<TAB>variant[<TAB>...]": the members are the same word in every context; every variant becomes the
 # canonical (first) form. Matched case-insensitively on whole tokens, longest first. The canonical form is the one
-# more frequent in the training pool's human references (normalized words, kept ids), ties to the term list's first
-# form. Groups from the committed term lists' spelling variants (terms.variant_key), plus ok / okay and alright /
-# all right. Contextual groups (back end / backend, front end / frontend) are layer 2 sets in choices.tsv.
-# Left out: ptsd / p t s d (the references spell the letters out by convention; "PTSD" stays as written).
-# Disabled by the net-harm check (cleaning plan Check 3, on the human-reference labels): all right, cybersecurity
+# T* writes most often across all kept labels (case-insensitive count per form, in T*'s most frequent casing), ties
+# to the term list's first form (cleaning plan v4). Groups from the committed term lists' spelling variants
+# (terms.variant_key), plus ok / okay and alright / all right. Contextual groups (back end / backend, front end /
+# frontend) are layer 2 sets in choices.tsv.
+# Disabled by the net-harm check (cleaning plan Check 3, on the human-reference labels): all right, cybersecurity, okay
 chest x-ray	chest xray
 diabetic ketoacidosis	diabetic keto acidosis
-ear drum	eardrum
+eardrum	ear drum
 gallbladder	gall bladder
-gastro enteritis	gastroenteritis
+gastroenteritis	gastro enteritis
 gastroesophageal reflux	gastro esophageal reflux
+PTSD	p t s d
 x-ray	xray
 capex	cap ex
 cash flow	cashflow
@@ -23,12 +24,11 @@ e-commerce	ecommerce
 fine-tuning	finetuning
 free cash flow	free cashflow
 headcount	head count
-heap sort	heapsort
 macroeconomic	macro-economic
 operating cash flow	operating cashflow
-pretax	pre-tax	pre tax
+pre-tax	pretax	pre tax
 pre-trained	pretrained
 pre-training	pretraining
 reinsurance	re-insurance
-wi-fi	wifi
-OK	okay
+Wi-Fi	wifi
+heap sort	heapsort
