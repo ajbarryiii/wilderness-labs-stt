@@ -10,6 +10,15 @@
 #                                                 the 12 runs) for labels/<T*>/RUN; each chunk ~110 min
 #   training/launch.sh status | report            progress; results.json and RESULTS-decoder-only.md (CPU)
 #
+# Stage 2c (synthetic plan; train_synthetic.py), after the 12 runs and the finalized "full" synthetic run, with the
+# version 2 plan built (./python -m training.batchplan build --pools 156 --synthetic-run full):
+#   training/launch.sh syn-probe S RUN VRAM       mixed-batch probe of student S on labels/<T*>/RUN (GPU)
+#   training/launch.sh syn-read-probe             synthetic reads under the replay throughput probe's rule (CPU)
+#   training/launch.sh syn-chain RUN VRAM N [JOB] N chained chunk jobs over train_synthetic.ORDER (the T* runs'
+#                                                 eval-stem, then B-TS, B-TSn, T-TS, T-TSn); the first waits for JOB
+#                                                 (e.g. the last stage 2b chunk) if given, else readiness is checked
+#   training/launch.sh syn-status | syn-report    progress; results-synthetic.json and RESULTS-decoder-only.md
+#
 # GPU jobs: a shared lease (--needs gpu:shared --vram VRAM, VRAM in GB: the probe's peak plus 2 GB), 36G memory
 # cap, low priority (the agent default). Each process takes the parakeet GPU lock ($PARAKEET_TERNARY_ROOT/gpu.lock)
 # for its own duration only: train.py's paths.gpu_lock for training sessions, score_teacher.gpu_lock for scoring,
@@ -47,10 +56,33 @@ case "${1:-}" in
         --timeout 3h -- ./python train_decoder.py chunk --labels-run "$run" --budget-minutes 110
       prev="relabel-decoder-$run-$i"
     done ;;
+  syn-probe)
+    s="${2:?student B|T}"; run="${3:?labels run name}"; v="${4:?VRAM GB}"
+    exec job start "relabel-synthetic-probe-$s" --cwd "$here" --needs gpu:shared --vram "${v}G" "${gpu[@]}" \
+      --timeout 1h -- ./python train_synthetic.py probe --student "$s" --labels-run "$run" ;;
+  syn-read-probe)
+    exec job start relabel-synthetic-read-probe --cwd "$here" --needs cpu-heavy --mem 8G --timeout 1h -- \
+      ./python train_synthetic.py read-probe ;;
+  syn-chain)
+    run="${2:?labels run name}"; v="${3:?VRAM GB}"; n="${4:?number of chunks}"; prev="${5:-}"
+    if [[ -z "$prev" ]]; then
+      ./python -c 'import sys, train_synthetic as ts; p = ts.readiness(); print(*p, sep="\n", file=sys.stderr); sys.exit(2 if p else 0)' \
+        || { echo "stage 2c is not ready (above); pass the last stage 2b chunk job to wait for it" >&2; exit 2; }
+    fi
+    for i in $(seq 1 "$n"); do
+      after=(); [[ -n "$prev" ]] && after=(--after "$prev")
+      job start "relabel-synthetic-$run-$i" --cwd "$here" "${after[@]}" --needs gpu:shared --vram "${v}G" "${gpu[@]}" \
+        --timeout 3h -- ./python train_synthetic.py chunk --labels-run "$run" --budget-minutes 110
+      prev="relabel-synthetic-$run-$i"
+    done ;;
+  syn-status)
+    exec ./python train_synthetic.py status ;;
+  syn-report)
+    exec ./python train_synthetic.py report "${@:2}" ;;
   status)
     exec ./python train_decoder.py status ;;
   report)
     exec ./python train_decoder.py report "${@:2}" ;;
   *)
-    sed -n '2,20p' "$0" >&2; exit 2 ;;
+    sed -n '2,27p' "$0" >&2; exit 2 ;;
 esac
