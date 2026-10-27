@@ -1,0 +1,34 @@
+# Label cleaning, layer 1: pure spelling-variant groups (cleaning plan "Layer 1"; training/cleaning.py).
+# "canonical<TAB>variant[<TAB>...]": the members are the same word in every context; every variant becomes the
+# canonical (first) form. Matched case-insensitively on whole tokens, longest first. The canonical form is the one
+# T* writes most often across all kept labels (case-insensitive count per form, in T*'s most frequent casing), ties
+# to the term list's first form (cleaning plan v4). Groups from the committed term lists' spelling variants
+# (terms.variant_key), plus ok / okay and alright / all right. Contextual groups (back end / backend, front end /
+# frontend) are layer 2 sets in choices.tsv.
+# Disabled by the net-harm check (cleaning plan Check 3, on the human-reference labels): all right, cybersecurity, okay
+chest x-ray	chest xray
+diabetic ketoacidosis	diabetic keto acidosis
+eardrum	ear drum
+gallbladder	gall bladder
+gastroenteritis	gastro enteritis
+gastroesophageal reflux	gastro esophageal reflux
+PTSD	p t s d
+x-ray	xray
+capex	cap ex
+cash flow	cashflow
+data center	datacenter
+data set	dataset
+data sets	datasets
+deleveraging	de-leveraging
+e-commerce	ecommerce
+fine-tuning	finetuning
+free cash flow	free cashflow
+headcount	head count
+macroeconomic	macro-economic
+operating cash flow	operating cashflow
+pre-tax	pretax	pre tax
+pre-trained	pretrained
+pre-training	pretraining
+reinsurance	re-insurance
+Wi-Fi	wifi
+heap sort	heapsort

@@ -13,6 +13,7 @@ Parakeet baseline (B0′). No model in this directory has been released yet.
 | 2 Part A | `devsets/`, `score_domain.py`, `terms/` | Builds held-out medical and technical dev sets (evaluation only) and measures critical-term recall. |
 | 2 Part B | `pool/`, `corpora/` | Builds text-only domain subsets of the streamed pool, new corpora and a global denylist of held-out ids. |
 | 2 Part C | `labeling/` | C1 (CPU) replays the pinned training stream once into local FLAC shards plus a journal. C2 (GPU) labels the shards with T* (vLLM, batch-invariant) and B0, keeping per-token confidence. |
+| 2a | `training/cleaning.py`, `training/cleaning_run.py`, `terms/cleaning/` | Label cleaning, read at training time: fixed casing, spelling-variant and dialect forms (layer 1), and same-sound spellings chosen by an open-weight LLM from option-letter probabilities (layer 2, precomputed into a hashed artifact), with a net-harm check against human references. On by default for every arm. |
 | 2b | `train_decoder.py`, `training/` | Decoder-only fine-tuning of Kea-B and Kea-T on the new labels, from an offline batch plan (`training/batchplan.py`). |
 | 2c | `synthetic/`, `terms/synthetic/` | Synthetic technical speech (chemistry, mathematics, finance, software engineering): open-weight text generation, then TTS and augmentation. |
 | 3 | `training/` (stage 3 entry point to come) | B0′: FP32 Parakeet fine-tuned on the new labels with a WSD schedule and cooldown branches. |

@@ -1,0 +1,39 @@
+# Label cleaning, layer 2: same-sound choice sets (cleaning plan "Layer 2"; training/cleaning.py).
+# One set per line, "member<TAB>member[<TAB>...]": spellings of the same spoken word or words, offered to the model
+# in this order (then "can't tell"). Spans are every whole-token, case-insensitive occurrence of a member, longest
+# first, without overlaps. A member ending in "*" is option-only: offered, but it does not start a span (the
+# standard spelling in a dialect set).
+# --- same-sound spellings
+maybe	may be
+anyway	any way
+everyday	every day
+setup	set up
+login	log in
+backup	back up
+checkout	check out
+workout	work out
+gap	GAAP
+cash	cache
+# --- dialect spellings (the standard spelling is option-only)
+get*	git	Git
+you*	yeah*	ya
+because*	cos
+# --- contextual spelling-variant groups of the term lists
+back end	backend
+front end	frontend
+# --- moved out of layer 1 (forms whose written form is also an ordinary word, a name or a typed token)
+ip	IP
+Bert	BERT
+bleu	BLEU
+http	HTTP
+https	HTTPS
+iOS	IOS	Ios
+fx	FX
+roa	ROA
+Asr	ASR
+Ebit	EBIT
+GPUs	GPUS
+Arr	ARR
+# --- left as written in the synthetic forms; real labels contain them
+roe	ROE
+eps	EPS
