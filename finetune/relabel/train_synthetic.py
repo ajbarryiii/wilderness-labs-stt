@@ -30,16 +30,17 @@ SHA-256) and refuses a later different result; before all three T* runs have fin
 2c run starts (exit EXIT_NOT_READY). The record is a resume key (lr_selection) and goes into the run's summary.
 
 The T* arm's data: parse_args reads the selected T* run's recorded arguments (its config.json) and refuses another
-label run, another labels_sha256 (the same labels through the same label cleaning, which follows that run: on iff
-it ran with it) and a version 2 plan whose base plan is not the T* run's version 1 plan. So a 2c arm trains on every
-real occurrence the T* arm trains on, with the same label and disposition, in the same pools and pool order, plus
-each pool's synthetic draw; within a pool its batches differ, since they are cut with the clips (synthetic plan
-"Arms"; synthetic_data's refusals hold the same checks for any caller).
+label run, another labels_sha256 (the same labels through the same label cleaning and the same repetition rejection,
+each following that run: on iff it ran with it) and a version 2 plan whose base plan is not the T* run's version 1
+plan. So a 2c arm trains on every real occurrence the T* arm trains on, with the same label and disposition, in the
+same pools and pool order, plus each pool's synthetic draw; within a pool its batches differ, since they are cut with
+the clips (synthetic plan "Arms"; synthetic_data's refusals hold the same checks for any caller).
 
-Seam: train_decoder.seam(arm) (stage 2b's replacements, unchanged) plus this module's parse_args, build_context
-(train_decoder.build_context, plus a "synthetic" block in config.json), finish (train_decoder.finish, then eval-stem),
-RESUME_KEYS + RESUME_EXTRA and TRAINING_SOURCES + EXTRA_SOURCES, all restored on exit. train_decoder.py and the
-shared training modules are not modified, so the 2b arms train, record and resume exactly as before.
+Seam: train_decoder.seam(arm) (stage 2b's replacements, unchanged, the non-finite step guard included) plus this
+module's parse_args, build_context (train_decoder.build_context, plus a "synthetic" block in config.json), finish
+(train_decoder.finish, then eval-stem), RESUME_KEYS + RESUME_EXTRA and TRAINING_SOURCES + EXTRA_SOURCES, all restored
+on exit. train_decoder.py and the shared training modules are not modified, so the 2b arms train, record and resume
+exactly as before.
 
 eval-stem (synthetic plan "Evaluation"; stage 2b does not score it): every 2c run after training, and each selected
 T* run (ORDER's "stem" items), with score_domain.py's settings (evaluate.evaluate_set at its batch, the pinned
@@ -202,9 +203,11 @@ def plan_dirs(clips) -> tuple[Path, Path]:
     return bp.production_dir(cid, td.PLAN_POOLS), bp.production_dir(cid, td.PLAN_POOLS, clips=clips)
 
 
-def offline_data(arm: str, labels_run: str, lr: float, cleaning: bool = True) -> tseam.OfflineData:
+def offline_data(arm: str, labels_run: str, lr: float, cleaning: bool = True,
+                 repetition: bool = True) -> tseam.OfflineData:
     """synthetic_data on the production plans, clip pool, T* store (read through label cleaning unless cleaning is
-    False) and schedule (schedule.decoder_only on the version 2 plan)."""
+    False, with repetition rejection unless repetition is False) and schedule (schedule.decoder_only on the version
+    2 plan)."""
     from training import poolaudio
     pin, pool, cid = _pinned()
     clips = mixing.ClipPool.load(SYNTHETIC_RUN)
@@ -215,7 +218,8 @@ def offline_data(arm: str, labels_run: str, lr: float, cleaning: bool = True) ->
             raise RuntimeError(f"{p.dir}: a batch plan of another pinned configuration or budget")
     labels = tlabels.LabelStore.open(tlabels.production_run_dir(labels_run), pool, label_set=LABEL_SET,
                                      through_batch=plan.consumed_batches,
-                                     cleaning=td.label_cleaning(labels_run, cleaning))
+                                     cleaning=td.label_cleaning(labels_run, cleaning),
+                                     repetition=td.label_repetition(labels_run, repetition))
     return synthetic_data(ARMS[arm][1], plan, base_plan, pool, poolaudio.store_dir(cid, plan.pool_batches), labels,
                           clips, schedule.decoder_only(lr, plan))
 
@@ -246,7 +250,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     base = base_args(t_arm, lr)
     if base["labels_run"] != a.labels_run:
         raise RuntimeError(f"{a.arm}: --labels-run {a.labels_run} is not the {t_arm} run's ({base['labels_run']})")
-    data = offline_data(a.arm, a.labels_run, lr, cleaning=base.get("cleaning") is not None)
+    data = offline_data(a.arm, a.labels_run, lr, cleaning=base.get("cleaning") is not None,
+                        repetition=base.get("repetition") is not None)
     if data.labels.identity["sha256"] != base["labels_sha256"]:
         raise RuntimeError(f"{a.arm}: the T* labels differ from the {t_arm} run's (labels_sha256)")
     base_plan_sha = data.replay.plan.meta["base_plan_sha256"]
@@ -270,6 +275,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ckpt_minutes=a.ckpt_minutes, seed=td.SEED, probe_steps=None, no_powerlog=True, overwrite=a.overwrite,
         smoke=False, student=student, label_set=LABEL_SET, labels_run=a.labels_run,
         labels_sha256=data.labels.identity["sha256"], cleaning=data.labels.identity.get("cleaning"),
+        repetition=data.labels.identity.get("repetition"),
         replay_sha256=data.replay.identity["sha256"], plan_sha256=data.replay.identity["plan_sha256"],
         stop_batch=data.stop, schedule=data.schedule.to_dict(), export_sha256=ident["export_sha256"],
         init_sha256=ident["checkpoint_sha256"], split_sha256=split.sha256, budget_minutes=a.budget_minutes,

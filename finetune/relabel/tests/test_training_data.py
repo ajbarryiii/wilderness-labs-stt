@@ -13,13 +13,23 @@ import numpy as np
 import torch
 
 import train  # finetune/parakeet-ternary
-from labeling import shards
+from labeling import filters, shards
 from labeling_fixtures import relabel_root
 from training import labels as tlabels
+from training import repetition as trep
 from training import replay as treplay
-from training_fixtures import PER_SHARD, REJECTED_BATCH, TOTAL, LabeledWorld
+from training_fixtures import HALLUCINATED, HALLUCINATED_BATCH, NEAR_MISS, PER_SHARD, REJECTED_BATCH, TOTAL, LabeledWorld
 
 THROUGH = 10     # batches 0-9: C1 shards 0-2 (shard 2 covers 8-11)
+_TOKENIZER: dict = {}
+
+
+def repetition_spec(cache: Path | None, **kw) -> trep.Repetition:
+    """Rule "repetition" with the students' tokenizer (extracted once per process from the pinned .nemo)."""
+    if "file" not in _TOKENIZER:
+        _TOKENIZER["dir"] = tempfile.TemporaryDirectory()
+        _TOKENIZER["file"] = filters.b0_tokenizer_file(Path(_TOKENIZER["dir"].name))
+    return trep.Repetition(_TOKENIZER["file"], cache, **kw)
 
 
 class Fixture(unittest.TestCase):
@@ -29,7 +39,7 @@ class Fixture(unittest.TestCase):
         cls.root = Path(cls.tmp.name)
         cls.ctx = relabel_root(cls.root)
         cls.ctx.__enter__()
-        cls.w = LabeledWorld(cls.root)
+        cls.w = LabeledWorld(cls.root, hallucinate=True)
         cls.fresh = cls.w.stream_batches(TOTAL)
 
     @classmethod
@@ -37,9 +47,9 @@ class Fixture(unittest.TestCase):
         cls.ctx.__exit__(None, None, None)
         cls.tmp.cleanup()
 
-    def store(self, label_set="T*", through=THROUGH, run_dir=None, pool=None):
+    def store(self, label_set="T*", through=THROUGH, run_dir=None, pool=None, **kw):
         return tlabels.LabelStore.open(run_dir or self.w.labels_dir, pool or self.w.pool, label_set=label_set,
-                                       through_batch=through)
+                                       through_batch=through, **kw)
 
     def copy_world(self, name):
         """A copy of the C1 and C2 directories, to damage."""
@@ -79,11 +89,19 @@ class Labels(Fixture):
 
     def test_control_and_t_star_arm_see_the_same_utterances(self):
         rt = treplay.JournalReplay(self.w.pool, THROUGH)
-        t, b0 = self.store("T*"), self.store("B0")
-        for b in range(THROUGH):
-            ids = rt.batch_ids(b)
-            self.assertEqual([t.text(i) is not None for i in ids], [b0.text(i) is not None for i in ids])
-        self.assertEqual(treplay.plan(rt, t, THROUGH), treplay.plan(rt, b0, THROUGH))
+        spec = repetition_spec(self.root / "rep-same.json")
+        for kw in ({}, {"repetition": spec}):
+            t, b0 = self.store("T*", **kw), self.store("B0", **kw)
+            for b in range(THROUGH):
+                ids = rt.batch_ids(b)
+                self.assertEqual([t.text(i) is not None for i in ids], [b0.text(i) is not None for i in ids])
+            self.assertEqual(treplay.plan(rt, t, THROUGH), treplay.plan(rt, b0, THROUGH))
+        # with the rule, both drop the hallucinated id (and nothing else)
+        plain, ruled = treplay.plan(rt, self.store("B0"), THROUGH), treplay.plan(rt, b0, THROUGH)
+        occurrences = sum(i == self.w.hallucinated for b in range(THROUGH) for i in rt.batch_ids(b))
+        self.assertGreater(occurrences, 0)
+        self.assertEqual(ruled["kept_occurrences"], plain["kept_occurrences"] - occurrences)
+        self.assertFalse(b0.kept(self.w.hallucinated))
 
     def test_unknown_id_is_an_error(self):
         with self.assertRaises(KeyError):
@@ -113,6 +131,119 @@ class Labels(Fixture):
         self.assertEqual((a["label_set"], a["column"], b["column"]), ("T*", "text", "b0_raw"))
         self.assertEqual(a["shards"], b["shards"])
         self.assertNotEqual(a["sha256"], b["sha256"])
+
+
+class Repetition(Fixture):
+    """Rule "repetition" v1 (training/repetition.py) in the label store: decided on the T* label as stored, applied
+    to every label set as part of T*'s disposition mask, named in the identity, cached per label shard."""
+
+    def cache(self) -> Path:
+        return self.root / "rep" / f"{self.id().rsplit('.', 1)[-1]}.json"
+
+    def test_the_fixture_has_repetitions_that_passed_the_filters(self):
+        h, n = self.w.records[self.w.hallucinated], self.w.records[self.w.near_miss]
+        self.assertEqual((h["disposition"], n["disposition"]), ("kept", "kept"))
+        self.assertTrue(h["text"].endswith(HALLUCINATED) and n["text"].endswith(NEAR_MISS))
+        spec = repetition_spec(None)
+        self.assertEqual(spec.repeats(h["text"]), (32, 1))
+        self.assertEqual(spec.repeats(n["text"]), (31, 1))
+        self.assertEqual(spec.repeats(h["b0_raw"])[0], 1)
+        self.assertIn(self.w.hallucinated, self.w.batch_ids(HALLUCINATED_BATCH))
+
+    def test_a_hallucinated_t_star_label_is_rejected_for_every_label_set(self):
+        spec = repetition_spec(self.cache())
+        for label_set in ("T*", "B0"):
+            plain, ruled = self.store(label_set), self.store(label_set, repetition=spec)
+            self.assertTrue(plain.kept(self.w.hallucinated))
+            self.assertFalse(ruled.kept(self.w.hallucinated), label_set)
+            self.assertIsNone(ruled.text(self.w.hallucinated))
+            self.assertTrue(ruled.kept(self.w.near_miss), label_set)              # 31 repeats: below the threshold
+            others = [i for b in range(THROUGH) for i in self.w.batch_ids(b) if i != self.w.hallucinated]
+            self.assertEqual([ruled.text(i) for i in others], [plain.text(i) for i in others])
+            self.assertEqual(ruled.identity["kept"], plain.identity["kept"] - 1)
+
+    def test_the_identity_names_the_rule_and_its_rejected_ids(self):
+        spec = repetition_spec(self.cache())
+        t, b0, plain = self.store("T*", repetition=spec), self.store("B0", repetition=spec), self.store("T*")
+        block = t.identity["repetition"]
+        self.assertEqual(block, b0.identity["repetition"])
+        self.assertEqual(block, spec.identity([self.w.hallucinated]))
+        self.assertEqual((block["name"], block["version"], block["threshold"], block["n"], block["rejected"]),
+                         ("repetition", 1, 32, [1, 6], 1))
+        self.assertNotIn("repetition", plain.identity)
+        self.assertNotEqual(t.identity["sha256"], plain.identity["sha256"])
+        # another rule: another identity, with another rejected set (threshold 31) or the same one (n up to 1)
+        lower = self.store("T*", repetition=repetition_spec(self.cache().with_suffix(".t31"), threshold=31))
+        self.assertEqual(lower.identity["repetition"]["rejected"], 2)
+        self.assertNotEqual(lower.identity["repetition"]["rejected_sha256"], block["rejected_sha256"])
+        unigram = self.store("T*", repetition=repetition_spec(self.cache().with_suffix(".n1"), n_max=1))
+        self.assertEqual(unigram.identity["repetition"]["rejected_sha256"], block["rejected_sha256"])
+        self.assertEqual(len({t.identity["sha256"], lower.identity["sha256"], unigram.identity["sha256"]}), 3)
+        # only the store's shards count: batches 0-3 (C1 shard 0) hold no rejected id
+        self.assertEqual(self.store("T*", through=4, repetition=spec).identity["repetition"]["rejected"], 0)
+
+    def test_decided_on_the_stored_t_star_text_whatever_the_cleaning(self):
+        from training import cleaning
+        spec = repetition_spec(self.cache())
+        layer1 = cleaning.Cleaning.load()
+        for label_set in ("T*", "B0"):
+            s = self.store(label_set, repetition=spec, cleaning=layer1)
+            self.assertFalse(s.kept(self.w.hallucinated))
+            self.assertEqual(s.identity["repetition"], self.store(label_set, repetition=spec).identity["repetition"])
+
+    def test_cached_per_label_shard_and_reused(self):
+        path = self.cache()
+        first = self.store("B0", repetition=repetition_spec(path))
+        cached = json.loads(path.read_text())
+        self.assertEqual(cached["rule"], repetition_spec(None).rule())
+        self.assertEqual(sorted(cached["shards"]), [shards.shard_name(k) for k in range(3)])
+        self.assertEqual(cached["shards"][shards.shard_name(1)]["rejected"], [[self.w.hallucinated, 32, 1]])
+        with mock.patch.object(trep.Repetition, "evaluate", side_effect=AssertionError("recomputed")):
+            again = self.store("T*", repetition=repetition_spec(path))     # the T* store reads the same cache
+        self.assertEqual(again.identity["repetition"], first.identity["repetition"])
+        self.assertFalse(again.kept(self.w.hallucinated))
+        # a wider store computes only the shard it adds
+        calls = []
+        real = trep.Repetition.evaluate
+        with mock.patch.object(trep.Repetition, "evaluate", lambda s, *a: calls.append(a[0]) or real(s, *a)):
+            self.store("T*", through=TOTAL, repetition=repetition_spec(path))
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(len(json.loads(path.read_text())["shards"]), 4)
+
+    def test_a_stale_cache_entry_is_recomputed(self):
+        path = self.cache()
+        want = self.store("T*", repetition=repetition_spec(path)).identity["repetition"]
+        cached = json.loads(path.read_text())
+        name = shards.shard_name(1)
+        cached["shards"][name].update(sha256="0" * 64, rejected=[])        # another shard's result
+        path.write_text(json.dumps(cached))
+        self.assertEqual(self.store("T*", repetition=repetition_spec(path)).identity["repetition"], want)
+        self.assertNotEqual(json.loads(path.read_text())["shards"][name]["sha256"], "0" * 64)
+        for change in ({"rule": {**cached["rule"], "threshold": 99}}, {"contract_sha256": "0" * 64}):
+            stale = {**json.loads(path.read_text()), **change}
+            stale["shards"][name]["rejected"] = []
+            path.write_text(json.dumps(stale))
+            self.assertEqual(self.store("T*", repetition=repetition_spec(path)).identity["repetition"], want)
+
+    def test_a_cached_rejected_id_must_be_a_kept_record_of_its_shard(self):
+        path = self.cache()
+        self.store("T*", repetition=repetition_spec(path))
+        cached = json.loads(path.read_text())
+        rejected_record = sorted(self.w.reject)[0]
+        k = next(k for k in range(3) if rejected_record in {i for b in range(k * PER_SHARD, (k + 1) * PER_SHARD)
+                                                            for i in self.w.batch_ids(b)})
+        cached["shards"][shards.shard_name(k)]["rejected"] = [[rejected_record, 12, 1]]
+        path.write_text(json.dumps(cached))
+        with self.assertRaises(RuntimeError):
+            self.store("T*", repetition=repetition_spec(path))
+        cached["shards"][shards.shard_name(k)]["rejected"] = [["nope:0", 12, 1]]
+        path.write_text(json.dumps(cached))
+        with self.assertRaises(RuntimeError):
+            self.store("T*", repetition=repetition_spec(path))
+
+    def test_without_a_cache_file(self):
+        s = self.store("T*", repetition=repetition_spec(None))
+        self.assertFalse(s.kept(self.w.hallucinated))
 
 
 class Replay(Fixture):

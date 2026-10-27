@@ -296,6 +296,7 @@ def run_table() -> list[dict]:
                      "real_hours": sum(v for k, v in by_source.items() if k != "synthetic") / 3600,
                      "selection_h4": s.get("decoder_only", {}).get("selection_part", {}).get("h4"),
                      "encoder_bit_identical": s.get("decoder_only", {}).get("encoder_bit_identical"),
+                     "nonfinite_skipped_steps": s.get("decoder_only", {}).get("nonfinite_skipped_steps"),
                      "resumes": s.get("resumes")})
     return rows
 
@@ -395,11 +396,12 @@ def markdown(r: dict) -> str:
             L += ["", "Note: the scored references' term occurrences differ from coverage.json's counts "
                       "(reference_occurrences in results-synthetic.json)."]
     L += ["", "## Stage 2c runs", "", "| Arm | lr | Steps | Planned batches | Synthetic rows | Real h | Synthetic h | "
-          "Selection H4 |", "|---|---|---:|---:|---:|---:|---:|---:|"]
+          "Non-finite steps skipped | Selection H4 |", "|---|---|---:|---:|---:|---:|---:|---:|---:|"]
     for row in r["runs"]:
+        skipped = row.get("nonfinite_skipped_steps")
         L.append(f"| {row['arm']} | {row.get('lr') or '–'} | {row.get('steps', '–')} | {row.get('planned_batches', '–')} | "
                  f"{row.get('synthetic_rows', '–')} | {_f(row.get('real_hours'), 1)} | {_f(row.get('synthetic_hours'), 1)} | "
-                 f"{_f(row.get('selection_h4'), 3)} |")
+                 f"{'–' if skipped is None else skipped} | {_f(row.get('selection_h4'), 3)} |")
     return "\n".join(L) + "\n"
 
 

@@ -130,6 +130,20 @@ def student_result(s: str, split: devsplit.Split, selections: dict) -> dict:
                   "proxy": {m: p for m, p in proxy.items()}}
 
 
+def label_rule() -> dict | None:
+    """The repetition rule (config.json args.repetition) every finished run recorded; RuntimeError when finished runs
+    record different rules (runs on different utterances are not compared)."""
+    rules = {}
+    for arm in td.ARMS:
+        for lr in td.LRS:
+            config = _json(td.run_dir(arm, lr) / "config.json")
+            if config is not None and (td.run_dir(arm, lr) / "summary.json").exists():
+                rules[f"{arm}/{td.LR_NAMES[lr]}"] = config.get("args", {}).get("repetition")
+    if len({json.dumps(v, sort_keys=True) for v in rules.values()}) > 1:
+        raise RuntimeError(f"finished runs of different repetition rules: {rules}")
+    return next(iter(rules.values()), None)
+
+
 def run_table() -> list[dict]:
     rows = []
     for arm in td.ARMS:
@@ -142,6 +156,7 @@ def run_table() -> list[dict]:
             rows.append({"arm": arm, "lr": td.LR_NAMES[lr], "status": "done", "steps": s["steps"],
                          "consumed_batches": d.get("consumed_batches"),
                          "fully_rejected_batches": d.get("fully_rejected_batches"),
+                         "nonfinite_skipped_steps": d.get("nonfinite_skipped_steps"),
                          "selection_h4": d.get("selection_part", {}).get("h4"),
                          "dev_mean_wer_full": 100 * s["dev_mean_wer"], "audio_hours": s.get("audio_hours_seen"),
                          "encoder_bit_identical": d.get("encoder_bit_identical"),
@@ -151,9 +166,10 @@ def run_table() -> list[dict]:
 
 def analyze_all() -> dict:
     split = devsplit.load(td.split_path(), devsplit.dev_manifests())
+    repetition = label_rule()
     selections = {arm: select(arm, split) for arm in td.ARMS}
     return {"plan": "decoder-only plan", "split": {"sha256": split.sha256, "counts": split.counts(),
-                                                        "rule": split.data["rule"]},
+                                                        "rule": split.data["rule"]}, "repetition": repetition,
             "selection": selections, "students": {s: student_result(s, split, selections) for s in td.STUDENTS},
             "runs": run_table(),
             "equivalence": {s: _json(td.root() / "equivalence" / f"{s}.json") for s in td.STUDENTS},
@@ -227,12 +243,13 @@ def markdown(r: dict) -> str:
             L.append(f"| {n} | " + " | ".join(f"{100 * st[m]['punctuation_share']:.0f} / {100 * st[m]['uppercase_share']:.0f}"
                                                for m in ("O", "C", "A", "B0", "T*")) + " |")
         L += ["", "YODAS dev (full set, informational): " + ", ".join(f"{m} {v:.2f}" for m, v in res["yodas_dev_full_wer"].items()) + "."]
-    L += ["", "## Runs", "", "| Arm | lr | Steps | Consumed batches | Fully rejected | Selection H4 | Full dev mean |",
-          "|---|---|---:|---:|---:|---:|---:|"]
+    L += ["", "## Runs", "", "| Arm | lr | Steps | Consumed batches | Fully rejected | Non-finite steps skipped | "
+          "Selection H4 | Full dev mean |", "|---|---|---:|---:|---:|---:|---:|---:|"]
     for row in r["runs"]:
+        skipped = row.get("nonfinite_skipped_steps")
         L.append(f"| {row['arm']} | {row['lr']} | {row.get('steps', '–')} | {row.get('consumed_batches', '–')} | "
-                 f"{row.get('fully_rejected_batches', '–')} | {_f(row.get('selection_h4'), 3)} | "
-                 f"{_f(row.get('dev_mean_wer_full'), 3)} |")
+                 f"{row.get('fully_rejected_batches', '–')} | {'–' if skipped is None else skipped} | "
+                 f"{_f(row.get('selection_h4'), 3)} | {_f(row.get('dev_mean_wer_full'), 3)} |")
     return "\n".join(L) + "\n"
 
 
