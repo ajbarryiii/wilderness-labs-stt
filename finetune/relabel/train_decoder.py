@@ -447,8 +447,10 @@ class DecoderContext(train.Context):
         return payload
 
     def restore(self, payload: dict) -> None:
-        """train.Context.restore for a prediction/joint checkpoint."""
-        if payload["resume_key"] != train.resume_key(self.args):
+        """train.Context.restore for a prediction/joint checkpoint. A resume key without a field of LEGACY_RESUME
+        (written before the field existed) reads it as its legacy value: a run made before repetition rejection
+        resumes with --no-repetition-reject and is refused with the rule on."""
+        if {**LEGACY_RESUME, **payload["resume_key"]} != train.resume_key(self.args):
             raise RuntimeError(f"checkpoint {payload['_path']} was written by another configuration")
         if payload.get("encoder_sha256") != self.encoder_sha256:
             raise RuntimeError("the rebuilt encoder differs from the checkpoint's (SHA-256)")
@@ -572,6 +574,9 @@ RESUME_EXTRA = ("student", "label_set", "labels_run", "labels_sha256", "cleaning
                 "replay_sha256", "stop_batch",
                 "schedule",
                 "export_sha256", "init_sha256")
+# resume-key fields added after runs were made, with the value a checkpoint without them stands for (train.py's
+# argument check already reads a missing recorded argument as None)
+LEGACY_RESUME = {"repetition": None}
 
 
 def build_context(args, run: Path, device: str = "cuda"):

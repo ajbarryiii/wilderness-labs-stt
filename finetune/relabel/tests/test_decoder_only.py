@@ -334,6 +334,12 @@ class RepetitionRule(Chunk):
         self.assertEqual(td.chunk("RUN", 110.0, runner=run, repetition=False), train.EXIT_RESUME_MISMATCH)
         self.finish_with_rule(td.ORDER[2], rule | {"version": 0})
         self.assertEqual(td.chunk("RUN", 110.0, runner=run), train.EXIT_RESUME_MISMATCH)
+        # a run finished before the rule existed records no "repetition" at all: it matches the rule off only
+        td.write_json(td.run_dir(*td.ORDER[2]) / "config.json", {"args": {"labels_sha256": "old"}})
+        self.assertEqual(td.chunk("RUN", 110.0, runner=run), train.EXIT_RESUME_MISMATCH)
+        calls.clear()
+        self.assertEqual(td.chunk("RUN", 110.0, runner=run, repetition=False), 0)
+        self.assertGreater(len(calls), 0)
 
     def test_the_report_refuses_runs_of_different_rules(self):
         rule = {"name": "repetition", "version": 1, "n": [1, 6], "threshold": 32, "rejected": 26}
@@ -651,10 +657,11 @@ class ContextAndCheckpoint(unittest.TestCase):
         cls.ctx.__exit__(None, None, None)
         cls.tmp.cleanup()
 
-    def build(self, name, seed=0):
+    def build(self, name, seed=0, extra=()):
+        import argparse
         model = tiny_model(21)
         td.configure(model)
-        args = types.SimpleNamespace(**{k: None for k in train.RESUME_KEYS + td.RESUME_EXTRA})
+        args = argparse.Namespace(**{k: None for k in train.RESUME_KEYS + td.RESUME_EXTRA + tuple(extra)})
         args.__dict__.update(arm="B-T", recipe="decoder-only", lr=1e-3, max_steps=self.data.plan["steps"], seed=seed,
                              label_set="T*", ckpt_minutes=30.0)
         run = self.root / name
@@ -694,6 +701,36 @@ class ContextAndCheckpoint(unittest.TestCase):
         payload["encoder_sha256"] = "0" * 64
         with td.seam("B-T"), self.assertRaises(RuntimeError):
             self.build("ckpt").restore(payload)
+
+    def test_a_checkpoint_from_before_the_rule_resumes_only_without_it(self):
+        """A checkpoint written before repetition rejection existed has no "repetition" in its resume key or
+        arguments. With --no-repetition-reject (args.repetition None) it resumes, through the argument check and
+        restore, on the 2b and the 2c seam; with the rule on it is refused by both."""
+        import contextlib
+        import io
+        import train_synthetic as ts
+        rule = {"name": "repetition", "version": 1, "n": [1, 6], "threshold": 32, "rejected": 26}
+        for seam, extra in ((lambda: td.seam("B-T"), ()), (lambda: ts.seam("B-TS"), ts.RESUME_EXTRA)):
+            a = self.build("legacy", extra=extra)
+            a.state.step, a.state.position = 3, {"batch": 4}
+            with seam():
+                payload = a.checkpoint_payload()
+            payload["resume_key"].pop("repetition")
+            payload["args"].pop("repetition")
+            with seam():
+                train.save_checkpoint(a.run, payload)
+                b = self.build("legacy", extra=extra)
+                loaded = train.load_resume_payload(b.run, b.args)
+                self.assertNotIn("repetition", loaded["resume_key"])
+                b.restore(loaded)
+                self.assertEqual(b.state.step, 3)
+                c = self.build("legacy", extra=extra)
+                c.args.repetition = rule
+                with contextlib.redirect_stdout(io.StringIO()), self.assertRaises(SystemExit) as stop:
+                    train.load_resume_payload(c.run, c.args)
+                self.assertEqual(stop.exception.code, train.EXIT_RESUME_MISMATCH)
+                with self.assertRaises(RuntimeError):
+                    c.restore(train.load_checkpoint(c.run))
 
     def test_train_loop_skips_a_non_finite_step_and_finishes_on_the_plan(self):
         """train.train_loop through the seam (CPU; the loss is FakeLosses): a NaN gradient at the third step is

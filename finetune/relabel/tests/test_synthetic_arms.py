@@ -214,7 +214,8 @@ class Args(unittest.TestCase):
         plan = types.SimpleNamespace(meta={"base_plan_sha256": "P1"}, version=bp.SYNTHETIC_VERSION)
         return types.SimpleNamespace(
             labels=types.SimpleNamespace(identity={"sha256": "L", "cleaning": self.base["cleaning"],
-                                                   "repetition": self.base["repetition"]}, label_set="T*"),
+                                                   "repetition": self.base.get("repetition") if repetition else None},
+                                         label_set="T*"),
             replay=types.SimpleNamespace(identity={"plan_id": "x-syn", "plan_sha256": "P2", "sha256": "RS",
                                                    "synthetic": {"clip_pool": "CP", "transform": {"seed": 1}}},
                                          consumed_batches=10, plan=plan),
@@ -249,6 +250,9 @@ class Args(unittest.TestCase):
         a = ts.parse_args(["--arm", "B-TSn", "--labels-run", "R"])
         self.assertEqual(self.calls[-1], ("B-TSn", "R", 3e-5, True, False))
         self.assertIsNone(a.repetition)
+        del self.base["repetition"]                          # a T* run made before the rule records no field
+        ts.parse_args(["--arm", "B-TS", "--labels-run", "R"])
+        self.assertEqual(self.calls[-1], ("B-TS", "R", 3e-5, True, False))
 
     def test_refusals(self):
         with self.assertRaises(RuntimeError):                # another label run than the T* arm's

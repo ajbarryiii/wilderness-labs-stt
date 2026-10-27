@@ -20,6 +20,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import numpy as np
 import torch
 
 import train  # finetune/parakeet-ternary
@@ -151,9 +152,18 @@ class Training(unittest.TestCase):
     def test_the_guard_trains_as_the_pinned_step(self):
         pinned = train.train_step
         self.assertIsNot(pinned, tseam.guarded_train_step)
+        # each build seeds every RNG (train.seed_everything: python, numpy, torch CPU and CUDA, SpecAugment's
+        # private ones), and a loop advances them: b is built after a has run, so both start from the same state
         a = self.build(self.root / "runs" / "pinned")
-        b = self.build(self.root / "runs" / "guarded")
+        start = train.rng_state(a.student)
         self.run_loop(a, step_fn=pinned)
+        b = self.build(self.root / "runs" / "guarded")
+        now = train.rng_state(b.student)
+        self.assertEqual((now["python"], now["private"]), (start["python"], start["private"]))
+        self.assertTrue(all(np.array_equal(x, y) for x, y in zip(now["numpy"], start["numpy"])))
+        self.assertTrue(torch.equal(now["torch"], start["torch"]))
+        self.assertEqual(len(now["cuda"]), len(start["cuda"]))
+        self.assertTrue(all(torch.equal(x, y) for x, y in zip(now["cuda"], start["cuda"])))
         self.run_loop(b)
         self.assertEqual(b.state.drop_counts[tseam.NONFINITE_KEY], 0)
         for k, v in td.trained_state(a.student).items():
