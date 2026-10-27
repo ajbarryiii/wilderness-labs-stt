@@ -3,7 +3,7 @@
     ./python train_decoder.py split                                    freeze the dev split (CPU; before any run)
     ./python train_decoder.py equivalence --student B|T                encoder-equivalence check, 20 dev clips (GPU)
     ./python train_decoder.py probe --student B|T                      100-step probe: peak VRAM, step time (GPU)
-    ./python train_decoder.py train --arm B-T --lr 1e-5 --labels-run RUN [--budget-minutes 110]
+    ./python train_decoder.py train --arm B-T --lr 1e-5 --labels-run RUN [--budget-minutes 110] [--no-cleaning]
                                                                        one chunk of one run (GPU; resumable)
     ./python train_decoder.py score-original --student B|T             the unchanged student's scores (GPU)
     ./python train_decoder.py chunk --labels-run RUN [--budget-minutes 110]
@@ -14,6 +14,12 @@
 Arms (ARMS): B-T and B-0 train Kea-B's decoder, T-T and T-0 Kea-T's, on T* labels (`text`) or on B0's labels
 (`b0_raw`) under T*'s disposition mask (training/labels.py). Each arm runs at the three peak learning rates LRS:
 12 runs, $RELABEL_ROOT/decoder-only/<arm>/lr<lr>/.
+
+Label cleaning (cleaning plan, stage 2a): every arm's labels, the B0-label controls included, are read through
+cleaning v1 (training/cleaning.py: the committed tables and the label run's choices artifact,
+$RELABEL_ROOT/cleaning/<run>/v1/), so the store identity, hence labels_sha256, the resume check and the run info,
+carry the cleaning block; `train --no-cleaning` (and `chunk --no-cleaning`, passed to every train item) reads the
+uncleaned labels for a run that must reproduce a pre-cleaning result.
 
 Training is finetune/parakeet-ternary/train.py's loop (train.main: checkpoints, resume, signals, metrics,
 summary.json), unchanged, inside seam(): training/seam.py's offline-label replacements (the batch plan's pools
@@ -79,6 +85,7 @@ import relabel_paths
 import score_domain
 from labeling import layout as llayout
 from training import bootstrap, decoder_steps, devsplit, schedule
+from training import cleaning as tcleaning
 from training import labels as tlabels
 from training import replay as treplay
 from training import seam as tseam
@@ -117,7 +124,10 @@ SOURCES = ("relabel/train_decoder.py", "relabel/decoder_report.py", "relabel/tra
            "relabel/training/labels.py", "relabel/training/replay.py", "relabel/training/schedule.py",
            "relabel/training/batchplan.py", "relabel/training/poolaudio.py",
            "relabel/training/seam.py", "relabel/training/devsplit.py", "relabel/training/bootstrap.py",
-           "relabel/training/decoder_steps.py", "relabel/labeling/shards.py", "relabel/labeling/c2.py",
+           "relabel/training/decoder_steps.py", "relabel/training/cleaning.py",
+           "relabel/terms/cleaning/forms.tsv", "relabel/terms/cleaning/variants.tsv",
+           "relabel/terms/cleaning/dialect.tsv", "relabel/terms/cleaning/choices.tsv",
+           "relabel/labeling/shards.py", "relabel/labeling/c2.py",
            "relabel/labeling/config.py", "relabel/score_domain.py", "relabel/relabel_paths.py",
            "parakeet-binary/binary_export.py", "parakeet-binary/binary_quant.py",
            "parakeet-binary/binary_train.py")
@@ -464,8 +474,15 @@ def start_budget(ctx, minutes: float | None, deadline: float | None = None) -> N
     ctx.timer.start()
 
 
-def offline_data(arm: str, labels_run: str, lr: float) -> tseam.OfflineData:
-    """The batch plan's pools 0-155 (materialized audio) with the arm's label set and the WSD schedule."""
+def label_cleaning(labels_run: str, enabled: bool = True):
+    """The cleaning spec every arm's labels are read through (cleaning v1 with the run's choices artifact), or None
+    (--no-cleaning)."""
+    return tcleaning.production(labels_run) if enabled else None
+
+
+def offline_data(arm: str, labels_run: str, lr: float, cleaning: bool = True) -> tseam.OfflineData:
+    """The batch plan's pools 0-155 (materialized audio) with the arm's label set (read through label cleaning
+    unless cleaning is False) and the WSD schedule."""
     from labeling import config as lconfig
     from labeling.__main__ import c1_dir, pinned
     from training import batchplan, poolaudio
@@ -478,7 +495,8 @@ def offline_data(arm: str, labels_run: str, lr: float) -> tseam.OfflineData:
         raise RuntimeError("the batch plan is of another pinned configuration or budget")
     label_set = ARMS[arm][1]
     labels = tlabels.LabelStore.open(tlabels.production_run_dir(labels_run), pool, label_set=label_set,
-                                     through_batch=plan.consumed_batches)
+                                     through_batch=plan.consumed_batches,
+                                     cleaning=label_cleaning(labels_run, cleaning))
     replay = treplay.PlannedReplay(plan, pool, audio="materialized", store=poolaudio.store_dir(cid, plan.pool_batches))
     return tseam.OfflineData(replay, labels, schedule.decoder_only(lr, plan), plan.n_batches)
 
@@ -492,6 +510,8 @@ def train_parser() -> argparse.ArgumentParser:
     p.add_argument("--deadline", type=float, help="epoch seconds: stop (checkpointed) by then (chunk jobs)")
     p.add_argument("--ckpt-minutes", type=float, default=30.0)
     p.add_argument("--overwrite", action="store_true", help="discard this run's outputs and checkpoints")
+    p.add_argument("--no-cleaning", action="store_true",
+                   help="read the uncleaned labels (default: label cleaning v1, every arm)")
     return p
 
 
@@ -501,7 +521,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     student, label_set = ARMS[a.arm]
     split = devsplit.load(split_path(), devsplit.dev_manifests())
     ident = ensure_student(student)
-    data = offline_data(a.arm, a.labels_run, a.lr)
+    data = offline_data(a.arm, a.labels_run, a.lr, cleaning=not a.no_cleaning)
     _ACTIVE["data"] = data
     steps = data.plan["steps"]
     log(f"{a.arm} {LR_NAMES[a.lr]}: batch plan {data.replay.identity['plan_id']}, {data.replay.consumed_batches} "
@@ -513,14 +533,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         grad_checkpointing=False, eval_every=steps, select="final", dev_limit=None, eval_batch_size=EVAL_BATCH,
         ckpt_minutes=a.ckpt_minutes, seed=SEED, probe_steps=None, no_powerlog=True, overwrite=a.overwrite,
         smoke=False, student=student, label_set=label_set, labels_run=a.labels_run,
-        labels_sha256=data.labels.identity["sha256"], replay_sha256=data.replay.identity["sha256"],
+        labels_sha256=data.labels.identity["sha256"], cleaning=data.labels.identity.get("cleaning"),
+        replay_sha256=data.replay.identity["sha256"],
         plan_sha256=data.replay.identity["plan_sha256"], stop_batch=data.stop, schedule=data.schedule.to_dict(), export_sha256=ident["export_sha256"],
         init_sha256=ident["checkpoint_sha256"], split_sha256=split.sha256, budget_minutes=a.budget_minutes,
         deadline=a.deadline)
 
 
 EXTRA_OUTPUTS = ("decoder.safetensors", "domain", "proxy", "scores.json")
-RESUME_EXTRA = ("student", "label_set", "labels_run", "labels_sha256", "plan_sha256", "replay_sha256", "stop_batch",
+RESUME_EXTRA = ("student", "label_set", "labels_run", "labels_sha256", "cleaning", "plan_sha256", "replay_sha256",
+                "stop_batch",
                 "schedule",
                 "export_sha256", "init_sha256")
 
@@ -544,7 +566,8 @@ def build_context(args, run: Path, device: str = "cuda"):
     info = {"quantized_modules": [], "trainable": info["trainable"], "parameter_accounting": None,
             "model_file": info["export_source"]["weights_file"],
             "teacher": {"labels": f"offline label store ({args.label_set}: {data.labels.identity['column']}) under "
-                                  f"{tlabels.MASK}", "online_teacher": None},
+                                  f"{tlabels.MASK}", "online_teacher": None,
+                        "cleaning": data.labels.identity.get("cleaning")},
             "bucketing": {"source": "batch plan re-cut from C1's journal (b0prime plan \"Batch plan\")",
                           "plan": data.replay.identity, "stop_batch": data.stop},
             "decoder_only": {"arm": args.arm, "student": info["student"], "export_source": info["export_source"],
@@ -953,17 +976,18 @@ def item_done(item: tuple) -> bool:
     return (run_dir(kind, value) / "summary.json").exists()
 
 
-def item_command(item: tuple, labels_run: str, minutes: float, deadline: float) -> list[str]:
+def item_command(item: tuple, labels_run: str, minutes: float, deadline: float, cleaning: bool = True) -> list[str]:
     here = Path(__file__).resolve().parent
     kind, value = item
     if kind == "original":
         return [str(here / "python"), str(here / "train_decoder.py"), "score-original", "--student", value,
                 "--deadline", f"{deadline:.0f}"]
     return [str(here / "python"), str(here / "train_decoder.py"), "train", "--arm", kind, "--lr", repr(value),
-            "--labels-run", labels_run, "--budget-minutes", f"{minutes:.1f}", "--deadline", f"{deadline:.0f}"]
+            "--labels-run", labels_run, "--budget-minutes", f"{minutes:.1f}", "--deadline", f"{deadline:.0f}"] + \
+        ([] if cleaning else ["--no-cleaning"])
 
 
-def chunk(labels_run: str, budget_minutes: float, runner=subprocess.run) -> int:
+def chunk(labels_run: str, budget_minutes: float, runner=subprocess.run, cleaning: bool = True) -> int:
     """One chunk job: the next unfinished items of ORDER, each in its own process (which takes the parakeet GPU
     lock for its own duration), until the budget leaves less than MIN_CHUNK_MINUTES or a run stops on it."""
     relabel_paths.require_mount()
@@ -976,7 +1000,8 @@ def chunk(labels_run: str, budget_minutes: float, runner=subprocess.run) -> int:
         if left < MIN_CHUNK_MINUTES:
             break
         log(f"chunk: {item} with {left:.0f} min left")
-        rc = runner(item_command(item, labels_run, left, deadline), cwd=str(Path(__file__).resolve().parent)).returncode
+        rc = runner(item_command(item, labels_run, left, deadline, cleaning),
+                    cwd=str(Path(__file__).resolve().parent)).returncode
         if rc != 0:
             log(f"chunk: {item} exited {rc}")
             return rc
@@ -1021,6 +1046,7 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("chunk")
     p.add_argument("--labels-run", required=True)
     p.add_argument("--budget-minutes", type=float, default=CHUNK_MINUTES)
+    p.add_argument("--no-cleaning", action="store_true", help="every train item reads the uncleaned labels")
     sub.add_parser("status")
     p = sub.add_parser("report")
     p.add_argument("--out", type=Path, help="RESULTS-decoder-only.md (default: $RELABEL_ROOT/decoder-only/)")
@@ -1034,7 +1060,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "score-original":
         return score_original(args.student, args.lock_wait, args.deadline)
     if args.cmd == "chunk":
-        return chunk(args.labels_run, args.budget_minutes)
+        return chunk(args.labels_run, args.budget_minutes, cleaning=not args.no_cleaning)
     if args.cmd == "status":
         print(json.dumps(status(), indent=1))
         return 0

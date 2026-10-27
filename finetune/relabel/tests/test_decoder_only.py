@@ -199,6 +199,70 @@ class Chunk(unittest.TestCase):
         self.assertEqual(calls, [])
 
 
+class LabelCleaning(Chunk):
+    """Cleaning plan "Where it applies": every arm (the B0-label controls included) reads cleaning v1 by default;
+    --no-cleaning reads the uncleaned labels; the module and tables are training sources; the cleaning block is a
+    resume key."""
+
+    def test_on_by_default_for_every_arm_with_an_explicit_off(self):
+        self.assertFalse(td.train_parser().parse_args(["--arm", "B-0", "--lr", "1e-5", "--labels-run", "R"])
+                         .no_cleaning)
+        self.assertTrue(td.train_parser().parse_args(["--arm", "T-0", "--lr", "1e-5", "--labels-run", "R",
+                                                      "--no-cleaning"]).no_cleaning)
+        with mock.patch.object(td.tcleaning, "production", lambda run: ("spec", run)):
+            self.assertEqual(td.label_cleaning("R"), ("spec", "R"))
+            self.assertIsNone(td.label_cleaning("R", enabled=False))
+
+    def test_offline_data_reads_the_store_through_the_spec(self):
+        seen = {}
+
+        def store_open(run_dir, pool, *, label_set, through_batch, cleaning):
+            seen[label_set] = cleaning
+            raise RuntimeError("stop")
+        plan = types.SimpleNamespace(meta={"pinned_hash": "h"}, budget=td.BATCH_SECONDS * 16000, consumed_batches=5)
+        patches = [mock.patch("labeling.__main__.pinned", lambda: {"batch": {"batch_seconds": td.BATCH_SECONDS},
+                                                                   "pinned_hash": "h"}),
+                   mock.patch("labeling.__main__.c1_dir", lambda: Path("pool")),
+                   mock.patch("labeling.config.config_id", lambda pin: "cid"),
+                   mock.patch("training.batchplan.Plan.load", lambda d: plan),
+                   mock.patch("training.batchplan.production_dir", lambda cid, pools: Path("plan")),
+                   mock.patch.object(td.tlabels.LabelStore, "open", store_open),
+                   mock.patch.object(td.tcleaning, "production", lambda run: f"spec:{run}")]
+        for p in patches:
+            p.start()
+        try:
+            for arm, (_, label_set) in td.ARMS.items():
+                with self.assertRaises(RuntimeError):
+                    td.offline_data(arm, "R", 1e-5)
+                self.assertEqual(seen[label_set], "spec:R", arm)
+                with self.assertRaises(RuntimeError):
+                    td.offline_data(arm, "R", 1e-5, cleaning=False)
+                self.assertIsNone(seen[label_set], arm)
+        finally:
+            for p in patches:
+                p.stop()
+
+    def test_chunk_passes_no_cleaning_to_every_train_item(self):
+        calls = []
+        for item in td.ORDER[:2]:
+            self.finish_item(item)
+        td.chunk("RUN", 110.0, runner=lambda cmd, cwd=None: calls.append(cmd) or types.SimpleNamespace(returncode=0),
+                 cleaning=False)
+        self.assertEqual(calls[0][-1], "--no-cleaning")
+        calls.clear()
+        td.chunk("RUN", 110.0, runner=lambda cmd, cwd=None: calls.append(cmd) or types.SimpleNamespace(returncode=0))
+        self.assertNotIn("--no-cleaning", calls[0])
+
+    def test_sources_and_resume_key(self):
+        for name in ("relabel/training/cleaning.py", "relabel/terms/cleaning/forms.tsv",
+                     "relabel/terms/cleaning/variants.tsv", "relabel/terms/cleaning/dialect.tsv",
+                     "relabel/terms/cleaning/choices.tsv"):
+            self.assertIn(name, td.SOURCES)
+            self.assertTrue((Path(td.__file__).resolve().parent.parent / name).exists(), name)
+        self.assertIn("cleaning", td.RESUME_EXTRA)
+        self.assertIn("labels_sha256", td.RESUME_EXTRA)
+
+
 class Selection(unittest.TestCase):
     def test_lowest_selection_h4_with_near_ties_to_the_lower_learning_rate(self):
         def run(values):
