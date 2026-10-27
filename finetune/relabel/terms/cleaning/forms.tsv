@@ -1,0 +1,72 @@
+# Label cleaning, layer 1: casing and hyphenation (cleaning plan "Layer 1"; training/cleaning.py).
+# "written<TAB>conventional": matched case-insensitively on whole tokens, longest first. The two sides may differ
+# only in letter case and in a hyphen versus a space, so normalized words never change. No diacritic folding.
+# Built from the synthetic label forms (terms/synthetic/forms/) minus the entries whose written form is also an
+# ordinary word or a common token in speech (moved to choices.tsv or left out after the layer 1 audit).
+acid base	acid-base
+lithium ion	lithium-ion
+pseudo first order	pseudo-first-order
+zero order reaction	zero-order reaction
+zero order reactions	zero-order reactions
+uv visible	UV-visible
+ebitda	EBITDA
+gdp	GDP
+cagr	CAGR
+gmv	GMV
+roic	ROIC
+nyse	NYSE
+dow jones	Dow Jones
+sarbanes oxley	Sarbanes-Oxley
+sarbanes-oxley	Sarbanes-Oxley
+high yield bond	high-yield bond
+high yield bonds	high-yield bonds
+price to earnings	price-to-earnings
+risk free rate	risk-free rate
+exchange traded fund	exchange-traded fund
+exchange traded funds	exchange-traded funds
+gaussian	Gaussian
+bayesian	Bayesian
+chi squared	chi-squared
+p value	p-value
+p values	p-values
+kaplan meier	Kaplan-Meier
+hahn banach	Hahn-Banach
+integro differential	integro-differential
+asic	ASIC
+cnn	CNN
+cpu	CPU
+dns	DNS
+etl	ETL
+fpga	FPGA
+gpt	GPT
+gpu	GPU
+html	HTML
+llms	LLMs
+lte	LTE
+nlp	NLP
+php	PHP
+rnn	RNN
+sql	SQL
+ssd	SSD
+tcp	TCP
+tpu	TPU
+xml	XML
+macos	macOS
+mysql	MySQL
+nosql	NoSQL
+github	GitHub
+mongodb	MongoDB
+docker	Docker
+kotlin	Kotlin
+redis	Redis
+unix	Unix
+ruby on rails	Ruby on Rails
+moore's law	Moore's law
+r tree	R-tree
+object oriented	object-oriented
+command line interface	command-line interface
+cross site	cross-site
+copy on write	copy-on-write
+depth first search	depth-first search
+breadth first search	breadth-first search
+double check	double-check

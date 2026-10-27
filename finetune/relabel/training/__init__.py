@@ -3,6 +3,9 @@
 
 Modules:
     labels     the label lookup by id (T* text or B0's label), with T*'s disposition mask applied to both
+    cleaning   label cleaning (stage 2a, cleaning plan): the committed tables, the read-time clean() and its
+               identity, the layer 2 choices artifact
+    cleaning_run  the cleaning runner: spans, choose (GPU), assemble, check (net harm), audit sheets
     replay     the journal replay from C1's local shards, batch for batch the labeled sequence, with
                consumed-batch accounting, a stop batch, and an optional extra clip source (stage 2c)
     schedule   the WSD schedule on the consumed-batch index (trunk, branches)
