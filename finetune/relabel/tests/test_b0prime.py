@@ -553,7 +553,8 @@ class Loop(World):
     def test_another_configuration_is_refused_on_resume(self):
         ctx = self.h.context("trunk")
         self.h.loop(ctx, fx.FakeLosses(), stop_after=2)
-        for change in ({"plan_sha256": "other"}, {"labels_sha256": "other"}, {"cleaning_version": 0},
+        self.assertEqual(ctx.args.cleaning_version, 0)
+        for change in ({"plan_sha256": "other"}, {"labels_sha256": "other"}, {"cleaning_version": 1},
                        {"schedule": {"kind": "wsd", "peak": 1.0}}, {"seed": 1}, {"branch_of": {"sha256": "x"}}):
             other = self.h.context("trunk", **change)
             out = io.StringIO()
