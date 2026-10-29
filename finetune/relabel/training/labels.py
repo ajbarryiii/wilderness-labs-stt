@@ -167,6 +167,9 @@ class LabelStore:
     def __len__(self) -> int:
         return len(self._texts)
 
+    def __contains__(self, item_id: str) -> bool:
+        return item_id in self._texts
+
 
 def _t_star_texts(path: Path, ids: list[str]) -> list[str | None]:
     """The T* texts (`text`) of a label shard, in the order of `ids` (its record order)."""

@@ -54,7 +54,8 @@ class ClipPool:
     def load(cls, run: str | Path, allow_provisional: bool = False, verify_audio: bool = True,
              synthetic_hygiene: bool = True) -> "ClipPool":
         """A clip store's kept clips. synthetic_hygiene=False: a store in the same format from another source (b0prime
-        plan v4 "Extra sources"), which has no synthetic term split to check; its manifest is still checked."""
+        plan v4 "Extra sources"), which has no synthetic term split to check; its manifest is still checked, and its
+        meta must say it is complete."""
         d = layout.run_dir(run) if isinstance(run, str) else Path(run)
         meta = json.loads((d / "clips.meta.json").read_text())
         data = (d / "clips.jsonl").read_bytes()
@@ -64,6 +65,8 @@ class ClipPool:
         if meta.get("provisional") and not allow_provisional:
             raise RuntimeError(f"{d}: provisional run (hygiene without eval-ext/eval-stem); not usable for training")
         if not synthetic_hygiene:
+            if meta.get("complete") is not True:
+                raise RuntimeError(f"{d}: the clip source is not complete (clips.meta.json)")
             return cls(read_jsonl(d / "clips.jsonl"), identity=sha, verify_audio=verify_audio)
         current = hashlib.sha256(layout.split_path().read_bytes()).hexdigest() if layout.split_path().exists() else None
         if (meta.get("hygiene_split_sha256") is None or meta["hygiene_split_sha256"] != current) and not allow_provisional:

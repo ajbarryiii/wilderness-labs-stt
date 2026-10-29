@@ -11,19 +11,26 @@ place and in one identity:
                   id stays None and is never transformed; a transform may not return None, nor empty a non-empty text.
                   An id without a store record is a KeyError, listed or not.
     ClipLabels    a clip store's labels (synthetic.mixing.ClipPool clips: the stage 2c synthetic store, or another
-                  source's store in the same format): row id "<prefix><clip id>" -> the clip's "label" (the version 2
-                  plan's extra rows, training/replay.py PlannedReplay).
+                  source's store in the same format): row id "<prefix><clip id>" -> the clip's "label" as stored (raw(),
+                  what the replay serves with the row), or with a `transform` (__call__(label, clip id) -> text and an
+                  `identity`; deterministic, memoized) that label transformed (text()). Layer1 is the read-speech
+                  source's transform: cleaning layer 1 alone at the run's cleaning version (b0prime plan v4 "Labels":
+                  training/cleaning.py with no choices artifact, so layer 2 leaves every span as written; layer 0 needs
+                  a T* label and its B0 donor and never applies; the label set is the source's name).
     Labels        the composite: a row id with an extra provider's prefix is that provider's, every other id is the
                   store's. identity["sha256"] is the run's labels_sha256: the store's own sha256 when there is no
                   reject list, transform or extra provider (so it equals stage 2b's for the same store), else the
                   SHA-256 of {"version": COMPOSITE_VERSION, store sha256, the reject list's identity, the transform's,
                   each provider's}.
-    RejectList    a hashed list of ids rejected at read time, from an artifact file (b0prime plan v4: the ted-test-text
-                  containment rule's main-pool rejects): JSON {"ids": [...], ...}; its identity (the file's SHA-256,
-                  the count, the file's "rule") enters labels_sha256. An empty list is valid.
+    RejectList    a hashed list of ids rejected at read time (b0prime plan v4: the ted-test-text containment rule's
+                  main-pool rejects), pool/tedreject.py's artifact directory: rejected_ids.txt (sorted ids, one per
+                  line; empty if none) and reject.json (name REJECT_NAME, version, ids_sha256 = SHA-256 of
+                  rejected_ids.txt, inputs.complete, counts.rejected_ids). Refused: another name, a list whose SHA-256
+                  differs, a partial (smoke) build, a count that differs. Its identity {name, version, ids_sha256,
+                  reject_sha256 (of reject.json), rejected_ids} enters labels_sha256. An empty list is valid.
 
 Batcher (a training/replay.py ReplayBatcher) takes every row's text from Labels.text; a row the replay serves with
-its own "label" (an extra row) must carry the provider's label. Cleaning versions (cleaning plan; the version enters
+its own "label" (an extra row) must carry the provider's stored label (raw). Cleaning versions (cleaning plan; the version enters
 the store identity, hence labels_sha256): 0 = no cleaning; 1 and 2 = training/cleaning.py's committed tables with the
 label run's choices artifact of that version (2: spelled-out acronyms and layer 0's punctuation transfer into T*'s
 labels, cleaning plan v6; stage 3 reads it).
@@ -38,6 +45,7 @@ from training import replay as treplay
 
 COMPOSITE_VERSION = 1
 CLEANING_VERSIONS = (0, 1, 2)
+REJECT_NAME = "talk-text-reject"
 
 
 def _sha(obj) -> str:
@@ -63,14 +71,22 @@ class RejectList:
         self.ids, self.identity = frozenset(ids), identity
 
     @classmethod
-    def load(cls, path: Path) -> "RejectList":
-        raw = Path(path).read_bytes()
-        data = json.loads(raw)
-        ids = data.get("ids") if isinstance(data, dict) else None
-        if not isinstance(ids, list) or not all(isinstance(i, str) and i for i in ids) or len(set(ids)) != len(ids):
-            raise ValueError(f"{path}: not a reject list (a JSON object with a list of distinct ids under \"ids\")")
-        return cls(ids, {"file": Path(path).name, "sha256": hashlib.sha256(raw).hexdigest(), "count": len(ids),
-                         "rule": data.get("rule")})
+    def load(cls, directory: Path) -> "RejectList":
+        """The reject list artifact at `directory` (module docstring); RuntimeError for a damaged or partial one."""
+        directory = Path(directory)
+        raw = (directory / "reject.json").read_bytes()
+        body = json.loads(raw)
+        data = (directory / "rejected_ids.txt").read_bytes()
+        if body.get("name") != REJECT_NAME or hashlib.sha256(data).hexdigest() != body.get("ids_sha256"):
+            raise RuntimeError(f"{directory}: rejected_ids.txt does not match reject.json (or not a {REJECT_NAME})")
+        if not (body.get("inputs") or {}).get("complete"):
+            raise RuntimeError(f"{directory}: built from a partial label run (a smoke); not usable for training")
+        ids = frozenset(line for line in data.decode().splitlines() if line)
+        count = (body.get("counts") or {}).get("rejected_ids")
+        if len(ids) != count:
+            raise RuntimeError(f"{directory}: {len(ids)} distinct ids, reject.json says {count}")
+        return cls(ids, {"name": REJECT_NAME, "version": body.get("version"), "ids_sha256": body["ids_sha256"],
+                         "reject_sha256": hashlib.sha256(raw).hexdigest(), "rejected_ids": len(ids)})
 
 
 class StoreLabels:
@@ -96,20 +112,59 @@ class StoreLabels:
         """The reject list's ids that are kept records of the store (they lose their label), or None."""
         if self.reject is None:
             return None
-        known = [i for i in self.reject.ids if i in self.store._texts]
+        known = [i for i in self.reject.ids if i in self.store]
         return {"listed": len(self.reject.ids), "in_store": len(known),
                 "kept_in_store": sum(self.store.text(i) is not None for i in known)}
 
 
 class ClipLabels:
-    def __init__(self, clips, prefix: str = "syn:"):
-        self.clips, self.prefix = clips, prefix
+    def __init__(self, clips, prefix: str = "syn:", transform=None):
+        self.clips, self.prefix, self.transform = clips, prefix, transform
         self._labels = {f"{prefix}{c['id']}": c["label"] for c in clips.clips}
+        self._done: dict[str, str] = {}
         self.identity = {"kind": "clip store", "prefix": prefix, "clip_pool": str(clips.identity),
                          "labels_sha256": _sha(sorted(self._labels.items()))}
+        if transform is not None:
+            self.identity["transform"] = dict(transform.identity)
+
+    def raw(self, item_id: str) -> str:
+        """The clip's label as stored (what the replay serves with the row)."""
+        return self._labels[item_id]
 
     def text(self, item_id: str) -> str:
-        return self._labels[item_id]
+        """The row's training text: the stored label, through the transform if there is one."""
+        value = self._labels[item_id]
+        if self.transform is None:
+            return value
+        out = self._done.get(item_id)
+        if out is None:
+            out = self.transform(value, item_id[len(self.prefix):])
+            if not isinstance(out, str) or (value != "" and out == ""):
+                raise RuntimeError(f"{item_id}: the label transform returned {out!r}")
+            self._done[item_id] = out
+        return out
+
+
+class Layer1:
+    """Cleaning layer 1 alone at `version` as a label transform (module docstring, ClipLabels)."""
+
+    def __init__(self, version: int, label_set: str):
+        from training import cleaning
+        if version not in cleaning.VERSIONS:
+            raise ValueError(f"cleaning version {version} has no layer 1 here (versions {cleaning.VERSIONS})")
+        self.spec = cleaning.Cleaning.load(version=version)
+        if self.spec.choices is not None or self.spec.needs_donor(label_set):
+            raise RuntimeError("layer 1 alone reads no choices artifact and no B0 donor")
+        self.label_set = label_set
+        self.identity = self.spec.identity() | {"layers": [1], "label_set": label_set}
+
+    def __call__(self, text: str, clip_id: str) -> str:
+        return self.spec.clean(text, clip_id, self.label_set)
+
+
+def layer1(version: int, label_set: str) -> Layer1 | None:
+    """Layer1 at the run's cleaning version; None at version 0 (no cleaning)."""
+    return None if version == 0 else Layer1(version, label_set)
 
 
 class Labels:
@@ -138,6 +193,13 @@ class Labels:
                 return provider.text(item_id)
         return self.real.text(item_id)
 
+    def stored(self, item_id: str) -> str:
+        """An extra row's label as its store holds it (what the replay serves); KeyError for a real row."""
+        for prefix, provider in self.extra.items():
+            if item_id.startswith(prefix):
+                return provider.raw(item_id)
+        raise KeyError(item_id)
+
     def kept(self, item_id: str) -> bool:
         return self.text(item_id) is not None
 
@@ -151,8 +213,8 @@ class Batcher(treplay.ReplayBatcher):
         texts = []
         for it in items:
             text = self.labels.text(it["id"])
-            if "label" in it and it["label"] != text:
-                raise RuntimeError(f"batch {b}: row {it['id']} carries a label its provider does not give")
+            if "label" in it and it["label"] != self.labels.stored(it["id"]):
+                raise RuntimeError(f"batch {b}: row {it['id']} carries a label its provider does not hold")
             texts.append(text)
         if self.extra is not None:
             raise RuntimeError("extra clips come through the plan (version 2), not appended after the cut")
