@@ -587,6 +587,14 @@ class PunctuationTransfer(unittest.TestCase):
             self.assertIs(C.punctuation_transfer(t, b)[0], t)
         self.assertEqual(t0("so  we\twent", "So, we, went."), "so,  we,\twent.")      # spacing kept around marks
 
+    def test_every_other_byte_is_kept(self):
+        """Differs from the analysis prototype (scripts/transfer.py), which re-joined every token of a changed label
+        with single spaces: here a mark is inserted in place, so whitespace runs, leading and trailing space and a
+        detached punctuation token stay as T* wrote them."""
+        self.assertEqual(t0('he said hello " then', 'He said hello," then.'), 'he said hello, " then.')
+        self.assertEqual(t0("  ok  thanks ", "Ok, thanks."), "  ok,  thanks. ")
+        self.assertEqual(t0("well - ok then", "Well, ok then."), "well - ok then.")      # "-" joins well's trail
+
     def test_guard_and_empty_b0(self):
         t = "one two three four five six seven eight nine ten"
         self.assertEqual(t0(t, ""), t)
