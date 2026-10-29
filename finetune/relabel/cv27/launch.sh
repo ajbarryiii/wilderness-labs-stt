@@ -10,12 +10,16 @@
 #   cv27/launch.sh decode N MEM                   N chained decode chunk jobs, ~110 min each (CPU: cpu-heavy and
 #                                                 disk-io, since the store is ~0.1 TB of small files on the data disk)
 #   cv27/launch.sh dev MEM                        the dev sample's FLAC and manifest (CPU)
-#   cv27/launch.sh confirm SECONDS VRAM N MEM     N chained B0 chunk jobs (GPU, shared lease), after the decode chain
+#   CHAIN_AFTER=JOB cv27/launch.sh confirm SECONDS VRAM LEASE N MEM
+#                                                 N chained B0 chunk jobs (GPU, shared lease of LEASE = the probe
+#                                                 job's VRAM peak + 2 GB, B0 capped at VRAM), after JOB (the last
+#                                                 decode job)
 #   cv27/launch.sh finalize MEM                   the clip source and report.json (CPU)
 #   cv27/launch.sh ted-reject MEM                 the main pool's talk-text reject list (CPU, cpu-heavy)
 #
-# GPU jobs: a shared lease (--needs gpu:shared --vram LEASE, LEASE = ceil(VRAM) + 2 GB, the plan's probe peak + 2 GB),
-# each holding the parakeet GPU lock for its own duration only (the CLI takes it), HF_HUB_OFFLINE=1.
+# GPU jobs: a shared lease (--needs gpu:shared --vram LEASE; the probe leases ceil(VRAM) + 2 GB, the B0 pass the
+# probe's measured peak + 2 GB), each holding the parakeet GPU lock for its own duration only (the CLI takes it),
+# HF_HUB_OFFLINE=1.
 set -euo pipefail
 here="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$here"
@@ -56,9 +60,11 @@ case "${1:-}" in
     exec job start cv27-dev --cwd "$here" --mem "${2:?MEM}" --cpus 5 --timeout 30m --stall 10m -- \
       ./python -m cv27 dev --workers 4 ;;
   confirm)
-    s="${2:?batch seconds}"; v="${3:?VRAM GB}"; n="${4:?chunks}"; mem="${5:?MEM}"
-    JOB_ARGS=(--needs gpu:shared --vram "$(lease "$v")" --mem "$mem" --cpus 9 --timeout 2h30m --stall 30m
+    s="${2:?batch seconds}"; v="${3:?declared VRAM GB}"; l="${4:?LEASE = the probe job VRAM peak + 2 GB}"
+    n="${5:?chunks}"; mem="${6:?MEM}"
+    JOB_ARGS=(--needs gpu:shared --vram "$l" --mem "$mem" --cpus 9 --timeout 2h30m --stall 30m
               --env HF_HUB_OFFLINE=1)
+    [[ -n "${CHAIN_AFTER:-}" ]] || { echo "set CHAIN_AFTER to the last decode job" >&2; exit 2; }
     chain cv27-confirm "$n" -- ./python -m cv27 confirm --batch-seconds "$s" --declared-vram-gb "$v" \
       --budget-minutes 110 ;;
   finalize)
@@ -68,5 +74,5 @@ case "${1:-}" in
     exec job start relabel-ted-reject --cwd "$here" --needs cpu-heavy --mem "${2:?MEM}" --cpus 7 --timeout 1h \
       --stall 20m -- ./python -m pool.tedreject build --workers 6 ;;
   *)
-    sed -n '2,20p' "$0"; exit 2 ;;
+    sed -n '2,24p' "$0"; exit 2 ;;
 esac
