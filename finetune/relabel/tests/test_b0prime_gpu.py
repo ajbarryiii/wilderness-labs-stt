@@ -20,6 +20,7 @@ import torch
 import b0prime_fixtures as fx
 import train  # finetune/parakeet-ternary
 import train_b0prime as tb
+import tdt_fused  # finetune/tdt-fused (train_b0prime puts it on sys.path)
 import train_decoder as td
 from decoder_fixtures import tiny_model
 from training import seam as tseam
@@ -84,10 +85,18 @@ class EndToEnd(unittest.TestCase):
                    mock.patch.object(tb, "score_model", self.fake_score),
                    mock.patch.object(tb, "label_manifest", lambda run: {"fixture": True}),
                    mock.patch.object(td, "_PATHS_GPU_LOCK", nolock)]
+        fused = tdt_fused.joint_loss
+
+        def counted(*args, **kwargs):
+            self.fused_calls += 1
+            return fused(*args, **kwargs)
+        self.fused_calls = 0
         with contextlib.ExitStack() as stack:
             for p in patches:
                 stack.enter_context(p)
             stack.enter_context(tb.seam(None))
+            self.assertIs(train.compute_losses, tdt_fused.compute_losses)       # b0prime plan v4.1: the fused seam
+            stack.enter_context(mock.patch.object(tdt_fused, "joint_loss", counted))
             stack.enter_context(mock.patch.object(train, "label_batch", remember))
             stack.enter_context(mock.patch.object(train, "train_step", step))
             try:
@@ -109,6 +118,9 @@ class EndToEnd(unittest.TestCase):
             self.assertEqual(s["lrs"], {data.schedule.lr(s["index"])})
             self.assertTrue(s["training"] and s["spec"])
         self.assertEqual(summary["steps"], data.plan["steps"])
+        self.assertEqual(self.fused_calls, len(seen))                 # every step's loss came from the fused seam
+        self.assertIn("tdt-fused/tdt_fused.py",
+                      json.loads((tb.run_dir("pw") / "model.json").read_text())["training_source_hashes"])
         init, final = tiny_model(7).state_dict(), self.latest("pw")
         for part in ("encoder.", "decoder.", "joint."):
             params = [k for k, _ in tiny_model(7).named_parameters() if k.startswith(part)]

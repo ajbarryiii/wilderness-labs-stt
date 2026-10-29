@@ -63,10 +63,11 @@ class World:
         self.labels = self.open_labels()
         self.replay = treplay.PlannedReplay(self.plan, self.w.pool, audio="materialized", store=self.store)
 
-    def open_labels(self, cleaning_version: int = 0, transform=None, extra=None):
+    def open_labels(self, cleaning_version: int = 0, transform=None, extra=None, reject=None, plan=None):
+        """train_b0prime.open_labels on the fixture's label run (through its persisted label index)."""
         with mock.patch.object(trep, "production", lambda run: repetition_spec(self.root / "rep.json")):
-            return tb.open_labels("fixture", self.w.pool, self.plan.consumed_batches, cleaning_version,
-                                  transform=transform, extra=extra, run_dir_=self.w.labels_dir)
+            return tb.open_labels("fixture", self.w.pool, plan or self.plan, cleaning_version, transform=transform,
+                                  extra=extra, run_dir_=self.w.labels_dir, reject=reject)
 
     def close(self):
         self.replay.close()
@@ -146,6 +147,21 @@ class Harness:
             payload = train.load_resume_payload(ctx.run, ctx.args)
             ctx.restore(payload)
         return ctx
+
+
+def write_reject(directory: Path, ids: list[str], *, ids_sha256: str | None = None, complete: bool = True,
+                 count: int | None = None, name: str = "talk-text-reject") -> Path:
+    """A read-time reject list in pool/tedreject.py's layout: rejected_ids.txt (one id per line) and reject.json."""
+    import json
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    data = "".join(f"{i}\n" for i in ids).encode()
+    (directory / "rejected_ids.txt").write_bytes(data)
+    body = {"name": name, "version": 1, "rule": "fixture containment rule",
+            "ids_sha256": ids_sha256 or hashlib.sha256(data).hexdigest(), "inputs": {"complete": complete},
+            "counts": {"rejected_ids": len(ids) if count is None else count}}
+    (directory / "reject.json").write_text(json.dumps(body))
+    return directory
 
 
 def tree_hashes(root: Path) -> dict[str, str]:

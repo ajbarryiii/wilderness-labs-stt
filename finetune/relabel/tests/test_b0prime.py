@@ -29,7 +29,7 @@ import train  # finetune/parakeet-ternary
 import train_b0prime as tb
 from decoder_fixtures import tiny_model
 from training import batchplan as bp
-from training import label_sources, stage3
+from training import label_index, label_sources, stage3
 from training import schedule as wsd
 from training import seam as tseam
 
@@ -311,35 +311,67 @@ class Labels(World):
             bad.text(kept[0])
 
     def test_the_read_time_reject_list(self):
-        """b0prime plan v4: the ted-test-text containment rule's main-pool rejects, a hashed id list in the identity."""
+        """b0prime plan v4: the ted-test-text containment rule's main-pool rejects (pool/tedreject.py's artifact:
+        rejected_ids.txt and reject.json), a hashed id list in the identity."""
         import tempfile
         base = self.world.labels
         kept = [i for i in self.world.w.records if base.text(i) is not None]
         with tempfile.TemporaryDirectory() as d:
-            empty, two = Path(d) / "empty.json", Path(d) / "two.json"
-            empty.write_text(json.dumps({"rule": "fixture rule", "ids": []}))
-            two.write_text(json.dumps({"rule": "fixture rule", "ids": kept[:2]}))
-            e = label_sources.RejectList.load(empty)
-            t = label_sources.RejectList.load(two)
-            bad = Path(d) / "bad.json"
-            for content in ({"ids": [kept[0], kept[0]]}, {"ids": "x"}, [kept[0]]):
-                bad.write_text(json.dumps(content))
-                with self.assertRaises(ValueError):
-                    label_sources.RejectList.load(bad)
-        with mock.patch.object(tb.trep, "production", lambda run: fx.repetition_spec(self.world.root / "rep.json")):
-            le = tb.open_labels("fixture", self.world.w.pool, self.world.plan.consumed_batches, 0,
-                                run_dir_=self.world.w.labels_dir, reject=e)
-            lt = tb.open_labels("fixture", self.world.w.pool, self.world.plan.consumed_batches, 0,
-                                run_dir_=self.world.w.labels_dir, reject=t)
+            e = label_sources.RejectList.load(fx.write_reject(Path(d) / "empty", []))
+            t = label_sources.RejectList.load(fx.write_reject(Path(d) / "two", kept[:2]))
+            # a damaged or partial artifact is refused
+            for name, kw in (("sha", {"ids_sha256": "0" * 64}), ("partial", {"complete": False}),
+                             ("count", {"count": 3}), ("name", {"name": "another-list"})):
+                with self.assertRaises(RuntimeError):
+                    label_sources.RejectList.load(fx.write_reject(Path(d) / name, kept[:2], **kw))
+            with self.assertRaises(RuntimeError):                          # an id listed twice
+                label_sources.RejectList.load(fx.write_reject(Path(d) / "twice", [kept[0], kept[0]]))
+            le = self.world.open_labels(reject=e)
+            lt = self.world.open_labels(reject=t)
         self.assertTrue(all(le.text(i) == base.text(i) for i in self.world.w.records))     # an empty list works
         self.assertEqual([lt.text(i) for i in kept[:2]], [None, None])
         self.assertTrue(all(lt.text(i) == base.text(i) for i in kept[2:]))
-        self.assertEqual((e.identity["count"], t.identity["count"]), (0, 2))
+        self.assertEqual((e.identity["rejected_ids"], t.identity["rejected_ids"]), (0, 2))
+        self.assertEqual(e.identity["name"], "talk-text-reject")
         self.assertEqual(len({base.identity["sha256"], le.identity["sha256"], lt.identity["sha256"]}), 3)
         self.assertEqual(lt.identity["reject"], t.identity)
         self.assertEqual(lt.real.reject_counts(), {"listed": 2, "in_store": 2, "kept_in_store": 2})
         with self.assertRaises(KeyError):
             lt.text("no-such-id")
+        with mock.patch.object(tb.llayout, "relabel_root", lambda: Path("/nonexistent-root")), \
+                self.assertRaises(tb.NotReady):
+            tb.reject_list()
+        self.assertEqual(tb.REJECT_LIST, "pool/ted-reject")
+
+    def test_a_layer_1_source_reads_its_labels_through_layer_1_alone(self):
+        """b0prime plan v4 "Labels": the read-speech source's sentences go through cleaning layer 1 only (no layer 2
+        choices, no layer 0), at the run's cleaning version; the provider keeps the stored label for the replay's
+        check and the transform's identity."""
+        from training import cleaning
+        raw = {"a": "I'm gonna check the html page.", "b": "Plain text here."}
+        clips = types.SimpleNamespace(identity="cv", clips=[{"id": k, "label": v} for k, v in raw.items()])
+        l1 = label_sources.Layer1(2, "cv27-en")
+        p = label_sources.ClipLabels(clips, "cv27-en:", transform=l1)
+        spec = cleaning.Cleaning.load(version=2)
+        self.assertIsNone(spec.choices)
+        for k, v in raw.items():
+            self.assertEqual(p.text(f"cv27-en:{k}"), spec.clean(v, k, "cv27-en"))
+            self.assertEqual(p.raw(f"cv27-en:{k}"), v)
+        self.assertNotEqual(p.text("cv27-en:a"), raw["a"])               # layer 1 changed it
+        self.assertEqual(p.text("cv27-en:b"), raw["b"])
+        self.assertEqual(l1.identity["layers"], [1])
+        self.assertEqual(l1.identity["version"], 2)
+        self.assertEqual(p.identity["transform"], l1.identity)
+        plain = label_sources.ClipLabels(clips, "cv27-en:")
+        self.assertNotIn("transform", plain.identity)
+        self.assertEqual(plain.text("cv27-en:a"), raw["a"])
+        self.assertNotEqual(label_sources.Labels(self.world.labels.real, {"cv27-en:": p}).identity["sha256"],
+                            label_sources.Labels(self.world.labels.real, {"cv27-en:": plain}).identity["sha256"])
+        self.assertEqual(label_sources.Layer1(1, "cv27-en").identity["version"], 1)
+        self.assertIsNone(label_sources.layer1(0, "cv27-en"))                 # version 0: no cleaning at all
+        # the production sources: the synthetic store as stored, the read-speech store through layer 1
+        self.assertEqual([s[-1] for s in tb.EXTRA_SOURCES], ["as stored", "layer 1"])
+        self.assertEqual(tb.EXTRA_SOURCES[1][2], "corpora/cv27-en/store")
 
     def test_extra_sources_come_from_their_provider(self):
         clips = types.SimpleNamespace(identity="pool-x", clips=[{"id": "c1", "label": "Synthetic one."},
@@ -352,6 +384,167 @@ class Labels(World):
         self.assertNotEqual(lab.identity["sha256"], self.world.labels.identity["sha256"])
         with self.assertRaises(ValueError):
             label_sources.Labels(lab.real, {"syn": label_sources.ClipLabels(clips)})
+
+
+class LabelIndex(World):
+    """b0prime plan v4.1: the label store is written once per label identity (training/label_index.py) and every
+    later run start opens it memory-mapped; an index of any other identity is refused."""
+
+    def fresh(self):
+        from training import labels as tlabels
+        return tlabels.LabelStore.open(self.world.w.labels_dir, self.world.w.pool, label_set="T*",
+                                       through_batch=self.world.plan.consumed_batches, cleaning=None,
+                                       repetition=fx.repetition_spec(self.world.root / "rep.json"))
+
+    def key(self, cleaning_version=0, reject=None, plan=None, repetition=None):
+        return tb.label_key("fixture", self.world.w.labels_dir, self.world.w.pool, plan or self.world.plan,
+                            label_sources.cleaning_spec("fixture", cleaning_version) if cleaning_version else None,
+                            repetition or fx.repetition_spec(self.world.root / "rep.json"), reject)
+
+    def test_an_index_answers_as_the_store_it_was_written_from(self):
+        store = self.world.labels.real.store                          # the fixture opens through the index
+        self.assertIsInstance(store, label_index.IndexedLabelStore)
+        fresh = self.fresh()
+        self.assertEqual(store.identity, json.loads(json.dumps(fresh.identity)))
+        self.assertEqual(len(store), len(fresh))
+        for i in fresh._texts:
+            self.assertIn(i, store)
+            self.assertEqual(store.text(i), fresh.text(i))
+            self.assertEqual(store.kept(i), fresh.kept(i))
+        self.assertEqual(store.repetition_rejected, json.loads(json.dumps(fresh.repetition_rejected)))
+        self.assertNotIn("no-such-id", store)
+        with self.assertRaises(KeyError):
+            store.text("no-such-id")
+        # a later open reads the index, not the label shards
+        with mock.patch.object(tb.tlabels.LabelStore, "open", side_effect=AssertionError("label shards re-read")):
+            again = self.world.open_labels()
+        self.assertEqual(again.identity, self.world.labels.identity)
+        self.assertEqual(again.real.store.dir, store.dir)
+        self.assertTrue(store.dir.is_relative_to(tb.root() / "label-index"))
+
+    def test_every_value_round_trips(self):
+        import tempfile
+        from training import labels as tlabels
+        texts = {"a": "x", "b": None, "c": "", "d": "naïve ü — “quoted”", "e": "two  spaces\tand tab"}
+        store = tlabels.LabelStore(texts, {"label_set": "T*", "sha256": "s"}, {"b": [40, 2]})
+        key, sha = label_index.key_of({"what": "fixture"})
+        with tempfile.TemporaryDirectory() as d:
+            got = label_index.load(label_index.write(Path(d) / "i", store, key, sha), key, sha)
+            self.assertEqual({i: got.text(i) for i in texts}, texts)
+            self.assertEqual((got.kept("b"), got.kept("c")), (False, True))
+            self.assertEqual(got.repetition_rejected, {"b": [40, 2]})
+            empty = tlabels.LabelStore({"z": None}, {"label_set": "T*", "sha256": "t"})
+            self.assertIsNone(label_index.load(label_index.write(Path(d) / "j", empty, key, sha), key, sha).text("z"))
+
+    def test_an_index_of_another_identity_is_refused(self):
+        import tempfile
+
+        from training import cleaning
+        key, sha = self.key()
+        directory = self.world.labels.real.store.dir
+        self.assertEqual(directory, label_index.index_dir(tb.root() / "label-index", sha))
+        other_plan = bp.build(self.world.w.pool, self.world.root / "plans" / "other-seed", fx.N_POOLS,
+                              pool_batches=fx.P, budget=fx.BUDGET, seed=fx.SEED + 1)
+        with tempfile.TemporaryDirectory() as d:
+            reject = label_sources.RejectList.load(fx.write_reject(Path(d) / "r", []))
+            with mock.patch.object(cleaning, "production",
+                                   lambda run, version: cleaning.Cleaning.load(version=version)):
+                variants = {"cleaning version": self.key(cleaning_version=2), "reject list": self.key(reject=reject),
+                            "repetition rule": self.key(repetition=types.SimpleNamespace(
+                                bind_run=lambda c: None, rule=lambda: {"name": "repetition", "threshold": 99})),
+                            "plan": self.key(plan=other_plan)}
+        for what, (k2, s2) in variants.items():
+            self.assertNotEqual(s2, sha, what)
+            with self.assertRaises(label_index.IndexMismatch, msg=what):
+                label_index.load(directory, k2, s2)
+            self.assertNotEqual(label_index.index_dir(tb.root() / "label-index", s2), directory, what)
+        # a damaged index is refused too
+        with tempfile.TemporaryDirectory() as d:
+            import shutil
+            copy = Path(d) / "copy"
+            shutil.copytree(directory, copy)
+            label_index.load(copy, key, sha)
+            data = bytearray((copy / "texts.bin").read_bytes())
+            data[0] ^= 1
+            (copy / "texts.bin").write_bytes(bytes(data))
+            with self.assertRaises(label_index.IndexMismatch):
+                label_index.load(copy, key, sha)
+
+    def test_a_version_2_plan_shares_the_index_of_its_real_plan(self):
+        from test_synthetic_mixing import make_pool
+        clips = make_pool(self.world.root / "syn-index", n=20)
+        plan2 = bp.build(self.world.w.pool, self.world.root / "plans" / "syn-index", fx.N_POOLS, clips=clips,
+                         pool_batches=fx.P, budget=fx.BUDGET, seed=fx.SEED, syn_seed=11, share=0.1)
+        self.assertEqual(tb.real_plan_sha256(plan2), self.world.plan.sha256)
+        self.assertEqual(self.key(plan=plan2), self.key())
+
+
+class PlanExtremes(World):
+    """b0prime plan v4.1 "Memory probe": the real plan's 10 most extreme batches by rows x longest clip (the plan's
+    key: a synthetic row's longest augmented length), the fused seam's padded lattice (rows x longest encoder frames x
+    (longest label in tokens + 1)) and rows x longest label, over the rows that keep a label."""
+
+    @staticmethod
+    def keys(plan, t):
+        """The plan's cut keys of training position t's rows (samples.u32 indexed by entry index, in cut order)."""
+        b = int(plan.shuffle[t])
+        return [int(plan.samples[e]) for e in plan.order[int(plan.offsets[b]):int(plan.offsets[b + 1])]]
+
+    def brute(self, plan, replay, labels, tokens):
+        out = {}
+        for t in range(plan.n_batches):
+            ids = replay.batch_ids(t)
+            rows = [(k, i) for k, i in zip(self.keys(plan, t), ids) if labels.text(i) is not None]
+            if not rows:
+                continue
+            longest = max(k for k, _ in rows)
+            label = max(tokens([labels.text(i)])[0] for _, i in rows)
+            out[t] = {"rows_x_longest_clip": len(rows) * longest,
+                      "padded_lattice": len(rows) * tb.encoder_frames(longest) * (label + 1),
+                      "rows_x_longest_label": len(rows) * label}
+        return out
+
+    def check(self, plan, replay, labels, k):
+        tokens = lambda texts: [len(x.split()) for x in texts]                    # noqa: E731
+        got = tb.plan_extremes(plan, replay, labels, tokens, k=k)
+        want = self.brute(plan, replay, labels, tokens)
+        for metric in tb.EXTREME_METRICS:
+            order = sorted(want, key=lambda t: (-want[t][metric], t))[:k]
+            self.assertEqual(got["top"][metric], order, metric)
+            for t in order:
+                self.assertEqual(got["values"][t][metric], want[t][metric])
+        self.assertEqual(got["batches"], sorted({t for m in tb.EXTREME_METRICS for t in got["top"][m]}))
+        self.assertIn("stress coverage", got["note"])
+        return got
+
+    def test_the_rankings(self):
+        self.check(self.world.plan, self.world.replay, self.world.labels, 3)
+
+    def test_a_synthetic_row_counts_at_its_longest_augmented_length(self):
+        from test_synthetic_mixing import make_pool
+        from training import replay as treplay
+        clips = make_pool(self.world.root / "syn-extremes", n=40)
+        plan2 = bp.build(self.world.w.pool, self.world.root / "plans" / "syn-extremes", fx.N_POOLS, clips=clips,
+                         pool_batches=fx.P, budget=fx.BUDGET, seed=fx.SEED, syn_seed=11, share=0.3)
+        replay = treplay.PlannedReplay(plan2, self.world.w.pool, audio="materialized", store=self.world.store,
+                                       synthetic=clips)
+        self.addCleanup(replay.close)
+        lab = self.world.open_labels(extra={"syn:": label_sources.ClipLabels(clips)}, plan=plan2)
+        syn = [(k, i) for t in range(plan2.n_batches)
+               for k, i in zip(self.keys(plan2, t), replay.batch_ids(t)) if i.startswith("syn:")]
+        by_id = {f"syn:{c['id']}": c for c in clips.clips}
+        self.assertTrue(syn)
+        self.assertTrue(all(k == math.ceil(round(by_id[i]["duration"] * 16000) * 10 / 9) for k, i in syn))
+        self.check(plan2, replay, lab, 4)
+
+    def test_encoder_frames_is_nemos(self):
+        import torch
+        from nemo.collections.asr.parts.submodules.subsampling import calc_length
+        for samples in (1, 159, 160, 16000, 16001, 123457, 480000):
+            mel = samples // 160 + 1
+            nemo = calc_length(torch.tensor([float(mel)]), all_paddings=2, kernel_size=3, stride=2, ceil_mode=False,
+                               repeat_num=3)
+            self.assertEqual(tb.encoder_frames(samples), int(nemo.item()), samples)
 
 
 class Serving(World):
@@ -401,10 +594,15 @@ class Serving(World):
                          pool_batches=fx.P, budget=fx.BUDGET, seed=fx.SEED, syn_seed=11, share=0.1)
         replay = treplay.PlannedReplay(plan2, self.world.w.pool, audio="materialized", store=self.world.store,
                                        synthetic=clips)
-        lab = self.world.open_labels(extra={"syn:": label_sources.ClipLabels(clips)})
+        class Shout:
+            identity = {"name": "shout"}
+
+            def __call__(self, text, item_id):
+                return text.upper()
+        lab = self.world.open_labels(extra={"syn:": label_sources.ClipLabels(clips, transform=Shout())})
         data = tb.data_for(fx.RUNS["pw"], plan2, replay, lab, fx.PEAK)
         self.assertGreater(data.plan["synthetic_rows"], 0)
-        by_id = {f"syn:{c['id']}": c["label"] for c in clips.clips}
+        by_id = {f"syn:{c['id']}": c["label"].upper() for c in clips.clips}      # the provider's text, transformed
         batcher = data.batcher(None)
         seen = 0
         try:
@@ -421,7 +619,7 @@ class Serving(World):
             replay.close()
         self.assertEqual(seen, data.plan["synthetic_rows"])
         wrong = label_sources.Labels(lab.real, {"syn:": types.SimpleNamespace(
-            text=lambda i: "another label", identity={"kind": "wrong"})})
+            text=lambda i: "another label", raw=lambda i: "another label", identity={"kind": "wrong"})})
         bad = label_sources.Batcher(replay, wrong, start=0, stop=data.stop)
         try:
             with self.assertRaises(RuntimeError):
@@ -829,6 +1027,47 @@ class SeamAndSources(unittest.TestCase):
         self.assertEqual({n: getattr(train, n) for n in saved}, saved)
         self.assertEqual(paths.RUNS, runs)
 
+    def test_a_read_speech_clip_source_must_be_complete(self):
+        import hashlib
+        import tempfile
+
+        from synthetic import mixing
+        with tempfile.TemporaryDirectory() as d:
+            data = json.dumps({"id": "a", "audio_filepath": "/x.flac", "duration": 1.0, "samples": 16000,
+                               "sha256": "0", "label": "Hi."}) + "\n"
+            Path(d, "clips.jsonl").write_text(data)
+            sha = hashlib.sha256(data.encode()).hexdigest()
+            Path(d, "clips.meta.json").write_text(json.dumps({"clips_sha256": sha, "provisional": False,
+                                                              "complete": True}))
+            self.assertEqual([c["id"] for c in mixing.ClipPool.load(Path(d), synthetic_hygiene=False).clips], ["a"])
+            for meta in ({"clips_sha256": sha, "provisional": False},
+                         {"clips_sha256": sha, "provisional": False, "complete": False}):
+                Path(d, "clips.meta.json").write_text(json.dumps(meta))
+                with self.assertRaises(RuntimeError):
+                    mixing.ClipPool.load(Path(d), synthetic_hygiene=False)
+
+    def test_every_run_mode_trains_through_the_fused_loss_seam(self):
+        """b0prime plan v4.1: the fused joint+TDT loss seam (finetune/tdt-fused) in every B0' run, installed after
+        stage 3's own TRAINING_SOURCES (so it extends them); its settings() in the identity and the resume key."""
+        import tdt_fused
+        original, sources = train.compute_losses, train.TRAINING_SOURCES
+        with tb.seam():
+            self.assertIs(train.compute_losses, tdt_fused.compute_losses)
+            self.assertEqual(train.TRAINING_SOURCES, tuple(sources) + tb.SOURCES + (tdt_fused.SOURCE,))
+        self.assertIs(train.compute_losses, original)
+        self.assertEqual(train.TRAINING_SOURCES, sources)
+        with tb.loss_seam():                                       # the memory probe's
+            self.assertIs(train.compute_losses, tdt_fused.compute_losses)
+        self.assertIs(train.compute_losses, original)
+        self.assertIn("loss_seam", tb.RESUME_EXTRA)
+        self.assertIn("loss_seam", tb.IDENTITY_KEYS)
+        world = fx.World()
+        self.addCleanup(world.close)
+        h = fx.Harness(world)
+        args = h.args(fx.RUNS["pw"], h.data(fx.RUNS["pw"]))
+        self.assertEqual(args.loss_seam, tdt_fused.settings())
+        self.assertEqual(tb.identity_of(vars(args))["loss_seam"], tdt_fused.settings())
+
     def test_the_budget_stop_and_the_lock_timeout_end_the_run_with_success(self):
         import tempfile
 
@@ -858,8 +1097,9 @@ class SeamAndSources(unittest.TestCase):
 
 
 class ProbePhases(unittest.TestCase):
-    """The memory probe's phases: an out-of-memory error ends its own phase only, so the planned batches' step time
-    is still measured when the worst case does not fit; a phase never reached reads "not run"."""
+    """The memory probe's phases: every worst-case batch is tried (an out-of-memory error is recorded and the next
+    worst-case batch runs), the timed phase ends at its first one, and the timed phase runs whatever the worst case
+    did, so the planned batches' step time is measured; a mode passes only when both phases pass."""
 
     class OOM(Exception):
         pass
@@ -868,29 +1108,33 @@ class ProbePhases(unittest.TestCase):
         seen, freed, brackets = [], [], []
 
         def step(kind, j, batch):
-            if fail.get(kind) == j:
+            if j in fail.get(kind, ()):
                 raise self.OOM()
             seen.append((kind, j))
-        status = tb.probe_phases([("worst", iter(range(3))), ("timed", iter(range(4)))], step,
-                                 lambda: freed.append(1), lambda k, s: brackets.append((k, s)), oom=self.OOM)
+        status = tb.probe_phases([("worst", iter(range(4))), ("timed", iter(range(4)))], step,
+                                 lambda k, j: freed.append((k, j)), lambda k, s: brackets.append((k, s)),
+                                 oom=self.OOM)
         return status, seen, freed, brackets
 
-    def test_an_oom_ends_its_phase_and_the_next_phase_runs(self):
-        status, seen, freed, brackets = self.run_phases({"worst": 1})
-        self.assertEqual(status, {"worst": "oom at batch 1", "timed": "ok"})
-        self.assertEqual(seen, [("worst", 0)] + [("timed", j) for j in range(4)])
-        self.assertEqual(len(freed), 1)
+    def test_every_worst_case_batch_is_tried_and_the_timed_phase_still_runs(self):
+        status, seen, freed, brackets = self.run_phases({"worst": (1, 3)})
+        self.assertEqual(status, {"worst": "oom at batches [1, 3]", "timed": "ok"})
+        self.assertEqual(seen, [("worst", 0), ("worst", 2)] + [("timed", j) for j in range(4)])
+        self.assertEqual(freed, [("worst", 1), ("worst", 3)])
         self.assertEqual(brackets, [("worst", True), ("worst", False), ("timed", True), ("timed", False)])
-        status, seen, _, _ = self.run_phases({"timed": 2})
+        status, seen, _, _ = self.run_phases({"timed": (2, 3)})
         self.assertEqual(status, {"worst": "ok", "timed": "oom at batch 2"})
         self.assertEqual(seen[-1], ("timed", 1))
         self.assertEqual(self.run_phases({})[0], {"worst": "ok", "timed": "ok"})
+        self.assertEqual(tb.probe_fits({"worst": "ok", "timed": "ok"}), True)
+        self.assertEqual(tb.probe_fits({"worst": "oom at batches [1]", "timed": "ok"}), False)
+        self.assertEqual(tb.probe_fits({"worst": "ok", "timed": "oom at batch 2"}), False)
 
     def test_other_errors_propagate(self):
         def step(kind, j, batch):
             raise ValueError("bug")
         with self.assertRaises(ValueError):
-            tb.probe_phases([("worst", [1])], step, lambda: None, lambda k, s: None, oom=self.OOM)
+            tb.probe_phases([("worst", [1])], step, lambda k, j: None, lambda k, s: None, oom=self.OOM)
 
 
 if __name__ == "__main__":

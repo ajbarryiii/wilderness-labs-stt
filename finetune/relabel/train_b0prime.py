@@ -17,6 +17,13 @@ drawn exactly once), extra rows labeled by their stores' providers; the read-tim
 containment rule's main-pool artifact, $RELABEL_ROOT/<REJECT_LIST>) in the label identity; eval-stem, dev-technical
 term recall and the cv27-en dev sample scored; style-neutral and formatted metrics in the report.
 
+v4.1 (2026-10-29): every run (probe, pilots, sanity pair, trunk, branches) trains through the fused joint+TDT loss
+seam (finetune/tdt-fused, tdt_fused.installed() inside seam(), after this stage's TRAINING_SOURCES; its settings()
+are `loss_seam` in the run's arguments, RESUME_KEYS and IDENTITY_KEYS); the label store is persisted once per label
+identity (training/label_index.py, $RELABEL_ROOT/b0prime/label-index/) and memory-mapped by every later run start;
+the read-speech source's labels go through cleaning layer 1 alone (label_sources.Layer1); the memory probe's
+worst-case phase also serves the real plan's most extreme batches (plan_extremes).
+
 Runs, spans, schedules and rules: training/stage3.py (RUNS: pilot-lr3e-5, pilot-lr1e-4, pilot-lr3e-4, sanity-wsd,
 sanity-linear, trunk, b25, b50, b100). Outputs under $RELABEL_ROOT/b0prime/: runs/<name>/ (train.py's run layout),
 scores/B0/, selection.json, wsd-rule.json, probe/, results.json; RESULTS-b0prime.md next to the plan
@@ -40,15 +47,17 @@ after the cut, a fully rejected planned batch consumed without a step, the non-f
    A1 with every parameter trainable: train.configure_trainable(RECIPE) (encoder, prediction and joint networks
    trainable, prediction and joint dropout 0, SpecAugment and the training-mode preprocessor on), checked by
    train.verify_recipe and verify() (all 617.8M parameters trainable, FP32, no quantization module); FP32 parameters
-   and AdamW state, BF16 autocast (train.compute_losses); no teacher, no B0 forward, no encoder matching, no
+   and AdamW state, BF16 autocast (train.compute_losses, whose joint loss call the fused seam answers); no teacher,
+   no B0 forward, no encoder matching, no
    waveform augmentation. A branch with no checkpoint of its own starts from its trunk branch point (start_branch:
    weights, AdamW, scheduler, RNG and the plan position; the file read-only). A budget timer requests a checkpoint and
    stop after --budget-minutes or at --deadline (exit 0).
 3. The data (Data, a seam.OfflineData): the multi-source version 2 batch plan of pools 0-781 (training/batchplan.py
    compute_sources over EXTRA_SOURCES; materialized pool audio and the sources' clip stores) served by a
    label_sources.Batcher, labels from label_sources.Labels (the label store at the run's cleaning version with
-   repetition rejection and the read-time reject list; each extra source's rows from its store's ClipLabels; a
-   read-time transform is an open seam, unused), the run's stop B(stop pool). The trunk's batcher saves a branch point
+   repetition rejection, opened through its persisted index, and the read-time reject list; each extra source's rows
+   from its store's ClipLabels, the read-speech source's through cleaning layer 1 alone; a read-time transform of the
+   real labels is an open seam, unused), the run's stop B(stop pool). The trunk's batcher saves a branch point
    (save_branch_point) just before it serves the first planned
    batch of pools 166 and 332, so the payload is the state after B(p) planned batches; the one at pool 664 is the
    trunk's final checkpoint (finish). Branch points are written once and kept; the rotating checkpoints are train.py's.
@@ -58,6 +67,8 @@ after the cut, a fully rejected planned batch consumed without a step, the non-f
    model.nemo with the scorer below; the trunk writes its final branch point and is not scored.
 6. paths.RUNS: $RELABEL_ROOT/b0prime/runs; paths.gpu_lock: train_decoder.bounded_lock(deadline); TRAINING_SOURCES and
    OUTPUTS gain this stage's.
+7. train.compute_losses and TRAINING_SOURCES: tdt_fused.replacements() (the fused joint+TDT loss, b0prime plan v4.1),
+   installed after 1-6 so its source extends this stage's.
 
 Scorer (stage 1's, as stage 2b's train_decoder.score_model without its decoder-step proxy): evaluate.evaluate_set at
 batch 64 and 1200 s per batch with the decoder pinned to the mode M1 and MB1 decoded in, on the five stage 1 dev sets
@@ -87,13 +98,30 @@ from pathlib import Path
 import numpy as np
 import torch
 
+
+
+def _triton_libcuda() -> None:
+    """Triton (the fused loss seam's kernels) looks libcuda up with /sbin/ldconfig, which some systems lack: unless
+    TRITON_LIBCUDA_PATH is set, point it at the first LD_LIBRARY_PATH directory holding libcuda.so.1 (Triton's own
+    fallback order after ldconfig)."""
+    if os.environ.get("TRITON_LIBCUDA_PATH"):
+        return
+    for d in os.environ.get("LD_LIBRARY_PATH", "").split(":"):
+        if d and os.path.exists(os.path.join(d, "libcuda.so.1")):
+            os.environ["TRITON_LIBCUDA_PATH"] = d
+            return
+
+
+_triton_libcuda()
+sys.path.append(str(Path(__file__).resolve().parent.parent / "tdt-fused"))   # finetune/tdt-fused, after every root
+import tdt_fused  # noqa: E402  imported after train, before any replacement of train.compute_losses
 import evaluate  # finetune/parakeet-ternary
 import paths  # finetune/parakeet-ternary
 import relabel_paths
 import score_domain
 import train_decoder as td
 from labeling import layout as llayout
-from training import bootstrap, devsplit, label_sources, stage3
+from training import bootstrap, devsplit, label_index, label_sources, stage3
 from training import labels as tlabels
 from training import repetition as trep
 from training import replay as treplay
@@ -120,6 +148,7 @@ ORDER = [("score", "B0")] + [("train", n) for n in stage3.PILOT + stage3.SANITY 
 THROUGH = {"pilot": len(["score"]) + len(stage3.PILOT) + len(stage3.SANITY), "main": len(ORDER)}
 SOURCES = ("relabel/train_b0prime.py", "relabel/b0prime_report.py", "relabel/train_decoder.py",
            "relabel/training/stage3.py", "relabel/training/label_sources.py", "relabel/training/labels.py",
+           "relabel/training/label_index.py",
            "relabel/training/replay.py", "relabel/training/schedule.py", "relabel/training/batchplan.py",
            "relabel/training/poolaudio.py", "relabel/training/seam.py", "relabel/training/devsplit.py",
            "relabel/training/bootstrap.py", "relabel/training/cleaning.py", "relabel/training/repetition.py",
@@ -130,7 +159,7 @@ SOURCES = ("relabel/train_b0prime.py", "relabel/b0prime_report.py", "relabel/tra
            "relabel/synthetic/augment.py", "relabel/synthetic/layout.py", "relabel/style_metrics.py")
 RESUME_EXTRA = ("spec", "label_set", "labels_run", "labels_sha256", "cleaning_version", "cleaning", "repetition",
                 "label_transform", "label_reject", "extra_sources", "plan_sha256", "replay_sha256", "stop_batch",
-                "schedule", "base_sha256", "lr_selection", "branch_of")
+                "schedule", "base_sha256", "lr_selection", "branch_of", "loss_seam")
 EXTRA_OUTPUTS = ("branch-points", "model.nemo", "model.json", "domain", "scores.json")
 _ACTIVE: dict = {"data": None, "ctx": None, "run": None}
 
@@ -186,26 +215,78 @@ def _sha256_file(path: Path) -> str:
 
 # ----------------------------------------------------------------------------- labels and data
 
-def open_labels(labels_run: str, pool_dir: Path, through_batch: int, cleaning_version: int = CLEANING_VERSION,
+def open_labels(labels_run: str, pool_dir: Path, plan, cleaning_version: int = CLEANING_VERSION,
                 repetition: bool = True, transform=None, extra: dict | None = None,
                 run_dir_: Path | None = None, reject: label_sources.RejectList | None = None) -> label_sources.Labels:
-    """The run's labels (label_sources): T*'s label store through cleaning `cleaning_version` and repetition
-    rejection, the read-time reject list, an optional read-time transform, the extra sources' providers."""
-    store = tlabels.LabelStore.open(run_dir_ or tlabels.production_run_dir(labels_run), pool_dir,
-                                    label_set=LABEL_SET, through_batch=through_batch,
-                                    cleaning=label_sources.cleaning_spec(labels_run, cleaning_version),
-                                    repetition=trep.production(labels_run) if repetition else None)
+    """The run's labels (label_sources): T*'s label store of the plan's real occurrences (through its consumed
+    batches) at cleaning `cleaning_version` with repetition rejection, opened through its persisted index (written by
+    the first open of this label identity; label_key), then the read-time reject list, an optional read-time transform,
+    the extra sources' providers."""
+    run_dir_ = run_dir_ or tlabels.production_run_dir(labels_run)
+    cleaning = label_sources.cleaning_spec(labels_run, cleaning_version)
+    rep = trep.production(labels_run) if repetition else None
+    key, sha = label_key(labels_run, run_dir_, pool_dir, plan, cleaning, rep, reject)
+    directory = label_index.index_dir(label_index_root(), sha)
+    if not (directory / "index.json").exists():
+        t0 = time.perf_counter()
+        store = tlabels.LabelStore.open(run_dir_, pool_dir, label_set=LABEL_SET, through_batch=plan.consumed_batches,
+                                        cleaning=cleaning, repetition=rep)
+        label_index.write(directory, store, key, sha)
+        log(f"label index {directory.name}: written in {time.perf_counter() - t0:.0f} s ({len(store)} records)")
+        del store
+    store = label_index.load(directory, key, sha)
     return label_sources.Labels(label_sources.StoreLabels(store, transform, reject), extra)
+
+
+def label_index_root() -> Path:
+    return root() / "label-index"
+
+
+def real_plan_sha256(plan) -> str:
+    """The SHA-256 of the plan of a plan's real occurrences: its own (version 1) or its base plan's (version 2)."""
+    return plan.sha256 if plan.version == 1 else plan.meta["base_plan_sha256"]
+
+
+def label_key(labels_run: str, run_dir_: Path, pool_dir: Path, plan, cleaning, repetition,
+              reject: label_sources.RejectList | None) -> tuple[dict, str]:
+    """The persisted label index's key (training/label_index.py): the label store's inputs (run, C1 directory, label
+    set, the plan's consumed batches, the run contract, every needed label shard's meta SHA-256), the cleaning
+    identity, the repetition rule, the reject list's identity, the real plan's SHA-256 and the code's hashes. The
+    cleaning spec and the rule are bound to the run contract here, as LabelStore.open does."""
+    from labeling import c2, shards
+    run = c2.load_run(run_dir_)
+    if c2._abs(run["pool_dir"]).resolve() != Path(pool_dir).resolve():
+        raise RuntimeError(f"{run_dir_} labels {run['pool_dir']}, not {pool_dir}")
+    contract = hashlib.sha256(json.dumps(c2.contract(run), sort_keys=True).encode()).hexdigest()
+    listed = []
+    for k in tlabels.needed_shards(pool_dir, plan.consumed_batches):
+        meta = Path(run_dir_) / "shards" / f"{shards.shard_name(k)}.json"
+        if not meta.exists():
+            raise RuntimeError(f"no label shard meta {meta.name} (C2 has not labeled C1 shard {k} yet)")
+        listed.append([k, json.loads(meta.read_text())["sha256"]])
+    if cleaning is not None:
+        cleaning.bind_run(contract)
+    if repetition is not None:
+        repetition.bind_run(contract)
+    return label_index.key_of({
+        "labels_run": labels_run, "run_dir": c2._rel(Path(run_dir_)), "pool_dir": c2._rel(Path(pool_dir)),
+        "label_set": LABEL_SET, "through_batch": int(plan.consumed_batches), "contract_sha256": contract,
+        "shards": listed, "cleaning": None if cleaning is None else cleaning.identity(),
+        "repetition": None if repetition is None else repetition.rule(),
+        "reject": None if reject is None else dict(reject.identity), "real_plan_sha256": real_plan_sha256(plan),
+        "code": label_index.code_sha256()})
 
 
 # ----------------------------------------------------------------------------- extra sources (b0prime plan v4)
 
-# (name, row-id prefix, store under $RELABEL_ROOT ("synthetic run" for stage 2c's), share, TS augmentation, seed).
-# The second source is the registry alias's clip store, in the stage 2c store format with a label per clip, written
-# by its preparation; its share is ONCE: its kept seconds over the whole journal's real seconds, each clip once.
-EXTRA_SOURCES = (("synthetic", "syn:", "synthetic run full", 0.0281, True, 20261025),     # stage 2c's seed
-                 ("cv27-en", "cv27-en:", "cv27-en/store", "once", False, 20261029))
-REJECT_LIST = "ted-test-text/main-pool-reject.json"     # the ted-test-text containment rule's read-time reject list
+# (name, row-id prefix, store under $RELABEL_ROOT ("synthetic run" for stage 2c's), share, TS augmentation, seed,
+# labels). The second source is the registry alias's clip source (its preparation's store/clips.jsonl and
+# clips.meta.json: the stage 2c store format plus samples, complete), its share ONCE: its kept seconds over the whole
+# journal's real seconds, each clip once. Labels: "as stored" (stage 2c's hygiene forms) or "layer 1" (the read
+# sentence through cleaning layer 1 alone at the run's cleaning version, label_sources.Layer1).
+EXTRA_SOURCES = (("synthetic", "syn:", "synthetic run full", 0.0281, True, 20261025, "as stored"),  # 2c's seed
+                 ("cv27-en", "cv27-en:", "corpora/cv27-en/store", "once", False, 20261029, "layer 1"))
+REJECT_LIST = "pool/ted-reject"     # the ted-test-text containment rule's read-time reject list (pool/tedreject.py)
 
 
 def source_stores() -> list:
@@ -213,7 +294,7 @@ def source_stores() -> list:
     from synthetic import layout as slayout
     from synthetic import mixing
     out = []
-    for name, prefix, where, share, augment, seed in EXTRA_SOURCES:
+    for name, prefix, where, share, augment, seed, labels in EXTRA_SOURCES:
         try:
             if where.startswith("synthetic run "):
                 pool = mixing.ClipPool.load(where.split()[-1])
@@ -223,28 +304,39 @@ def source_stores() -> list:
             raise NotReady(f"extra source {name}: no clip store yet ({error})") from error
         if name == "synthetic" and seed != slayout.SEED:
             raise RuntimeError("the synthetic source's seed is stage 2c's")
-        out.append(((name, prefix, where, share, augment, seed), pool))
+        out.append(((name, prefix, where, share, augment, seed, labels), pool))
     return out
 
 
 def plan_sources(stores) -> list:
     from training import batchplan
     return [batchplan.Source(name, prefix, pool, seed, batchplan.ONCE if share == "once" else share, augment)
-            for (name, prefix, _, share, augment, seed), pool in stores]
+            for (name, prefix, _, share, augment, seed, _), pool in stores]
 
 
 def replay_sources(stores, sources) -> list:
     """treplay.ExtraSource per source: an augmented source's rows go through stage 2c's TS augmentation."""
     from synthetic import mixing
     out = []
-    for ((name, _, _, _, augment, seed), _), src in zip(stores, sources):
+    for ((name, _, _, _, augment, seed, _), _), src in zip(stores, sources):
         out.append(treplay.ExtraSource(src, mixing.transform_for("TS", seed=seed) if augment else None))
+    return out
+
+
+def label_providers(stores, sources, cleaning_version: int) -> dict:
+    """{prefix: label_sources.ClipLabels} of the extra sources, each read as its config says (EXTRA_SOURCES)."""
+    out = {}
+    for ((name, _, _, _, _, _, labels), _), src in zip(stores, sources):
+        if labels not in ("as stored", "layer 1"):
+            raise ValueError(f"extra source {name}: unknown label rule {labels!r}")
+        transform = label_sources.layer1(cleaning_version, name) if labels == "layer 1" else None
+        out[src.prefix] = label_sources.ClipLabels(src.clips, src.prefix, transform=transform)
     return out
 
 
 def reject_list() -> label_sources.RejectList:
     path = llayout.relabel_root() / REJECT_LIST
-    if not path.exists():
+    if not (path / "reject.json").exists():
         raise NotReady(f"no read-time reject list at $RELABEL_ROOT/{REJECT_LIST} yet")
     return label_sources.RejectList.load(path)
 
@@ -365,8 +457,8 @@ def offline_data(run: stage3.Run, labels_run: str, peak: float, cleaning_version
     from training import poolaudio
     stores = source_stores()
     _, pool, cid, plan, sources = pinned_plan(stores)
-    extra = {src.prefix: label_sources.ClipLabels(src.clips, src.prefix) for src in sources}
-    labels = open_labels(labels_run, pool, plan.consumed_batches, cleaning_version, extra=extra, reject=reject_list())
+    extra = label_providers(stores, sources, cleaning_version)
+    labels = open_labels(labels_run, pool, plan, cleaning_version, extra=extra, reject=reject_list())
     replay = treplay.PlannedReplay(plan, pool, audio="materialized", store=poolaudio.store_dir(cid, plan.pool_batches),
                                    sources=replay_sources(stores, sources))
     return data_for(run, plan, replay, labels, peak)
@@ -565,7 +657,7 @@ def run_done(name: str) -> bool:
 
 # what every stage 3 run must share: the labels (run, cleaning, reject list, transform, extra sources), the plan, B0
 IDENTITY_KEYS = ("labels_run", "cleaning_version", "labels_sha256", "plan_sha256", "label_reject", "label_transform",
-                 "extra_sources", "base_sha256")
+                 "extra_sources", "base_sha256", "loss_seam")
 
 
 def recorded_args(name: str) -> dict | None:
@@ -736,7 +828,7 @@ def namespace(a, run: stage3.Run, data: Data, peak: float, selection: dict | Non
         extra_sources=ident.get("extra") or None, plan_sha256=data.replay.identity["plan_sha256"],
         replay_sha256=data.replay.identity["sha256"], stop_batch=data.stop,
         schedule=stage3.schedule_dict(data.schedule), base_sha256=base_sha256, lr_selection=selection,
-        branch_of=None, budget_minutes=a.budget_minutes, deadline=a.deadline)
+        branch_of=None, budget_minutes=a.budget_minutes, deadline=a.deadline, loss_seam=tdt_fused.settings())
     if selection is not None and identity_of(vars(args)) != selection["identity"]:
         raise RuntimeError(f"{run.name}: its labels, plan or B0 differ from the pilot runs' that chose its learning "
                            f"rate ({identity_of(vars(args))} != {selection['identity']})")
@@ -781,7 +873,8 @@ def build_context(args, run: Path, device: str = "cuda"):
                         "empty_batches": data.plan["empty_batches"], "schedule": stage3.schedule_dict(data.schedule),
                         "branch_points": {p: b for b, p in data.hooks.items()}, "branch_of": args.branch_of,
                         "recipe": RECIPE, "precision": "FP32 parameters and AdamW state; BF16 autocast "
-                                                      "(train.compute_losses)"}}
+                                                      "(train.compute_losses)",
+                        "loss_seam": args.loss_seam}}
     return ctx, info
 
 
@@ -857,7 +950,8 @@ def finish(ctx, config_sha: str) -> dict:
 
 @contextlib.contextmanager
 def seam(deadline: float | None = None):
-    """Install the stage 3 replacements in train.py and paths.py; restore them on exit."""
+    """Install the stage 3 replacements in train.py and paths.py, then the fused loss seam (module docstring, item 7;
+    its TRAINING_SOURCES extend this stage's); restore them on exit."""
     items = tseam.replacements() + [
         (train, "parse_args", parse_args), (train, "build_context", build_context), (train, "finish", finish),
         (train, "recipe_of", recipe_of), (train, "run_eval", run_eval), (train, "train_step", tseam.guarded_train_step),
@@ -866,8 +960,13 @@ def seam(deadline: float | None = None):
         (train, "TRAINING_SOURCES", tuple(train.TRAINING_SOURCES) + SOURCES),
         (train, "OUTPUTS", tuple(train.OUTPUTS) + EXTRA_OUTPUTS), (paths, "RUNS", root() / "runs"),
         (paths, "gpu_lock", td.bounded_lock(deadline))]
-    with tseam.installed(items):
+    with tseam.installed(items), loss_seam():
         yield
+
+
+def loss_seam():
+    """The fused joint+TDT loss seam (b0prime plan v4.1): tdt_fused.installed()."""
+    return tdt_fused.installed()
 
 
 def run_train(argv: list[str]) -> int:
@@ -1004,7 +1103,7 @@ STEM_SET = "eval-stem"
 # critical-term recall per domain set: score_domain's (dev-medical: medical) plus dev-technical with the technical
 # list (b0prime plan "Gate" item 3: WER and critical-term recall of both domain sets)
 TERM_KIND = {"dev-medical": "medical", "dev-technical": "technical"}
-CV_DEV_SAMPLE = "cv27-en/dev-sample.jsonl"     # the cv27-en dev sample manifest (its preparation writes it)
+CV_DEV_SAMPLE = "corpora/cv27-en/dev/cv27-en-dev.jsonl"     # the cv27-en dev sample manifest (its preparation writes it)
 CV_DEV_NAME = "cv27-en-dev"
 
 
@@ -1094,8 +1193,9 @@ def current_rss_gib() -> float:
 
 
 def probe_mode(ckpt: bool, batches, labels, steps: int) -> dict:
-    """One probe configuration: a fresh A1 model (gradient checkpointing on or off), the worst-case batches, then
-    `steps` timed planned batches (the first untimed); peak VRAM, step time, rows and seconds."""
+    """One probe configuration: a fresh A1 model (gradient checkpointing on or off) training through the fused loss
+    seam, every worst-case batch (synthetic and the plan's extremes; each tried, failures listed), then `steps` timed
+    planned batches (the first untimed); peak VRAM per phase, step time, rows and seconds."""
     import types
     model, info = build_model()
     train.seed_everything(stage3.SEED, model)
@@ -1110,7 +1210,7 @@ def probe_mode(ckpt: bool, batches, labels, steps: int) -> dict:
                                     schedule=types.SimpleNamespace(lr=lambda k: 1e-4)))
     trainable = [p for g in optimizer.param_groups for p in g["params"]]
     train.set_train_modes(model, RECIPE)
-    times, seconds, rows = [], [], []
+    times, seconds, rows, failed = [], [], [], []
 
     def step(kind: str, j: int, batch):
         ctx.state.batches_read = int(batch["index"]) + 1
@@ -1128,9 +1228,10 @@ def probe_mode(ckpt: bool, batches, labels, steps: int) -> dict:
             rows.append(labeled["rows"])
         ctx.state.step += 1
 
-    def after_oom() -> None:
+    def after_oom(kind: str, j: int) -> None:
         optimizer.zero_grad(set_to_none=True)
         torch.cuda.empty_cache()
+        failed.append(batches["worst_names"][j] if kind == "worst" else f"timed batch {j}")
 
     peaks = {}
 
@@ -1141,8 +1242,9 @@ def probe_mode(ckpt: bool, batches, labels, steps: int) -> dict:
             peaks[kind] = (torch.cuda.max_memory_allocated() / 2**30, torch.cuda.max_memory_reserved() / 2**30)
 
     try:
-        status = probe_phases([("worst", batches["worst"]), ("timed", batches["timed"])], step, after_oom,
-                              phase_peak)
+        with loss_seam():
+            status = probe_phases([("worst", batches["worst"]), ("timed", batches["timed"])], step, after_oom,
+                                  phase_peak)
     finally:
         batches["timed"].close()
     peak_alloc = max((a for a, _ in peaks.values()), default=None)
@@ -1150,7 +1252,7 @@ def probe_mode(ckpt: bool, batches, labels, steps: int) -> dict:
     process_now = td.gpu_process_gb()
     reserved_now = torch.cuda.memory_reserved() / 2**30
     peak_process = peak_reserved + max(0.0, (process_now or reserved_now) - reserved_now)
-    out = {"grad_checkpointing": ckpt, "status": status, "steps_timed": len(times),
+    out = {"grad_checkpointing": ckpt, "status": status, "failed": failed, "steps_timed": len(times),
            "step_time_s": float(np.mean(times)) if times else None,
            "step_time_p90_s": float(np.percentile(times, 90)) if times else None,
            "audio_seconds_per_step": float(np.mean(seconds)) if seconds else None,
@@ -1162,62 +1264,137 @@ def probe_mode(ckpt: bool, batches, labels, steps: int) -> dict:
     return out | {"_model": model, "_optimizer": optimizer, "_ctx": ctx}
 
 
+CONTINUE_ON_OOM = ("worst",)
+
+
 def probe_phases(phases, step, after_oom, phase_peak, oom=None) -> dict:
-    """Run each phase's batches through step(kind, j, batch); an out-of-memory error ends that phase only (status
-    "oom at batch j", after_oom() frees the step's memory) and the next phase still runs, so the step time on
-    planned batches is measured even when the worst case does not fit. phase_peak(kind, start) brackets a phase."""
+    """Run each phase's batches through step(kind, j, batch). In a CONTINUE_ON_OOM phase (the worst cases) an
+    out-of-memory error is recorded and the next batch runs (status "oom at batches [j, ...]"); in another (the timed
+    batches) it ends the phase ("oom at batch j"). after_oom(kind, j) frees the step's memory. Every phase runs
+    whatever an earlier one did, so the planned batches' step time is measured even when a worst case does not fit.
+    phase_peak(kind, start) brackets a phase. A mode passes only if every phase is "ok" (probe_fits)."""
     oom = oom or torch.OutOfMemoryError
     status = {kind: "not run" for kind, _ in phases}
     for kind, source in phases:
         phase_peak(kind, True)
-        status[kind] = "ok"
+        status[kind], failed = "ok", []
         for j, batch in enumerate(source):
             try:
                 step(kind, j, batch)
             except oom:
-                status[kind] = f"oom at batch {j}"
-                after_oom()
-                break
+                after_oom(kind, j)
+                failed.append(j)
+                if kind not in CONTINUE_ON_OOM:
+                    status[kind] = f"oom at batch {j}"
+                    break
+        if failed and kind in CONTINUE_ON_OOM:
+            status[kind] = f"oom at batches {failed}"
         phase_peak(kind, False)
     return status
 
 
-def plan_worst(replay, labels) -> int:
-    """The planned batch with the largest kept rows x longest clip x longest label (characters): a proxy of the
-    transducer joint's size."""
-    plan, best, worst = replay.plan, -1, 0
+def probe_fits(status: dict) -> bool:
+    """A mode passes only if both phases (every worst case and every timed batch) passed."""
+    return all(v == "ok" for v in status.values())
+
+
+EXTREME_METRICS = ("rows_x_longest_clip", "padded_lattice", "rows_x_longest_label")
+EXTREMES_PER_METRIC = 10
+EXTREMES_NOTE = ("stress coverage, not a proof that every planned batch fits: the plan's most extreme batches by "
+                 "each metric, over the rows that keep a label (b0prime plan v4.1)")
+V2_RECHECK = ("ranked on the version 1 plan of pools 0-781 (its real rows); the version 2 multi-source plan's "
+              "extremes must be re-checked once the read-speech clip store exists and that plan is built")
+
+
+def encoder_frames(samples: int) -> int:
+    """The encoder frames of a clip of `samples` samples: the preprocessor's samples // 160 + 1 mel frames (10 ms hop,
+    centered), then the 8x subsampling's three stride-2 convolutions (kernel 3, padding 1): n -> (n - 1) // 2 + 1."""
+    n = int(samples) // 160 + 1
+    for _ in range(3):
+        n = (n - 1) // 2 + 1
+    return n
+
+
+def plan_extremes(plan, replay, labels, tokens, k: int = EXTREMES_PER_METRIC) -> dict:
+    """The plan's k most extreme planned batches (positions) by each of EXTREME_METRICS, over the rows that keep a
+    label (labels.text is not None; a rejected row never reaches the model):
+        rows_x_longest_clip    rows x the longest row's plan key (samples; a synthetic row's longest augmented length)
+        padded_lattice         rows x encoder_frames(that key) x (the longest label in tokens + 1): the fused seam's
+                               globally padded B x T x (U + 1) buffers
+        rows_x_longest_label   rows x the longest label in tokens
+    tokens(texts) -> their token counts (the students' tokenizer on the labels as read). Ties go to the earlier
+    batch."""
+    per, texts = [], {}
     for t in range(plan.n_batches):
-        rows = plan.batch(t).tolist()
-        kept = [x for x in map(labels.text, replay.batch_ids(t)) if x is not None]
+        b = int(plan.shuffle[t])
+        keys = plan.samples[plan.order[int(plan.offsets[b]):int(plan.offsets[b + 1])]].tolist()   # cut order
+        ids = replay.batch_ids(t)
+        if len(keys) != len(ids):
+            raise RuntimeError(f"planned batch {t}: {len(keys)} entries, {len(ids)} rows")
+        kept = []
+        for key, i in zip(keys, ids):
+            if i not in texts:
+                texts[i] = labels.text(i)
+            if texts[i] is not None:
+                kept.append((int(key), i))
+        per.append(kept)
+    order = [i for i, x in texts.items() if x is not None]
+    lengths = dict(zip(order, tokens([texts[i] for i in order])))
+    del texts
+    values = {}
+    for t, kept in enumerate(per):
         if kept:
-            score = len(kept) * max(int(plan.samples[e]) for e in rows) * max(len(x) for x in kept)
-            if score > best:
-                best, worst = score, t
-    return worst
+            longest = max(s for s, _ in kept)
+            label = max(lengths[i] for _, i in kept)
+            values[t] = {"rows": len(kept), "longest_samples": longest, "longest_tokens": label,
+                         "rows_x_longest_clip": len(kept) * longest,
+                         "padded_lattice": len(kept) * encoder_frames(longest) * (label + 1),
+                         "rows_x_longest_label": len(kept) * label}
+    top = {m: sorted(values, key=lambda t: (-values[t][m], t))[:k] for m in EXTREME_METRICS}
+    batches = sorted({t for ts in top.values() for t in ts})
+    return {"k": k, "top": top, "batches": batches, "values": {t: values[t] for t in batches}, "note": EXTREMES_NOTE}
 
 
-def probe_batches(replay, labels, steps: int, seed: int) -> dict:
-    """Worst-case batches (train_decoder.probe_batches: stage 1 dev-clean concatenated to about 29.5 s per row, 20
-    rows, references joined; and plan_worst's planned batch) and a batcher over steps + 1 consecutive planned batches
-    from a seeded pool of pools 0-155 (real T* labels, rejected rows dropped by the seam)."""
+def token_counter(labels_run: str, chunk: int = 100_000):
+    """tokens(texts) for plan_extremes: the students' tokenizer (B0's, checked as repetition rejection checks it)."""
+    sp = trep.production(labels_run).sp
+
+    def tokens(texts: list[str]) -> list[int]:
+        out: list[int] = []
+        for k in range(0, len(texts), chunk):
+            out += [len(x) for x in sp.encode(texts[k:k + chunk])]
+        return out
+    return tokens
+
+
+def worst_batches(full_replay, labels, seed: int, extremes: dict) -> tuple[list[dict], list[str]]:
+    """The worst-case batches and their names: train_decoder.probe_batches's (stage 1 dev-clean concatenated to about
+    29.5 s per row, 20 rows, references joined) and the plan's extremes (plan_extremes; read through the full plan's
+    replay from C1, rejected rows dropped by the seam)."""
     worst, _ = td.probe_batches(seed)
-    collated = []
+    collated, names = [], []
     for k, items in enumerate(worst):
         b = train.collate(items)
         b.update(index=k, labels=[it["text"] for it in items])
         collated.append(b)
-    w = plan_worst(replay, labels)
-    one = label_sources.Batcher(replay, labels, start=w, stop=w + 1)
-    try:
-        collated.append(one.next(timeout=900))
-    finally:
-        one.close()
+        names.append(f"synthetic {k}")
+    for t in extremes["batches"]:
+        one = label_sources.Batcher(full_replay, labels, start=t, stop=t + 1)
+        try:
+            collated.append(one.next(timeout=1800))
+        finally:
+            one.close()
+        names.append(f"planned batch {t} ({', '.join(m for m in EXTREME_METRICS if t in extremes['top'][m])})")
+    return collated, names
+
+
+def timed_batches(replay, labels, steps: int, seed: int) -> dict:
+    """steps + 1 consecutive planned batches from a seeded pool of the materialized pools 0-155."""
     plan = replay.plan
     pools = [p for p in range(plan.n_pools) if plan.pool_start(p) + steps + 1 <= plan.n_batches]
     p = int(np.random.default_rng([int(seed), 3]).choice(pools))
     start = plan.pool_start(p)
-    return {"worst": collated, "timed": TimedBatches(replay, labels, start, steps + 1), "timed_start": start,
-            "timed_pool": p}
+    return {"timed": TimedBatches(replay, labels, start, steps + 1), "timed_start": start, "timed_pool": p}
 
 
 class TimedBatches:
@@ -1259,23 +1436,6 @@ def checkpoint_round_trip(ctx, out: Path) -> dict:
             "host_peak_rss_gib": rss_gib()}
 
 
-def data_measure(labels_run: str, pool, plan) -> dict:
-    """Host memory and time of the full plan's label store (pools 0-781) and journal rows, opened and released before
-    the GPU part (the probe itself trains on pools 0-155)."""
-    from training import batchplan
-    before, t0 = current_rss_gib(), time.perf_counter()
-    labels = open_labels(labels_run, pool, plan.consumed_batches)
-    labels_s, with_labels = time.perf_counter() - t0, current_rss_gib()
-    t0 = time.perf_counter()
-    j = batchplan.read_journal(pool, plan.consumed_batches, with_rows=True)
-    journal_s, with_journal = time.perf_counter() - t0, current_rss_gib()
-    out = {"pools": plan.n_pools, "labels_open_s": labels_s, "labels_rss_gib": with_labels - before,
-           "journal_read_s": journal_s, "journal_rss_gib": with_journal - with_labels, "kept": labels.identity["kept"],
-           "records": labels.identity["records"], "occurrences": len(j["ids"])}
-    del labels, j
-    return out
-
-
 V2_FACTOR = 1.137            # b0prime plan v4 "Effect": the extra sources add about 13.7% planned batches
 
 
@@ -1309,24 +1469,47 @@ def _swap(plan_factor: tuple, step_s: float) -> tuple:
 
 
 def probe_job(labels_run: str, steps: int, lock_wait: float) -> int:
-    """The memory probe (b0prime plan "Resources"): A1 at 600 s batches with and without gradient checkpointing,
-    peak VRAM, host memory, step time, the decision and the GPU-hour estimate; probe/probe.json."""
+    """The memory probe (b0prime plan "Resources", v4.1): A1 through the fused loss seam at 600 s batches with and
+    without gradient checkpointing: every worst-case batch (synthetic, and the version 1 plan's extremes by
+    EXTREME_METRICS), then `steps` timed planned batches; peak VRAM, host memory, step time, the decision (a mode only
+    if both phases pass; the 6 GB rule) and the GPU-hour estimate; the label store's index open (built on first use);
+    probe/probe.json."""
     import score_teacher
     from training import poolaudio
     llayout.require_mount()
     pool, cid, full_plan, plan = probe_plan_dir()
-    measured = data_measure(labels_run, pool, full_plan)
-    log(f"full-plan data: {json.dumps(measured)}")
+    reject = reject_list()
+    before, t0 = current_rss_gib(), time.perf_counter()
+    labels = open_labels(labels_run, pool, full_plan, reject=reject)
+    labels_s, labels_rss = time.perf_counter() - t0, current_rss_gib() - before
     t0 = time.perf_counter()
-    labels = open_labels(labels_run, pool, plan.consumed_batches)
-    replay = treplay.PlannedReplay(plan, pool, audio="materialized", store=poolaudio.store_dir(cid, plan.pool_batches))
-    open_s = time.perf_counter() - t0
+    again = open_labels(labels_run, pool, full_plan, reject=reject)
+    reopen_s = time.perf_counter() - t0
+    if again.identity != labels.identity:
+        raise RuntimeError("the label index reopened with another identity")
+    del again
+    t0 = time.perf_counter()
+    full_replay = treplay.PlannedReplay(full_plan, pool, audio="c1")
+    replay_s = time.perf_counter() - t0
+    t0 = time.perf_counter()
+    extremes = plan_extremes(full_plan, full_replay, labels, token_counter(labels_run))
+    extremes |= {"plan": full_plan.identity(), "recheck": V2_RECHECK, "ranking_s": time.perf_counter() - t0}
+    log(f"plan extremes: {json.dumps(extremes, default=str)}")
+    worst, names = worst_batches(full_replay, labels, stage3.SEED, extremes)
+    full_replay.close()
+    measured = {"pools": full_plan.n_pools, "labels_open_s": labels_s, "labels_rss_gib": labels_rss,
+                "labels_reopen_s": reopen_s, "label_index": str(labels.real.store.dir.relative_to(root())),
+                "kept": labels.identity["kept"], "records": labels.identity["records"],
+                "labels_sha256": labels.identity["sha256"], "full_replay_open_s": replay_s}
+    log(f"full-plan data: {json.dumps(measured)}")
+    timed_replay = treplay.PlannedReplay(plan, pool, audio="materialized",
+                                         store=poolaudio.store_dir(cid, plan.pool_batches))
     modes, round_trip = {}, None
     with score_teacher.gpu_lock("b0prime memory probe", lock_wait):
         train.deterministic_mode()
         tdt_sha = train.prepare_tdt_loss()
         for ckpt in (False, True):
-            batches = probe_batches(replay, labels, steps, stage3.SEED)
+            batches = {"worst": worst, "worst_names": names} | timed_batches(timed_replay, labels, steps, stage3.SEED)
             res = probe_mode(ckpt, batches, labels, steps)
             res["timed_from_planned_batch"] = batches["timed_start"]
             res["timed_pool"] = batches["timed_pool"]
@@ -1337,9 +1520,9 @@ def probe_job(labels_run: str, steps: int, lock_wait: float) -> int:
             torch.cuda.empty_cache()
             modes["ckpt" if ckpt else "no_ckpt"] = res
             log(json.dumps(res))
-    replay.close()
-    total = 32.0 if not torch.cuda.is_available() else torch.cuda.get_device_properties(0).total_memory / 2**30
-    fits = {k: m["status"] == {"worst": "ok", "timed": "ok"} for k, m in modes.items()}
+    timed_replay.close()
+    total = torch.cuda.get_device_properties(0).total_memory / 2**30
+    fits = {k: probe_fits(m["status"]) for k, m in modes.items()}
     free = {k: total - m["peak_process_gib_estimate"] for k, m in modes.items()}
     if fits["no_ckpt"] and free["no_ckpt"] >= FREE_GB:
         choice = "no_ckpt"
@@ -1349,14 +1532,16 @@ def probe_job(labels_run: str, steps: int, lock_wait: float) -> int:
         choice = None
     decision = {"fits": choice is not None, "grad_checkpointing": choice == "ckpt" if choice else None,
                 "chosen": choice, "gpu_total_gib": total, "free_gib": free,
-                "rule": f"gradient checkpointing if the run without it leaves less than {FREE_GB} GB for others or "
-                        "does not fit", "lease_vram_gb": math.ceil(modes[choice]["peak_process_gib_estimate"]
-                                                                   + LEASE_MARGIN_GB) if choice else None}
+                "rule": f"a mode only if both phases pass; gradient checkpointing if the run without it leaves less "
+                        f"than {FREE_GB} GB for others or does not fit",
+                "lease_vram_gb": math.ceil(modes[choice]["peak_process_gib_estimate"] + LEASE_MARGIN_GB)
+                if choice else None, "coverage": EXTREMES_NOTE, "recheck": V2_RECHECK}
     timed = [k for k in ("no_ckpt", "ckpt") if modes[k]["status"]["timed"] == "ok" and modes[k]["step_time_s"]]
-    result = {"steps": steps, "modes": modes, "decision": decision, "checkpoint_round_trip": round_trip,
-              "full_plan_data": measured, "probe_data": {"plan": plan.identity(), "open_s": open_s,
-                                                          "labels_sha256": labels.identity["sha256"]},
-              "host_peak_rss_gib": rss_gib(), "tdt_kernel_sha256": tdt_sha, "utc": train.utc(),
+    result = {"steps": steps, "modes": modes, "decision": decision, "worst_batches": names, "extremes": extremes,
+              "checkpoint_round_trip": round_trip, "full_plan_data": measured,
+              "probe_data": {"plan": plan.identity(), "labels_sha256": labels.identity["sha256"]},
+              "loss_seam": tdt_fused.settings(), "host_peak_rss_gib": rss_gib(), "tdt_kernel_sha256": tdt_sha,
+              "utc": train.utc(),
               "estimate": gpu_hours(*_swap(estimate_plan(), modes[choice]["step_time_s"]))
               if choice and modes[choice]["step_time_s"] else None}
     if choice is None and timed:
@@ -1364,7 +1549,7 @@ def probe_job(labels_run: str, steps: int, lock_wait: float) -> int:
         result["estimate_unfit"] = gpu_hours(*_swap(estimate_plan(), modes[timed[-1]]["step_time_s"])) | {
             "mode": timed[-1], "note_unfit": "no mode fits the worst case; this mode's step time on planned batches"}
     write_json(probe_path(), result)
-    log(json.dumps({k: v for k, v in result.items() if k != "modes"}))
+    log(json.dumps({k: v for k, v in result.items() if k not in ("modes", "extremes")}, default=str))
     return 0 if choice else 1
 
 
