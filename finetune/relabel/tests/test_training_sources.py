@@ -176,6 +176,32 @@ class Sources(World):
         with self.assertRaises(ValueError):
             treplay.PlannedReplay(self.plan, self.w.pool, store=self.store, sources=extras)
 
+    def test_the_read_probe_starts_every_region_cold_for_the_extra_sources_too(self):
+        """Stage 3's read probe of the version 2 plan (training/replay_probe.run with sources): each region's
+        page-cache eviction covers the clip-store audio of its extra rows, not only the materialized pools."""
+        from unittest import mock
+
+        from training import replay_probe
+        extras = [treplay.ExtraSource(self.sources[0], None), treplay.ExtraSource(self.sources[1], None)]
+        dropped = []
+
+        def drop(paths):
+            dropped.append({str(p) for p in paths})
+            return len(dropped[-1])
+        regions = [(0, 1), (2, 4)]
+        with mock.patch.object(replay_probe, "drop_cache", drop):
+            res = replay_probe.run(self.plan3, self.w.pool, self.store, regions, ["materialized"], max_seconds=60,
+                                   sources=extras)
+        r = treplay.PlannedReplay(self.plan3, self.w.pool, store=self.store, sources=extras)
+        by = {**{f"syn:{c['id']}": c for c in self.syn.clips}, **{f"rs:{c['id']}": c for c in self.once.clips}}
+        for k, (lo, hi) in enumerate(regions):
+            ids = {i for t in range(self.plan3.pool_start(lo), self.plan3.pool_start(hi)) for i in r.batch_ids(t)}
+            want = {by[i]["audio_filepath"] for i in ids if i in by}
+            self.assertTrue(want)
+            self.assertTrue(want <= dropped[k])
+            self.assertEqual(res["regions"][k]["extra_source_files"], len(want))
+        r.close()
+
 
 REAL = Path(os.environ.get("RELABEL_ROOT", "/nonexistent"))
 

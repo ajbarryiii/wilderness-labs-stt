@@ -78,7 +78,7 @@ class EndToEnd(unittest.TestCase):
         patches = [mock.patch.dict(stage3.RUNS, fx.RUNS, clear=True),
                    mock.patch.object(tb, "offline_data", lambda run, labels_run, peak, cv: self.h.data(run, peak)),
                    mock.patch.object(tb, "peak_of", lambda run: (fx.PEAK, None)),
-                   mock.patch.object(tb, "grad_checkpointing", lambda: False),
+                   mock.patch.object(tb, "grad_checkpointing", lambda *a: False),
                    mock.patch.object(tb, "_sha256_base", lambda: "b0"),
                    mock.patch.object(tb, "build_model", fx.model_factory()),
                    mock.patch.object(train, "DevEvaluator", fx.FakeEvaluator),

@@ -755,9 +755,10 @@ def peak_of(run: stage3.Run) -> tuple[float, dict | None]:
     return float(sel["selected"]), record
 
 
-def grad_checkpointing() -> bool:
+def grad_checkpointing(plan_sha256: str | None = None, labels_sha256: str | None = None) -> bool:
     """The memory probe's decision (b0prime plan "Resources", v4.1), which the version 2 plan's extremes must also
-    pass in the chosen mode within the chosen lease (probe_v2_job); NotReady before either exists."""
+    pass in the chosen mode within the chosen lease (probe_v2_job), on this run's plan and labels (when given: every
+    run passes its own); NotReady before either exists."""
     if not probe_path().exists():
         raise NotReady(f"no memory probe result at {probe_path()} (train_b0prime.py probe)")
     decision = json.loads(probe_path().read_text()).get("decision") or {}
@@ -770,6 +771,11 @@ def grad_checkpointing() -> bool:
         raise RuntimeError(f"{probe_v2_path()} checked another memory probe result; run probe-v2 again")
     if v2.get("pass") is not True:
         raise RuntimeError(f"the version 2 plan's extremes do not pass in the chosen mode: {v2.get('status')}")
+    for what, have, got in (("plan", plan_sha256, v2.get("plan_sha256")), ("labels", labels_sha256,
+                                                                         v2.get("labels_sha256"))):
+        if have is not None and have != got:
+            raise RuntimeError(f"{probe_v2_path()} checked the extremes of other {what} ({got}, not {have}); run "
+                               "probe-v2 again")
     return bool(decision["grad_checkpointing"])
 
 
@@ -813,7 +819,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     run = stage3.RUNS[a.run]
     peak, selection = peak_of(run)
     data = offline_data(run, a.labels_run, peak, a.cleaning_version)
-    return namespace(a, run, data, peak, selection, grad_checkpointing(), _sha256_base())
+    ckpt = grad_checkpointing(data.replay.identity["plan_sha256"], data.labels.identity["sha256"])
+    return namespace(a, run, data, peak, selection, ckpt, _sha256_base())
 
 
 def _sha256_base() -> str:
@@ -1666,7 +1673,8 @@ def probe_v2_job(labels_run: str, steps: int, lock_wait: float) -> int:
         torch.cuda.empty_cache()
     replay.close()
     check = probe_v2_check(decision, res)
-    out = check | {"result": res, "extremes": extremes, "worst_batches": names, "probe_sha256": _sha256_file(probe_path()),
+    out = check | {"plan_sha256": plan.sha256, "labels_sha256": labels.identity["sha256"],
+                   "result": res, "extremes": extremes, "worst_batches": names, "probe_sha256": _sha256_file(probe_path()),
                    "loss_seam": tdt_fused.settings(), "coverage": EXTREMES_NOTE, "utc": train.utc(),
                    "estimate": gpu_hours(plan, res["step_time_s"]) if res["step_time_s"] else None}
     write_json(probe_v2_path(), out)

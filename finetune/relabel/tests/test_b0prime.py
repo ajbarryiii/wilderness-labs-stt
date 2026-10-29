@@ -1164,8 +1164,13 @@ class Gates(unittest.TestCase):
             tb.write_json(tb.probe_v2_path(), body)
             with self.assertRaises(error):
                 tb.grad_checkpointing()
-        tb.write_json(tb.probe_v2_path(), {"pass": True, "mode": "ckpt", "probe_sha256": sha})
+        tb.write_json(tb.probe_v2_path(), {"pass": True, "mode": "ckpt", "probe_sha256": sha, "plan_sha256": "p",
+                                           "labels_sha256": "l"})
         self.assertTrue(tb.grad_checkpointing())
+        self.assertTrue(tb.grad_checkpointing("p", "l"))
+        for plan, labels in (("another plan", "l"), ("p", "other labels")):      # a later plan or label change
+            with self.assertRaises(RuntimeError):
+                tb.grad_checkpointing(plan, labels)
         tb.write_json(tb.probe_path(), {"decision": decision | {"fits": False}})
         with self.assertRaises(RuntimeError):
             tb.grad_checkpointing()
