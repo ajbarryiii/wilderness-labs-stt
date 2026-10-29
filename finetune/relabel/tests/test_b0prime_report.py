@@ -54,8 +54,57 @@ class StyleNeutral(unittest.TestCase):
         self.assertGreater(s["contribution"]["acr"], 0)
         self.assertEqual(s["contribution"]["std"], 0)
         table = rep.variant_table({"B0": s, "B0p": sm.score_records(recs[:2])}, "std", lambda i: i)
-        self.assertEqual((table.clusters, table.utterances), (["a", "b"], 2))
-        self.assertAlmostEqual(table.wer("B0"), s["wer"]["std"])
+        self.assertEqual((table["clusters"], table["utterances"]), (["a", "b"], 2))
+        self.assertAlmostEqual(100 * table["errors"]["B0"].sum() / table["words"]["B0"].sum(), s["wer"]["std"])
+
+
+class StyleBootstrap(unittest.TestCase):
+    """The style-neutral intervals: each model keeps its own canonical reference words (an acronym run is joined
+    where the other side wrote the word), in the points and in every replicate; otherwise bootstrap.paired's rule."""
+
+    def recs(self):
+        refs = {"s1-a": "call a p i now the cat", "s1-b": "the dog ran", "s2-a": "use the s q l table now",
+                "s2-b": "a b c is easy"}
+        b0 = {"s1-a": "call api now the bat", "s1-b": "the dog ran", "s2-a": "use the sql table", "s2-b": "abc is easy"}
+        b0p = {"s1-a": "call a p i now the bat", "s1-b": "a dog ran", "s2-a": "use the s q l table now",
+               "s2-b": "a b c is easy"}
+        return [record(i, refs[i], b0[i]) for i in refs], [record(i, refs[i], b0p[i]) for i in refs]
+
+    def test_each_model_keeps_its_reference_words(self):
+        r0, r1 = self.recs()
+        scored = {"B0": sm.score_records(r0), "B0p": sm.score_records(r1)}
+        table = rep.variant_table(scored, "acr", lambda i: i.split("-")[0])
+        self.assertNotEqual(table["words"]["B0"].tolist(), table["words"]["B0p"].tolist())
+        res = rep.variant_bootstrap({"x": table}, ("B0p", "B0"), ["x"], replicates=500)
+        for m in ("B0", "B0p"):
+            self.assertAlmostEqual(res["wer"]["x"][m], scored[m]["wer"]["acr"])
+        self.assertAlmostEqual(res["sets"]["x"]["point"], scored["B0p"]["wer"]["acr"] - scored["B0"]["wer"]["acr"])
+        self.assertAlmostEqual(res["mean"]["point"], res["sets"]["x"]["point"])
+        # each replicate uses each model's own words: with two clusters a replicate is one cluster twice or both, so
+        # the interval lies within the per-cluster contrasts' range
+        lo, hi = res["sets"]["x"]["ci"]
+        per = [100 * table["errors"]["B0p"][j] / table["words"]["B0p"][j]
+               - 100 * table["errors"]["B0"][j] / table["words"]["B0"][j] for j in range(2)]
+        self.assertGreaterEqual(lo, min(per) - 1e-9)
+        self.assertLessEqual(hi, max(per) + 1e-9)
+        self.assertLess(lo, hi)
+
+    def test_equal_words_are_bootstrap_paired(self):
+        from training import bootstrap
+        r0, r1 = self.recs()
+        cluster = lambda i: i.split("-")[0]
+        scored = {"B0": sm.score_records(r0), "B0p": sm.score_records(r1)}
+        mine = {n: rep.variant_table(scored, "std", cluster) for n in ("p", "q")}
+        theirs = {n: bootstrap.SetTable.from_records({"B0": r0, "B0p": r1}, cluster) for n in ("p", "q")}
+        a = rep.variant_bootstrap(mine, ("B0p", "B0"), ["p", "q"], replicates=300)
+        b = bootstrap.paired(theirs, {"c": ("B0p", "B0")}, ["p", "q"], replicates=300)
+        for n in ("p", "q"):
+            self.assertAlmostEqual(a["sets"][n]["point"], b["sets"][n]["c"]["point"])
+            for x, y in zip(a["sets"][n]["ci"], b["sets"][n]["c"]["ci"]):
+                self.assertAlmostEqual(x, y)
+        self.assertAlmostEqual(a["mean"]["point"], b["mean"]["c"]["point"])
+        for x, y in zip(a["mean"]["ci"], b["mean"]["c"]["ci"]):
+            self.assertAlmostEqual(x, y)
 
 
 class Formatted(unittest.TestCase):

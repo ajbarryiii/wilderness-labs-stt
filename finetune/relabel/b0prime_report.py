@@ -125,9 +125,10 @@ def cluster_fn(name: str):
     return None                                            # YODAS, the cv27-en dev sample: informational, no interval
 
 
-def variant_table(scored: dict[str, dict], variant: str, cluster_of) -> bootstrap.SetTable:
-    """A bootstrap.SetTable of one set from style_metrics.score_records results ({model: result}), the same
-    utterances in every model."""
+def variant_table(scored: dict[str, dict], variant: str, cluster_of) -> dict:
+    """Per-cluster errors AND reference words of each model on one set (style_metrics.score_records results,
+    {model: result}, the same utterances in every model). A canonicalizer may read the other side (acronym runs), so
+    each model has its own canonical reference length."""
     import numpy as np
     models = sorted(scored)
     ids = scored[models[0]]["ids"]
@@ -137,10 +138,42 @@ def variant_table(scored: dict[str, dict], variant: str, cluster_of) -> bootstra
     names = sorted({cluster_of(i) for i in ids})
     index = {c: j for j, c in enumerate(names)}
     idx = np.array([index[cluster_of(i)] for i in ids], dtype=np.int64)
-    words = np.bincount(idx, weights=[w for _, w in scored[models[0]]["per"][variant]], minlength=len(names))
+    words = {m: np.bincount(idx, weights=[w for _, w in scored[m]["per"][variant]], minlength=len(names))
+             for m in models}
     errs = {m: np.bincount(idx, weights=[e for e, _ in scored[m]["per"][variant]], minlength=len(names))
             for m in models}
-    return bootstrap.SetTable(names, words, errs, len(ids))
+    return {"clusters": names, "words": words, "errors": errs, "utterances": len(ids)}
+
+
+def variant_bootstrap(tables: dict[str, dict], contrast: tuple[str, str], mean_sets: list[str],
+                      replicates: int = bootstrap.REPLICATES, seed: int = bootstrap.SEED, ci: float = bootstrap.CI) -> dict:
+    """bootstrap.paired's rule (clusters drawn within each set from SeedSequence([seed, set index]) in sorted set
+    order, the same draw for both models, the mean over mean_sets recomputed per replicate) with each model's own
+    reference words: WER(m) = 100 x errors(m) / words(m) per replicate. Contrast (a, b) = WER(a) - WER(b)."""
+    import numpy as np
+    a, b = contrast
+    out = {"replicates": replicates, "seed": seed, "ci_level": ci, "sets": {}, "wer": {}}
+    reps = {}
+    for s_index, name in enumerate(sorted(tables)):
+        t = tables[name]
+        n = len(t["clusters"])
+        rng = np.random.default_rng(np.random.SeedSequence([seed, s_index]))
+        counts = np.empty((replicates, n), dtype=np.float64)
+        for k in range(replicates):
+            counts[k] = np.bincount(rng.integers(0, n, n), minlength=n)
+        w = {m: 100.0 * float(t["errors"][m].sum()) / float(t["words"][m].sum()) for m in (a, b)}
+        r = {m: 100.0 * (counts @ t["errors"][m]) / (counts @ t["words"][m]) for m in (a, b)}
+        reps[name] = r[a] - r[b]
+        out["wer"][name] = w
+        lo, hi = np.percentile(reps[name], [100 * (1 - ci) / 2, 100 * (1 + ci) / 2])
+        out["sets"][name] = {"point": w[a] - w[b], "ci": [float(lo), float(hi)], "clusters": n}
+    if mean_sets and set(mean_sets) <= set(tables):
+        diff = np.mean([reps[s] for s in mean_sets], axis=0)
+        lo, hi = np.percentile(diff, [100 * (1 - ci) / 2, 100 * (1 + ci) / 2])
+        out["mean"] = {"point": float(np.mean([out["sets"][s]["point"] for s in mean_sets])),
+                       "ci": [float(lo), float(hi)]}
+        out["wer"]["mean"] = {m: float(np.mean([out["wer"][s][m] for s in mean_sets])) for m in (a, b)}
+    return out
 
 
 def style_section(dirs: dict[str, Path | None]) -> dict:
@@ -167,10 +200,9 @@ def style_section(dirs: dict[str, Path | None]) -> dict:
         if not tables:
             continue
         full = set(tb.H4) <= set(tables)
-        res = bootstrap.paired(tables, {"B0p-B0": ("B0p", "B0")}, mean_sets=list(tb.H4) if full else [sorted(tables)[0]])
-        out["contrast"][v] = {"sets": {n: res["sets"][n]["B0p-B0"] for n in tables},
-                              "H4": res["mean"]["B0p-B0"] if full else None,
-                              "h4_wer": res["wer"]["mean"] if full else None}
+        res = variant_bootstrap(tables, ("B0p", "B0"), list(tb.H4) if full else [])
+        out["contrast"][v] = {"sets": res["sets"], "H4": res.get("mean"),
+                              "h4_wer": res["wer"].get("mean")}
     return out
 
 
