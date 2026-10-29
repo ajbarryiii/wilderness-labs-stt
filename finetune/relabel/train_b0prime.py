@@ -1110,39 +1110,43 @@ def probe_mode(ckpt: bool, batches, labels, steps: int) -> dict:
                                     schedule=types.SimpleNamespace(lr=lambda k: 1e-4)))
     trainable = [p for g in optimizer.param_groups for p in g["params"]]
     train.set_train_modes(model, RECIPE)
-    torch.cuda.reset_peak_memory_stats()
-    times, seconds, rows, status, worst_peak = [], [], [], {"worst": "ok", "timed": "ok"}, None
+    times, seconds, rows = [], [], []
+
+    def step(kind: str, j: int, batch):
+        ctx.state.batches_read = int(batch["index"]) + 1
+        torch.cuda.synchronize()
+        t0 = time.perf_counter()
+        labeled = tseam.label_batch(ctx, batch)
+        if labeled is None:
+            return
+        train.reseed_cudnn_rnn_dropout()
+        train.train_step(ctx, labeled, trainable)
+        torch.cuda.synchronize()
+        if kind == "timed" and j >= 1:
+            times.append(time.perf_counter() - t0)
+            seconds.append(labeled["seconds"])
+            rows.append(labeled["rows"])
+        ctx.state.step += 1
+
+    def after_oom() -> None:
+        optimizer.zero_grad(set_to_none=True)
+        torch.cuda.empty_cache()
+
+    peaks = {}
+
+    def phase_peak(kind: str, start: bool) -> None:
+        if start:
+            torch.cuda.reset_peak_memory_stats()
+        else:
+            peaks[kind] = (torch.cuda.max_memory_allocated() / 2**30, torch.cuda.max_memory_reserved() / 2**30)
+
     try:
-        for kind, source in (("worst", batches["worst"]), ("timed", batches["timed"])):
-            for j, batch in enumerate(source):
-                ctx.state.batches_read = int(batch["index"]) + 1
-                torch.cuda.synchronize()
-                t0 = time.perf_counter()
-                try:
-                    labeled = tseam.label_batch(ctx, batch)
-                    if labeled is None:
-                        continue
-                    train.reseed_cudnn_rnn_dropout()
-                    train.train_step(ctx, labeled, trainable)
-                except torch.OutOfMemoryError:
-                    status[kind] = f"oom at batch {j}"
-                    optimizer.zero_grad(set_to_none=True)
-                    torch.cuda.empty_cache()
-                    break
-                torch.cuda.synchronize()
-                if kind == "timed" and j >= 1:
-                    times.append(time.perf_counter() - t0)
-                    seconds.append(labeled["seconds"])
-                    rows.append(labeled["rows"])
-                ctx.state.step += 1
-            if kind == "worst":
-                worst_peak = torch.cuda.max_memory_reserved() / 2**30
-            if status[kind] != "ok":
-                break
+        status = probe_phases([("worst", batches["worst"]), ("timed", batches["timed"])], step, after_oom,
+                              phase_peak)
     finally:
         batches["timed"].close()
-    peak_alloc = torch.cuda.max_memory_allocated() / 2**30
-    peak_reserved = torch.cuda.max_memory_reserved() / 2**30
+    peak_alloc = max((a for a, _ in peaks.values()), default=None)
+    peak_reserved = max((r for _, r in peaks.values()), default=None)
     process_now = td.gpu_process_gb()
     reserved_now = torch.cuda.memory_reserved() / 2**30
     peak_process = peak_reserved + max(0.0, (process_now or reserved_now) - reserved_now)
@@ -1151,10 +1155,31 @@ def probe_mode(ckpt: bool, batches, labels, steps: int) -> dict:
            "step_time_p90_s": float(np.percentile(times, 90)) if times else None,
            "audio_seconds_per_step": float(np.mean(seconds)) if seconds else None,
            "rows_per_step": float(np.mean(rows)) if rows else None, "peak_allocated_gib": peak_alloc,
-           "peak_reserved_gib": peak_reserved, "worst_reserved_gib": worst_peak, "process_gpu_gib_at_end": process_now,
+           "peak_reserved_gib": peak_reserved, "worst_reserved_gib": peaks.get("worst", (None, None))[1],
+           "timed_reserved_gib": peaks.get("timed", (None, None))[1], "process_gpu_gib_at_end": process_now,
            "peak_process_gib_estimate": peak_process, "trainable": info["trainable"]["trainable"],
            "host_peak_rss_gib": rss_gib()}
     return out | {"_model": model, "_optimizer": optimizer, "_ctx": ctx}
+
+
+def probe_phases(phases, step, after_oom, phase_peak, oom=None) -> dict:
+    """Run each phase's batches through step(kind, j, batch); an out-of-memory error ends that phase only (status
+    "oom at batch j", after_oom() frees the step's memory) and the next phase still runs, so the step time on
+    planned batches is measured even when the worst case does not fit. phase_peak(kind, start) brackets a phase."""
+    oom = oom or torch.OutOfMemoryError
+    status = {kind: "not run" for kind, _ in phases}
+    for kind, source in phases:
+        phase_peak(kind, True)
+        status[kind] = "ok"
+        for j, batch in enumerate(source):
+            try:
+                step(kind, j, batch)
+            except oom:
+                status[kind] = f"oom at batch {j}"
+                after_oom()
+                break
+        phase_peak(kind, False)
+    return status
 
 
 def plan_worst(replay, labels) -> int:
@@ -1327,12 +1352,17 @@ def probe_job(labels_run: str, steps: int, lock_wait: float) -> int:
                 "rule": f"gradient checkpointing if the run without it leaves less than {FREE_GB} GB for others or "
                         "does not fit", "lease_vram_gb": math.ceil(modes[choice]["peak_process_gib_estimate"]
                                                                    + LEASE_MARGIN_GB) if choice else None}
+    timed = [k for k in ("no_ckpt", "ckpt") if modes[k]["status"]["timed"] == "ok" and modes[k]["step_time_s"]]
     result = {"steps": steps, "modes": modes, "decision": decision, "checkpoint_round_trip": round_trip,
               "full_plan_data": measured, "probe_data": {"plan": plan.identity(), "open_s": open_s,
                                                           "labels_sha256": labels.identity["sha256"]},
               "host_peak_rss_gib": rss_gib(), "tdt_kernel_sha256": tdt_sha, "utc": train.utc(),
               "estimate": gpu_hours(*_swap(estimate_plan(), modes[choice]["step_time_s"]))
               if choice and modes[choice]["step_time_s"] else None}
+    if choice is None and timed:
+        # informational for the architect's report: the planned batches' step time of a mode whose worst case failed
+        result["estimate_unfit"] = gpu_hours(*_swap(estimate_plan(), modes[timed[-1]]["step_time_s"])) | {
+            "mode": timed[-1], "note_unfit": "no mode fits the worst case; this mode's step time on planned batches"}
     write_json(probe_path(), result)
     log(json.dumps({k: v for k, v in result.items() if k != "modes"}))
     return 0 if choice else 1

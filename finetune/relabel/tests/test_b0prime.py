@@ -857,5 +857,41 @@ class SeamAndSources(unittest.TestCase):
                 tb.run_train(argv)
 
 
+class ProbePhases(unittest.TestCase):
+    """The memory probe's phases: an out-of-memory error ends its own phase only, so the planned batches' step time
+    is still measured when the worst case does not fit; a phase never reached reads "not run"."""
+
+    class OOM(Exception):
+        pass
+
+    def run_phases(self, fail: dict):
+        seen, freed, brackets = [], [], []
+
+        def step(kind, j, batch):
+            if fail.get(kind) == j:
+                raise self.OOM()
+            seen.append((kind, j))
+        status = tb.probe_phases([("worst", iter(range(3))), ("timed", iter(range(4)))], step,
+                                 lambda: freed.append(1), lambda k, s: brackets.append((k, s)), oom=self.OOM)
+        return status, seen, freed, brackets
+
+    def test_an_oom_ends_its_phase_and_the_next_phase_runs(self):
+        status, seen, freed, brackets = self.run_phases({"worst": 1})
+        self.assertEqual(status, {"worst": "oom at batch 1", "timed": "ok"})
+        self.assertEqual(seen, [("worst", 0)] + [("timed", j) for j in range(4)])
+        self.assertEqual(len(freed), 1)
+        self.assertEqual(brackets, [("worst", True), ("worst", False), ("timed", True), ("timed", False)])
+        status, seen, _, _ = self.run_phases({"timed": 2})
+        self.assertEqual(status, {"worst": "ok", "timed": "oom at batch 2"})
+        self.assertEqual(seen[-1], ("timed", 1))
+        self.assertEqual(self.run_phases({})[0], {"worst": "ok", "timed": "ok"})
+
+    def test_other_errors_propagate(self):
+        def step(kind, j, batch):
+            raise ValueError("bug")
+        with self.assertRaises(ValueError):
+            tb.probe_phases([("worst", [1])], step, lambda: None, lambda k, s: None, oom=self.OOM)
+
+
 if __name__ == "__main__":
     unittest.main()

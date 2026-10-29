@@ -307,10 +307,16 @@ def markdown(r: dict) -> str:
             L.append(f"- {k}: status {m['status']}, peak {_f(m['peak_process_gib_estimate'], 1)} GiB, step "
                      f"{_f(m['step_time_s'], 3)} s, {_f(m['audio_seconds_per_step'], 0)} s of audio per step")
         d, e = p["decision"], p.get("estimate") or {}
-        L += [f"- Decision: {d['chosen']} (gradient checkpointing {d['grad_checkpointing']}); lease "
-              f"{d['lease_vram_gb']} GB; host peak {_f(p['host_peak_rss_gib'], 1)} GiB.",
-              f"- Estimate: pilot {_f(e.get('pilot_gpu_hours'), 1)} GPU-h, main run {_f(e.get('main_gpu_hours'), 1)} "
-              "GPU-h (training steps only)."]
+        if d["fits"]:
+            L.append(f"- Decision: {d['chosen']} (gradient checkpointing {d['grad_checkpointing']}); lease "
+                     f"{d['lease_vram_gb']} GB; host peak {_f(p['host_peak_rss_gib'], 1)} GiB.")
+        else:
+            e = p.get("estimate_unfit") or {}
+            L.append(f"- Decision: **A1 does not fit** at 600-second batches in either mode (the architect reports); "
+                     f"host peak {_f(p['host_peak_rss_gib'], 1)} GiB."
+                     + (f" The estimate below uses {e['mode']}'s step time on planned batches." if e else ""))
+        L.append(f"- Estimate: pilot {_f(e.get('pilot_gpu_hours'), 1)} GPU-h, main run {_f(e.get('main_gpu_hours'), 1)} "
+                 "GPU-h (training steps only).")
     else:
         L.append("Pending.")
     c = r["b0_rescore"]
