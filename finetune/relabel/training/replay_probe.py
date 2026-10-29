@@ -107,7 +107,8 @@ def time_region(replay, start: int, stop: int, max_seconds: float) -> dict:
 
 
 def run(plan, pool_dir: Path, store: Path, regions: list[tuple[int, int]], readers: list[str],
-        max_seconds: float = MAX_SECONDS) -> dict:
+        max_seconds: float = MAX_SECONDS, sources=None) -> dict:
+    """sources: a multi-source version 2 plan's replay.ExtraSource list (stage 3's read probe with both stores)."""
     from training import poolaudio
     from training import replay as treplay
     from training.labels import needed_shards
@@ -118,7 +119,8 @@ def run(plan, pool_dir: Path, store: Path, regions: list[tuple[int, int]], reade
     for reader in readers:
         for lo, hi in regions:
             t0 = time.monotonic()
-            r = treplay.PlannedReplay(plan, pool_dir, audio=reader, store=store)
+            r = treplay.PlannedReplay(plan, pool_dir, audio=reader, store=store,
+                                      **({} if sources is None else {"sources": sources}))
             opened = time.monotonic() - t0
             if reader == "materialized":
                 files = [store / "pools" / f"{poolaudio.pool_name(p)}.flac" for p in range(lo, min(hi + 1, plan.n_pools))]

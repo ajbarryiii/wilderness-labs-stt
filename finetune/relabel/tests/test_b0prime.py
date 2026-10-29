@@ -279,11 +279,12 @@ class Labels(World):
         with mock.patch.object(tb, "source_stores", lambda: []), \
                 mock.patch.object(tb, "pinned_plan", lambda stores: (None, "pool", "cid", self.world.plan, [])), \
                 mock.patch.object(tb, "reject_list", lambda: "reject"), \
+                mock.patch.object(tb, "reading_gate", lambda plan: seen.update(gate=plan)), \
                 mock.patch.object(tb, "open_labels",
                                   lambda run, pool, through, cv, extra, reject: seen.update(cv=cv, reject=reject) or v2), \
                 mock.patch.object(tb.treplay, "PlannedReplay", lambda *x, **k: self.world.replay):
             tb.offline_data(fx.RUNS["pw"], "R", fx.PEAK, 2)
-        self.assertEqual(seen, {"cv": 2, "reject": "reject"})
+        self.assertEqual(seen, {"cv": 2, "reject": "reject", "gate": self.world.plan})     # every run passes the gate
 
     def test_a_transform_applies_to_kept_labels_and_enters_the_identity(self):
         class Upper:
@@ -1094,6 +1095,103 @@ class SeamAndSources(unittest.TestCase):
                 self.assertEqual(tb.run_train(argv), 0)
             with mock.patch.object(train, "main", stopped("SIGTERM")), self.assertRaises(SystemExit):
                 tb.run_train(argv)
+
+
+class Gates(unittest.TestCase):
+    """Gates enforced in code (b0prime plan v4.1, architect 2026-10-29): every run needs the replay throughput probe
+    of the version 1 plan and the read probe of the version 2 plan to have met the rate rule on the last pools, and
+    the version 2 plan's extremes to pass in the memory probe's chosen mode within its lease; the WSD rule's stop is
+    the stage's status."""
+
+    def setUp(self):
+        import tempfile
+
+        from labeling_fixtures import relabel_root
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        env = relabel_root(Path(self.tmp.name))
+        env.__enter__()
+        self.addCleanup(env.__exit__, None, None, None)
+        self.v1 = types.SimpleNamespace(sha256="v1sha", n_pools=782, meta={"plan_id": "v1-plan"})
+        self.v2 = types.SimpleNamespace(sha256="v2sha", n_pools=782, meta={"plan_id": "v2-plan"}, pool_batches=128)
+        patch = mock.patch.object(tb, "v1_plan", lambda: (None, "pool", "cid", self.v1))
+        patch.start()
+        self.addCleanup(patch.stop)
+
+    @staticmethod
+    def probe_body(plan, meets=True, last=782):
+        return {"plan": {"plan_sha256": plan.sha256}, "materialized_meets_required": meets,
+                "regions": [{"reader": "materialized", "pools": [0, 3]},
+                            {"reader": "materialized", "pools": [last - 3, last]}]}
+
+    def test_the_reading_gate(self):
+        with self.assertRaises(tb.NotReady):
+            tb.reading_gate(self.v2)
+        tb.write_json(tb.replay_probe_path(self.v1), self.probe_body(self.v1))
+        with self.assertRaises(tb.NotReady):                                     # the version 2 read probe missing
+            tb.reading_gate(self.v2)
+        for body in (self.probe_body(self.v2, meets=False), self.probe_body(self.v1),
+                     self.probe_body(self.v2, last=100)):
+            tb.write_json(tb.read_probe_path(), body)
+            with self.assertRaises(RuntimeError):
+                tb.reading_gate(self.v2)
+        tb.write_json(tb.read_probe_path(), self.probe_body(self.v2))
+        tb.reading_gate(self.v2)
+        tb.write_json(tb.replay_probe_path(self.v1), self.probe_body(self.v1, meets=False))
+        with self.assertRaises(RuntimeError):
+            tb.reading_gate(self.v2)
+
+    def test_the_version_2_memory_check(self):
+        decision = {"fits": True, "chosen": "ckpt", "grad_checkpointing": True, "lease_vram_gb": 20}
+        with self.assertRaises(tb.NotReady):
+            tb.grad_checkpointing()
+        tb.write_json(tb.probe_path(), {"decision": decision})
+        with self.assertRaises(tb.NotReady):
+            tb.grad_checkpointing()
+        ok = {"status": {"worst": "ok", "timed": "ok"}, "peak_process_gib_estimate": 17.5}
+        self.assertTrue(tb.probe_v2_check(decision, ok)["pass"])
+        self.assertFalse(tb.probe_v2_check(decision, ok | {"peak_process_gib_estimate": 18.5})["pass"])  # 21 > 20
+        self.assertFalse(tb.probe_v2_check(decision, ok | {"status": {"worst": "oom at batches [3]",
+                                                                      "timed": "ok"}})["pass"])
+        sha = tb._sha256_file(tb.probe_path())
+        for body, error in (({"pass": True, "mode": "ckpt", "probe_sha256": "other"}, RuntimeError),
+                            ({"pass": True, "mode": "no_ckpt", "probe_sha256": sha}, RuntimeError),
+                            ({"pass": False, "mode": "ckpt", "probe_sha256": sha}, RuntimeError)):
+            tb.write_json(tb.probe_v2_path(), body)
+            with self.assertRaises(error):
+                tb.grad_checkpointing()
+        tb.write_json(tb.probe_v2_path(), {"pass": True, "mode": "ckpt", "probe_sha256": sha})
+        self.assertTrue(tb.grad_checkpointing())
+        tb.write_json(tb.probe_path(), {"decision": decision | {"fits": False}})
+        with self.assertRaises(RuntimeError):
+            tb.grad_checkpointing()
+
+    def test_the_read_probe_reads_both_stores_and_fails_below_the_rate(self):
+        from training import replay_probe
+        seen = {}
+
+        def run(plan, pool, store, regions, readers, max_seconds, sources=None):
+            seen.update(regions=regions, readers=readers, sources=sources)
+            return {"plan": {"plan_sha256": plan.sha256}, "materialized_meets_required": seen.get("meets", True),
+                    "regions": []}
+        with mock.patch.object(tb, "source_stores", lambda: ["stores"]), \
+                mock.patch.object(tb, "pinned_plan", lambda stores: (None, "pool", "cid", self.v2, ["srcs"])), \
+                mock.patch.object(tb, "replay_sources", lambda stores, sources: ["extra sources"]), \
+                mock.patch.object(tb.llayout, "require_mount", lambda: None), \
+                mock.patch.object(replay_probe, "run", run):
+            self.assertEqual(tb.read_probe_job(10.0), 0)
+            self.assertEqual(seen["sources"], ["extra sources"])
+            self.assertEqual(seen["readers"], ["materialized"])
+            self.assertEqual(seen["regions"], [(0, 3), (390, 393), (779, 782)])
+            self.assertTrue(json.loads(tb.read_probe_path().read_text())["pass"])
+            seen["meets"] = False
+            self.assertEqual(tb.read_probe_job(10.0), 1)
+
+    def test_a_wsd_stop_is_the_stages_status(self):
+        tb.write_json(tb.wsd_rule_path(), {"stop": True, "reasons": ["d = +0.08 > 0.05"]})
+        self.assertIn("STOPPED", tb.status()["stage 3"])
+        tb.write_json(tb.wsd_rule_path(), {"stop": False, "reasons": []})
+        self.assertNotIn("stage 3", tb.status())
 
 
 class ProbePhases(unittest.TestCase):

@@ -457,6 +457,7 @@ def offline_data(run: stage3.Run, labels_run: str, peak: float, cleaning_version
     from training import poolaudio
     stores = source_stores()
     _, pool, cid, plan, sources = pinned_plan(stores)
+    reading_gate(plan)
     extra = label_providers(stores, sources, cleaning_version)
     labels = open_labels(labels_run, pool, plan, cleaning_version, extra=extra, reject=reject_list())
     replay = treplay.PlannedReplay(plan, pool, audio="materialized", store=poolaudio.store_dir(cid, plan.pool_batches),
@@ -755,12 +756,20 @@ def peak_of(run: stage3.Run) -> tuple[float, dict | None]:
 
 
 def grad_checkpointing() -> bool:
-    """The memory probe's decision (b0prime plan "Resources"); NotReady before the probe."""
+    """The memory probe's decision (b0prime plan "Resources", v4.1), which the version 2 plan's extremes must also
+    pass in the chosen mode within the chosen lease (probe_v2_job); NotReady before either exists."""
     if not probe_path().exists():
         raise NotReady(f"no memory probe result at {probe_path()} (train_b0prime.py probe)")
     decision = json.loads(probe_path().read_text()).get("decision") or {}
     if decision.get("fits") is not True:
         raise RuntimeError(f"the memory probe found no configuration that fits: {decision}")
+    if not probe_v2_path().exists():
+        raise NotReady(f"no memory check of the version 2 plan at {probe_v2_path()} (train_b0prime.py probe-v2)")
+    v2 = json.loads(probe_v2_path().read_text())
+    if v2.get("probe_sha256") != _sha256_file(probe_path()) or v2.get("mode") != decision["chosen"]:
+        raise RuntimeError(f"{probe_v2_path()} checked another memory probe result; run probe-v2 again")
+    if v2.get("pass") is not True:
+        raise RuntimeError(f"the version 2 plan's extremes do not pass in the chosen mode: {v2.get('status')}")
     return bool(decision["grad_checkpointing"])
 
 
@@ -1553,6 +1562,117 @@ def probe_job(labels_run: str, steps: int, lock_wait: float) -> int:
     return 0 if choice else 1
 
 
+# ----------------------------------------------------------------------------- the version 2 plan's gates
+
+def read_probe_path() -> Path:
+    return root() / "read-probe" / "read-probe.json"
+
+
+def probe_v2_path() -> Path:
+    return root() / "probe" / "probe-v2.json"
+
+
+def replay_probe_path(plan) -> Path:
+    """The replay throughput probe's result for a plan (training/replay_probe.py, `batchplan probe`)."""
+    return llayout.relabel_root() / "training" / "batch-plan" / "probes" / f"{plan.meta['plan_id']}.json"
+
+
+def _probe_passed(path: Path, plan, what: str) -> None:
+    if not path.exists():
+        raise NotReady(f"no {what} at {path} yet")
+    body = json.loads(path.read_text())
+    if (body.get("plan") or {}).get("plan_sha256") != plan.sha256:
+        raise RuntimeError(f"{path}: {what} of another plan")
+    regions = [r for r in body.get("regions", []) if r.get("reader") == "materialized"]
+    if not body.get("materialized_meets_required") or not any(r["pools"][1] == plan.n_pools for r in regions):
+        raise RuntimeError(f"{what} did not meet the rate rule on the plan's last pools (b0prime plan \"Replay "
+                           f"throughput probe\"): {path}")
+
+
+def reading_gate(plan) -> None:
+    """Every stage 3 run reads materialized audio of all 782 pools (PoolAudio also refuses a missing pool) only after
+    the replay throughput probe of the version 1 plan and the read probe of the version 2 plan with both stores
+    (read_probe_job) met the rate rule in every region, the last pools included; NotReady before either exists,
+    RuntimeError when one missed it."""
+    v1 = v1_plan()[3]
+    _probe_passed(replay_probe_path(v1), v1, "the replay throughput probe of the version 1 plan")
+    _probe_passed(read_probe_path(), plan, "the read probe of the version 2 plan")
+
+
+def read_probe_job(max_seconds: float) -> int:
+    """The read probe of the version 2 plan with both stores (b0prime plan "Extra-source preparation"): the
+    materialized reader with the extra sources, on the plan's start, middle and last pools, against the rate rule of
+    training/replay_probe.py; read-probe/read-probe.json. Fails (exit 1) when a region misses the rate."""
+    from training import poolaudio, replay_probe
+    llayout.require_mount()
+    stores = source_stores()
+    _, pool, cid, plan, sources = pinned_plan(stores)
+    n = plan.n_pools
+    regions = [(0, 3), (n // 2 - 1, n // 2 + 2), (n - 3, n)]
+    res = replay_probe.run(plan, pool, poolaudio.store_dir(cid, plan.pool_batches), regions, ["materialized"],
+                           max_seconds, sources=replay_sources(stores, sources))
+    res["pass"] = bool(res["materialized_meets_required"])
+    write_json(read_probe_path(), res)
+    log(json.dumps({k: v for k, v in res.items() if k != "regions"}, default=str))
+    return 0 if res["pass"] else 1
+
+
+def probe_v2_check(decision: dict, result: dict) -> dict:
+    """The version 2 plan's extremes pass in the memory probe's chosen mode when both phases pass and the peak plus
+    the lease margin stays within the lease the probe chose (the chunk jobs' VRAM lease)."""
+    need = math.ceil(result["peak_process_gib_estimate"] + LEASE_MARGIN_GB)
+    ok = probe_fits(result["status"]) and decision.get("lease_vram_gb") is not None \
+        and need <= decision["lease_vram_gb"]
+    return {"pass": bool(ok), "mode": decision.get("chosen"), "lease_vram_gb": decision.get("lease_vram_gb"),
+            "needed_lease_vram_gb": need, "status": result["status"]}
+
+
+def probe_v2_job(labels_run: str, steps: int, lock_wait: float) -> int:
+    """b0prime plan v4.1: the memory probe's worst cases on the version 2 plan, which only exists once the read-speech
+    store does: its extremes (plan_extremes over every source's rows, augmented rows at their served length) in the
+    mode the memory probe chose, then `steps` timed planned batches of the version 2 plan; probe/probe-v2.json with
+    the step time and the GPU-hour estimate on that plan. Every run requires it to pass (grad_checkpointing)."""
+    import score_teacher
+    from training import poolaudio
+    llayout.require_mount()
+    first = json.loads(probe_path().read_text())
+    decision = first["decision"]
+    if not decision.get("fits"):
+        raise RuntimeError("the memory probe chose no mode")
+    stores = source_stores()
+    _, pool, cid, plan, sources = pinned_plan(stores)
+    labels = open_labels(labels_run, pool, plan, extra=label_providers(stores, sources, CLEANING_VERSION),
+                         reject=reject_list())
+    replay = treplay.PlannedReplay(plan, pool, audio="materialized", store=poolaudio.store_dir(cid, plan.pool_batches),
+                                   sources=replay_sources(stores, sources))
+    extremes = plan_extremes(plan, replay, labels, token_counter(labels_run)) | {"plan": plan.identity()}
+    log(f"version 2 plan extremes: {json.dumps(extremes, default=str)}")
+    worst, names = [], []
+    for t in extremes["batches"]:
+        one = label_sources.Batcher(replay, labels, start=t, stop=t + 1)
+        try:
+            worst.append(one.next(timeout=1800))
+        finally:
+            one.close()
+        names.append(f"planned batch {t} ({', '.join(m for m in EXTREME_METRICS if t in extremes['top'][m])})")
+    with score_teacher.gpu_lock("b0prime memory probe (version 2 plan)", lock_wait):
+        train.deterministic_mode()
+        batches = {"worst": worst, "worst_names": names} | timed_batches(replay, labels, steps, stage3.SEED)
+        res = probe_mode(bool(decision["grad_checkpointing"]), batches, labels, steps)
+        res["timed_from_planned_batch"] = batches["timed_start"]
+        for key in ("_ctx", "_model", "_optimizer"):
+            res.pop(key)
+        torch.cuda.empty_cache()
+    replay.close()
+    check = probe_v2_check(decision, res)
+    out = check | {"result": res, "extremes": extremes, "worst_batches": names, "probe_sha256": _sha256_file(probe_path()),
+                   "loss_seam": tdt_fused.settings(), "coverage": EXTREMES_NOTE, "utc": train.utc(),
+                   "estimate": gpu_hours(plan, res["step_time_s"]) if res["step_time_s"] else None}
+    write_json(probe_v2_path(), out)
+    log(json.dumps({k: v for k, v in out.items() if k not in ("result", "extremes")}, default=str))
+    return 0 if check["pass"] else 1
+
+
 # ----------------------------------------------------------------------------- chunks and status
 
 def item_done(item: tuple) -> bool:
@@ -1616,6 +1736,15 @@ def status() -> dict:
             out[name] = "pending"
     for name, path in (("selection", selection_path()), ("wsd rule", wsd_rule_path())):
         out[name] = json.loads(path.read_text()) if path.exists() else "not frozen"
+    rule = out["wsd rule"]
+    if isinstance(rule, dict) and rule.get("stop"):
+        out["stage 3"] = ("STOPPED by the preregistered WSD rule (the main run does not start; the architect reports): "
+                          + "; ".join(rule.get("reasons") or []))
+    for name, path in (("memory probe", probe_path()), ("memory probe, version 2 plan", probe_v2_path()),
+                       ("read probe, version 2 plan", read_probe_path())):
+        body = json.loads(path.read_text()) if path.exists() else None
+        out[name] = "pending" if body is None else (body.get("decision") or {}).get("chosen") if "decision" in body \
+            else ("passed" if body.get("pass") else "FAILED")
     return out
 
 
@@ -1643,6 +1772,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--budget-minutes", type=float, default=CHUNK_MINUTES)
     p.add_argument("--cleaning-version", type=int, choices=label_sources.CLEANING_VERSIONS, default=CLEANING_VERSION,
                    help="passed to every train item")
+    p = sub.add_parser("read-probe")
+    p.add_argument("--max-seconds", type=float, default=120.0)
+    p = sub.add_parser("probe-v2")
+    p.add_argument("--labels-run", required=True)
+    p.add_argument("--steps", type=int, default=50)
+    p.add_argument("--lock-wait", type=float, default=4 * 3600.0)
     sub.add_parser("status")
     sub.add_parser("report")
     args = parser.parse_args(argv)
@@ -1658,6 +1793,18 @@ def main(argv: list[str] | None = None) -> int:
         return score_b0(args.lock_wait, args.deadline)
     if args.cmd == "probe":
         return probe_job(args.labels_run, args.steps, args.lock_wait)
+    if args.cmd == "read-probe":
+        try:
+            return read_probe_job(args.max_seconds)
+        except NotReady as e:
+            log(f"read-probe: not ready: {e}")
+            return EXIT_NOT_READY
+    if args.cmd == "probe-v2":
+        try:
+            return probe_v2_job(args.labels_run, args.steps, args.lock_wait)
+        except NotReady as e:
+            log(f"probe-v2: not ready: {e}")
+            return EXIT_NOT_READY
     if args.cmd == "chunk":
         return chunk(args.labels_run, args.budget_minutes, args.through, cleaning_version=args.cleaning_version)
     if args.cmd == "status":
