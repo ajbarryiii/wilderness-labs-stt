@@ -539,13 +539,17 @@ class PlanExtremes(World):
         self.check(plan2, replay, lab, 4)
 
     def test_encoder_frames_is_nemos(self):
+        """NeMo's own length functions with Parakeet TDT 0.6B v2's preprocessor (n_fft 512, hop 160, centered STFT)
+        and its 8x dw-striding subsampling (three stride-2 convolutions, kernel 3, padding 1 on each side)."""
         import torch
+        from nemo.collections.asr.parts.preprocessing.features import FilterbankFeatures
         from nemo.collections.asr.parts.submodules.subsampling import calc_length
-        for samples in (1, 159, 160, 16000, 16001, 123457, 480000):
-            mel = samples // 160 + 1
-            nemo = calc_length(torch.tensor([float(mel)]), all_paddings=2, kernel_size=3, stride=2, ceil_mode=False,
-                               repeat_num=3)
+        pre = types.SimpleNamespace(stft_pad_amount=None, n_fft=512, hop_length=160)
+        for samples in (160, 16000, 16001, 20480, 123457, 480000):
+            mel = FilterbankFeatures.get_seq_len(pre, torch.tensor([samples]))
+            nemo = calc_length(mel.float(), all_paddings=2, kernel_size=3, stride=2, ceil_mode=False, repeat_num=3)
             self.assertEqual(tb.encoder_frames(samples), int(nemo.item()), samples)
+        self.assertEqual((tb.encoder_frames(480000), tb.encoder_frames(20480)), (375, 16))
 
 
 class Serving(World):

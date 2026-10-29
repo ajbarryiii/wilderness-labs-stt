@@ -1316,9 +1316,10 @@ V2_RECHECK = ("ranked on the version 1 plan of pools 0-781 (its real rows); the 
 
 
 def encoder_frames(samples: int) -> int:
-    """The encoder frames of a clip of `samples` samples: the preprocessor's samples // 160 + 1 mel frames (10 ms hop,
-    centered), then the 8x subsampling's three stride-2 convolutions (kernel 3, padding 1): n -> (n - 1) // 2 + 1."""
-    n = int(samples) // 160 + 1
+    """The encoder frames of a clip of `samples` samples: the preprocessor's valid length samples // 160 mel frames
+    (NeMo's FilterbankFeatures.get_seq_len: 10 ms hop, n_fft 512, centered), then the 8x subsampling's three
+    stride-2 convolutions (kernel 3, padding 1): n -> (n - 1) // 2 + 1."""
+    n = int(samples) // 160
     for _ in range(3):
         n = (n - 1) // 2 + 1
     return n
