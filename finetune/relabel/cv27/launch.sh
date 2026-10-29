@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Jobs of the read-speech extra source (b0prime plan "Extra sources"), run through the `job` supervisor from
-# finetune/relabel. Every job has a memory cap (MEM = the measured peak + 25%).
+# finetune/relabel. Every job has a memory cap (MEM = the measured peak + 25%) and runs at --priority normal
+# (stage 3; the highest an agent may request).
 #
 #   cv27/launch.sh tests                          contract tests (foreground)
 #   cv27/launch.sh boilerplate                    reproduce the denylist's boilerplate 8-grams (CPU, cpu-heavy)
@@ -30,7 +31,7 @@ chain() {   # chain NAME N -- command...: N jobs NAME-1..N, each after the previ
   local prev="${CHAIN_AFTER:-}" after
   for i in $(seq 1 "$n"); do
     after=(); [[ -n "$prev" ]] && after=(--after "$prev")
-    job start "$name-$i" --cwd "$here" "${after[@]}" "${JOB_ARGS[@]}" -- "$@"
+    job start "$name-$i" --cwd "$here" --priority normal "${after[@]}" "${JOB_ARGS[@]}" -- "$@"
     prev="$name-$i"
   done
 }
@@ -39,17 +40,17 @@ case "${1:-}" in
   tests)
     exec ./python -m unittest discover -s tests -p 'test_cv27_*.py' -v ;;
   boilerplate)
-    exec job start cv27-boilerplate --cwd "$here" --needs cpu-heavy --mem 9G --cpus 7 --timeout 50m --stall 15m -- \
+    exec job start cv27-boilerplate --cwd "$here" --priority normal --needs cpu-heavy --mem 9G --cpus 7 --timeout 50m --stall 15m -- \
       ./python -m cv27 boilerplate --workers 6 ;;
   select)
-    exec job start cv27-select --cwd "$here" --needs cpu-heavy --mem "${2:?MEM}" --cpus 2 --timeout 2h --stall 30m -- \
+    exec job start cv27-select --cwd "$here" --priority normal --needs cpu-heavy --mem "${2:?MEM}" --cpus 2 --timeout 2h --stall 30m -- \
       ./python -m cv27 select ;;
   probe-decode)
-    exec job start cv27-probe-decode --cwd "$here" --needs cpu-heavy --mem "${2:?MEM}" --cpus 9 --timeout 30m \
+    exec job start cv27-probe-decode --cwd "$here" --priority normal --needs cpu-heavy --mem "${2:?MEM}" --cpus 9 --timeout 30m \
       --stall 10m -- ./python -m cv27 probe-decode --workers 8 ;;
   probe-b0)
     s="${2:?batch seconds}"; v="${3:?VRAM GB}"; mem="${4:?MEM}"
-    exec job start "cv27-probe-b0-${s%.*}" --cwd "$here" --needs gpu:shared --vram "$(lease "$v")" --mem "$mem" \
+    exec job start "cv27-probe-b0-${s%.*}" --cwd "$here" --priority normal --needs gpu:shared --vram "$(lease "$v")" --mem "$mem" \
       --cpus 9 --timeout 40m --stall 15m --env HF_HUB_OFFLINE=1 -- \
       ./python -m cv27 probe-b0 --batch-seconds "$s" --declared-vram-gb "$v" ;;
   decode)
@@ -57,7 +58,7 @@ case "${1:-}" in
     JOB_ARGS=(--needs cpu-heavy,disk-io --mem "$mem" --cpus 9 --timeout 2h15m --stall 20m)
     chain cv27-decode "$n" -- ./python -m cv27 decode --workers 8 --budget-minutes 110 ;;
   dev)
-    exec job start cv27-dev --cwd "$here" --mem "${2:?MEM}" --cpus 5 --timeout 30m --stall 10m -- \
+    exec job start cv27-dev --cwd "$here" --priority normal --mem "${2:?MEM}" --cpus 5 --timeout 30m --stall 10m -- \
       ./python -m cv27 dev --workers 4 ;;
   confirm)
     s="${2:?batch seconds}"; v="${3:?declared VRAM GB}"; l="${4:?LEASE = the probe job VRAM peak + 2 GB}"
@@ -68,10 +69,10 @@ case "${1:-}" in
     chain cv27-confirm "$n" -- ./python -m cv27 confirm --batch-seconds "$s" --declared-vram-gb "$v" \
       --budget-minutes 110 ;;
   finalize)
-    exec job start cv27-finalize --cwd "$here" --mem "${2:?MEM}" --cpus 2 --timeout 1h --stall 20m -- \
+    exec job start cv27-finalize --cwd "$here" --priority normal --mem "${2:?MEM}" --cpus 2 --timeout 1h --stall 20m -- \
       ./python -m cv27 finalize ;;
   ted-reject)
-    exec job start relabel-ted-reject --cwd "$here" --needs cpu-heavy --mem "${2:?MEM}" --cpus 7 --timeout 1h \
+    exec job start relabel-ted-reject --cwd "$here" --priority normal --needs cpu-heavy --mem "${2:?MEM}" --cpus 7 --timeout 1h \
       --stall 20m -- ./python -m pool.tedreject build --workers 6 ;;
   *)
     sed -n '2,24p' "$0"; exit 2 ;;
