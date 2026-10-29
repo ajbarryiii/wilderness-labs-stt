@@ -14,8 +14,11 @@ model is loaded.
     ./python -m training.cleaning_run check --labels-run RUN [--layer1-only] [--workers N]          CPU
     ./python -m training.cleaning_run audit --labels-run RUN [--workers N]          CPU (architect's sheets)
 
-Everything is written under $RELABEL_ROOT/cleaning/<RUN>/v<VERSION>/ (training/cleaning.production_dir), the
-architect's sheets under $RELABEL_ROOT/cleaning/audit/:
+Every command takes --version V (a cleaning version, cleaning.VERSIONS; default cleaning.VERSION). Everything is
+written under $RELABEL_ROOT/cleaning/<RUN>/v<V>/ (training/cleaning.production_dir), the architect's sheets under
+cleaning.audit_dir(V) ($RELABEL_ROOT/cleaning/audit/ for version 1, .../audit/v<V>/ after). Layer 2 is the same in
+every version, so a version's decision blocks may be copied into another version's decisions/ before assemble (a
+decision is keyed by its prompt):
 
     spans.parquet       one row per layer 2 span of a kept label of either label set (label_set, id, span, start,
                         end, original, set, prompt_key), over every label shard of the run's manifest
@@ -34,7 +37,13 @@ architect's sheets under $RELABEL_ROOT/cleaning/audit/:
                         once every prompt is decided)
     check.json          Check 3 (net harm per set, variant group and dialect entry; corpus WER of the
                         human-reference labels before and after) and Check 5 (spans found, chosen, left per set;
-                        labels changed per source and label set)
+                        labels changed per source and label set); from version 2 also the spelled-out acronym class
+                        ("acronyms": changed spans and labels, shapes, residual-risk classes, compact forms)
+    check-layer1.json   check --layer1-only (no choices artifact)
+
+    audit_dir(V)/check-sample[-layer1].tsv   Check 4: AUDIT_SAMPLE changed spans to read (from version 2,
+                        AUDIT_ACRONYMS of them spelled-out acronyms); audit_dir(V)/acronyms[-layer1].txt the acronym
+                        class's sheet (version 2)
 
 choose scores each prompt with one prefill: the probabilities of the option letters at the first answer position,
 renormalized over the options ("can't tell" included); cleaning.decide picks a spelling only if it is not "can't
@@ -49,6 +58,7 @@ import hashlib
 import json
 import os
 import random
+import re
 import resource
 import sys
 import time
@@ -61,6 +71,9 @@ LABEL_SETS = {"T*": "text", "B0": "b0_raw"}       # training/labels.py LABEL_SET
 BLOCK = 4096
 PROBE_DEFAULT = 2000
 AUDIT_SAMPLE = 200
+AUDIT_ACRONYMS = 50              # version 2: of the AUDIT_SAMPLE spans, drawn from the spelled-out acronyms (plan v5)
+RISK_SAMPLES = 15                # examples per residual-risk class on the acronym sheet
+COMPACT_LISTED = 150             # the most frequent compact forms on the acronym sheet and in the report
 AUDIT_SEED = "cleaning-v1-audit"
 MIN_JUDGED = 30
 FORMS_AUDIT_MATCHES = 30
@@ -158,12 +171,13 @@ def _pool_map(fn, items, workers: int, init_args: tuple):
 _W: dict = {}
 
 
-def _init(run_dir, tables_dir, with_spec: bool = False, choices_dir=None) -> None:
-    """Per worker: the run, the tables and (with_spec) the cleaning spec with the choices artifact, if any."""
+def _init(run_dir, tables_dir, with_spec: bool = False, choices_dir=None, version: int = C.VERSION) -> None:
+    """Per worker: the run, the tables and (with_spec) the cleaning spec of `version` with the choices artifact, if
+    any."""
     _W["run"] = Run(run_dir)
     _W["tables"] = C.Tables.load(tables_dir)
     _W["spec"] = None if not with_spec else C.Cleaning(
-        _W["tables"], None if choices_dir is None else C.Choices.load(choices_dir))
+        _W["tables"], None if choices_dir is None else C.Choices.load(choices_dir), version)
 
 
 # ----------------------------------------------------------------------------- spans
@@ -189,8 +203,9 @@ def _spans_shard(shard):
 
 
 def spans(run_dir: Path, out: Path, workers: int = 1, tables_dir: Path | None = None,
-          sample_shards: int | None = None) -> dict:
-    """Every layer 2 span of the run's kept labels, both label sets, and the unique prompts (CPU)."""
+          sample_shards: int | None = None, version: int = C.VERSION) -> dict:
+    """Every layer 2 span of the run's kept labels, both label sets, and the unique prompts (CPU). Layer 2 is the same
+    in every version; the version is recorded so that the artifact assembled from them is of that version."""
     t0 = time.time()
     run, tables = Run(run_dir, sample_shards), C.Tables.load(tables_dir)
     rows, prompts = [], {}
@@ -219,7 +234,7 @@ def spans(run_dir: Path, out: Path, workers: int = 1, tables_dir: Path | None = 
     for r in rows:
         per_set[r[6]][r[0]] += 1
     unique_per_set = Counter(v[0] for v in prompts.values())
-    report = {"version": C.VERSION, "label_run": run.rel, "contract_sha256": run.contract_sha256,
+    report = {"version": version, "label_run": run.rel, "contract_sha256": run.contract_sha256,
               "tables_sha256": tables.sha256, "template_sha256": C.TEMPLATE_SHA256, "shards": len(run.shards),
               "sampled_shards": run.sampled,
               "kept": dict(kept), "labels_with_span": dict(with_span), "spans": len(rows),
@@ -233,11 +248,11 @@ def spans(run_dir: Path, out: Path, workers: int = 1, tables_dir: Path | None = 
 
 # ----------------------------------------------------------------------------- choose
 
-def _read_prompts(work: Path, tables: C.Tables) -> list[dict]:
+def _read_prompts(work: Path, tables: C.Tables, version: int = C.VERSION) -> list[dict]:
     import pyarrow.parquet as pq
     meta = json.loads((work / "spans.json").read_text())
     for key, want in (("tables_sha256", tables.sha256), ("template_sha256", C.TEMPLATE_SHA256),
-                      ("version", C.VERSION)):
+                      ("version", version)):
         if meta.get(key) != want:
             raise RuntimeError(f"{work}/spans.json was written under {key} {meta.get(key)!r}, not {want!r}; "
                                "re-run spans")
@@ -285,9 +300,10 @@ def _score(scorer, batch: list[dict]) -> list[list[float]]:
     return [[float(x) for x in probs] for probs in got]
 
 
-def probe(work: Path, scorer, n: int = PROBE_DEFAULT, tables_dir: Path | None = None) -> dict:
+def probe(work: Path, scorer, n: int = PROBE_DEFAULT, tables_dir: Path | None = None,
+          version: int = C.VERSION) -> dict:
     """Score n prompts spread over the list (no decisions written): throughput, memory, extrapolated time."""
-    prompts = _read_prompts(work, C.Tables.load(tables_dir))
+    prompts = _read_prompts(work, C.Tables.load(tables_dir), version)
     step = max(1, len(prompts) // max(1, n))
     sample = prompts[::step][:n]
     scorer.load()
@@ -304,10 +320,11 @@ def probe(work: Path, scorer, n: int = PROBE_DEFAULT, tables_dir: Path | None = 
 
 
 def choose(work: Path, scorer, budget_minutes: float | None = None, block: int = BLOCK,
-           tables_dir: Path | None = None, assemble_when_done: bool = True, run_dir: Path | None = None) -> dict:
+           tables_dir: Path | None = None, assemble_when_done: bool = True, run_dir: Path | None = None,
+           version: int = C.VERSION) -> dict:
     """Score every unique prompt not yet decided, block by block (resumable); assemble once all are decided."""
     tables = C.Tables.load(tables_dir)
-    prompts = _read_prompts(work, tables)
+    prompts = _read_prompts(work, tables, version)
     done, metas = _decided(work)
     todo = [p for p in prompts if p["prompt_key"] not in done]
     log(f"choose: {len(prompts)} unique prompts, {len(prompts) - len(todo)} decided, {len(todo)} to score")
@@ -338,14 +355,15 @@ def choose(work: Path, scorer, budget_minutes: float | None = None, block: int =
     left = sum(p["prompt_key"] not in done for p in prompts)
     out = {"unique_prompts": len(prompts), "decided": len(prompts) - left, "left": left}
     if left == 0 and assemble_when_done:
-        out["manifest"] = assemble(work, run_dir, tables_dir)
+        out["manifest"] = assemble(work, run_dir, tables_dir, version)
     return out
 
 
-def determinism(work: Path, scorer, fraction: float = 0.01, tables_dir: Path | None = None) -> dict:
+def determinism(work: Path, scorer, fraction: float = 0.01, tables_dir: Path | None = None,
+                version: int = C.VERSION) -> dict:
     """Check 2: re-score a fixed fraction of the decided prompts and compare the decisions."""
     tables = C.Tables.load(tables_dir)
-    prompts = _read_prompts(work, tables)
+    prompts = _read_prompts(work, tables, version)
     done, _ = _decided(work)
     cut = int(fraction * 2 ** 32)
     sample = [p for p in prompts if p["prompt_key"] in done and int(p["prompt_key"][:8], 16) < cut]
@@ -365,14 +383,15 @@ def determinism(work: Path, scorer, fraction: float = 0.01, tables_dir: Path | N
 
 # ----------------------------------------------------------------------------- assemble
 
-def assemble(work: Path, run_dir: Path | None, tables_dir: Path | None = None) -> dict:
+def assemble(work: Path, run_dir: Path | None, tables_dir: Path | None = None, version: int = C.VERSION) -> dict:
     """choices.parquet + manifest.json from spans.parquet and the decision blocks (decisions of prompts no longer
-    in the spans, e.g. of a disabled set, are ignored)."""
+    in the spans, e.g. of a disabled set, are ignored). A decision is keyed by its prompt (template, label text, span,
+    options), not by the cleaning version, so another version's decision blocks may be copied into decisions/."""
     import pyarrow as pa
     import pyarrow.parquet as pq
     tables = C.Tables.load(tables_dir)
     meta = json.loads((work / "spans.json").read_text())
-    _read_prompts(work, tables)                                   # same tables and template as the spans
+    _read_prompts(work, tables, version)                          # same tables, template and version as the spans
     if run_dir is not None and Run(run_dir).contract_sha256 != meta["contract_sha256"]:
         raise RuntimeError("the spans were found in another label run")
     done, metas = _decided(work)
@@ -398,7 +417,7 @@ def assemble(work: Path, run_dir: Path | None, tables_dir: Path | None = None) -
         "original": sp["original"], "set": sp["set"], "options": options, "probs": probs, "chosen": chosen},
         schema=schema)
     engine = metas[0]["engine"] if metas else {}
-    manifest = {"version": C.VERSION, "label_run": meta["label_run"], "contract_sha256": meta["contract_sha256"],
+    manifest = {"version": version, "label_run": meta["label_run"], "contract_sha256": meta["contract_sha256"],
                 "tables_sha256": tables.sha256, "template_sha256": C.TEMPLATE_SHA256, "threshold": C.THRESHOLD,
                 "model": {"alias": engine.get("alias"), "revision": engine.get("revision")}, "engine": engine,
                 "rows": len(sp["id"]), "file_sha256": sha, "unique_prompts": len(set(sp["prompt_key"])),
@@ -454,13 +473,73 @@ def _rank(*parts) -> str:
     return hashlib.sha256("|".join(map(str, (AUDIT_SEED,) + parts)).encode()).hexdigest()
 
 
+def acronym_shape(run: str) -> tuple[int, str, bool, bool]:
+    """(letters, separators, final period, plural) of a spelled-out acronym run as written (an acronym Edit's `run`):
+    separators "dotted" ("A.P.I."), "dotted+spaced" ("A. P. I."), "spaced" ("A P I") or "mixed"."""
+    caps = [k for k, c in enumerate(run) if "A" <= c <= "Z"]
+    seps = {run[a + 1:b] for a, b in zip(caps, caps[1:])}
+    kind = {frozenset({"."}): "dotted", frozenset({". "}): "dotted+spaced",
+            frozenset({" "}): "spaced"}.get(frozenset(seps), "mixed")
+    tail = run[caps[-1] + 1:] if caps else ""
+    return len(caps), kind, tail.startswith("."), "s" in tail
+
+
+def acronym_compact(run: str) -> str:
+    """The compact form of a run as the acronym rule writes it, before any table (no final period)."""
+    n, kind, final, plural = acronym_shape(run)
+    return "".join(c for c in run if "A" <= c <= "Z") + ("s" if plural else "")
+
+
+def acronym_risks(text: str, e: C.Edit) -> list[str]:
+    """The residual-risk classes (cleaning plan v5, review p4) a changed acronym span falls in; heuristics that only
+    count the class's changed spans for the audit, never a rule of the cleaning. Read from the edit's run as written
+    (an edit may also hold table words merged into it)."""
+    n, kind, final, plural = acronym_shape(e.run)
+    letters = "".join(c for c in e.run if "A" <= c <= "Z")
+    s = e.start + e.original.find(e.run)
+    end = s + len(e.run)
+    rest = text[:s] + " " + text[end:]
+    out = []
+    if n >= 3 and re.search(rf"(?<![^\W_]){letters}(?![^\W_])", rest, re.IGNORECASE):
+        out.append("spelled word: the letters are a word of the label")
+    if n >= 6 and kind in ("dotted", "dotted+spaced"):
+        out.append("dotted, 6+ letters (letter-by-letter spelling)")
+    if n >= 6 and kind == "spaced":
+        out.append("spaced, 6+ letters (letter-by-letter spelling)")
+    if n >= 3 and kind == "spaced" and _MATH.search(rest):
+        out.append("variables: spaced, 3+ letters, mathematical words in the label")
+    if n >= 3 and set(letters) <= set("ABCDEFG"):
+        out.append("notes: 3+ letters of A-G" + (", music words in the label" if _MUSIC.search(rest) else ""))
+    if n == 2 and kind == "dotted+spaced" and not final:
+        out.append("two letters '. ' without a final period ('Plan A. B is', 'I. A lot')")
+    if kind == "mixed":
+        out.append("mixed separators ('I. A P I')")
+    if text.strip(" .,!?") == e.run.strip(" ."):
+        out.append("the whole label is the run (a spelling: 'M. I. N. E.')")
+    if re.match(r" ?[a-z](?![^\W_])", text[end:]):
+        out.append("a single lowercase letter follows (a partial run: 'L. C. d.')")
+    return out
+
+
+_MATH = re.compile(r"(?i)(?<![^\W_])(?:equals?|plus|minus|times|squared|cubed|sub|prime|matrix|matrices|vectors?|"
+                   r"variables?|derivative|integral|sum|transpose|indices|index|modulo|mod)(?![^\W_])|[=+^]")
+_MUSIC = re.compile(r"(?i)(?<![^\W_])(?:notes?|chords?|scales?|keys?|melody|sharp|flat|major|minor|guitar|piano|"
+                    r"tune|songs?|sing|octave|riff|bass|play(?:s|ed|ing)?)(?![^\W_])")
+
+
+def _acronym_totals() -> dict:
+    return {"spans": Counter(), "labels": Counter(), "shape": Counter(), "letters": Counter(), "risks": Counter(),
+            "compact": Counter(), "risk_sample": defaultdict(list)}
+
+
 def _check_shard(shard):
     import evaluate
     run, spec = _W["run"], _W["spec"]
     t = run.read(shard, LABEL_COLUMNS)
     refs = None
     out = {"changed": Counter(), "labels": Counter(), "edits": Counter(), "screen": defaultdict(Counter),
-           "wer": Counter(), "sample": []}
+           "wer": Counter(), "sample": [], "acr_sample": [], "acr": _acronym_totals()}
+    acr = out["acr"]
     for i, source, rk, texts in kept_texts(t):
         for ls, text in texts.items():
             out["labels"][ls] += 1
@@ -469,8 +548,22 @@ def _check_shard(shard):
                 out["changed"][f"{ls}\t{source}"] += 1
             for n, e in enumerate(edits):
                 out["edits"][f"{ls}\t{_group_key(e)}"] += 1
-                out["sample"].append((_rank(ls, i, n), ls, i, e.table, e.group, e.original, e.replacement,
-                                      text[max(0, e.start - CONTEXT):e.end + CONTEXT]))
+                acronym = e.table == C.ACRONYM_TABLE
+                out["acr_sample" if acronym else "sample"].append(
+                    (_rank(ls, i, n), ls, i, e.table, e.group, e.original, e.replacement,
+                     text[max(0, e.start - CONTEXT):e.end + CONTEXT]))
+                if acronym:
+                    letters, kind, final, plural = acronym_shape(e.run)
+                    acr["spans"][ls] += 1
+                    acr["shape"][f"{ls}\t{kind}{', final period' if final else ''}{', plural' if plural else ''}"] += 1
+                    acr["letters"][f"{ls}\t{letters if letters < 6 else '6+'}"] += 1
+                    acr["compact"][f"{ls}\t{acronym_compact(e.run)}"] += 1
+                    for risk in acronym_risks(text, e):
+                        acr["risks"][f"{ls}\t{risk}"] += 1
+                        acr["risk_sample"][risk].append((_rank("r", ls, i, n), ls, i, e.original, e.replacement,
+                                                         _ctx(text, e.start, e.end)))
+            if any(e.table == C.ACRONYM_TABLE for e in edits):
+                acr["labels"][ls] += 1
             if rk != "human":
                 continue
             if refs is None:
@@ -502,6 +595,8 @@ def _check_shard(shard):
                 g["original_matches"] += r[0]
                 g["cleaned_matches"] += r[1]
     out["sample"] = sorted(out["sample"])[:AUDIT_SAMPLE]
+    out["acr_sample"] = sorted(out["acr_sample"])[:AUDIT_ACRONYMS]
+    acr["risk_sample"] = {k: sorted(v)[:RISK_SAMPLES] for k, v in acr["risk_sample"].items()}
     return out
 
 
@@ -523,24 +618,35 @@ def judge(screen: dict[str, dict[str, Counter]]) -> dict:
 
 
 def check(run_dir: Path, work: Path, out_dir: Path | None = None, layer1_only: bool = False, workers: int = 1,
-          tables_dir: Path | None = None, sample_shards: int | None = None) -> dict:
-    """Checks 3 and 5 over every kept label of the run (CPU)."""
+          tables_dir: Path | None = None, sample_shards: int | None = None, version: int = C.VERSION) -> dict:
+    """Checks 3 and 5 over every kept label of the run under cleaning `version` (CPU), and the Check 4 sample: the
+    AUDIT_SAMPLE lowest-ranked changed spans, of which AUDIT_ACRONYMS (or all, if fewer) are spelled-out acronyms
+    (version 2; plan v5), with the acronym class's sheet (shapes, residual-risk classes, compact forms)."""
     t0 = time.time()
     run = Run(run_dir, sample_shards)
     choices_dir = None if layer1_only else work
-    spec = C.Cleaning(C.Tables.load(tables_dir), None if choices_dir is None else C.Choices.load(choices_dir))
+    spec = C.Cleaning(C.Tables.load(tables_dir), None if choices_dir is None else C.Choices.load(choices_dir),
+                      version)
     spec.bind_run(run.contract_sha256)
     agg = {"changed": Counter(), "labels": Counter(), "edits": Counter(), "screen": defaultdict(Counter),
            "wer": Counter()}
-    sample = []
-    for n, part in enumerate(_pool_map(_check_shard, run.shards, workers, (run_dir, tables_dir, True, choices_dir))):
+    acr = _acronym_totals()
+    sample, acr_sample = [], []
+    for n, part in enumerate(_pool_map(_check_shard, run.shards, workers,
+                                       (run_dir, tables_dir, True, choices_dir, version))):
         for k in ("changed", "labels", "edits", "wer"):
             agg[k].update(part[k])
         for g, c in part["screen"].items():
             agg["screen"][g].update(c)
         sample = sorted(sample + part["sample"])[:AUDIT_SAMPLE]
+        acr_sample = sorted(acr_sample + part["acr_sample"])[:AUDIT_ACRONYMS]
+        for k in ("spans", "labels", "shape", "letters", "risks", "compact"):
+            acr[k].update(part["acr"][k])
+        for k, v in part["acr"]["risk_sample"].items():
+            acr["risk_sample"][k] = sorted(acr["risk_sample"][k] + v)[:RISK_SAMPLES]
         if (n + 1) % 200 == 0:
             log(f"check: {n + 1}/{len(run.shards)} shards")
+    sample = sorted(acr_sample + sample[:AUDIT_SAMPLE - len(acr_sample)])
     screen: dict[str, dict[str, Counter]] = defaultdict(dict)
     for key, c in agg["screen"].items():
         ls, group = key.split("\t", 1)
@@ -560,7 +666,7 @@ def check(run_dir: Path, work: Path, out_dir: Path | None = None, layer1_only: b
     for key, v in agg["edits"].items():
         ls, group = key.split("\t", 1)
         edits[group][ls] = v
-    report = {"version": C.VERSION, "label_run": run.rel, "tables_sha256": spec.tables.sha256,
+    report = {"version": version, "label_run": run.rel, "tables_sha256": spec.tables.sha256,
               "choices_sha256": spec.identity()["choices_sha256"], "layer1_only": layer1_only,
               "check3": {"min_judged": MIN_JUDGED, "groups": verdict,
                          "disabled": sorted(g for g, v in verdict.items() if v["disabled"]),
@@ -575,16 +681,71 @@ def check(run_dir: Path, work: Path, out_dir: Path | None = None, layer1_only: b
         probe_path = work / "probe.json"
         report["check5"]["gpu_seconds"] = {"run": manifest.get("gpu_seconds"), "probe": json.loads(
             probe_path.read_text())["seconds"] if probe_path.exists() else None}
+    if version >= 2:
+        report["acronyms"] = _acronym_report(acr)
     out_dir = work if out_dir is None else Path(out_dir)
     write_json(out_dir / ("check-layer1.json" if layer1_only else "check.json"), report)
-    audit = C.audit_dir()
+    audit = C.audit_dir(version)
     audit.mkdir(parents=True, exist_ok=True)
-    name = "check-sample-layer1.tsv" if layer1_only else "check-sample.tsv"
-    with open(audit / name, "w", encoding="utf-8") as f:
+    suffix = "-layer1" if layer1_only else ""
+    with open(audit / f"check-sample{suffix}.tsv", "w", encoding="utf-8") as f:
         f.write("label_set\tid\ttable\tgroup\toriginal\treplacement\twrong (architect)\tcontext\n")
         for _, ls, i, table, group, o, r, ctx in sample:
             f.write("\t".join((ls, i, table, group, o, r, "", ctx.replace("\t", " ").replace("\n", " "))) + "\n")
+    if version >= 2:
+        _write_acronym_sheet(audit / f"acronyms{suffix}.txt", report, acr)
     return report
+
+
+def _per_label_set(c: Counter) -> dict:
+    """{"<label set>\\t<key>": n} -> {key: {label set: n}}."""
+    out: dict = defaultdict(dict)
+    for key, v in c.items():
+        ls, k = key.split("\t", 1)
+        out[k][ls] = v
+    return dict(out)
+
+
+def _acronym_report(acr: dict) -> dict:
+    compact = _per_label_set(acr["compact"])
+    top = sorted(compact, key=lambda k: (-sum(compact[k].values()), k))[:COMPACT_LISTED]
+    return {"changed_spans": dict(acr["spans"]), "labels_changed": dict(acr["labels"]),
+            "shapes": _per_label_set(acr["shape"]), "letters": _per_label_set(acr["letters"]),
+            "residual_risks": _per_label_set(acr["risks"]), "distinct_compact_forms": len(compact),
+            "compact": {k: compact[k] for k in top},
+            "note": "residual-risk classes are heuristics that count the class's changed spans for the audit"}
+
+
+def _write_acronym_sheet(path: Path, report: dict, acr: dict) -> None:
+    a = report["acronyms"]
+    g = report["check3"]["groups"].get(f"{C.ACRONYM_TABLE}:{C.ACRONYM_GROUP}")
+
+    def counts(d: dict) -> str:
+        return ", ".join(f"{ls} {d.get(ls, 0)}" for ls in LABEL_SETS)
+
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(f"# Spelled-out acronyms (cleaning v{report['version']}, plan v5): every changed span of the run's "
+                f"kept labels.\n# label run {report['label_run']}, tables {report['tables_sha256']}, layer 1 only: "
+                f"{report['layer1_only']}\n\n")
+        f.write(f"changed spans: {counts(a['changed_spans'])}\nlabels changed: {counts(a['labels_changed'])}\n")
+        if g is not None:
+            f.write("Check 3 (aligned changed spans; original / cleaned matches): " + "; ".join(
+                f"{k} {c.get('aligned', 0)} aligned, {c.get('original_matches', 0)} / {c.get('cleaned_matches', 0)}"
+                for k, c in g["cells"].items()) + f"; disabled: {g['disabled']}\n")
+        f.write("\n== shapes\n")
+        for k, v in sorted(a["shapes"].items(), key=lambda kv: -sum(kv[1].values())):
+            f.write(f"   {k}: {counts(v)}\n")
+        f.write("\n== letters\n")
+        for k, v in sorted(a["letters"].items()):
+            f.write(f"   {k}: {counts(v)}\n")
+        f.write("\n== residual-risk classes (heuristics; a span may be in several)\n")
+        for k, v in sorted(a["residual_risks"].items(), key=lambda kv: -sum(kv[1].values())):
+            f.write(f"\n-- {k}: {counts(v)}\n")
+            for _, ls, i, o, r, ctx in acr["risk_sample"].get(k, []):
+                f.write(f"   {ls:3s} {o!r} -> {r!r}   {ctx}\n")
+        f.write(f"\n== compact forms ({a['distinct_compact_forms']} distinct; the {COMPACT_LISTED} most frequent)\n")
+        for k, v in a["compact"].items():
+            f.write(f"   {k}: {counts(v)}\n")
 
 
 def layer2_counts(work: Path) -> dict:
@@ -1087,6 +1248,9 @@ def main(argv: list[str] | None = None) -> int:
     for name in ("spans", "choose", "assemble", "check", "audit"):
         s = sub.add_parser(name)
         s.add_argument("--labels-run", required=True, help="the C2 run name (labels/<T*>/<run>)")
+        s.add_argument("--version", type=int, choices=C.VERSIONS, default=C.VERSION,
+                       help=f"cleaning version (default {C.VERSION}; stages 2b and 2c read version 1): the run's "
+                            "cleaning/<run>/v<version>/ and the sheets in cleaning.audit_dir(version)")
         if name in ("spans", "check", "audit"):
             s.add_argument("--workers", type=int, default=8)
             s.add_argument("--sample-shards", type=int, metavar="N",
@@ -1107,27 +1271,29 @@ def main(argv: list[str] | None = None) -> int:
     import relabel_paths
     relabel_paths.require_mount()
     run_dir = _run_dir(a.labels_run)
-    work = C.production_dir(a.labels_run)
+    work = C.production_dir(a.labels_run, a.version)
     sample = getattr(a, "sample_shards", None)
     out = getattr(a, "out", None)
     if sample and out is None:
         p.error("--sample-shards needs --out (a sampled run is a measurement, never the run's artifact)")
     if a.cmd == "spans":
-        r = spans(run_dir, out or work, a.workers, sample_shards=sample)
+        r = spans(run_dir, out or work, a.workers, sample_shards=sample, version=a.version)
         print(json.dumps({k: r[k] for k in ("kept", "labels_with_span", "spans", "spans_per_label_set",
                                             "spans_per_set", "unique_prompts", "seconds")}, indent=1))
         return 0
     if a.cmd == "assemble":
-        print(json.dumps(assemble(work, run_dir), indent=1))
+        print(json.dumps(assemble(work, run_dir, version=a.version), indent=1))
         return 0
     if a.cmd == "check":
-        r = check(run_dir, work, out_dir=out, layer1_only=a.layer1_only, workers=a.workers, sample_shards=sample)
+        r = check(run_dir, work, out_dir=out, layer1_only=a.layer1_only, workers=a.workers, sample_shards=sample,
+                  version=a.version)
         print(json.dumps({"disabled": r["check3"]["disabled"], "wer": r["corpus_wer_human_reference_labels"]},
                          indent=1))
         return 0
     if a.cmd == "audit":
+        out = out or C.audit_dir(a.version)
         r = audit(run_dir, a.workers, out=out, sample_shards=sample)
-        print(json.dumps({"human_reference_labels": r["human_reference_labels"], "out": str(out or C.audit_dir())}))
+        print(json.dumps({"human_reference_labels": r["human_reference_labels"], "out": str(out)}))
         return 0
     return gpu_command(a, work, run_dir)
 
@@ -1139,14 +1305,15 @@ def gpu_command(a, work: Path, run_dir: Path) -> int:
     import score_teacher
     scorer = make_scorer(a.engine, a.gpu_memory_utilization, a.declared_vram_gb)
     mode = "probe" if a.probe else "determinism" if a.determinism else "choose"
+    version = getattr(a, "version", C.VERSION)
     try:
         with score_teacher.gpu_lock(f"relabel cleaning {mode} {a.labels_run}", a.lock_wait):
             if a.probe:
-                out = probe(work, scorer, a.probe)
+                out = probe(work, scorer, a.probe, version=version)
             elif a.determinism:
-                out = determinism(work, scorer, a.determinism)
+                out = determinism(work, scorer, a.determinism, version=version)
             else:
-                out = choose(work, scorer, a.budget_minutes, run_dir=run_dir)
+                out = choose(work, scorer, a.budget_minutes, run_dir=run_dir, version=version)
     except score_teacher.LockBusy as exc:
         print(f"refusing to run: {exc}", file=sys.stderr)
         return score_teacher.LOCK_BUSY_EXIT

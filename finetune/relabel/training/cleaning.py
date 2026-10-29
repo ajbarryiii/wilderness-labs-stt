@@ -1,6 +1,6 @@
 """Label cleaning (stage 2a, cleaning plan): a versioned, deterministic read-time layer over the training labels.
 
-    spec = Cleaning.load(choices_dir=...)          committed tables + the layer 2 choices artifact of one label run
+    spec = Cleaning.load(choices_dir=..., version=V)   committed tables + the layer 2 choices artifact of one label run
     spec.clean(text, item_id, label_set) -> str    the cleaned training text of one kept label
     spec.edits(text, item_id, label_set)           (cleaned text, [Edit]) with every changed span
     spec.spans(text) -> [Span]                     layer 2 spans of a label (what the choices artifact decides)
@@ -8,6 +8,11 @@
 
 training/labels.py LabelStore.open(..., cleaning=spec) applies clean() to every kept label of either label set;
 cleaning=None reproduces the uncleaned texts and identity byte for byte.
+
+Versions (VERSIONS; the version is in the identity and the artifact's manifest, so a run's resume check refuses a
+checkpoint of another version): 1 = layer 2 + the tables of layer 1 (stages 2b and 2c; production() defaults to it);
+2 = version 1 + spelled-out acronyms in layer 1, before the tables (cleaning plan v5; stage 3 and later). Version 1's
+texts are unchanged by version 2's code.
 
 Tables (terms/cleaning/, committed; UTF-8; blank lines and lines starting with "#" are ignored; fields are separated
 by one TAB; every written form is ASCII):
@@ -49,18 +54,36 @@ replacement is all lowercase, the replacement's first letter is capitalized ("Go
 "May be", "Double check" -> "Double-check"); a replacement with any capital letter is written as listed ("GAAP",
 "Git", "OK", "I'm going to").
 
+Spelled-out acronyms (version 2, layer 1, before the tables; table "acronyms", group "spelled-out"): a run of two or
+more capitals A-Z, each a single-letter token, separated by ". ", "." or " ", becomes the compact acronym ("A. P. I.",
+"A.P.I.", "A P I" -> "API"). A dotted run (any separator with ".") takes one final "." after its last letter; an
+undotted run's following "." is the sentence's and stays. A plural "s" or "'s" (after the last letter or the final
+".", optionally after one space: "G.P.U.s", "G. P. U. s", "G P U's", "G P Us") becomes "s"; a possessive reads as a
+plural. A dotted run takes no "s" attached directly to its last letter ("hard R. Is that": the word "Is").
+Whole tokens: the run is not joined on either side to a letter or digit, directly or by "'", "." or "-" (hyphens join,
+they do not separate: "A-V-E-N-S-A-R" and "C T X-ray" keep the hyphenated token; a last capital that starts a word,
+"A B Cat", is not part of the run). Left as written, before anything else: two letters dotted with no space ("U.S.")
+or undotted ("T V"); a run of only "I" ("I I think"); initials, a run followed by one space and a word that starts
+with a capital and is not all capitals as layer 1 will write it ("J. A. Mellon", also "...the A. P. I. We"). The
+final "." is kept only when it is the label's last character ("...the A. P. I." -> "...the API."), else dropped
+("the A.P.I. and" -> "the API and"). The tables then apply to the result ("H T M L" -> "HTML", "M A C O S" -> "macOS",
+one edit), and the two repeat until a round changes nothing (a table edit can split a chain left as written: "P T S
+D. M R Is" -> "PTSD. MRIs"), so layer 1 is idempotent. Runs overlapping a layer 2 span are left as written.
+
 Load-time checks: every side has the token syntax above; written forms are unique (case-insensitively) across the
-three layer 1 tables; layer 1 is idempotent (each output is left unchanged by layer 1); a layer 2 set has two or
-more distinct members and at least one that starts spans; no member key is shared by two sets; the layers are
-disjoint: no layer 1 form matches inside a member, and no member matches inside a layer 1 form.
+three layer 1 tables; layer 1 is idempotent (each output is left unchanged by layer 1, and no output, as listed or
+with its first letter capitalized, has a single capital letter as a token that could join an acronym run); a layer 2
+set has two or more distinct members and at least one that starts spans; no member key is shared by two sets; the
+layers are disjoint: no layer 1 form matches inside a member, and no member matches inside a layer 1 form.
 
 Read-time order (clean): the empty text stays empty. Layer 2: the spans of the original text (members that start
 spans, matched as above) take the recorded choice of the artifact, if one was chosen (else they are left as
 written); the replacement must be a member of the span's set, and the text outside the spans is verified
-byte-identical. Then layer 1 on the result, which never touches a layer 2 span. A non-empty text never becomes empty.
+byte-identical. Then layer 1 on the result (version 2: acronyms, then the tables), which never touches a layer 2
+span. A non-empty text never becomes empty.
 Without a choices artifact (choices_dir None) layer 2 leaves every span as written (layer 1 only; used by checks).
 
-The choices artifact ($RELABEL_ROOT/cleaning/<label run>/v<VERSION>/, written by training/cleaning_run.py):
+The choices artifact ($RELABEL_ROOT/cleaning/<label run>/v<version>/, written by training/cleaning_run.py):
 choices.parquet (CHOICE_COLUMNS: one row per span of a kept label of either label set) and manifest.json
 (version, model alias and revision, template sha256, threshold, tables sha256, the label run's contract sha256,
 row count, file sha256). Cleaning.load refuses an artifact whose file, row count, version, template, threshold or
@@ -78,7 +101,8 @@ from pathlib import Path
 
 import terms as committed_terms
 
-VERSION = 1
+VERSION = 2                    # the latest cleaning version (the default of Cleaning and the runner)
+VERSIONS = (1, 2)              # 1: stages 2b and 2c; 2: version 1 + spelled-out acronyms (plan v5), stage 3 on
 TABLES_DIR = committed_terms.HERE / "cleaning"
 TABLE_FILES = ("forms.tsv", "variants.tsv", "dialect.tsv", "choices.tsv")
 THRESHOLD = 0.9
@@ -107,6 +131,15 @@ _DIALECT = re.compile(rf"'?{_WORD}(?:[ -]{_WORD})*'?")
 _STANDARD = re.compile(rf"{_WORD}(?:[ -]{_WORD})*")
 _LEFT = r"(?<![^\W_])(?<![^\W_]['.])"
 _RIGHT = r"(?![^\W_])(?!['.][^\W_])"
+# spelled-out acronyms (version 2): a chain of capitals A-Z separated by ". ", "." or " ", starting a token (not
+# joined to a token on its left by "'", "." or "-"); _acronym cuts it into a run
+_CHAIN = re.compile(r"(?<![^\W_])(?<![^\W_]['.\-])[A-Z](?:(?:\. ?| )[A-Z])+")
+_JOINED = re.compile(r"[^\W_]|['.\-][^\W_]")       # at a position: the token goes on
+_PLURAL = re.compile(r" ?'?s(?![^\W_])(?!['.\-][^\W_])")
+_NEXT_WORD = re.compile(r" (\S+)")
+_LONE_CAPITAL = re.compile(r"(?<![^\W_])(?<![^\W_]['.\-])[A-Z](?![^\W_])(?!['.\-][^\W_])")
+ACRONYM_TABLE, ACRONYM_GROUP = "acronyms", "spelled-out"
+LAYER1_ROUNDS = 8              # version 2: rounds of (acronyms, tables) allowed to reach a text they leave unchanged
 
 
 class ArtifactMismatch(RuntimeError):
@@ -175,6 +208,7 @@ class Edit:
     replacement: str
     out_start: int = -1
     out_end: int = -1
+    run: str | None = None   # an acronym edit: the spelled-out run as written (original may add merged table words)
 
 
 @dataclass(frozen=True)
@@ -219,6 +253,11 @@ class Layer1:
             out, edits = self.apply(e.output)
             if out != e.output:
                 raise ValueError(f"layer 1 is not idempotent: {e.output!r} (from {e.key!r}) becomes {out!r}")
+            # a lone capital letter in an output could join a spelled-out acronym on a second pass
+            for written in (e.output, cased(e.output, "X")):
+                if _LONE_CAPITAL.search(written):
+                    raise ValueError(f"{e.table}.tsv: the output {written!r} (from {e.key!r}) has a single "
+                                     "capital letter as a token")
 
     def search(self, text: str) -> str | None:
         """The first layer 1 form matched in text (whether or not it would change it), or None."""
@@ -249,17 +288,11 @@ class Layer1:
             return text, []
         out, edits, pos, delta = [], [], 0, 0
         for m in self._re.finditer(text):
+            rep = self._replacement(text, m, protect)
+            if rep is None:
+                continue
             s, e, found = m.start(), m.end(), m.group(0)
-            if any(s < pe and ps < e for ps, pe in protect):
-                continue
             entry = self.entries[found.lower()]
-            if found.endswith("'") and self._open_quote(text, e - 1):
-                continue
-            if found.startswith("'") and text[e:e + 1] == "'":
-                continue
-            rep = cased(entry.output, found)
-            if rep == found:
-                continue
             out.append(text[pos:s])
             out.append(rep)
             edits.append(Edit(1, entry.table, entry.group, s, e, found, rep, s + delta, s + delta + len(rep)))
@@ -269,6 +302,83 @@ class Layer1:
             return text, []
         out.append(text[pos:])
         return "".join(out), edits
+
+    def _replacement(self, text: str, m: re.Match, protect) -> str | None:
+        """What apply writes for the table match m of text (None: left as written)."""
+        s, e, found = m.start(), m.end(), m.group(0)
+        if any(s < pe and ps < e for ps, pe in protect):
+            return None
+        entry = self.entries[found.lower()]
+        if found.endswith("'") and self._open_quote(text, e - 1):
+            return None
+        if found.startswith("'") and text[e:e + 1] == "'":
+            return None
+        rep = cased(entry.output, found)
+        return None if rep == found else rep
+
+    def acronyms(self, text: str, protect: list[tuple[int, int]] = ()) -> tuple[str, list[Edit]]:
+        """Spelled-out acronyms (cleaning version 2; module docstring), before apply; runs overlapping a protected
+        [start, end) are left as written. Edits as in apply."""
+        if not text:
+            return text, []
+        out, edits, pos, delta = [], [], 0, 0
+        for m in _CHAIN.finditer(text):
+            run = self._acronym(text, m, protect)
+            if run is None:
+                continue
+            s, e, rep = run
+            if s < pos or any(s < pe and ps < e for ps, pe in protect):
+                continue
+            out.append(text[pos:s])
+            out.append(rep)
+            edits.append(Edit(1, ACRONYM_TABLE, ACRONYM_GROUP, s, e, text[s:e], rep, s + delta, s + delta + len(rep),
+                              text[s:e]))
+            delta += len(rep) - (e - s)
+            pos = e
+        if not edits:
+            return text, []
+        out.append(text[pos:])
+        return "".join(out), edits
+
+    def _acronym(self, text: str, m: re.Match, protect) -> tuple[int, int, str] | None:
+        """The run of the chain m as (start, end, compact form), or None (fewer than two letters, not a whole
+        token, or excluded)."""
+        letters = [m.start() + k for k, c in enumerate(m.group(0)) if "A" <= c <= "Z"]
+        while len(letters) >= 2:
+            e = letters[-1] + 1
+            seps = [text[a + 1:b] for a, b in zip(letters, letters[1:])]
+            dotted = any("." in sep for sep in seps)
+            final = dotted and text.startswith(".", e)          # an undotted run's period is the sentence's
+            q = e + final
+            plural = _PLURAL.match(text, q)
+            if plural and dotted and not final and plural.group(0) == "s":
+                plural = None                                   # "the R. Is that": a word, not "R" + "I" + "s"
+            if plural:
+                q = plural.end()
+            if _JOINED.match(text, q):
+                if final or plural or not _JOINED.match(text, e):
+                    return None                                 # the run goes on as another token ("A.P.I.x")
+                letters.pop()                                   # the last capital starts a word ("A B Cat")
+                continue
+            word = self._next_word(text, q, protect)
+            if (len(letters) == 2 and seps[0] in (".", " ")                 # "U.S.", "T V"
+                    or all(text[p] == "I" for p in letters)                 # "I I think"
+                    or word and word[0].isupper() and word != word.upper()):    # initials: "J. A. Mellon"
+                return None
+            compact = "".join(text[p] for p in letters) + ("s" if plural else "")
+            return letters[0], q, compact + ("." if final and not plural and q == len(text) else "")
+        return None
+
+    def _next_word(self, text: str, q: int, protect) -> str | None:
+        """The token (up to the next space) directly after one space at q, as the tables will write it, or None.
+        Read the same way on a cleaned text, so the initials exclusion does not change on a second pass."""
+        nm = _NEXT_WORD.match(text, q)
+        if nm is None:
+            return None
+        out, edits = self.apply(text, protect)
+        if not edits:
+            return nm.group(1)
+        return re.match(r"\S*", out[q + 1 + _shift(edits, q + 1):]).group(0)
 
 
 class Tables:
@@ -397,6 +507,38 @@ class Tables:
                 for k, m in enumerate(self._span_re.finditer(text))]
 
 
+def _shift(edits: list[Edit], p: int) -> int:
+    """The length change made by the edits (start, end in their input) that end at or before p."""
+    return sum(len(e.replacement) - (e.end - e.start) for e in edits if e.end <= p)
+
+
+def _compose(text: str, out: str, first: list[Edit], second: list[Edit]) -> list[Edit]:
+    """Two passes' edits (first: text -> mid, second: mid -> out) as edits from text to out. Edits that overlap in
+    mid become one: an acronym edit if one of them is ("M A C O S" -> "MACOS" -> "macOS" is one acronym edit, with the
+    acronym's run), else of the first pass's table and group."""
+    if not first:
+        return second
+    items = sorted([(e.out_start, e.out_end, 0, e) for e in first] + [(e.start, e.end, 1, e) for e in second],
+                   key=lambda x: (x[0], x[1], x[2]))
+    clusters: list[list] = []
+    for a, b, k, e in items:
+        if clusters and a < clusters[-1][1]:
+            clusters[-1][1] = max(clusters[-1][1], b)
+            clusters[-1][2].append((k, e))
+        else:
+            clusters.append([a, b, [(k, e)]])
+    res = []
+    for a, b, members in clusters:
+        # mid -> text: undo the first pass's edits before; mid -> out: apply the second pass's edits before
+        s = a - sum(len(e.replacement) - (e.end - e.start) for e in first if e.out_end <= a)
+        t = b - sum(len(e.replacement) - (e.end - e.start) for e in first if e.out_end <= b)
+        o, p = a + _shift(second, a), b + _shift(second, b)
+        members.sort(key=lambda m: m[0])
+        lead = next((e for k, e in members if e.table == ACRONYM_TABLE), members[0][1])
+        res.append(Edit(1, lead.table, lead.group, s, t, text[s:t], out[o:p], o, p, lead.run))
+    return res
+
+
 def marked(text: str, start: int, end: int) -> str:
     return text[:start] + MARK_OPEN + text[start:end] + MARK_CLOSE + text[end:]
 
@@ -462,11 +604,13 @@ class Choices:
 class Cleaning:
     """A loaded cleaning spec: the tables and (optionally) one label run's choices artifact."""
 
-    def __init__(self, tables: Tables, choices: Choices | None = None):
-        self.tables, self.choices = tables, choices
+    def __init__(self, tables: Tables, choices: Choices | None = None, version: int = VERSION):
+        if version not in VERSIONS:
+            raise ValueError(f"cleaning version {version!r} is not one of {VERSIONS}")
+        self.tables, self.choices, self.version = tables, choices, version
         if choices is not None:
             m = choices.manifest
-            for key, want in (("version", VERSION), ("tables_sha256", tables.sha256),
+            for key, want in (("version", version), ("tables_sha256", tables.sha256),
                               ("template_sha256", TEMPLATE_SHA256), ("threshold", THRESHOLD)):
                 if m.get(key) != want:
                     raise ArtifactMismatch(f"choices artifact {choices.dir}: {key} {m.get(key)!r}, these tables and "
@@ -474,12 +618,13 @@ class Cleaning:
         self._sets = {cs.name: cs for cs in tables.sets}
 
     @classmethod
-    def load(cls, tables_dir: Path | None = None, choices_dir: Path | None = None) -> "Cleaning":
+    def load(cls, tables_dir: Path | None = None, choices_dir: Path | None = None,
+             version: int = VERSION) -> "Cleaning":
         tables = Tables.load(tables_dir)
-        return cls(tables, None if choices_dir is None else Choices.load(choices_dir))
+        return cls(tables, None if choices_dir is None else Choices.load(choices_dir), version)
 
     def identity(self) -> dict:
-        return {"version": VERSION, "tables_sha256": self.tables.sha256,
+        return {"version": self.version, "tables_sha256": self.tables.sha256,
                 "choices_sha256": None if self.choices is None else self.choices.file_sha256}
 
     def bind_run(self, contract_sha256: str) -> None:
@@ -541,7 +686,24 @@ class Cleaning:
         kept_out.append(mid[p_out:])
         if kept_in != kept_out:
             raise RuntimeError(f"{label_set} {item_id}: layer 2 changed text outside its spans")
-        out, l1 = self.tables.layer1.apply(mid, protect)
+        layer1 = self.tables.layer1
+        if self.version >= 2:
+            # spelled-out acronyms, then the tables on their result (the protected spans shifted accordingly), until
+            # nothing changes: a table edit can split a chain left as written and expose a run ("P T S D. M R Is")
+            cur, prot, l1 = mid, list(protect), []
+            for k in range(LAYER1_ROUNDS):
+                nxt, acr = layer1.acronyms(cur, prot)
+                if k and not acr:
+                    break
+                prot = [(ps + _shift(acr, ps), pe + _shift(acr, ps)) for ps, pe in prot]
+                out, tab = layer1.apply(nxt, prot)
+                prot = [(ps + _shift(tab, ps), pe + _shift(tab, ps)) for ps, pe in prot]
+                l1 = _compose(mid, out, l1, _compose(cur, out, acr, tab))
+                cur = out
+            else:
+                raise RuntimeError(f"{label_set} {item_id}: layer 1 did not settle in {LAYER1_ROUNDS} rounds")
+        else:
+            out, l1 = layer1.apply(mid, protect)
         edits = self._merge(l2, l1, protect, spans)
         if out == "":
             raise RuntimeError(f"{label_set} {item_id}: cleaning made a non-empty label empty")
@@ -558,13 +720,14 @@ class Cleaning:
         out = []
         for e in l1:
             back = sum(d for pe, d in shifts if pe <= e.start)
-            out.append(Edit(1, e.table, e.group, e.start - back, e.end - back, e.original, e.replacement))
+            out.append(Edit(1, e.table, e.group, e.start - back, e.end - back, e.original, e.replacement,
+                            run=e.run))
         allx = sorted(l2 + out, key=lambda x: x.start)
         final, delta = [], 0
         for e in allx:
             o = e.start + delta
             final.append(Edit(e.layer, e.table, e.group, e.start, e.end, e.original, e.replacement, o,
-                              o + len(e.replacement)))
+                              o + len(e.replacement), e.run))
             delta += len(e.replacement) - (e.end - e.start)
         return final
 
@@ -572,18 +735,21 @@ class Cleaning:
         return self.edits(text, item_id, label_set)[0]
 
 
-def production_dir(label_run: str) -> Path:
-    """$RELABEL_ROOT/cleaning/<label run>/v<VERSION> (the choices artifact and its work files)."""
+def production_dir(label_run: str, version: int = VERSION) -> Path:
+    """$RELABEL_ROOT/cleaning/<label run>/v<version> (the choices artifact and its work files)."""
     from labeling import layout
-    return layout.relabel_root() / "cleaning" / label_run / f"v{VERSION}"
+    return layout.relabel_root() / "cleaning" / label_run / f"v{version}"
 
 
-def audit_dir() -> Path:
-    """$RELABEL_ROOT/cleaning/audit (architect's sheets; never committed)."""
+def audit_dir(version: int = VERSION) -> Path:
+    """The architect's sheets (never committed): $RELABEL_ROOT/cleaning/audit for version 1,
+    $RELABEL_ROOT/cleaning/audit/v<version> for later versions."""
     from labeling import layout
-    return layout.relabel_root() / "cleaning" / "audit"
+    base = layout.relabel_root() / "cleaning" / "audit"
+    return base if version == 1 else base / f"v{version}"
 
 
-def production(label_run: str) -> Cleaning:
-    """The committed tables with the label run's choices artifact (what training reads by default)."""
-    return Cleaning.load(choices_dir=production_dir(label_run))
+def production(label_run: str, version: int = 1) -> Cleaning:
+    """The committed tables with the label run's choices artifact of `version`. The default, version 1, is what
+    stages 2b and 2c read (train_decoder.label_cleaning); stage 3 and later pass version=2 (cleaning plan v5)."""
+    return Cleaning.load(choices_dir=production_dir(label_run, version), version=version)
