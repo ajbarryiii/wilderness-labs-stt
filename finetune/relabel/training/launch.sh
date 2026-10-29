@@ -21,6 +21,8 @@
 #
 # Stage 3 (b0prime plan; train_b0prime.py), on the plan of pools 0-781 with every pool materialized. MEM is the
 # job's memory cap (the probe's host peak plus 25%), VRAM the probe's lease (its peak plus 2 GB):
+#   training/launch.sh b0p-plan MEM               build the multi-source plan of pools 0-781 (CPU job; needs every
+#                                                 extra source's clip store)
 #   training/launch.sh b0p-tests                  the stage 3 contract tests that need no GPU (foreground)
 #   training/launch.sh b0p-gpu-tests VRAM         the stage 3 CUDA contract tests (tiny model), a short GPU job
 #   training/launch.sh b0p-probe RUN VRAM MEM     the memory probe (A1 at 600 s batches, with and without gradient
@@ -97,7 +99,12 @@ case "${1:-}" in
     exec ./python train_decoder.py status ;;
   report)
     exec ./python train_decoder.py report "${@:2}" ;;
+  b0p-plan)
+    m="${2:?memory cap, e.g. 16G}"
+    exec job start relabel-b0prime-plan --cwd "$here" --mem "$m" --timeout 2h -- ./python train_b0prime.py plan ;;
   b0p-tests)
+    ./python -m unittest discover -s tests -p 'test_training_sources.py' -v
+    ./python -m unittest discover -s tests -p 'test_b0prime_report.py' -v
     exec ./python -m unittest discover -s tests -p 'test_b0prime.py' -v ;;
   b0p-gpu-tests)
     v="${2:?VRAM GB}"
