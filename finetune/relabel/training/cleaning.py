@@ -11,8 +11,25 @@ cleaning=None reproduces the uncleaned texts and identity byte for byte.
 
 Versions (VERSIONS; the version is in the identity and the artifact's manifest, so a run's resume check refuses a
 checkpoint of another version): 1 = layer 2 + the tables of layer 1 (stages 2b and 2c; production() defaults to it);
-2 = version 1 + spelled-out acronyms in layer 1, before the tables (cleaning plan v5; stage 3 and later). Version 1's
-texts are unchanged by version 2's code.
+2 = version 1 + spelled-out acronyms in layer 1, before the tables (cleaning plan v5), + layer 0, B0's punctuation
+transferred into T*'s labels (cleaning plan v6; T* only; its rule constants LAYER0 enter the identity); stage 3 and
+later. Version 1's texts are unchanged by version 2's code.
+
+Layer 0 (version 2, T* only; clean/edits take the id's B0 label as `donor`, as stored in `b0_raw`; rule "union"):
+tokens are whitespace-separated; each is leading non-word characters, a core and trailing non-word characters, and a
+pure-punctuation token joins the trail of the word before it. A word's key is its core lowercased with non-word
+characters removed; a word's mark is the last of PUNCT_MARKS in its trail. The keys of T* and B0 are aligned by a
+minimum-edit Levenshtein alignment (backtrace from the end preferring the diagonal, then a T* word without a B0 word);
+aligned = matched with equal keys. At an aligned pair (i, j), B0's mark is inserted right after T*'s word's core when
+T*'s word has no mark, B0's word has one, T*'s trail holds only marks and PUNCT_CLOSERS (so a false start "the-" is
+left alone), B0's core has no "." (abbreviations), and the boundary condition holds: (i + 1, j + 1) is aligned too, or
+i and j are both the last words. The mark goes right after the core, before any closing quote or bracket (as the
+analysis prototype). If the inserted mark is one of PUNCT_ENDS, (i + 1, j + 1) is aligned and B0's word j + 1 starts
+with a capital letter, T*'s word i + 1, if it starts with a lowercase letter, takes it upper-cased. Guard: nothing is done
+when B0 has no word or the word edit rate of B0's keys against T*'s exceeds PUNCT_GUARD. Layer 0 never edits inside a
+layer 2 span (an insertion strictly inside one, a capital within one), so layer 2's spans stay as layer 2 wrote them.
+No mark is removed or changed, no word added, removed or respelled; an unchanged label is byte-identical. Its edits
+are layer 0 edits of table PUNCT_TABLE (group "mark": an insertion, empty original; group "capital").
 
 Tables (terms/cleaning/, committed; UTF-8; blank lines and lines starting with "#" are ignored; fields are separated
 by one TAB; every written form is ASCII):
@@ -79,8 +96,9 @@ layers are disjoint: no layer 1 form matches inside a member, and no member matc
 Read-time order (clean): the empty text stays empty. Layer 2: the spans of the original text (members that start
 spans, matched as above) take the recorded choice of the artifact, if one was chosen (else they are left as
 written); the replacement must be a member of the span's set, and the text outside the spans is verified
-byte-identical. Then layer 1 on the result (version 2: acronyms, then the tables), which never touches a layer 2
-span. A non-empty text never becomes empty.
+byte-identical. Then (version 2, T*) layer 0 on the result. Then layer 1 (version 2: acronyms, then the tables),
+which never touches a layer 2 span. A non-empty text never becomes empty. Edits of layers 0 and 1 that overlap become
+one edit of layer 1's table and group.
 Without a choices artifact (choices_dir None) layer 2 leaves every span as written (layer 1 only; used by checks).
 
 The choices artifact ($RELABEL_ROOT/cleaning/<label run>/v<version>/, written by training/cleaning_run.py):
@@ -140,6 +158,20 @@ _NEXT_WORD = re.compile(r" (\S+)")
 _LONE_CAPITAL = re.compile(r"(?<![^\W_])(?<![^\W_]['.\-])[A-Z](?![^\W_])(?!['.\-][^\W_])")
 ACRONYM_TABLE, ACRONYM_GROUP = "acronyms", "spelled-out"
 LAYER1_ROUNDS = 8              # version 2: rounds of (acronyms, tables) allowed to reach a text they leave unchanged
+# layer 0 (version 2, cleaning plan v6): B0's punctuation transferred into T*'s labels
+PUNCT_MARKS = ".,?!:;"
+PUNCT_ENDS = ".?!"
+PUNCT_CLOSERS = "\"')]}”’"
+PUNCT_GUARD = 0.3
+PUNCT_LABEL_SET = "T*"
+PUNCT_TABLE = "punctuation"
+LAYER0 = {"name": "punctuation transfer", "rule": "union", "version": 1, "label_set": PUNCT_LABEL_SET,
+          "donor": "b0_raw", "marks": PUNCT_MARKS, "sentence_marks": PUNCT_ENDS, "closers": PUNCT_CLOSERS,
+          "guard": PUNCT_GUARD, "boundary": "next words aligned, or both last", "alignment": "levenshtein, diagonal "
+          "first, then a T* word without a B0 word", "abbreviation": "no '.' in B0's core"}
+_TOKEN = re.compile(r"\S+")
+_PARTS = re.compile(r"^(\W*)(.*?)(\W*)$", re.S)
+_NONWORD = re.compile(r"\W")
 
 
 class ArtifactMismatch(RuntimeError):
@@ -512,10 +544,11 @@ def _shift(edits: list[Edit], p: int) -> int:
     return sum(len(e.replacement) - (e.end - e.start) for e in edits if e.end <= p)
 
 
-def _compose(text: str, out: str, first: list[Edit], second: list[Edit]) -> list[Edit]:
+def _compose(text: str, out: str, first: list[Edit], second: list[Edit], second_leads: bool = False) -> list[Edit]:
     """Two passes' edits (first: text -> mid, second: mid -> out) as edits from text to out. Edits that overlap in
     mid become one: an acronym edit if one of them is ("M A C O S" -> "MACOS" -> "macOS" is one acronym edit, with the
-    acronym's run), else of the first pass's table and group."""
+    acronym's run), else of the first pass's table and group (second_leads: of the second pass's, if one of them is
+    from it: layer 0 then layer 1), with the lead edit's layer."""
     if not first:
         return second
     items = sorted([(e.out_start, e.out_end, 0, e) for e in first] + [(e.start, e.end, 1, e) for e in second],
@@ -534,9 +567,194 @@ def _compose(text: str, out: str, first: list[Edit], second: list[Edit]) -> list
         t = b - sum(len(e.replacement) - (e.end - e.start) for e in first if e.out_end <= b)
         o, p = a + _shift(second, a), b + _shift(second, b)
         members.sort(key=lambda m: m[0])
-        lead = next((e for k, e in members if e.table == ACRONYM_TABLE), members[0][1])
-        res.append(Edit(1, lead.table, lead.group, s, t, text[s:t], out[o:p], o, p, lead.run))
+        lead = next((e for k, e in members if e.table == ACRONYM_TABLE), None)
+        if lead is None and second_leads:
+            lead = next((e for k, e in members if k == 1), None)
+        lead = lead or members[0][1]
+        res.append(Edit(lead.layer, lead.table, lead.group, s, t, text[s:t], out[o:p], o, p, lead.run))
     return res
+
+
+# ----------------------------------------------------------------------------- layer 0 (version 2)
+
+@dataclass
+class _Word:
+    key: str
+    core: str
+    core_start: int
+    core_end: int
+    trail: str
+
+
+def _words(text: str) -> list[_Word]:
+    """The word tokens of text (module docstring, "Layer 0"): pure-punctuation tokens join the trail of the word
+    before them."""
+    out: list[_Word] = []
+    for m in _TOKEN.finditer(text):
+        lead, core, trail = _PARTS.match(m.group(0)).groups()
+        if not core:
+            if out:
+                out[-1].trail += m.group(0)
+            continue
+        key = _NONWORD.sub("", core.lower())
+        if key:
+            s = m.start() + len(lead)
+            out.append(_Word(key, core, s, s + len(core), trail))
+    return out
+
+
+def _mark(trail: str) -> str:
+    for ch in reversed(trail):
+        if ch in PUNCT_MARKS:
+            return ch
+    return ""
+
+
+_LEV: dict = {}
+
+
+def _numba_kernels():
+    """The alignment kernels (numba, compiled once per process)."""
+    if not _LEV:
+        import numba
+        import numpy as np
+
+        @numba.njit(cache=True)
+        def lev(a, b):
+            n, m = a.shape[0], b.shape[0]
+            if n == 0:
+                return m
+            if m == 0:
+                return n
+            prev = np.arange(m + 1)
+            cur = np.empty(m + 1, dtype=prev.dtype)
+            for i in range(1, n + 1):
+                cur[0] = i
+                for j in range(1, m + 1):
+                    c = prev[j - 1] + (0 if a[i - 1] == b[j - 1] else 1)
+                    d = prev[j] + 1
+                    if d < c:
+                        c = d
+                    d = cur[j - 1] + 1
+                    if d < c:
+                        c = d
+                    cur[j] = c
+                prev, cur = cur, prev
+            return prev[m]
+
+        @numba.njit(cache=True)
+        def align(a, b):
+            n, m = a.shape[0], b.shape[0]
+            cost = np.zeros((n + 1, m + 1), dtype=np.int32)
+            for i in range(n + 1):
+                cost[i, 0] = i
+            for j in range(m + 1):
+                cost[0, j] = j
+            for i in range(1, n + 1):
+                for j in range(1, m + 1):
+                    c = cost[i - 1, j - 1] + (0 if a[i - 1] == b[j - 1] else 1)
+                    d = cost[i - 1, j] + 1
+                    if d < c:
+                        c = d
+                    d = cost[i, j - 1] + 1
+                    if d < c:
+                        c = d
+                    cost[i, j] = c
+            out = np.empty((min(n, m), 2), dtype=np.int64)
+            k = 0
+            i, j = n, m
+            while i > 0 or j > 0:
+                if i > 0 and j > 0 and cost[i, j] == cost[i - 1, j - 1] + (0 if a[i - 1] == b[j - 1] else 1):
+                    if a[i - 1] == b[j - 1]:
+                        out[k, 0] = i - 1
+                        out[k, 1] = j - 1
+                        k += 1
+                    i -= 1
+                    j -= 1
+                elif i > 0 and cost[i, j] == cost[i - 1, j] + 1:
+                    i -= 1
+                else:
+                    j -= 1
+            return out[:k][::-1]
+
+        _LEV.update(lev=lev, align=align, np=np)
+    return _LEV
+
+
+def _codes(a: list[str], b: list[str]):
+    np = _numba_kernels()["np"]
+    vocab: dict[str, int] = {}
+    return (np.array([vocab.setdefault(w, len(vocab)) for w in a], dtype=np.int64),
+            np.array([vocab.setdefault(w, len(vocab)) for w in b], dtype=np.int64))
+
+
+def key_errors(a: list[str], b: list[str]) -> int:
+    """The word edit distance (substitutions, deletions, insertions) of key sequences a and b."""
+    if a == b:
+        return 0
+    if not a or not b:
+        return len(a) + len(b)
+    return int(_numba_kernels()["lev"](*_codes(a, b)))
+
+
+def key_matches(a: list[str], b: list[str]) -> list[tuple[int, int]]:
+    """The matched pairs (i, j), a[i] == b[j], of the minimum-edit alignment with the fixed tie-break (module
+    docstring, "Layer 0")."""
+    if a == b:
+        return [(k, k) for k in range(len(a))]
+    if not a or not b:
+        return []
+    return [(int(i), int(j)) for i, j in _numba_kernels()["align"](*_codes(a, b))]
+
+
+def punctuation_transfer(text: str, donor: str, protect=()) -> tuple[str, list[Edit]]:
+    """Layer 0 (module docstring): T*'s text with B0's marks transferred from donor, and its edits (start, end in
+    text; out_start, out_end in the result). `protect`: layer 2's spans [start, end) in text, never edited inside."""
+    tw = _words(text)
+    bw = _words(donor) if donor else []
+    if not tw or not bw:
+        return text, []
+    a, b = [w.key for w in tw], [w.key for w in bw]
+    if key_errors(a, b) / len(a) > PUNCT_GUARD:
+        return text, []
+    pairs = key_matches(a, b)
+    nxt = dict(pairs)
+
+    def inside(p: int, cap: bool) -> bool:
+        return any((ps <= p < pe) if cap else (ps < p < pe) for ps, pe in protect)
+
+    ops: list[tuple[int, str, str]] = []                  # (position in text, original, replacement)
+    for i, j in pairs:
+        t, w = tw[i], bw[j]
+        mark = _mark(w.trail)
+        if _mark(t.trail) or not mark or "." in w.core:
+            continue
+        if not all(ch in PUNCT_MARKS or ch in PUNCT_CLOSERS for ch in t.trail):
+            continue
+        if not (nxt.get(i + 1) == j + 1 or (i == len(tw) - 1 and j == len(bw) - 1)):
+            continue
+        if inside(t.core_end, False):
+            continue
+        ops.append((t.core_end, "", mark))
+        if mark in PUNCT_ENDS and nxt.get(i + 1) == j + 1:
+            b_next, p = bw[j + 1].core[0], tw[i + 1].core_start
+            if b_next.isalpha() and b_next.isupper() and text[p].isalpha() and text[p].islower() \
+                    and not inside(p, True):
+                ops.append((p, text[p], text[p].upper()))
+    if not ops:
+        return text, []
+    ops.sort(key=lambda x: (x[0], len(x[1])))
+    pieces, edits, pos, delta = [], [], 0, 0
+    for p, original, rep in ops:
+        pieces.append(text[pos:p])
+        pieces.append(rep)
+        o = p + delta
+        edits.append(Edit(0, PUNCT_TABLE, "mark" if not original else "capital", p, p + len(original), original, rep,
+                          o, o + len(rep)))
+        delta += len(rep) - len(original)
+        pos = p + len(original)
+    pieces.append(text[pos:])
+    return "".join(pieces), edits
 
 
 def marked(text: str, start: int, end: int) -> str:
@@ -624,8 +842,15 @@ class Cleaning:
         return cls(tables, None if choices_dir is None else Choices.load(choices_dir), version)
 
     def identity(self) -> dict:
-        return {"version": self.version, "tables_sha256": self.tables.sha256,
-                "choices_sha256": None if self.choices is None else self.choices.file_sha256}
+        out = {"version": self.version, "tables_sha256": self.tables.sha256,
+               "choices_sha256": None if self.choices is None else self.choices.file_sha256}
+        if self.version >= 2:
+            out["layer0"] = dict(LAYER0)
+        return out
+
+    def needs_donor(self, label_set: str) -> bool:
+        """Whether clean/edits of this label set read the id's B0 label (layer 0, version 2, T* only)."""
+        return self.version >= 2 and label_set == PUNCT_LABEL_SET
 
     def bind_run(self, contract_sha256: str) -> None:
         """Refuse a choices artifact of another label run contract."""
@@ -656,8 +881,10 @@ class Cleaning:
             out.append(chosen)
         return out
 
-    def edits(self, text: str, item_id: str, label_set: str) -> tuple[str, list[Edit]]:
-        """The cleaned text and its changed spans (module docstring, read-time order)."""
+    def edits(self, text: str, item_id: str, label_set: str, donor: str | None = None) -> tuple[str, list[Edit]]:
+        """The cleaned text and its changed spans (module docstring, read-time order); donor: the id's B0 label as
+        stored, read by layer 0 (needs_donor); None reads as no B0 label (layer 0 does nothing). The training path
+        (training/labels.py LabelStore) and the runner always pass the record's b0_raw."""
         if text == "":
             self._recorded([], text, item_id, label_set)      # no spans: the artifact must record none either
             return "", []
@@ -687,10 +914,16 @@ class Cleaning:
         if kept_in != kept_out:
             raise RuntimeError(f"{label_set} {item_id}: layer 2 changed text outside its spans")
         layer1 = self.tables.layer1
+        l0 = []
+        if self.needs_donor(label_set):
+            mid0, l0 = punctuation_transfer(mid, donor or "", protect)
+            protect0 = [(ps + _shift(l0, ps), pe + _shift(l0, ps)) for ps, pe in protect]
+        else:
+            mid0, protect0 = mid, protect
         if self.version >= 2:
             # spelled-out acronyms, then the tables on their result (the protected spans shifted accordingly), until
             # nothing changes: a table edit can split a chain left as written and expose a run ("P T S D. M R Is")
-            cur, prot, l1 = mid, list(protect), []
+            cur, prot, l1 = mid0, list(protect0), []
             for k in range(LAYER1_ROUNDS):
                 nxt, acr = layer1.acronyms(cur, prot)
                 if k and not acr:
@@ -698,12 +931,14 @@ class Cleaning:
                 prot = [(ps + _shift(acr, ps), pe + _shift(acr, ps)) for ps, pe in prot]
                 out, tab = layer1.apply(nxt, prot)
                 prot = [(ps + _shift(tab, ps), pe + _shift(tab, ps)) for ps, pe in prot]
-                l1 = _compose(mid, out, l1, _compose(cur, out, acr, tab))
+                l1 = _compose(mid0, out, l1, _compose(cur, out, acr, tab))
                 cur = out
             else:
                 raise RuntimeError(f"{label_set} {item_id}: layer 1 did not settle in {LAYER1_ROUNDS} rounds")
         else:
             out, l1 = layer1.apply(mid, protect)
+        if l0:
+            l1 = _compose(mid, out, l0, l1, second_leads=True)      # layers 0 and 1, from the layer 2 result
         edits = self._merge(l2, l1, protect, spans)
         if out == "":
             raise RuntimeError(f"{label_set} {item_id}: cleaning made a non-empty label empty")
@@ -720,7 +955,7 @@ class Cleaning:
         out = []
         for e in l1:
             back = sum(d for pe, d in shifts if pe <= e.start)
-            out.append(Edit(1, e.table, e.group, e.start - back, e.end - back, e.original, e.replacement,
+            out.append(Edit(e.layer, e.table, e.group, e.start - back, e.end - back, e.original, e.replacement,
                             run=e.run))
         allx = sorted(l2 + out, key=lambda x: x.start)
         final, delta = [], 0
@@ -731,8 +966,8 @@ class Cleaning:
             delta += len(e.replacement) - (e.end - e.start)
         return final
 
-    def clean(self, text: str, item_id: str, label_set: str) -> str:
-        return self.edits(text, item_id, label_set)[0]
+    def clean(self, text: str, item_id: str, label_set: str, donor: str | None = None) -> str:
+        return self.edits(text, item_id, label_set, donor)[0]
 
 
 def production_dir(label_run: str, version: int = VERSION) -> Path:

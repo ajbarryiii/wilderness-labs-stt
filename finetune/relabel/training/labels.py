@@ -18,7 +18,8 @@ KeyError (every replayed id must have one).
 
 Label cleaning (cleaning plan, stage 2a; training/cleaning.py): with `cleaning` (a loaded Cleaning spec), every kept
 text of either label set is read through cleaning.clean, which never changes which ids are kept, never returns None
-and never empties a non-empty text (an empty kept text stays empty and kept). The identity gains "cleaning"
+and never empties a non-empty text (an empty kept text stays empty and kept). Under cleaning version 2, T*'s texts
+are cleaned with the same record's `b0_raw` as layer 0's donor (cleaning plan v6); B0's are cleaned as before. The identity gains "cleaning"
 ({version, tables_sha256, choices_sha256}, which enters identity["sha256"]) and "cleaned_labels". The store refuses a
 choices artifact of another label run contract or tables, or whose recorded spans do not match a label. With
 cleaning=None the texts and the identity are exactly the uncleaned ones.
@@ -102,7 +103,9 @@ class LabelStore:
             meta = json.loads(meta_path.read_text())
             if shards.sha256_file(path) != meta["sha256"]:
                 raise RuntimeError(f"{path}: SHA-256 differs from its meta")
-            table = pq.read_table(path, columns=["id", "disposition", "teacher", column]).to_pydict()
+            donor = cleaning is not None and cleaning.needs_donor(label_set)      # layer 0 (version 2) reads b0_raw
+            cols = ["id", "disposition", "teacher", column] + (["b0_raw"] if donor and column != "b0_raw" else [])
+            table = pq.read_table(path, columns=cols).to_pydict()
             if len(table["id"]) != meta["records"]:
                 raise RuntimeError(f"{path}: {len(table['id'])} records, meta says {meta['records']}")
             rejected = {}
@@ -111,8 +114,9 @@ class LabelStore:
                     shards.shard_name(k), meta["sha256"], table["id"], table["disposition"],
                     lambda: table["text"] if column == "text" else _t_star_texts(path, table["id"]))
                 repeated.update(rejected)
-            for i, disposition, teacher, value in zip(table["id"], table["disposition"], table["teacher"],
-                                                      table[column]):
+            donors = table["b0_raw"] if donor else [None] * len(table["id"])
+            for i, disposition, teacher, value, b0 in zip(table["id"], table["disposition"], table["teacher"],
+                                                          table[column], donors):
                 if i in texts:
                     raise RuntimeError(f"id {i} has two label records")
                 if teacher != run["teacher"]:
@@ -124,7 +128,9 @@ class LabelStore:
                         texts[i] = None
                         continue
                     if cleaning is not None:
-                        text = cleaning.clean(value, i, label_set)
+                        if donor and b0 is None:
+                            raise RuntimeError(f"{i}: kept by T* but no b0_raw (layer 0's donor)")
+                        text = cleaning.clean(value, i, label_set, b0) if donor else cleaning.clean(value, i, label_set)
                         if text is None or (value != "" and text == ""):
                             raise RuntimeError(f"{i}: cleaning returned {text!r} for a kept label")
                         cleaned += text != value

@@ -42,8 +42,13 @@ decision is keyed by its prompt):
     check-layer1.json   check --layer1-only (no choices artifact)
 
     audit_dir(V)/check-sample[-layer1].tsv   Check 4: AUDIT_SAMPLE changed spans to read (from version 2,
-                        AUDIT_ACRONYMS of them spelled-out acronyms); audit_dir(V)/acronyms[-layer1].txt the acronym
-                        class's sheet (version 2)
+                        AUDIT_ACRONYMS of them spelled-out acronyms, and AUDIT_PUNCTUATION layer 0 edits added:
+                        cleaning plan v6, 250 in all); audit_dir(V)/acronyms[-layer1].txt the acronym class's sheet
+                        (version 2)
+
+Version 2 (cleaning plan v6): T*'s labels are cleaned with the record's b0_raw as layer 0's donor; Check 3 never
+screens layer 0 edits (punctuation and case change no normalized word) and reports the spelled-out acronym class
+without judging it (NOT_JUDGED: AJ's decision), so it is never disabled.
 
 choose scores each prompt with one prefill: the probabilities of the option letters at the first answer position,
 renormalized over the options ("can't tell" included); cleaning.decide picks a spelling only if it is not "can't
@@ -72,6 +77,7 @@ BLOCK = 4096
 PROBE_DEFAULT = 2000
 AUDIT_SAMPLE = 200
 AUDIT_ACRONYMS = 50              # version 2: of the AUDIT_SAMPLE spans, drawn from the spelled-out acronyms (plan v5)
+AUDIT_PUNCTUATION = 50           # version 2: layer 0 edits added to the AUDIT_SAMPLE spans (plan v6: 250 in all)
 RISK_SAMPLES = 15                # examples per residual-risk class on the acronym sheet
 COMPACT_LISTED = 150             # the most frequent compact forms on the acronym sheet and in the report
 AUDIT_SEED = "cleaning-v1-audit"
@@ -538,18 +544,18 @@ def _check_shard(shard):
     t = run.read(shard, LABEL_COLUMNS)
     refs = None
     out = {"changed": Counter(), "labels": Counter(), "edits": Counter(), "screen": defaultdict(Counter),
-           "wer": Counter(), "sample": [], "acr_sample": [], "acr": _acronym_totals()}
+           "wer": Counter(), "sample": [], "acr_sample": [], "l0_sample": [], "acr": _acronym_totals()}
     acr = out["acr"]
     for i, source, rk, texts in kept_texts(t):
         for ls, text in texts.items():
             out["labels"][ls] += 1
-            after, edits = spec.edits(text, i, ls)
+            after, edits = spec.edits(text, i, ls, texts["B0"] if spec.needs_donor(ls) else None)
             if after != text:
                 out["changed"][f"{ls}\t{source}"] += 1
             for n, e in enumerate(edits):
                 out["edits"][f"{ls}\t{_group_key(e)}"] += 1
                 acronym = e.table == C.ACRONYM_TABLE
-                out["acr_sample" if acronym else "sample"].append(
+                out["acr_sample" if acronym else "l0_sample" if e.layer == 0 else "sample"].append(
                     (_rank(ls, i, n), ls, i, e.table, e.group, e.original, e.replacement,
                      text[max(0, e.start - CONTEXT):e.end + CONTEXT]))
                 if acronym:
@@ -583,7 +589,7 @@ def _check_shard(shard):
             s2, d2, i2 = evaluate.edit_counts(ref, _tokens(evaluate.normalize, after))
             out["wer"][f"{ls}\tafter_errors"] += s2 + d2 + i2
             for e in edits:
-                if e.table == "forms":
+                if e.table == "forms" or e.layer == 0:      # casing and layer 0 change no normalized word
                     continue
                 g = out["screen"][f"{ls}\t{_group_key(e)}"]
                 g["changed"] += 1
@@ -596,14 +602,21 @@ def _check_shard(shard):
                 g["cleaned_matches"] += r[1]
     out["sample"] = sorted(out["sample"])[:AUDIT_SAMPLE]
     out["acr_sample"] = sorted(out["acr_sample"])[:AUDIT_ACRONYMS]
+    out["l0_sample"] = sorted(out["l0_sample"])[:AUDIT_PUNCTUATION]
     acr["risk_sample"] = {k: sorted(v)[:RISK_SAMPLES] for k, v in acr["risk_sample"].items()}
     return out
+
+
+# groups Check 3 reports without judging (cleaning plan v6, AJ 2026-10-29: the compact acronym is a deliberate style)
+NOT_JUDGED = {f"{C.ACRONYM_TABLE}:{C.ACRONYM_GROUP}": "AJ's decision (cleaning plan v6): a deliberate style choice, "
+                                                      "reported, not judged"}
 
 
 def judge(screen: dict[str, dict[str, Counter]]) -> dict:
     """Check 3's decision per group: judged on every cell (each label set, and both pooled) with at least
     MIN_JUDGED aligned changed spans; disabled when a judged cell's original matches more often than its cleaned
-    output."""
+    output. The groups of NOT_JUDGED are reported (their cells and where the original matched more often) but never
+    judged or disabled."""
     out = {}
     for group, cells in sorted(screen.items()):
         pooled = Counter()
@@ -612,6 +625,11 @@ def judge(screen: dict[str, dict[str, Counter]]) -> dict:
         allc = dict(cells) | {"both": pooled}
         judged = {k: c for k, c in allc.items() if c["aligned"] >= MIN_JUDGED}
         harm = sorted(k for k, c in judged.items() if c["original_matches"] > c["cleaned_matches"])
+        if group in NOT_JUDGED:
+            out[group] = {"cells": {k: dict(c) for k, c in allc.items()}, "judged": [], "harm_in": [],
+                          "original_matches_more_in": harm, "disabled": False, "reported_not_judged": True,
+                          "why": NOT_JUDGED[group]}
+            continue
         out[group] = {"cells": {k: dict(c) for k, c in allc.items()}, "judged": sorted(judged),
                       "harm_in": harm, "disabled": bool(harm), "reported_not_judged": not judged}
     return out
@@ -631,7 +649,7 @@ def check(run_dir: Path, work: Path, out_dir: Path | None = None, layer1_only: b
     agg = {"changed": Counter(), "labels": Counter(), "edits": Counter(), "screen": defaultdict(Counter),
            "wer": Counter()}
     acr = _acronym_totals()
-    sample, acr_sample = [], []
+    sample, acr_sample, l0_sample = [], [], []
     for n, part in enumerate(_pool_map(_check_shard, run.shards, workers,
                                        (run_dir, tables_dir, True, choices_dir, version))):
         for k in ("changed", "labels", "edits", "wer"):
@@ -640,13 +658,14 @@ def check(run_dir: Path, work: Path, out_dir: Path | None = None, layer1_only: b
             agg["screen"][g].update(c)
         sample = sorted(sample + part["sample"])[:AUDIT_SAMPLE]
         acr_sample = sorted(acr_sample + part["acr_sample"])[:AUDIT_ACRONYMS]
+        l0_sample = sorted(l0_sample + part["l0_sample"])[:AUDIT_PUNCTUATION]
         for k in ("spans", "labels", "shape", "letters", "risks", "compact"):
             acr[k].update(part["acr"][k])
         for k, v in part["acr"]["risk_sample"].items():
             acr["risk_sample"][k] = sorted(acr["risk_sample"][k] + v)[:RISK_SAMPLES]
         if (n + 1) % 200 == 0:
             log(f"check: {n + 1}/{len(run.shards)} shards")
-    sample = sorted(acr_sample + sample[:AUDIT_SAMPLE - len(acr_sample)])
+    sample = sorted(acr_sample + sample[:AUDIT_SAMPLE - len(acr_sample)]) + l0_sample   # v6: + layer 0's 50
     screen: dict[str, dict[str, Counter]] = defaultdict(dict)
     for key, c in agg["screen"].items():
         ls, group = key.split("\t", 1)

@@ -458,6 +458,79 @@ class Versions(World):
         self.assertNotIn("acronyms:spelled-out", v1["check3"]["groups"])
         self.assertNotIn("acronyms", v1)
 
+    def test_the_acronym_class_is_reported_not_judged(self):
+        """Cleaning plan v6 (AJ): Check 3 reports the class, never disables it, even where the original matches the
+        references more often."""
+        screen = {"acronyms:spelled-out": {"T*": {"aligned": 40, "original_matches": 39, "cleaned_matches": 1}},
+                  "dialect:gonna": {"T*": {"aligned": 40, "original_matches": 39, "cleaned_matches": 1}}}
+        from collections import Counter
+        v = R.judge({g: {ls: Counter(c) for ls, c in cells.items()} for g, cells in screen.items()})
+        self.assertEqual((v["acronyms:spelled-out"]["disabled"], v["acronyms:spelled-out"]["reported_not_judged"]),
+                         (False, True))
+        self.assertEqual(v["acronyms:spelled-out"]["original_matches_more_in"], ["T*", "both"])
+        self.assertTrue(v["dialect:gonna"]["disabled"])
+
+
+L0_T, L0_B0 = "so we went home then we slept {}", "So, we went home. Then we slept {}."
+
+
+class Layer0Store(World):
+    """Cleaning plan v6 "Layer 0" through the label store: version 2 cleans T*'s labels with the same record's b0_raw
+    as the donor; B0's labels and version 1 are untouched; the runner audits 50 layer 0 edits and never screens them."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        d = cls.root / "copies" / "layer0"
+        cls.pool, cls.lab = d / "pool", d / "labels"
+        shutil.copytree(cls.w.pool, cls.pool)
+        shutil.copytree(cls.w.labels_dir, cls.lab)
+        run = json.loads((cls.lab / "run.json").read_text())
+        run["pool_dir"] = str(cls.pool.relative_to(cls.root))
+        (cls.lab / "run.json").write_text(json.dumps(run))
+        cls.raw = {}
+        manifest = json.loads((cls.lab / "manifest.json").read_text())
+        for k in range(2):
+            path = cls.lab / "shards" / f"{shards.shard_name(k)}.labels.parquet"
+            t = pq.read_table(path)
+            rows = t.to_pylist()
+            n = next(n for n, r in enumerate(rows) if r["disposition"] == "kept" and r["reference_kind"] == "human")
+            rows[n]["text"], rows[n]["b0_raw"] = L0_T.format(k), L0_B0.format(k)
+            cls.raw[rows[n]["id"]] = (rows[n]["text"], rows[n]["b0_raw"])
+            pq.write_table(pa.Table.from_pylist(rows, schema=t.schema), path)
+            meta_path = path.with_name(f"{shards.shard_name(k)}.json")
+            meta = json.loads(meta_path.read_text())
+            meta["sha256"] = shards.sha256_file(path)
+            meta_path.write_text(json.dumps(meta))
+            for s in manifest["shards"]:
+                if s["file"] == path.name:
+                    s["sha256"] = meta["sha256"]
+        (cls.lab / "manifest.json").write_text(json.dumps(manifest))
+
+    def open(self, label_set, version):
+        return tlabels.LabelStore.open(self.lab, self.pool, label_set=label_set, through_batch=TOTAL,
+                                       cleaning=C.Cleaning.load(self.tables, version=version))
+
+    def test_t_star_takes_b0s_marks_and_b0_is_untouched(self):
+        t2, t1, b2 = self.open("T*", 2), self.open("T*", 1), self.open("B0", 2)
+        for k, (i, (t, b)) in enumerate(sorted(self.raw.items())):
+            self.assertEqual(t2.text(i), f"so, we went home. Then we slept {t.split()[-1]}.")
+            self.assertEqual(t1.text(i), t)
+            self.assertEqual(b2.text(i), b)
+        self.assertEqual(t2.identity["cleaning"]["layer0"]["rule"], "union")
+        self.assertNotEqual(t2.identity["sha256"], t1.identity["sha256"])
+
+    def test_the_runner_audits_layer0_and_never_screens_it(self):
+        work = self.root / "cleaning" / "layer0" / "v2"
+        with mock.patch.object(R, "AUDIT_SAMPLE", 4), mock.patch.object(R, "AUDIT_ACRONYMS", 1), \
+                mock.patch.object(R, "AUDIT_PUNCTUATION", 3):
+            r = R.check(self.lab, work, out_dir=work, layer1_only=True, tables_dir=self.tables, version=2)
+        self.assertEqual(r["check5"]["edits_per_group"]["punctuation:mark"], {"T*": 6})
+        self.assertEqual(r["check5"]["edits_per_group"]["punctuation:capital"], {"T*": 2})
+        self.assertFalse(any(g.startswith("punctuation") for g in r["check3"]["groups"]))
+        sample = (C.audit_dir(2) / "check-sample-layer1.tsv").read_text().splitlines()[1:]
+        self.assertEqual(sum(row.split("\t")[2] == "punctuation" for row in sample), 3)
+
 
 class AcronymRisks(unittest.TestCase):
     """The audit counts the residual-risk classes the plan names (review p4) among the class's changed spans."""
