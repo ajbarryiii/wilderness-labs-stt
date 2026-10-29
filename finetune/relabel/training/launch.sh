@@ -19,6 +19,20 @@
 #                                                 (e.g. the last stage 2b chunk) if given, else readiness is checked
 #   training/launch.sh syn-status | syn-report    progress; results-synthetic.json and RESULTS-decoder-only.md
 #
+# Stage 3 (b0prime plan; train_b0prime.py), on the plan of pools 0-781 with every pool materialized. MEM is the
+# job's memory cap (the probe's host peak plus 25%), VRAM the probe's lease (its peak plus 2 GB):
+#   training/launch.sh b0p-tests                  the stage 3 contract tests that need no GPU (foreground)
+#   training/launch.sh b0p-gpu-tests VRAM         the stage 3 CUDA contract tests (tiny model), a short GPU job
+#   training/launch.sh b0p-probe RUN VRAM MEM     the memory probe (A1 at 600 s batches, with and without gradient
+#                                                 checkpointing; probe/probe.json with the decision and the estimate)
+#   training/launch.sh b0p-chain RUN VRAM MEM N THROUGH [JOB]
+#                                                 N chained chunk jobs over train_b0prime.ORDER through "pilot" (the
+#                                                 B0 re-score, the three pilot runs, the WSD sanity pair) or "main"
+#                                                 (then the trunk and the b25, b50, b100 branches) for labels/<T*>/RUN;
+#                                                 the first waits for JOB if given. A chunk that the WSD rule stops
+#                                                 exits 80 and the chain stops.
+#   training/launch.sh b0p-status | b0p-report    progress; results.json and RESULTS-b0prime.md (CPU)
+#
 # GPU jobs: a shared lease (--needs gpu:shared --vram VRAM, VRAM in GB: the probe's peak plus 2 GB), 36G memory
 # cap, low priority (the agent default). Each process takes the parakeet GPU lock ($PARAKEET_TERNARY_ROOT/gpu.lock)
 # for its own duration only: train.py's paths.gpu_lock for training sessions, score_teacher.gpu_lock for scoring,
@@ -83,6 +97,34 @@ case "${1:-}" in
     exec ./python train_decoder.py status ;;
   report)
     exec ./python train_decoder.py report "${@:2}" ;;
+  b0p-tests)
+    exec ./python -m unittest discover -s tests -p 'test_b0prime.py' -v ;;
+  b0p-gpu-tests)
+    v="${2:?VRAM GB}"
+    lock="$(./python -c 'import relabel_paths; print(relabel_paths.GPU_LOCK)')"
+    exec job start relabel-b0prime-gpu-tests --cwd "$here" --needs gpu:shared --vram "${v}G" --mem 16G --stall 30m \
+      --env HF_HUB_OFFLINE=1 --timeout 40m -- flock "$lock" ./python -m unittest discover -s tests -p 'test_b0prime_gpu.py' -v ;;
+  b0p-probe)
+    run="${2:?labels run name}"; v="${3:?VRAM GB}"; m="${4:?memory cap, e.g. 40G}"
+    exec job start relabel-b0prime-probe --cwd "$here" --needs gpu:shared --vram "${v}G" --mem "$m" --stall 30m \
+      --env HF_HUB_OFFLINE=1 --timeout 2h -- ./python train_b0prime.py probe --labels-run "$run" ;;
+  b0p-chain)
+    run="${2:?labels run name}"; v="${3:?VRAM GB}"; m="${4:?memory cap}"; n="${5:?number of chunks}"
+    through="${6:?pilot|main}"; prev="${7:-}"
+    [[ "$through" == pilot || "$through" == main ]] || { echo "THROUGH is pilot or main" >&2; exit 2; }
+    ./python -c 'import json, train_b0prime as tb; json.loads(tb.probe_path().read_text())["decision"]["chosen"]' \
+      || { echo "no memory probe result (training/launch.sh b0p-probe)" >&2; exit 2; }
+    for i in $(seq 1 "$n"); do
+      after=(); [[ -n "$prev" ]] && after=(--after "$prev")
+      job start "relabel-b0prime-$run-$through-$i" --cwd "$here" "${after[@]}" --needs gpu:shared --vram "${v}G" \
+        --mem "$m" --stall 30m --env HF_HUB_OFFLINE=1 --timeout 3h -- \
+        ./python train_b0prime.py chunk --labels-run "$run" --through "$through" --budget-minutes 110
+      prev="relabel-b0prime-$run-$through-$i"
+    done ;;
+  b0p-status)
+    exec ./python train_b0prime.py status ;;
+  b0p-report)
+    exec ./python train_b0prime.py report ;;
   *)
-    sed -n '2,27p' "$0" >&2; exit 2 ;;
+    sed -n '2,40p' "$0" >&2; exit 2 ;;
 esac
