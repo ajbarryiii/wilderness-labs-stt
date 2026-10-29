@@ -252,32 +252,38 @@ class Labels(World):
 
     def test_cleaning_version_is_a_recorded_parameter_in_labels_sha256(self):
         from training import cleaning
-        with mock.patch.object(cleaning, "production", lambda run: cleaning.Cleaning.load()):
+        with mock.patch.object(cleaning, "production", lambda run, version: cleaning.Cleaning.load(version=version)):
             v1 = self.world.open_labels(cleaning_version=1)
+            v2 = self.world.open_labels(cleaning_version=2)
             self.assertEqual(label_sources.cleaning_spec("fixture", 1).identity()["version"], 1)
+            self.assertEqual(label_sources.cleaning_spec("fixture", 2).identity()["version"], 2)
         v0 = self.world.labels
-        self.assertEqual(v1.identity["cleaning"]["version"], 1)
+        self.assertEqual((v1.identity["cleaning"]["version"], v2.identity["cleaning"]["version"]), (1, 2))
+        self.assertIn("layer0", v2.identity["cleaning"])
         self.assertNotIn("cleaning", v0.identity)
-        self.assertNotEqual(v1.identity["sha256"], v0.identity["sha256"])
+        self.assertEqual(len({v0.identity["sha256"], v1.identity["sha256"], v2.identity["sha256"]}), 3)
         self.assertIsNone(label_sources.cleaning_spec("fixture", 0))
         with self.assertRaises(ValueError):
-            label_sources.cleaning_spec("fixture", 2)                  # not in this checkout yet
-        args = self.h.args(fx.RUNS["pw"], self.h.data(fx.RUNS["pw"], labels=v1), cleaning_version=1)
-        self.assertEqual((args.cleaning_version, args.labels_sha256), (1, v1.identity["sha256"]))
-        self.assertEqual(args.cleaning, v1.identity["cleaning"])
+            label_sources.cleaning_spec("fixture", 3)                  # no such version in this checkout
+        args = self.h.args(fx.RUNS["pw"], self.h.data(fx.RUNS["pw"], labels=v2), cleaning_version=2)
+        self.assertEqual((args.cleaning_version, args.labels_sha256), (2, v2.identity["sha256"]))
+        self.assertEqual(args.cleaning, v2.identity["cleaning"])
         self.assertIn("cleaning_version", tb.RESUME_EXTRA)
         a = tb.train_parser().parse_args(["--run", "trunk", "--labels-run", "R"])
-        self.assertEqual(a.cleaning_version, 1)                                # version 1 by default
+        self.assertEqual(a.cleaning_version, 2)                                # b0prime plan v4: version 2
         self.assertEqual(tb.train_parser().parse_args(["--run", "trunk", "--labels-run", "R", "--cleaning-version",
-                                                       "0"]).cleaning_version, 0)
+                                                       "1"]).cleaning_version, 1)
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
-            tb.train_parser().parse_args(["--run", "trunk", "--labels-run", "R", "--cleaning-version", "2"])
+            tb.train_parser().parse_args(["--run", "trunk", "--labels-run", "R", "--cleaning-version", "3"])
         seen = {}
-        with mock.patch.object(tb, "pinned_plan", lambda: (None, "pool", "cid", self.world.plan)), \
-                mock.patch.object(tb, "open_labels", lambda run, pool, through, cv: seen.update(cv=cv) or v1), \
+        with mock.patch.object(tb, "source_stores", lambda: []), \
+                mock.patch.object(tb, "pinned_plan", lambda stores: (None, "pool", "cid", self.world.plan, [])), \
+                mock.patch.object(tb, "reject_list", lambda: "reject"), \
+                mock.patch.object(tb, "open_labels",
+                                  lambda run, pool, through, cv, extra, reject: seen.update(cv=cv, reject=reject) or v2), \
                 mock.patch.object(tb.treplay, "PlannedReplay", lambda *x, **k: self.world.replay):
-            tb.offline_data(fx.RUNS["pw"], "R", fx.PEAK, 1)
-        self.assertEqual(seen, {"cv": 1})
+            tb.offline_data(fx.RUNS["pw"], "R", fx.PEAK, 2)
+        self.assertEqual(seen, {"cv": 2, "reject": "reject"})
 
     def test_a_transform_applies_to_kept_labels_and_enters_the_identity(self):
         class Upper:
@@ -303,6 +309,37 @@ class Labels(World):
         bad = self.world.open_labels(transform=Emptying())
         with self.assertRaises(RuntimeError):
             bad.text(kept[0])
+
+    def test_the_read_time_reject_list(self):
+        """b0prime plan v4: the ted-test-text containment rule's main-pool rejects, a hashed id list in the identity."""
+        import tempfile
+        base = self.world.labels
+        kept = [i for i in self.world.w.records if base.text(i) is not None]
+        with tempfile.TemporaryDirectory() as d:
+            empty, two = Path(d) / "empty.json", Path(d) / "two.json"
+            empty.write_text(json.dumps({"rule": "fixture rule", "ids": []}))
+            two.write_text(json.dumps({"rule": "fixture rule", "ids": kept[:2]}))
+            e = label_sources.RejectList.load(empty)
+            t = label_sources.RejectList.load(two)
+            bad = Path(d) / "bad.json"
+            for content in ({"ids": [kept[0], kept[0]]}, {"ids": "x"}, [kept[0]]):
+                bad.write_text(json.dumps(content))
+                with self.assertRaises(ValueError):
+                    label_sources.RejectList.load(bad)
+        with mock.patch.object(tb.trep, "production", lambda run: fx.repetition_spec(self.world.root / "rep.json")):
+            le = tb.open_labels("fixture", self.world.w.pool, self.world.plan.consumed_batches, 0,
+                                run_dir_=self.world.w.labels_dir, reject=e)
+            lt = tb.open_labels("fixture", self.world.w.pool, self.world.plan.consumed_batches, 0,
+                                run_dir_=self.world.w.labels_dir, reject=t)
+        self.assertTrue(all(le.text(i) == base.text(i) for i in self.world.w.records))     # an empty list works
+        self.assertEqual([lt.text(i) for i in kept[:2]], [None, None])
+        self.assertTrue(all(lt.text(i) == base.text(i) for i in kept[2:]))
+        self.assertEqual((e.identity["count"], t.identity["count"]), (0, 2))
+        self.assertEqual(len({base.identity["sha256"], le.identity["sha256"], lt.identity["sha256"]}), 3)
+        self.assertEqual(lt.identity["reject"], t.identity)
+        self.assertEqual(lt.real.reject_counts(), {"listed": 2, "in_store": 2, "kept_in_store": 2})
+        with self.assertRaises(KeyError):
+            lt.text("no-such-id")
 
     def test_extra_sources_come_from_their_provider(self):
         clips = types.SimpleNamespace(identity="pool-x", clips=[{"id": "c1", "label": "Synthetic one."},
@@ -581,6 +618,16 @@ class Loop(World):
         with self.assertRaises(RuntimeError):
             self.h.args(fx.RUNS["ba"], data)
 
+    def test_a_selected_run_trains_on_the_pilots_identity(self):
+        run, data = fx.RUNS["pw"], self.h.data(fx.RUNS["pw"])
+        a = types.SimpleNamespace(labels_run="fixture", ckpt_minutes=30.0, overwrite=False, budget_minutes=None,
+                                  deadline=None, cleaning_version=0)
+        ok = tb.identity_of(vars(self.h.args(run, data)))
+        tb.namespace(a, run, data, fx.PEAK, {"selected": fx.PEAK, "identity": ok}, False, "b0")
+        with self.assertRaises(RuntimeError):
+            tb.namespace(a, run, data, fx.PEAK, {"selected": fx.PEAK, "identity": {**ok, "labels_sha256": "x"}},
+                         False, "b0")
+
     def test_a_branch_waits_for_its_branch_point(self):
         data = self.h.data(fx.RUNS["ba"])
         with self.assertRaises(tb.NotReady):
@@ -628,6 +675,18 @@ class Freezing(unittest.TestCase):
         self.assertEqual(tb.peak_of(stage3.RUNS["sanity-wsd"])[0], 1e-4)
         self.assertEqual(tb.peak_of(stage3.RUNS["pilot-lr3e-4"]), (3e-4, None))
         self.scored_run("pilot-lr3e-5", {n: 5.0 for n in tb.H4})            # a changed run: refused
+        with self.assertRaises(RuntimeError):
+            tb.frozen_selection()
+
+    def test_the_pilots_must_share_one_label_and_plan_identity(self):
+        for name, x in zip(stage3.PILOT, (6.0, 5.8, 5.84)):
+            self.scored_run(name, {n: x for n in tb.H4})
+            tb.write_json(tb.run_dir(name) / "config.json",
+                          {"args": {"labels_run": "R", "cleaning_version": 2, "labels_sha256": "L", "plan_sha256": "P"}})
+        self.assertEqual(tb.frozen_selection()["identity"]["labels_sha256"], "L")
+        tb.selection_path().unlink()
+        tb.write_json(tb.run_dir(stage3.PILOT[1]) / "config.json",
+                      {"args": {"labels_run": "R", "cleaning_version": 1, "labels_sha256": "L1", "plan_sha256": "P"}})
         with self.assertRaises(RuntimeError):
             tb.frozen_selection()
 
@@ -699,7 +758,7 @@ class Chunk(unittest.TestCase):
         self.assertEqual(calls[-1][4], "sanity-linear")
         self.assertEqual(tb.chunk("RUN", 600.0, "main", runner=runner), 0)
         self.assertEqual([c[4] for c in calls[tb.THROUGH["pilot"]:]], ["trunk", "b25", "b50", "b100"])
-        self.assertTrue(all(c[-2:] == ["--cleaning-version", "1"] for c in calls[1:]))
+        self.assertTrue(all(c[-2:] == ["--cleaning-version", "2"] for c in calls[1:]))
 
     def test_the_cleaning_version_reaches_every_train_item(self):
         calls = []
@@ -717,6 +776,23 @@ class Chunk(unittest.TestCase):
         calls = []
         tb.chunk("RUN", 600.0, "main", runner=lambda c, cwd=None: calls.append(c) or types.SimpleNamespace(returncode=0))
         self.assertEqual(len(calls), 1)
+
+    def test_finished_runs_of_other_labels_are_refused(self):
+        """A finished run of another labels run or cleaning version is never skipped as done: the chunk runs nothing
+        and run_train refuses (EXIT_RESUME_MISMATCH)."""
+        self.finish(tb.ORDER[0])
+        self.finish(tb.ORDER[1])
+        tb.write_json(tb.run_dir(tb.ORDER[1][1]) / "config.json", {"args": {"labels_run": "RUN", "cleaning_version": 1}})
+        calls = []
+        rc = tb.chunk("RUN", 600.0, "pilot", runner=lambda c, cwd=None: calls.append(c) or types.SimpleNamespace(returncode=0))
+        self.assertEqual((rc, calls), (train.EXIT_RESUME_MISMATCH, []))
+        rc = tb.chunk("RUN", 600.0, "pilot", cleaning_version=1,
+                      runner=lambda c, cwd=None: calls.append(c) or types.SimpleNamespace(returncode=0))
+        self.assertEqual(rc, 0)
+        self.assertEqual(tb.run_train(["--run", tb.ORDER[1][1], "--labels-run", "RUN"]), train.EXIT_RESUME_MISMATCH)
+        self.assertEqual(tb.run_train(["--run", tb.ORDER[1][1], "--labels-run", "RUN", "--cleaning-version", "1"]), 0)
+        self.assertEqual(tb.run_train(["--run", tb.ORDER[1][1], "--labels-run", "OTHER", "--cleaning-version", "1"]),
+                         train.EXIT_RESUME_MISMATCH)
 
     def test_b0_counts_as_done_only_with_a_passing_check(self):
         tb.write_json(tb.b0_dir() / "scores.json", {"complete": True})

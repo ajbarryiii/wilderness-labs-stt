@@ -1,13 +1,21 @@
-"""Stage 3 (b0prime plan): B0', the FP32 Parakeet TDT 0.6B v2 (B0) fine-tuned on the new labels.
+"""Stage 3 (b0prime plan v4): B0', the FP32 Parakeet TDT 0.6B v2 (B0) fine-tuned on the new labels.
 
-    ./python train_b0prime.py train --run NAME --labels-run RUN [--budget-minutes 110] [--deadline EPOCH]
-                                                                      one chunk of one run (GPU; resumable)
+    ./python train_b0prime.py plan                                    build the multi-source plan of pools 0-781 (CPU)
+    ./python train_b0prime.py train --run NAME --labels-run RUN [--cleaning-version 2] [--budget-minutes 110]
+                                    [--deadline EPOCH]                one chunk of one run (GPU; resumable)
     ./python train_b0prime.py score-b0 [--deadline EPOCH]             re-score B0 on the gate's sets (GPU)
+    ./python train_b0prime.py score-run --run NAME                    (re)score a finished run's model.nemo (GPU)
     ./python train_b0prime.py probe --labels-run RUN [--steps 200]    the memory probe (GPU)
-    ./python train_b0prime.py chunk --labels-run RUN --through pilot|main [--budget-minutes 110]
-                                                                      one chunk job: the next unfinished items of
+    ./python train_b0prime.py chunk --labels-run RUN --through pilot|main [--cleaning-version 2]
+                                    [--budget-minutes 110]            one chunk job: the next unfinished items of
                                                                       ORDER (each a subprocess) within the budget
     ./python train_b0prime.py status | report
+
+v4 (2026-10-29): labels through cleaning version 2 (layer 0 punctuation transfer, compact acronyms); the
+multi-source version 2 plan (stage 2c's synthetic clips at 2.81% with the TS augmentation, and the cv27-en clip store
+drawn exactly once), extra rows labeled by their stores' providers; the read-time reject list (the ted-test-text
+containment rule's main-pool artifact, $RELABEL_ROOT/<REJECT_LIST>) in the label identity; eval-stem, dev-technical
+term recall and the cv27-en dev sample scored; style-neutral and formatted metrics in the report.
 
 Runs, spans, schedules and rules: training/stage3.py (RUNS: pilot-lr3e-5, pilot-lr1e-4, pilot-lr3e-4, sanity-wsd,
 sanity-linear, trunk, b25, b50, b100). Outputs under $RELABEL_ROOT/b0prime/: runs/<name>/ (train.py's run layout),
@@ -22,10 +30,12 @@ after the cut, a fully rejected planned batch consumed without a step, the non-f
 1. train.parse_args: the run's arguments: arm A1, recipe "b0prime-a1", the run spec, the peak (a pilot run's own; the
    frozen selection for the sanity pair and the main runs, which also need the frozen WSD rule to allow the main run),
    seed, max_steps = planned batches before the run's stop with a labeled row (so train_loop ends at the last one),
-   the labels (labels_run, cleaning_version, labels_sha256 and its parts, label_transform), the plan and replay
-   hashes, the schedule, B0's SHA-256, gradient checkpointing (the memory probe's decision), and a branch's
-   branch_of (its trunk branch point's record). RESUME_KEYS gains them all; a checkpoint of another configuration is
-   refused (exit 78). RESUME_ALLOWED_CHANGES gains budget_minutes and deadline.
+   the labels (labels_run, cleaning_version, labels_sha256 and its parts, label_transform, label_reject,
+   extra_sources), the plan and replay hashes, the schedule, B0's SHA-256, gradient checkpointing (the memory probe's
+   decision), and a branch's branch_of (its trunk branch point's record). RESUME_KEYS gains them all; a checkpoint of
+   another configuration is refused (exit 78). RESUME_ALLOWED_CHANGES gains budget_minutes and deadline. A selected run
+   (sanity pair, main) must have the labels, plan and B0 (IDENTITY_KEYS) the pilot runs shared; a finished run of
+   another labels run or cleaning version is refused rather than skipped (run_train, chunk: exit 78).
 2. train.build_context: B0 (train.load_pretrained, lock-file SHA-256 checked by train.verify_base), configured as arm
    A1 with every parameter trainable: train.configure_trainable(RECIPE) (encoder, prediction and joint networks
    trainable, prediction and joint dropout 0, SpecAugment and the training-mode preprocessor on), checked by
@@ -34,10 +44,12 @@ after the cut, a fully rejected planned batch consumed without a step, the non-f
    waveform augmentation. A branch with no checkpoint of its own starts from its trunk branch point (start_branch:
    weights, AdamW, scheduler, RNG and the plan position; the file read-only). A budget timer requests a checkpoint and
    stop after --budget-minutes or at --deadline (exit 0).
-3. The data (Data, a seam.OfflineData): the batch plan of pools 0-781 (training/batchplan.py, materialized pool audio)
-   served by a label_sources.Batcher, labels from label_sources.Labels (the label store at the run's cleaning version
-   with repetition rejection; a read-time transform and extra clip sources are open seams, unused), the run's stop
-   B(stop pool). The trunk's batcher saves a branch point (save_branch_point) just before it serves the first planned
+3. The data (Data, a seam.OfflineData): the multi-source version 2 batch plan of pools 0-781 (training/batchplan.py
+   compute_sources over EXTRA_SOURCES; materialized pool audio and the sources' clip stores) served by a
+   label_sources.Batcher, labels from label_sources.Labels (the label store at the run's cleaning version with
+   repetition rejection and the read-time reject list; each extra source's rows from its store's ClipLabels; a
+   read-time transform is an open seam, unused), the run's stop B(stop pool). The trunk's batcher saves a branch point
+   (save_branch_point) just before it serves the first planned
    batch of pools 166 and 332, so the payload is the state after B(p) planned batches; the one at pool 664 is the
    trunk's final checkpoint (finish). Branch points are written once and kept; the rotating checkpoints are train.py's.
 4. train.run_eval: the trunk's dev-subset evaluations (train.run_eval, informational only); none for the other runs.
@@ -49,9 +61,10 @@ after the cut, a fully rejected planned batch consumed without a step, the non-f
 
 Scorer (stage 1's, as stage 2b's train_decoder.score_model without its decoder-step proxy): evaluate.evaluate_set at
 batch 64 and 1200 s per batch with the decoder pinned to the mode M1 and MB1 decoded in, on the five stage 1 dev sets
-(eval-dev/<set>.json, per-utterance records kept) and the dev-medical and dev-technical parts with term recall
-(domain/). score-b0 scores B0 the same way into scores/B0/ and checks every dev set against its stage 1 record
-within RESCORE_POINTS (crosscheck.json; a failure fails the job).
+(eval-dev/<set>.json, per-utterance records kept), the dev-medical and dev-technical parts with critical-term recall
+(TERM_KIND: the medical and technical lists; domain/), eval-stem's parts with technical term recall (eval-stem/) and,
+once its manifest exists, the cv27-en dev sample (cv-dev/). score-b0 scores B0 the same way into scores/B0/ and checks every
+dev set against its stage 1 record within RESCORE_POINTS (crosscheck.json; a failure fails the job).
 """
 from __future__ import annotations
 
@@ -91,7 +104,7 @@ RECIPE_NAME = "b0prime-a1"
 ARM = "A1"
 LABEL_SET = "T*"
 BATCH_SECONDS = 600.0
-CLEANING_VERSION = 1
+CLEANING_VERSION = 2         # b0prime plan v4: stage 3 reads cleaning version 2 (cleaning plan v6)
 CHUNK_MINUTES = 110.0
 MIN_CHUNK_MINUTES = 15.0
 EXIT_BUDGET = 0
@@ -113,10 +126,11 @@ SOURCES = ("relabel/train_b0prime.py", "relabel/b0prime_report.py", "relabel/tra
            "relabel/terms/cleaning/forms.tsv", "relabel/terms/cleaning/variants.tsv",
            "relabel/terms/cleaning/dialect.tsv", "relabel/terms/cleaning/choices.tsv",
            "relabel/labeling/shards.py", "relabel/labeling/c2.py", "relabel/labeling/config.py",
-           "relabel/score_domain.py", "relabel/relabel_paths.py")
+           "relabel/score_domain.py", "relabel/relabel_paths.py", "relabel/synthetic/mixing.py",
+           "relabel/synthetic/augment.py", "relabel/synthetic/layout.py", "relabel/style_metrics.py")
 RESUME_EXTRA = ("spec", "label_set", "labels_run", "labels_sha256", "cleaning_version", "cleaning", "repetition",
-                "label_transform", "extra_sources", "plan_sha256", "replay_sha256", "stop_batch", "schedule",
-                "base_sha256", "lr_selection", "branch_of")
+                "label_transform", "label_reject", "extra_sources", "plan_sha256", "replay_sha256", "stop_batch",
+                "schedule", "base_sha256", "lr_selection", "branch_of")
 EXTRA_OUTPUTS = ("branch-points", "model.nemo", "model.json", "domain", "scores.json")
 _ACTIVE: dict = {"data": None, "ctx": None, "run": None}
 
@@ -174,14 +188,65 @@ def _sha256_file(path: Path) -> str:
 
 def open_labels(labels_run: str, pool_dir: Path, through_batch: int, cleaning_version: int = CLEANING_VERSION,
                 repetition: bool = True, transform=None, extra: dict | None = None,
-                run_dir_: Path | None = None) -> label_sources.Labels:
+                run_dir_: Path | None = None, reject: label_sources.RejectList | None = None) -> label_sources.Labels:
     """The run's labels (label_sources): T*'s label store through cleaning `cleaning_version` and repetition
-    rejection, an optional read-time transform, optional extra clip sources' providers."""
+    rejection, the read-time reject list, an optional read-time transform, the extra sources' providers."""
     store = tlabels.LabelStore.open(run_dir_ or tlabels.production_run_dir(labels_run), pool_dir,
                                     label_set=LABEL_SET, through_batch=through_batch,
                                     cleaning=label_sources.cleaning_spec(labels_run, cleaning_version),
                                     repetition=trep.production(labels_run) if repetition else None)
-    return label_sources.Labels(label_sources.StoreLabels(store, transform), extra)
+    return label_sources.Labels(label_sources.StoreLabels(store, transform, reject), extra)
+
+
+# ----------------------------------------------------------------------------- extra sources (b0prime plan v4)
+
+# (name, row-id prefix, store under $RELABEL_ROOT ("synthetic run" for stage 2c's), share, TS augmentation, seed).
+# The second source is the registry alias's clip store, in the stage 2c store format with a label per clip, written
+# by its preparation; its share is ONCE: its kept seconds over the whole journal's real seconds, each clip once.
+EXTRA_SOURCES = (("synthetic", "syn:", "synthetic run full", 0.0281, True, 20261025),     # stage 2c's seed
+                 ("cv27-en", "cv27-en:", "cv27-en/store", "once", False, 20261029))
+REJECT_LIST = "ted-test-text/main-pool-reject.json"     # the ted-test-text containment rule's read-time reject list
+
+
+def source_stores() -> list:
+    """(config, clip store) of EXTRA_SOURCES; NotReady while a store is not written yet."""
+    from synthetic import layout as slayout
+    from synthetic import mixing
+    out = []
+    for name, prefix, where, share, augment, seed in EXTRA_SOURCES:
+        try:
+            if where.startswith("synthetic run "):
+                pool = mixing.ClipPool.load(where.split()[-1])
+            else:
+                pool = mixing.ClipPool.load(llayout.relabel_root() / where, synthetic_hygiene=False)
+        except FileNotFoundError as error:
+            raise NotReady(f"extra source {name}: no clip store yet ({error})") from error
+        if name == "synthetic" and seed != slayout.SEED:
+            raise RuntimeError("the synthetic source's seed is stage 2c's")
+        out.append(((name, prefix, where, share, augment, seed), pool))
+    return out
+
+
+def plan_sources(stores) -> list:
+    from training import batchplan
+    return [batchplan.Source(name, prefix, pool, seed, batchplan.ONCE if share == "once" else share, augment)
+            for (name, prefix, _, share, augment, seed), pool in stores]
+
+
+def replay_sources(stores, sources) -> list:
+    """treplay.ExtraSource per source: an augmented source's rows go through stage 2c's TS augmentation."""
+    from synthetic import mixing
+    out = []
+    for ((name, _, _, _, augment, seed), _), src in zip(stores, sources):
+        out.append(treplay.ExtraSource(src, mixing.transform_for("TS", seed=seed) if augment else None))
+    return out
+
+
+def reject_list() -> label_sources.RejectList:
+    path = llayout.relabel_root() / REJECT_LIST
+    if not path.exists():
+        raise NotReady(f"no read-time reject list at $RELABEL_ROOT/{REJECT_LIST} yet")
+    return label_sources.RejectList.load(path)
 
 
 class HookedBatcher:
@@ -232,30 +297,78 @@ def data_for(run: stage3.Run, plan, replay, labels, peak: float) -> Data:
     return Data(replay, labels, stage3.schedule_of(run, plan, peak), stop, hooks)
 
 
-def pinned_plan():
-    """(pin, C1 directory, config id, the production plan of pools 0-781)."""
+def pinned_base():
+    """(pin, C1 directory, config id) of the pinned stream."""
     from labeling import config as lconfig
     from labeling.__main__ import c1_dir, pinned
-    from training import batchplan
     pin = pinned()
     if float(pin["batch"]["batch_seconds"]) != BATCH_SECONDS:
         raise RuntimeError(f"the pinned stream batches {pin['batch']['batch_seconds']} s, not {BATCH_SECONDS}")
-    cid = lconfig.config_id(pin)
-    plan = batchplan.Plan.load(batchplan.production_dir(cid, stage3.PLAN_POOLS))
+    return pin, c1_dir(), lconfig.config_id(pin)
+
+
+def check_plan(plan, pin, version: int) -> None:
+    from training import batchplan
     if plan.meta["pinned_hash"] != pin["pinned_hash"] or plan.budget != BATCH_SECONDS * batchplan.SAMPLE_RATE:
         raise RuntimeError("the batch plan is of another pinned configuration or budget")
-    if plan.version != batchplan.VERSION or plan.n_pools != stage3.PLAN_POOLS:
-        raise RuntimeError(f"stage 3 trains on the version 1 plan of {stage3.PLAN_POOLS} pools")
-    return pin, c1_dir(), cid, plan
+    if plan.version != version or plan.n_pools != stage3.PLAN_POOLS:
+        raise RuntimeError(f"stage 3 trains on a version {version} plan of {stage3.PLAN_POOLS} pools")
+
+
+def v1_plan():
+    """(pin, C1 directory, config id, the version 1 plan of pools 0-781: the real occurrences and pools)."""
+    from training import batchplan
+    pin, pool, cid = pinned_base()
+    plan = batchplan.Plan.load(batchplan.production_dir(cid, stage3.PLAN_POOLS))
+    check_plan(plan, pin, batchplan.VERSION)
+    return pin, pool, cid, plan
+
+
+def pinned_plan(stores=None):
+    """(pin, C1 directory, config id, the production multi-source version 2 plan of pools 0-781 (b0prime plan v4),
+    its batchplan.Source list); NotReady before a store or the plan exists."""
+    from training import batchplan
+    pin, pool, cid = pinned_base()
+    stores = source_stores() if stores is None else stores
+    sources = plan_sources(stores)
+    d = batchplan.production_dir(cid, stage3.PLAN_POOLS, sources=sources)
+    if not (d / "plan.json").exists():
+        raise NotReady(f"no stage 3 plan at {d} yet (train_b0prime.py plan)")
+    plan = batchplan.Plan.load(d)
+    check_plan(plan, pin, batchplan.SYNTHETIC_VERSION)
+    if plan.source_configs() != [s.config() for s in sources]:
+        raise RuntimeError("the stage 3 plan was drawn from other sources")
+    return pin, pool, cid, plan, sources
+
+
+def build_plan() -> int:
+    """Build the production multi-source version 2 plan of pools 0-781 (CPU; b0prime plan v4)."""
+    from training import batchplan
+    llayout.require_mount()
+    pin, pool, cid = pinned_base()
+    v1 = v1_plan()[3]
+    sources = plan_sources(source_stores())
+    plan = batchplan.build(pool, batchplan.production_dir(cid, stage3.PLAN_POOLS, sources=sources),
+                           stage3.PLAN_POOLS, sources=sources, config_id=cid)
+    if plan.meta["base_plan_sha256"] != v1.sha256:
+        raise RuntimeError("the stage 3 plan is not drawn on the version 1 plan of the same journal")
+    log(json.dumps({**plan.identity(), "n_extra": plan.meta["n_extra"], "stats": plan.meta["stats"],
+                    "sources": [{k: m[k] for k in ("config", "share_value", "draws", "distinct", "seconds")}
+                                for m in plan.meta["sources"]]}, default=str))
+    return 0
 
 
 def offline_data(run: stage3.Run, labels_run: str, peak: float, cleaning_version: int = CLEANING_VERSION) -> Data:
-    """The production Data of a run: the plan of pools 0-781 on materialized audio, the labels through the plan's
-    consumed batches (every run reads the same label identity)."""
+    """The production Data of a run: the multi-source plan of pools 0-781 on materialized audio and the extra
+    sources' stores, the labels through the plan's consumed batches (every run reads the same label identity) with
+    the extra sources' providers and the read-time reject list."""
     from training import poolaudio
-    _, pool, cid, plan = pinned_plan()
-    labels = open_labels(labels_run, pool, plan.consumed_batches, cleaning_version)
-    replay = treplay.PlannedReplay(plan, pool, audio="materialized", store=poolaudio.store_dir(cid, plan.pool_batches))
+    stores = source_stores()
+    _, pool, cid, plan, sources = pinned_plan(stores)
+    extra = {src.prefix: label_sources.ClipLabels(src.clips, src.prefix) for src in sources}
+    labels = open_labels(labels_run, pool, plan.consumed_batches, cleaning_version, extra=extra, reject=reject_list())
+    replay = treplay.PlannedReplay(plan, pool, audio="materialized", store=poolaudio.store_dir(cid, plan.pool_batches),
+                                   sources=replay_sources(stores, sources))
     return data_for(run, plan, replay, labels, peak)
 
 
@@ -318,8 +431,8 @@ def branch_point_files(trunk_dir: Path, pool: int) -> tuple[Path, Path]:
 
 
 TRUNK_KEYS = ("labels_sha256", "plan_sha256", "replay_sha256", "lr", "seed", "cleaning_version", "cleaning",
-              "repetition", "label_transform", "extra_sources", "base_sha256", "grad_checkpointing", "lr_selection",
-              "batch_seconds")
+              "repetition", "label_transform", "label_reject", "extra_sources", "base_sha256", "grad_checkpointing",
+              "lr_selection", "batch_seconds")
 
 
 def read_branch_point(trunk_dir: Path, pool: int) -> dict:
@@ -450,6 +563,43 @@ def run_done(name: str) -> bool:
     return (run_dir(name) / "summary.json").exists()
 
 
+# what every stage 3 run must share: the labels (run, cleaning, reject list, transform, extra sources), the plan, B0
+IDENTITY_KEYS = ("labels_run", "cleaning_version", "labels_sha256", "plan_sha256", "label_reject", "label_transform",
+                 "extra_sources", "base_sha256")
+
+
+def recorded_args(name: str) -> dict | None:
+    """The arguments a finished run recorded (config.json "args"), or None."""
+    path = run_dir(name) / "config.json"
+    return json.loads(path.read_text()).get("args") if run_done(name) and path.exists() else None
+
+
+def identity_of(args: dict) -> dict:
+    return json.loads(json.dumps({k: args.get(k) for k in IDENTITY_KEYS}, default=str))
+
+
+def shared_identity(names) -> dict:
+    """The label and plan identity the finished runs `names` share (RuntimeError if they differ)."""
+    idents = {n: identity_of(recorded_args(n) or {}) for n in names}
+    distinct = {json.dumps(v, sort_keys=True) for v in idents.values()}
+    if len(distinct) != 1:
+        diff = sorted(k for k in IDENTITY_KEYS if len({json.dumps(v.get(k), sort_keys=True) for v in idents.values()}) > 1)
+        raise RuntimeError(f"runs {list(names)} trained on different {diff}; they cannot be compared")
+    return next(iter(idents.values()))
+
+
+def run_mismatch(name: str, labels_run: str, cleaning_version: int) -> str | None:
+    """Why a finished run does not belong with this invocation's runs (another label run or cleaning version);
+    None when it matches or is not finished."""
+    rec = recorded_args(name)
+    if rec is None:
+        return None
+    got = (rec.get("labels_run"), rec.get("cleaning_version"))
+    if got != (labels_run, cleaning_version):
+        return f"{run_dir(name)} finished with labels run and cleaning version {got}, not {(labels_run, cleaning_version)}"
+    return None
+
+
 def dev_wers(out: Path) -> dict[str, float]:
     """Full-dev corpus WER (points) per stage 1 dev set of a scored model directory (eval-dev/<set>.json)."""
     return {n: 100 * json.loads((Path(out) / "eval-dev" / f"{n}.json").read_text())["wer"]["wer"] for n in DEV_SETS}
@@ -466,6 +616,7 @@ def frozen_selection() -> dict:
         raise NotReady(f"the learning-rate selection needs the pilot runs ({', '.join(pending)} pending)")
     sel = stage3.select_lr({stage3.RUNS[n].lr: h4(dev_wers(run_dir(n))) for n in stage3.PILOT})
     sel["summaries_sha256"] = {n: _sha256_file(run_dir(n) / "summary.json") for n in stage3.PILOT}
+    sel["identity"] = shared_identity(stage3.PILOT)
     return frozen_record(selection_path(), sel, "selection")
 
 
@@ -490,7 +641,8 @@ def frozen_wsd_rule() -> dict:
     rule = stage3.wsd_rule(res["mean"]["d"]["point"], res["mean"]["d"]["ci"])
     rule |= {"per_set": {n: res["sets"][n]["d"] for n in H4}, "wer": res["wer"], "clusters": res["clusters"],
              "replicates": res["replicates"], "seed": res["seed"], "selection": frozen_selection()["selected"],
-             "summaries_sha256": {n: _sha256_file(run_dir(n) / "summary.json") for n in stage3.SANITY}}
+             "summaries_sha256": {n: _sha256_file(run_dir(n) / "summary.json") for n in stage3.SANITY},
+             "identity": shared_identity(stage3.PILOT + stage3.SANITY)}
     return frozen_record(wsd_rule_path(), rule, "WSD rule")
 
 
@@ -500,7 +652,7 @@ def peak_of(run: stage3.Run) -> tuple[float, dict | None]:
     if run.lr is not None:
         return run.lr, None
     sel = frozen_selection()
-    record = {k: sel[k] for k in ("selected", "selected_name", "h4", "rule", "summaries_sha256")}
+    record = {k: sel[k] for k in ("selected", "selected_name", "h4", "rule", "summaries_sha256", "identity")}
     if run.kind in ("trunk", "branch"):
         rule = frozen_wsd_rule()
         if rule["stop"]:
@@ -580,11 +732,14 @@ def namespace(a, run: stage3.Run, data: Data, peak: float, selection: dict | Non
         eval_batch_size=32, ckpt_minutes=a.ckpt_minutes, seed=run.seed, probe_steps=None, no_powerlog=True,
         overwrite=a.overwrite, smoke=False, spec=run.to_dict(), label_set=LABEL_SET, labels_run=a.labels_run,
         labels_sha256=ident["sha256"], cleaning_version=a.cleaning_version, cleaning=ident.get("cleaning"),
-        repetition=ident.get("repetition"), label_transform=ident.get("transform"),
+        repetition=ident.get("repetition"), label_transform=ident.get("transform"), label_reject=ident.get("reject"),
         extra_sources=ident.get("extra") or None, plan_sha256=data.replay.identity["plan_sha256"],
         replay_sha256=data.replay.identity["sha256"], stop_batch=data.stop,
         schedule=stage3.schedule_dict(data.schedule), base_sha256=base_sha256, lr_selection=selection,
         branch_of=None, budget_minutes=a.budget_minutes, deadline=a.deadline)
+    if selection is not None and identity_of(vars(args)) != selection["identity"]:
+        raise RuntimeError(f"{run.name}: its labels, plan or B0 differ from the pilot runs' that chose its learning "
+                           f"rate ({identity_of(vars(args))} != {selection['identity']})")
     args.branch_of = branch_of(run, data.replay.plan, vars(args))
     log(f"{run.name}: plan {data.replay.identity['plan_id']}, stop at planned batch {data.stop} (pool "
         f"{run.stop_pool}), {steps} steps ({len(data.plan['empty_batches'])} fully rejected batches), peak {peak:g}, "
@@ -621,6 +776,7 @@ def build_context(args, run: Path, device: str = "cuda"):
             "bucketing": {"source": "batch plan re-cut from C1's journal (b0prime plan \"Batch plan\")",
                           "plan": data.replay.identity, "stop_batch": data.stop},
             "b0prime": {"run": spec.to_dict(), "labels": data.labels.identity, "replay": data.replay.identity,
+                        "reject_counts": data.labels.real.reject_counts(),
                         "plan": {k: v for k, v in data.plan.items() if k != "empty_batches"},
                         "empty_batches": data.plan["empty_batches"], "schedule": stage3.schedule_dict(data.schedule),
                         "branch_points": {p: b for b, p in data.hooks.items()}, "branch_of": args.branch_of,
@@ -718,6 +874,10 @@ def run_train(argv: list[str]) -> int:
     a = train_parser().parse_args(argv)
     llayout.require_mount()
     if run_done(a.run) and not a.overwrite:
+        mismatch = run_mismatch(a.run, a.labels_run, a.cleaning_version)
+        if mismatch:
+            log(f"refusing: {mismatch}")
+            return train.EXIT_RESUME_MISMATCH
         log(f"{run_dir(a.run)} is complete")
         return 0
     _ACTIVE.update(data=None, ctx=None, run=None)
@@ -769,7 +929,7 @@ def score_model(net, out: Path, source: dict, device, label: str) -> dict:
         dev[name] = result
     parts = [p for s in devsets.DEFAULT_SETS for p in devsets.SETS[s]]
     inputs = score_domain.part_manifests(parts, None)
-    matcher, domain = None, {}
+    matchers, domain = {}, {}
     for part in parts:
         manifest, meta = inputs[part]
         path = out / "domain" / f"{part}.json"
@@ -778,21 +938,90 @@ def score_model(net, out: Path, source: dict, device, label: str) -> dict:
         if result is None:
             result = evaluate.evaluate_set(net, part, manifest, source, score_domain.BATCH_SIZE, None, device,
                                            score_domain.MAX_BATCH_SECONDS)
-            if devsets.set_of(part) in devsets.TERM_KIND:
-                matcher = matcher or terms.matcher(devsets.TERM_KIND[devsets.set_of(part)])
+            kind = TERM_KIND.get(devsets.set_of(part))
+            if kind is not None:
+                matcher = matchers.get(kind) or matchers.setdefault(kind, terms.matcher(kind))
                 result["term_recall"] = score_domain.term_recall(result["records"], matcher)
+                result["term_kind"] = kind
             result.update(config=config, part=part, set=devsets.set_of(part),
                           decoder_graphs_mode=binary_train.require_decoder_graphs_mode(net, label))
             write_json(path, result)
         domain[part] = result
     domain_summary = score_domain.summarize(label, domain, list(devsets.DEFAULT_SETS))
+    for name in devsets.DEFAULT_SETS:          # recall of the sets stage 3 adds to score_domain's (dev-technical)
+        entry = domain_summary["sets"].get(name)
+        if entry is not None and name not in devsets.TERM_KIND and name in TERM_KIND:
+            got = [domain[p]["term_recall"] for p in devsets.SETS[name]]
+            occ, rep = sum(g["occurrences"] for g in got), sum(g["reproduced"] for g in got)
+            entry["mean_term_recall"] = (sum(g["recall"] for g in got) / len(got)
+                                         if all(g["recall"] is not None for g in got) else None)
+            entry["pooled_term_recall"] = {"occurrences": occ, "reproduced": rep, "recall": rep / occ if occ else None}
+            entry["term_kind"] = TERM_KIND[name]
     write_json(out / "domain" / "summary.json", domain_summary)
+    # eval-stem (b0prime plan v4: targeted and held-out term recall on eval-stem and dev-technical)
+    stem_parts = list(devsets.SETS[STEM_SET])
+    stem_inputs = score_domain.part_manifests(stem_parts, None)
+    stem, stem_matcher = {}, None
+    for part in stem_parts:
+        manifest, meta = stem_inputs[part]
+        path = out / STEM_SET / f"{part}.json"
+        config = td._config(source, STEM_SET, {"manifest_sha256": meta["manifest_sha256"]})
+        result = td._done(path, config)
+        if result is None:
+            result = evaluate.evaluate_set(net, part, manifest, source, score_domain.BATCH_SIZE, None, device,
+                                           score_domain.MAX_BATCH_SECONDS)
+            stem_matcher = stem_matcher or matchers.get(devsets.TERM_KIND[STEM_SET]) or \
+                terms.matcher(devsets.TERM_KIND[STEM_SET])
+            result["term_recall"] = score_domain.term_recall(result["records"], stem_matcher)
+            result.update(config=config, part=part, set=STEM_SET,
+                          decoder_graphs_mode=binary_train.require_decoder_graphs_mode(net, label))
+            write_json(path, result)
+        stem[part] = result
+    stem_summary = score_domain.summarize(label, stem, [STEM_SET])
+    write_json(out / STEM_SET / "summary.json", stem_summary)
+    # the cv27-en dev sample (informational, b0prime plan v4), once its manifest exists
+    cv = None
+    manifest = llayout.relabel_root() / CV_DEV_SAMPLE
+    if manifest.exists():
+        path = out / "cv-dev" / f"{CV_DEV_NAME}.json"
+        config = td._config(source, "cv-dev", {"manifest_sha256": evaluate.sha256_file(manifest)})
+        cv = td._done(path, config)
+        if cv is None:
+            cv = evaluate.evaluate_set(net, CV_DEV_NAME, manifest, source, score_domain.BATCH_SIZE, None, device,
+                                       score_domain.MAX_BATCH_SECONDS)
+            cv.update(config=config, decoder_graphs_mode=binary_train.require_decoder_graphs_mode(net, label))
+            write_json(path, cv)
     summary = {"label": label, "source": source, "complete": True, "utc": train.utc(), "decoder_graphs_mode": mode,
                "dev_wer": {n: r["wer"]["wer"] for n, r in dev.items()},
                "dev_utterances": {n: r["utterances"] for n, r in dev.items()},
-               "h4": h4({n: 100 * r["wer"]["wer"] for n, r in dev.items()}), "domain_sets": domain_summary["sets"]}
+               "h4": h4({n: 100 * r["wer"]["wer"] for n, r in dev.items()}), "domain_sets": domain_summary["sets"],
+               "eval_stem": stem_summary["sets"].get(STEM_SET), "cv_dev_wer": None if cv is None else cv["wer"]["wer"]}
     write_json(out / "scores.json", summary)
     return summary
+
+
+STEM_SET = "eval-stem"
+# critical-term recall per domain set: score_domain's (dev-medical: medical) plus dev-technical with the technical
+# list (b0prime plan "Gate" item 3: WER and critical-term recall of both domain sets)
+TERM_KIND = {"dev-medical": "medical", "dev-technical": "technical"}
+CV_DEV_SAMPLE = "cv27-en/dev-sample.jsonl"     # the cv27-en dev sample manifest (its preparation writes it)
+CV_DEV_NAME = "cv27-en-dev"
+
+
+def score_run(name: str, lock_wait: float) -> int:
+    """(Re)score a finished run's model.nemo: every part not yet written with this model (e.g. a later cv27-en dev
+    sample)."""
+    import score_teacher
+    llayout.require_mount()
+    nemo = run_dir(name) / "model.nemo"
+    if not run_done(name) or not nemo.exists():
+        raise NotReady(f"{name} has no finished model.nemo")
+    source = evaluate.describe_source("nemo", nemo, f"stage 3 {name}: B0 fine-tuned on T* labels (A1, FP32)")
+    with score_teacher.gpu_lock(f"b0prime score {name}", lock_wait):
+        train.deterministic_mode()
+        net = train.load_nemo(nemo, "cuda").eval()
+        score_model(net, run_dir(name), source, "cuda", name)
+    return 0
 
 
 def stage1_wers() -> dict[str, float]:
@@ -838,7 +1067,7 @@ def score_b0(lock_wait: float, deadline: float | None = None) -> int:
 def probe_plan_dir():
     """The materialized plan of pools 0-155 (stage 2b's; a prefix of the stage 3 plan) for the probe's batches."""
     from training import batchplan
-    _, pool, cid, plan = pinned_plan()
+    _, pool, cid, plan = v1_plan()
     short = batchplan.Plan.load(batchplan.production_dir(cid, schedule_pools()))
     if not batchplan.is_prefix(short, plan):
         raise RuntimeError("the materialized 156-pool plan is not a prefix of the stage 3 plan")
@@ -1022,17 +1251,36 @@ def data_measure(labels_run: str, pool, plan) -> dict:
     return out
 
 
-def gpu_hours(plan, step_s: float) -> dict:
-    """The pilot's and the main run's planned batches x the probe's step time (b0prime plan "Estimate")."""
+V2_FACTOR = 1.137            # b0prime plan v4 "Effect": the extra sources add about 13.7% planned batches
+
+
+def gpu_hours(plan, step_s: float, factor: float = 1.0) -> dict:
+    """The pilot's and the main run's planned batches x the probe's step time (b0prime plan "Estimate"); `plan` is the
+    stage 3 plan, or the version 1 plan with `factor` the extra sources' expected growth until the plan is built."""
     B = plan.pool_start
-    pilot = 5 * B(stage3.PILOT_POOLS)
-    trunk = B(stage3.TRUNK_POOLS)
-    cool = sum(B(e) - B(s) for s, e in stage3.BRANCHES.values())
-    return {"step_time_s": step_s, "pilot_planned_batches": pilot, "trunk_planned_batches": trunk,
-            "cooldown_planned_batches": cool, "pilot_gpu_hours": pilot * step_s / 3600,
+    pilot = 5 * B(stage3.PILOT_POOLS) * factor
+    trunk = B(stage3.TRUNK_POOLS) * factor
+    cool = sum(B(e) - B(s) for s, e in stage3.BRANCHES.values()) * factor
+    return {"step_time_s": step_s, "plan": plan.meta["plan_id"], "factor": factor,
+            "pilot_planned_batches": round(pilot), "trunk_planned_batches": round(trunk),
+            "cooldown_planned_batches": round(cool), "pilot_gpu_hours": pilot * step_s / 3600,
             "main_gpu_hours": (trunk + cool) * step_s / 3600, "total_gpu_hours": (pilot + trunk + cool) * step_s / 3600,
             "note": "probe step time x planned batches (fully rejected batches take no step); excludes replay waits, "
-                    "checkpoints, the trunk's dev-subset evaluations and the finishing scores"}
+                    "checkpoints, the trunk's dev-subset evaluations and the finishing scores"
+                    + ("" if factor == 1.0 else f"; the version 1 plan's batches x {factor} until the stage 3 plan "
+                                                "is built")}
+
+
+def estimate_plan():
+    """(the stage 3 plan, 1.0) once built, else (the version 1 plan, V2_FACTOR)."""
+    try:
+        return pinned_plan()[3], 1.0
+    except NotReady:
+        return v1_plan()[3], V2_FACTOR
+
+
+def _swap(plan_factor: tuple, step_s: float) -> tuple:
+    return plan_factor[0], step_s, plan_factor[1]
 
 
 def probe_job(labels_run: str, steps: int, lock_wait: float) -> int:
@@ -1083,8 +1331,8 @@ def probe_job(labels_run: str, steps: int, lock_wait: float) -> int:
               "full_plan_data": measured, "probe_data": {"plan": plan.identity(), "open_s": open_s,
                                                           "labels_sha256": labels.identity["sha256"]},
               "host_peak_rss_gib": rss_gib(), "tdt_kernel_sha256": tdt_sha, "utc": train.utc(),
-              "estimate": gpu_hours(full_plan, modes[choice]["step_time_s"]) if choice and modes[choice]["step_time_s"]
-              else None}
+              "estimate": gpu_hours(*_swap(estimate_plan(), modes[choice]["step_time_s"]))
+              if choice and modes[choice]["step_time_s"] else None}
     write_json(probe_path(), result)
     log(json.dumps({k: v for k, v in result.items() if k != "modes"}))
     return 0 if choice else 1
@@ -1116,6 +1364,11 @@ def chunk(labels_run: str, budget_minutes: float, through: str, runner=subproces
     an item fails (its exit code: EXIT_STOPPED when the WSD rule stops stage 3, EXIT_RESCORE, ...)."""
     llayout.require_mount()
     items = ORDER[:THROUGH[through]]
+    mismatched = [m for m in (run_mismatch(n, labels_run, cleaning_version) for k, n in items if k == "train") if m]
+    if mismatched:
+        log("chunk: refusing to mix runs of other labels: move these runs aside (or pass their labels run and "
+            "cleaning version): " + "; ".join(mismatched))
+        return train.EXIT_RESUME_MISMATCH
     t0, deadline = time.monotonic(), time.time() + budget_minutes * 60
     for item in items:
         if item_done(item):
@@ -1158,6 +1411,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="train_b0prime.py", description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("plan")
+    p = sub.add_parser("score-run")
+    p.add_argument("--run", choices=[n for n, r in stage3.RUNS.items() if r.scored], required=True)
+    p.add_argument("--lock-wait", type=float, default=4 * 3600.0)
     p = sub.add_parser("score-b0")
     p.add_argument("--lock-wait", type=float, default=4 * 3600.0)
     p.add_argument("--deadline", type=float, help="epoch seconds (chunk jobs): give up waiting for the lock")
@@ -1174,6 +1431,14 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("status")
     sub.add_parser("report")
     args = parser.parse_args(argv)
+    if args.cmd == "plan":
+        try:
+            return build_plan()
+        except NotReady as wait:
+            log(f"plan: not ready: {wait}")
+            return EXIT_NOT_READY
+    if args.cmd == "score-run":
+        return score_run(args.run, args.lock_wait)
     if args.cmd == "score-b0":
         return score_b0(args.lock_wait, args.deadline)
     if args.cmd == "probe":
