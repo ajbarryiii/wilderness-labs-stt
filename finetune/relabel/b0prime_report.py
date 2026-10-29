@@ -28,7 +28,7 @@ import analyze
 import relabel_paths
 import train_b0prime as tb
 from labeling import layout as llayout
-from training import bootstrap, stage3
+from training import bootstrap, devsplit, stage3
 
 T_STAR = "granite-speech-5.0-2b"
 EPS = stage3.EPS
@@ -79,13 +79,148 @@ def gate_section() -> dict:
         g = w["B0"] - w["T*"]
         gap[n] = {"wer": w, "gap_points": g, "closed_share": (w["B0"] - w["B0p"]) / g if abs(g) > EPS else None}
     style = {n: analyze.style({"B0": recs["B0"][n], "B0p": recs["B0p"][n], "T*": ts[n]}) for n in tb.DEV_SETS}
+    dirs = {"B0": tb.b0_dir(), "B0p": tb.run_dir(stage3.B0PRIME)}
+    neutral = style_section(dirs)
     return {"status": "complete", "bootstrap": res, "decision": decision, "per_set_regression": per_set,
+            "style_neutral": neutral, "style_neutral_gate": style_gate(neutral, crosscheck, decision),
+            "formatted": formatted_section(dirs), "terms": terms_section(dirs),
             "domain": {"B0": b0_domain.get("sets"), "B0p": bp_domain.get("sets"), "T*": t_star_domain(),
                        "T*_note": None if t_star_domain() else "no T* domain scores exist (score_teacher.py scores "
                                                                "the stage 1 dev sets only)",
                        "difference_points": domain_diff},
             "gap": gap, "style": style,
             "yodas_dev": {m: 100 * corpus(r["yodas_dev"]) for m, r in recs.items()}}
+
+
+# ----------------------------------------------------------------------------- v4 reporting additions
+
+DOMAIN_PARTS = ("med-dev-1", "med-dev-2", "med-dev-3", "tech-dev-1", "tech-dev-2")
+FORMATTED_SETS = ("tech-dev-1", "tech-dev-2", "med-dev-1", "yodas_dev")
+PUNCT_ONLY_SETS = ("voxpopuli_dev",)
+F1_FLAG = 0.03
+
+
+def set_records(model_dir: Path | None, name: str) -> list | None:
+    """A scored model's records of a dev set (eval-dev/), a domain part (domain/), an eval-stem part (eval-stem/) or
+    the cv27-en dev sample (cv-dev/); None if not scored."""
+    if model_dir is None:
+        return None
+    sub = ("eval-dev" if name in tb.DEV_SETS else "eval-stem" if name.startswith("stem-") else
+           "cv-dev" if name == tb.CV_DEV_NAME else "domain")
+    data = _json(Path(model_dir) / sub / f"{name}.json")
+    return None if data is None else data["records"]
+
+
+def t_star_set_records(name: str) -> list | None:
+    """T*'s stage 1 records of a dev set (no T* scores exist for the domain parts or the cv27-en dev sample)."""
+    return t_star_records([name])[name] if name in tb.DEV_SETS else None
+
+
+def cluster_fn(name: str):
+    import synthetic_report
+    if name in tb.H4:
+        return lambda i: devsplit.cluster_of(name, i)
+    if name in DOMAIN_PARTS or name.startswith("stem-"):
+        return synthetic_report.recording_of
+    return None                                            # YODAS, the cv27-en dev sample: informational, no interval
+
+
+def variant_table(scored: dict[str, dict], variant: str, cluster_of) -> bootstrap.SetTable:
+    """A bootstrap.SetTable of one set from style_metrics.score_records results ({model: result}), the same
+    utterances in every model."""
+    import numpy as np
+    models = sorted(scored)
+    ids = scored[models[0]]["ids"]
+    for m in models[1:]:
+        if scored[m]["ids"] != ids:
+            raise ValueError(f"{m} does not cover the same scored utterances as {models[0]}")
+    names = sorted({cluster_of(i) for i in ids})
+    index = {c: j for j, c in enumerate(names)}
+    idx = np.array([index[cluster_of(i)] for i in ids], dtype=np.int64)
+    words = np.bincount(idx, weights=[w for _, w in scored[models[0]]["per"][variant]], minlength=len(names))
+    errs = {m: np.bincount(idx, weights=[e for e, _ in scored[m]["per"][variant]], minlength=len(names))
+            for m in models}
+    return bootstrap.SetTable(names, words, errs, len(ids))
+
+
+def style_section(dirs: dict[str, Path | None]) -> dict:
+    """Style-neutral WER (style_metrics) per dev set and domain part for B0, B0' and T*, the groups' contributions,
+    and paired cluster-bootstrap intervals of B0' - B0 per variant (H4 sets and domain parts), with H4."""
+    import style_metrics as sm
+    out, scored_all = {"sets": {}, "contrast": {}}, {}
+    for name in list(tb.DEV_SETS) + list(DOMAIN_PARTS) + [tb.CV_DEV_NAME]:
+        recs = {m: set_records(d, name) for m, d in dirs.items()}
+        if name in tb.DEV_SETS:
+            recs["T*"] = t_star_set_records(name)
+        recs = {m: r for m, r in recs.items() if r is not None}
+        if not recs:
+            continue
+        scored = {m: sm.score_records(r) for m, r in recs.items()}
+        scored_all[name] = scored
+        out["sets"][name] = {m: {"wer": s["wer"], "contribution": s["contribution"]} for m, s in scored.items()}
+    for v in sm.VARIANTS:
+        tables = {}
+        for name, scored in scored_all.items():
+            fn = cluster_fn(name)
+            if fn is not None and {"B0", "B0p"} <= set(scored):
+                tables[name] = variant_table({m: scored[m] for m in ("B0", "B0p")}, v, fn)
+        if not tables:
+            continue
+        full = set(tb.H4) <= set(tables)
+        res = bootstrap.paired(tables, {"B0p-B0": ("B0p", "B0")}, mean_sets=list(tb.H4) if full else [sorted(tables)[0]])
+        out["contrast"][v] = {"sets": {n: res["sets"][n]["B0p-B0"] for n in tables},
+                              "H4": res["mean"]["B0p-B0"] if full else None,
+                              "h4_wer": res["wer"]["mean"] if full else None}
+    return out
+
+
+def formatted_section(dirs: dict[str, Path | None]) -> dict:
+    """Formatted metrics (style_metrics) on the sets whose references carry case and punctuation (VoxPopuli for
+    punctuation only), for B0, B0' and T* (where scored); B0' any-mark F1 more than F1_FLAG below B0's is flagged."""
+    import style_metrics as sm
+    out, flags = {}, []
+    for name in FORMATTED_SETS + PUNCT_ONLY_SETS:
+        recs = {m: set_records(d, name) for m, d in dirs.items()}
+        if name in tb.DEV_SETS:
+            recs["T*"] = t_star_set_records(name)
+        out[name] = {m: sm.formatted_summary(sm.score_records(r)["formatted"], punct_only=name in PUNCT_ONLY_SETS)
+                     for m, r in recs.items() if r is not None}
+        f = {m: (s["any_mark"]["f1"]) for m, s in out[name].items()}
+        if f.get("B0p") is not None and f.get("B0") is not None and f["B0"] - f["B0p"] > F1_FLAG + EPS:
+            flags.append(name)
+    return {"sets": out, "f1_flags": flags, "rule": f"B0' any-mark F1 more than {F1_FLAG} below B0's is reported to "
+                                                    "AJ before stage 4"}
+
+
+def terms_section(dirs: dict[str, Path | None]) -> dict:
+    """Critical-term recall, targeted and held-out (stage 2c's term split and groups), on eval-stem and
+    dev-technical, B0' against B0 with paired cluster-bootstrap intervals over recordings (synthetic_report)."""
+    import synthetic_report as srep
+    from synthetic import vocab
+    parts = {p: {m: set_records(dirs[m], p) for m in ("B0", "B0p")} for ps in srep.TERM_SETS.values() for p in ps}
+    if any(r is None for v in parts.values() for r in v.values()):
+        return {"status": "pending (B0 or B0' not scored on eval-stem and dev-technical)"}
+    split = vocab.Split.load()
+    cov = srep.coverage_info(split)
+    if cov["underpowered"] is None:
+        return {"status": "coverage.json is missing or of another split"}
+    tables = {p: srep.RecallTable.from_records(r, split) for p, r in parts.items()}
+    res = srep.recall_bootstrap(tables, {"B0p-B0": ("B0p", "B0")}, srep.groups(cov["underpowered"]))
+    return {"status": "complete", "recall": res, "underpowered": cov["underpowered"]}
+
+
+def style_gate(style: dict, crosscheck: dict, standard: dict) -> dict:
+    """The gate's items on the style-neutral ("all") WER, and the note: standard fails but style-neutral passes."""
+    c = style.get("contrast", {}).get("all")
+    if not c or c.get("H4") is None:
+        return {"status": "pending"}
+    delta = {"point": -c["H4"]["point"], "ci": [-c["H4"]["ci"][1], -c["H4"]["ci"][0]]}     # WER(B0) - WER(B0')
+    per_set = {n: c["sets"][n]["point"] for n in tb.H4}                                       # WER(B0') - WER(B0)
+    g = stage3.gate(delta, per_set, crosscheck)
+    return {"status": "complete", "decision": g, "delta": delta,
+            "report_both_to_aj": (not standard["pass"]) and g["pass"],
+            "rule": "the gate is preregistered on standard WER; if it fails there but passes on style-neutral WER, "
+                    "the architect reports both to AJ before stage 4"}
 
 
 def corpus(records: list[dict]) -> float:
@@ -199,13 +334,14 @@ def markdown(r: dict) -> str:
           f"**{'yes' if d['no_large_regression'] else 'no'}**.",
           f"- **Gate: {'PASS' if d['pass'] else 'FAIL'}.**", "",
           "Domain sets (score_domain.py settings): mean WER over parts and mean critical-term recall.", "",
-          "| Model | dev-medical WER | dev-medical term recall | dev-technical WER |", "|---|---:|---:|---:|"]
+          "| Model | dev-medical WER | dev-medical term recall | dev-technical WER | dev-technical term recall |",
+          "|---|---:|---:|---:|---:|"]
     for m in ("B0", "B0p", "T*"):
         dm = g["domain"].get(m) or {}
         med, tech = dm.get("dev-medical", {}), dm.get("dev-technical", {})
-        rec = med.get("mean_term_recall")
+        rec, trec = med.get("mean_term_recall"), tech.get("mean_term_recall")
         L.append(f"| {m} | {_f(med.get('mean_wer'))} | {_f(100 * rec if rec is not None else None, 1)} | "
-                 f"{_f(tech.get('mean_wer'))} |")
+                 f"{_f(tech.get('mean_wer'))} | {_f(100 * trec if trec is not None else None, 1)} |")
     if g["domain"]["T*_note"]:
         L.append(f"\nT*: {g['domain']['T*_note']}.")
     if d["domain_regressions_over_flag"]:
@@ -220,7 +356,63 @@ def markdown(r: dict) -> str:
         L.append(f"| {n} | " + " | ".join(f"{100 * st[m]['punctuation_share']:.0f} / {100 * st[m]['uppercase_share']:.0f}"
                                           for m in ("B0", "B0p", "T*")) + " |")
     L += ["", "YODAS dev (informational): " + ", ".join(f"{m} {v:.2f}" for m, v in g["yodas_dev"].items()) + "."]
+    L += markdown_v4(g)
     return "\n".join(L) + "\n"
+
+
+def markdown_v4(g: dict) -> list[str]:
+    """The v4 reporting additions (style-neutral WER, the gate note, formatted metrics, term recall, the cv27-en dev sample)."""
+    import style_metrics as sm
+    L = ["", "## Style-neutral WER (v4)", "",
+         "Canonicalizers applied identically to reference and hypothesis (style_metrics): acr (acronym runs), cmp "
+         "(compound list), dis (fillers, false starts, repetitions), all. B0′ − B0 per variant, 90% paired "
+         "cluster-bootstrap interval:", "", "| Variant | H4 B0 | H4 B0′ | B0′ − B0 (H4) |", "|---|---:|---:|---:|"]
+    for v in sm.VARIANTS:
+        c = g["style_neutral"]["contrast"].get(v) or {}
+        w = c.get("h4_wer") or {}
+        L.append(f"| {v} | {_f(w.get('B0'))} | {_f(w.get('B0p'))} | {_ci(c['H4']) if c.get('H4') else '–'} |")
+    L += ["", "Contribution of each group (WER(std) − WER(group), points), per set:", "",
+          "| Set | Model | " + " | ".join(v for v in sm.VARIANTS if v != "std") + " |",
+          "|---|---|" + "---:|" * (len(sm.VARIANTS) - 1)]
+    for name, models in g["style_neutral"]["sets"].items():
+        for m, s in models.items():
+            L.append(f"| {name} | {m} | " + " | ".join(_f(s["contribution"][v]) for v in sm.VARIANTS if v != "std")
+                     + " |")
+    sg = g["style_neutral_gate"]
+    if sg.get("status") == "complete":
+        L += ["", f"Gate items on style-neutral (all) WER: improvement **{'yes' if sg['decision']['improvement'] else 'no'}**"
+              f" (Δ {_ci(sg['delta'])}), no large regression **{'yes' if sg['decision']['no_large_regression'] else 'no'}**."]
+        if sg["report_both_to_aj"]:
+            L.append("**The gate fails on standard WER but passes on style-neutral WER: the architect reports both to AJ "
+                     "before stage 4.**")
+    f = g["formatted"]
+    L += ["", "## Formatted metrics (v4)", "", "| Set | Model | Any-mark P / R / F1 | . F1 | , F1 | ? F1 | Case errors | "
+          "Formatted WER |", "|---|---|---|---:|---:|---:|---:|---:|"]
+    for name, models in f["sets"].items():
+        for m, s in models.items():
+            a = s["any_mark"]
+            L.append(f"| {name} | {m} | {_f(a['precision'], 3)} / {_f(a['recall'], 3)} / {_f(a['f1'], 3)} | "
+                     + " | ".join(_f(s["per_mark"][k]["f1"], 3) for k in sm.PER_MARK)
+                     + f" | {_f(s.get('case_error_rate'), 4)} | {_f(s.get('formatted_wer'))} |")
+    if f["f1_flags"]:
+        L.append(f"\n**Reported to AJ before stage 4:** B0′'s any-mark F1 is more than {F1_FLAG} below B0's on "
+                 f"{', '.join(f['f1_flags'])}.")
+    t = g["terms"]
+    L += ["", "## Critical-term recall, targeted and held-out (v4; eval-stem and dev-technical)", ""]
+    if t.get("status") != "complete":
+        L.append(f"Status: {t.get('status')}.")
+    else:
+        L += ["| Group | Occurrences | B0 | B0′ | B0′ − B0 |", "|---|---:|---:|---:|---:|"]
+        for name in ("targeted", "heldout"):
+            e = t["recall"]["groups"][name]
+            c = e["contrasts"].get("B0p-B0")
+            L.append(f"| {name} | {e['occurrences']} | {_f(e['recall']['B0'])} | {_f(e['recall']['B0p'])} | "
+                     f"{_ci(c) if c else '–'} |")
+    cv = g["style_neutral"]["sets"].get(tb.CV_DEV_NAME)
+    L += ["", "## cv27-en dev sample (v4, informational)", ""]
+    L.append("Not scored yet." if not cv else ", ".join(
+        f"{m}: standard {s['wer']['std']:.2f}, style-neutral {s['wer']['all']:.2f}" for m, s in cv.items()) + ".")
+    return L
 
 
 def main() -> int:
