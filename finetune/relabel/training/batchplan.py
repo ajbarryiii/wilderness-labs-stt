@@ -54,6 +54,19 @@ before the cut. The cut runs over ENTRIES instead of journal occurrences:
   share_basis, key_rule, draw_rule}, and stats.synthetic; stats are of the unaugmented audio as served (synthetic
   rows at their stored length), stats.by_key at the keys.
 
+Version 2 with several sources (2026-10-29, b0prime plan v4 "Extra sources"): compute_sources, the same rule
+generalized to a list of extra sources (Source: a clip store, a name and row-id prefix, a seed, a share and an
+augmentation flag). Each source has its own seeded clip order (synthetic.mixing.clip_order) and its own
+error-diffused draw over the pools (synthetic.mixing.plan) against SHARE x all real audio of the pool; a source whose
+share is ONCE is drawn from one pass only, never repeated, at share = its total seconds / the real seconds of the
+whole journal (so a plan over the first N pools is a prefix of the whole journal's), and on the journal's last pool
+it also takes every clip not drawn yet, so each clip is drawn exactly once. A pool's entries are its real
+occurrences, then source 0's draw, source 1's, ...; an extra entry v >= 2^31 is (v - 2^31) = s << SOURCE_BITS | c:
+clip c (sorted by id) of source s (stage 2c's single source is source 0, so its entries are unchanged). Keys: an
+augmented source's ceil(samples * 10 / 9), else its samples. plan.json has "sources" (each source's "config" and
+its counts) instead of "synthetic", "n_extra" instead of "n_synthetic", and stats.sources. The plan id ends in
+"-x" + 12 hex digits of the sources' configs.
+
 Cut engines (`engine`, CLI --cut): "numpy" (cut(), the default) or "bend", finetune/bend-planner's binary (a Bend 2
 implementation of the cut contract with its laws proved; build it per its README). The bend engine writes the cut's
 inputs to a temporary directory under $RELABEL_ROOT/tmp (on the data mount), runs the planner, also runs cut() and
@@ -71,9 +84,11 @@ the CLI prints it.
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -105,6 +120,10 @@ SYN_DRAW_RULE = ("synthetic.mixing.plan(real seconds per pool, clip seconds, see
                  "pools in order, clips in the seeded clip order")
 SYN_SHARE_BASIS = "all real occurrences of the pool (teacher-independent)"
 FILES_V2 = FILES + ("entries.u32",)
+SOURCE_BITS = 27                 # an extra entry: (v - SYN_FLAG) = source << SOURCE_BITS | clip
+ONCE = "once"
+ENTRY_RULE = (f"an extra entry v >= 2^31 is clip (v - 2^31) & (2^{SOURCE_BITS} - 1), sorted by id, of source "
+              f"(v - 2^31) >> {SOURCE_BITS} in the plan's source order")
 ENGINES = ("numpy", "bend")
 BEND_PLANNER = Path(__file__).resolve().parents[2] / "bend-planner" / "build" / "planner"
 BEND_BUILD = "nix develop <repo> -c bend planner.bend -o build/planner (in finetune/bend-planner)"
@@ -318,11 +337,15 @@ def plan_id(config_id: str, pool_batches: int, n_pools: int) -> str:
     return f"{config_id}-p{int(pool_batches)}-n{int(n_pools)}"
 
 
-def production_dir(config_id: str, n_pools: int, pool_batches: int = POOL_BATCHES, clips=None) -> Path:
-    """$RELABEL_ROOT/training/batch-plan/<plan id> (with `clips`: the version 2 plan drawn from that clip pool)."""
+def production_dir(config_id: str, n_pools: int, pool_batches: int = POOL_BATCHES, clips=None,
+                   sources: list | None = None) -> Path:
+    """$RELABEL_ROOT/training/batch-plan/<plan id> (with `clips`: the version 2 plan drawn from that clip pool; with
+    `sources`: the multi-source version 2 plan)."""
     pid = plan_id(config_id, pool_batches, n_pools)
     if clips is not None:
         pid = f"{pid}-syn{str(clips.identity)[:12]}"
+    if sources is not None:
+        pid = f"{pid}-x{sources_id(sources)}"
     return layout.relabel_root() / "training" / "batch-plan" / pid
 
 
@@ -448,13 +471,146 @@ def compute_synthetic(pool_dir: Path, n_pools: int, clips, *, pool_batches: int 
     return body, data
 
 
-def build(pool_dir: Path, out_dir: Path, n_pools: int, clips=None, **kw) -> "Plan":
+@dataclasses.dataclass(frozen=True)
+class Source:
+    """An extra clip source of a multi-source version 2 plan (module docstring)."""
+    name: str               # the rows' source tag
+    prefix: str             # the rows' id prefix: "<prefix><clip id>"
+    clips: object           # a clip store: .clips [{"id", "duration", ...}], .identity (synthetic.mixing.ClipPool)
+    seed: int
+    share: float | str      # a fraction of the real audio, or ONCE
+    augment: bool           # rows augmented on the fly: keys at the longest augmented length
+
+    def config(self) -> dict:
+        return {"name": self.name, "prefix": self.prefix, "clip_pool": str(self.clips.identity), "seed": int(self.seed),
+                "share": self.share if self.share == ONCE else float(self.share), "augment": bool(self.augment)}
+
+    def key(self, samples: int) -> int:
+        return synthetic_key(samples) if self.augment else int(samples)
+
+
+def extra_entry(source: int, clip: int) -> int:
+    if not (0 <= clip < 1 << SOURCE_BITS and 0 <= source < 1 << (31 - SOURCE_BITS)):
+        raise PlanError(f"extra entry ({source}, {clip}) does not fit the entry encoding")
+    return SYN_FLAG | (source << SOURCE_BITS) | clip
+
+
+def extra_parts(v: int) -> tuple[int, int]:
+    """(source, clip) of an extra entry v >= SYN_FLAG."""
+    x = int(v) - SYN_FLAG
+    return x >> SOURCE_BITS, x & ((1 << SOURCE_BITS) - 1)
+
+
+def sources_id(sources: list[Source]) -> str:
+    return _sha(_dumps([s.config() for s in sources]))[:12]
+
+
+def journal_real_samples(pool_dir: Path) -> int:
+    """The samples of every occurrence of the complete journal (a ONCE source's share is its seconds over these)."""
+    end = journal_end(pool_dir)
+    if end is None:
+        raise PlanError("a source drawn once needs the complete journal (C1's manifest) to fix its share")
+    return int(read_journal(pool_dir, end, with_rows=False)["samples"].astype(np.int64).sum())
+
+
+def compute_sources(pool_dir: Path, n_pools: int, sources: list[Source], *, pool_batches: int = POOL_BATCHES,
+                    budget: int = BUDGET_SAMPLES, seed: int = SEED, config_id: str | None = None,
+                    engine: str = "numpy", planner: Path | None = None,
+                    threads: int | None = None) -> tuple[dict, dict[str, bytes]]:
+    """(plan.json body, file bytes) of the multi-source version 2 plan (module docstring)."""
+    from synthetic import mixing
+    if not sources:
+        raise PlanError("a multi-source plan needs at least one source")
+    if len({s.name for s in sources}) != len(sources) or len({s.prefix for s in sources}) != len(sources):
+        raise PlanError("source names and prefixes must be distinct")
+    if len(sources) > 1 << (31 - SOURCE_BITS):
+        raise PlanError("too many sources for the entry encoding")
+    if any(s.augment for s in sources):
+        check_stretch()
+    base_body, base = compute(pool_dir, n_pools, pool_batches=pool_batches, budget=budget, seed=seed,
+                              config_id=config_id, engine=engine, planner=planner, threads=threads)
+    real = np.frombuffer(base["samples.u32"], dtype="<u4").astype(np.int64)
+    rpools = np.frombuffer(base["pools.u32"], dtype="<u4").astype(np.int64)
+    real_seconds = [int(real[a:b].sum()) / SAMPLE_RATE for a, b in zip(rpools[:-1], rpools[1:])]
+    end = journal_end(pool_dir)
+    complete = end is not None and base_body["consumed_batches"] == end
+    total_real = None
+    draws, meta_sources = [], []
+    for s_index, src in enumerate(sources):
+        csamples = clip_samples(src.clips)
+        ckeys = [src.key(x) for x in csamples]
+        if max(ckeys) > budget:
+            raise PlanError(f"source {src.name}: a clip's key {max(ckeys)} exceeds the budget {budget}")
+        if src.share == ONCE:
+            if total_real is None:
+                total_real = int(real.sum()) if complete else journal_real_samples(pool_dir)
+            share, rule = sum(csamples) / total_real, "once: the source's seconds / the whole journal's real seconds"
+        else:
+            share, rule = float(src.share), "fixed"
+        d = mixing.plan(real_seconds, [x / SAMPLE_RATE for x in csamples], int(src.seed), share,
+                        once=src.share == ONCE, take_rest=src.share == ONCE and complete)
+        draws.append(d)
+        drawn = [c for pool in d for c in pool]
+        syn_s = [sum(csamples[c] for c in pool) / SAMPLE_RATE for pool in d]
+        ratio = [x / r for x, r in zip(syn_s, real_seconds) if r > 0]
+        meta_sources.append({"config": src.config(), "share_value": share, "share_rule": rule,
+                             "key_rule": SYN_KEY_RULE if src.augment else "samples", "n_clips": len(csamples),
+                             "clip_order": "sorted by id", "draw_rule": SYN_DRAW_RULE, "draws": len(drawn),
+                             "distinct": len(set(drawn)), "seconds": sum(syn_s),
+                             "share_of_real": sum(syn_s) / sum(real_seconds),
+                             "pool_share_min": min(ratio) if ratio else None,
+                             "pool_share_max": max(ratio) if ratio else None,
+                             "max_pool_error_seconds": max(abs(x - share * r) for x, r in zip(syn_s, real_seconds))})
+        draws[-1] = (d, csamples, ckeys)
+    entries, keys, lengths, pools = [], [], [], [0]
+    for p, (a, b) in enumerate(zip(rpools[:-1].tolist(), rpools[1:].tolist())):
+        entries += list(range(a, b))
+        keys += real[a:b].tolist()
+        lengths += real[a:b].tolist()
+        for s_index, (d, csamples, ckeys) in enumerate(draws):
+            entries += [extra_entry(s_index, c) for c in d[p]]
+            keys += [ckeys[c] for c in d[p]]
+            lengths += [csamples[c] for c in d[p]]
+        pools.append(len(entries))
+    keys_a, pools_a = np.asarray(keys, dtype=np.int64), np.asarray(pools, dtype=np.int64)
+    order, offsets, bpools = engine_cut(keys_a, pools_a, budget, engine, planner, threads)
+    shuf = shuffle(bpools, seed)
+    data = {"samples.u32": _u32(keys_a), "pools.u32": _u32(pools_a), "order.u32": _u32(order),
+            "offsets.u32": _u32(offsets), "batch_pools.u32": _u32(bpools), "shuffle.u32": _u32(shuf),
+            "entries.u32": np.asarray(entries, dtype=np.int64).astype("<u4").tobytes()}
+    counts = {"samples.u32": len(keys), "pools.u32": len(pools), "order.u32": len(order), "offsets.u32": len(offsets),
+              "batch_pools.u32": len(bpools), "shuffle.u32": len(shuf), "entries.u32": len(entries)}
+    st = stats(np.asarray(lengths, dtype=np.int64), order, offsets, base_body["consumed_batches"])
+    by_key = stats(keys_a, order, offsets, base_body["consumed_batches"])
+    st["by_key"] = {"padding": by_key["padding"], "padded_seconds": by_key["padded_seconds"],
+                    "note": "augmented rows at their longest augmented length (the cut's keys)"}
+    st["sources"] = {m["config"]["name"]: {k: m[k] for k in ("seconds", "share_of_real", "pool_share_min",
+                                                               "pool_share_max", "max_pool_error_seconds")}
+                     for m in meta_sources}
+    body = {**base_body, "version": SYNTHETIC_VERSION,
+            "plan_id": f"{base_body['plan_id']}-x{sources_id(sources)}", "base_plan_sha256": _sha(_dumps(base_body)),
+            "key_rule": f"real: {KEY_RULE}; an augmented source: {SYN_KEY_RULE}; another source: samples",
+            "entry_rule": ENTRY_RULE, "n_entries": len(entries), "n_extra": len(entries) - len(real),
+            "n_batches": int(len(offsets) - 1), "journal_complete": complete, "sources": meta_sources,
+            "files": {n: {"sha256": _sha(b), "bytes": len(b), "count": counts[n]} for n, b in data.items()},
+            "stats": st}
+    return body, data
+
+
+def build(pool_dir: Path, out_dir: Path, n_pools: int, clips=None, sources: list[Source] | None = None,
+          **kw) -> "Plan":
     """Write the plan into out_dir (atomically: a temporary sibling, then a rename); with `clips` (a
-    synthetic.mixing.ClipPool) the version 2 plan; `kw` are compute's, the cut engine included. Nothing is written
-    unless the plan is computed (and, with engine="bend", cross-checked). An existing plan is kept if it is the same
-    plan and refused otherwise."""
+    synthetic.mixing.ClipPool) the version 2 plan of stage 2c, with `sources` the multi-source version 2 plan; `kw`
+    are compute's, the cut engine included. Nothing is written unless the plan is computed (and, with engine="bend",
+    cross-checked). An existing plan is kept if it is the same plan and refused otherwise."""
     out_dir = Path(out_dir)
-    body, data = compute(pool_dir, n_pools, **kw) if clips is None else compute_synthetic(pool_dir, n_pools, clips, **kw)
+    if clips is not None and sources is not None:
+        raise PlanError("a plan has either stage 2c's synthetic clip pool or a list of sources")
+    if sources is not None:
+        body, data = compute_sources(pool_dir, n_pools, sources, **kw)
+    else:
+        body, data = compute(pool_dir, n_pools, **kw) if clips is None else compute_synthetic(pool_dir, n_pools, clips,
+                                                                                              **kw)
     meta = _dumps(body)
     if out_dir.exists():
         existing = (out_dir / "plan.json").read_bytes() if (out_dir / "plan.json").exists() else None
@@ -541,13 +697,31 @@ class Plan:
                 raise PlanError("entries.u32 has the wrong length")
             real = self.entries[self.entries < SYN_FLAG]
             if not np.array_equal(real, np.arange(int(self.meta["n_occurrences"]))) or \
-                    len(self.entries) - len(real) != int(self.meta["n_synthetic"]):
+                    len(self.entries) - len(real) != int(self.meta.get("n_synthetic", self.meta.get("n_extra", -1))):
                 raise PlanError("entries do not hold every real occurrence once, in order, plus the draw")
 
-    def verify_journal(self, pool_dir: Path, clips=None) -> dict:
+    @property
+    def multi_source(self) -> bool:
+        return "sources" in self.meta
+
+    def source_configs(self) -> list[dict]:
+        return [m["config"] for m in self.meta.get("sources", [])]
+
+    def verify_journal(self, pool_dir: Path, clips=None, sources: list[Source] | None = None) -> dict:
         """Re-read the journal: the same shards (SHA-256) and keys, and the cut and shuffle recomputed from them
-        equal the plan's (version 2: the whole plan recomputed from the journal and the clip pool `clips` equals
-        this one). Returns read_journal's rows (ids, sources, durations)."""
+        equal the plan's (version 2: the whole plan recomputed from the journal and the clip pool `clips`, or the
+        `sources` of a multi-source plan, equals this one). Returns read_journal's rows (ids, sources, durations)."""
+        if self.version == SYNTHETIC_VERSION and self.multi_source:
+            if sources is None or [s.config() for s in sources] != self.source_configs():
+                raise PlanError("a multi-source plan needs the sources it was drawn from")
+            body, data = compute_sources(pool_dir, self.n_pools, sources, pool_batches=self.pool_batches,
+                                         budget=self.budget, seed=int(self.meta["seed"]), config_id=self.config_id())
+            if _dumps(body) != _dumps(self.meta) or any(_sha(b) != self.meta["files"][n]["sha256"]
+                                                        for n, b in data.items()):
+                raise PlanError("the plan differs from the one the journal and the sources give")
+            return read_journal(pool_dir, self.consumed_batches, with_rows=True)
+        if sources is not None:
+            raise PlanError("only a multi-source plan takes sources")
         if self.version == SYNTHETIC_VERSION:
             if clips is None or str(clips.identity) != self.meta["synthetic"]["clip_pool"]:
                 raise PlanError("a version 2 plan needs the clip pool it was drawn from")
@@ -574,7 +748,7 @@ class Plan:
         return j
 
     def config_id(self) -> str:
-        base = self.meta["plan_id"].split("-syn")[0]
+        base = re.sub(r"-x[0-9a-f]{12}$", "", self.meta["plan_id"]).split("-syn")[0]
         return base[:-len(f"-p{self.pool_batches}-n{self.n_pools}")]
 
     def batch(self, t: int) -> np.ndarray:
@@ -604,6 +778,10 @@ def is_prefix(short: Plan, long: Plan) -> bool:
     if any(short.meta[k] != long.meta[k] for k in keys) or short.n_pools > long.n_pools:
         return False
     if short.version != long.version or short.meta.get("synthetic") != long.meta.get("synthetic"):
+        return False
+    if short.source_configs() != long.source_configs() or \
+            [m.get("share_value") for m in short.meta.get("sources", [])] != \
+            [m.get("share_value") for m in long.meta.get("sources", [])]:
         return False
     n, nb = short.n_entries, short.n_batches
     if short.entries is not None and not np.array_equal(short.entries, long.entries[:n]):

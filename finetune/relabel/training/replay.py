@@ -32,6 +32,11 @@ serves its synthetic rows in place, in cut order among the real ones: {"id": "sy
 clip's samples, passed through `synthetic_transform(item, b)` when given (the TS arms' augmentation; TSn passes
 none), and refused if longer than the plan's key for it. ReplayBatcher takes a row's text from its "label" when it
 has one (synthetic rows), else from the label store.
+
+A multi-source version 2 plan (training/batchplan.py compute_sources; b0prime plan v4) needs `sources`: one
+ExtraSource per plan source, in the plan's order (its batchplan.Source, and the transform of its rows or None).
+Source s's rows are {"id": "<prefix><clip id>", "source": <name>, "duration", "audio", "label"}, served and checked
+as the synthetic rows above. synthetic_mask(b) marks every extra row.
 """
 from __future__ import annotations
 
@@ -164,37 +169,62 @@ class JournalReplay:
         return [{"id": i, "source": s, "duration": d, "audio": a} for (i, s, d), a in zip(rows, audio)]
 
 
+class ExtraSource:
+    """A multi-source plan's source as the replay serves it: its batchplan.Source and the transform of its rows."""
+
+    def __init__(self, source, transform=None):
+        self.source, self.transform = source, transform
+        self.name, self.prefix, self.pool = source.name, source.prefix, source.clips
+        self.clips = sorted(source.clips.clips, key=lambda c: c["id"])
+
+    def identity(self) -> dict:
+        t = self.transform
+        return {**self.source.config(), "transform": None if t is None else getattr(t, "identity", repr(type(t)))}
+
+
 class PlannedReplay:
     """Planned batches [0, n_batches) of a batch plan, with JournalReplay's interface (module docstring)."""
 
     AUDIO = ("materialized", "c1")
 
     def __init__(self, plan, pool_dir, audio: str = "materialized", store=None, decode_threads: int = DECODE_THREADS,
-                 synthetic=None, synthetic_transform=None):
+                 synthetic=None, synthetic_transform=None, sources: list[ExtraSource] | None = None):
         from training import batchplan, poolaudio
         from training.labels import needed_shards
         if audio not in self.AUDIO:
             raise ValueError(f"audio must be one of {self.AUDIO}")
-        if (plan.version == batchplan.SYNTHETIC_VERSION) != (synthetic is not None):
+        multi = plan.version == batchplan.SYNTHETIC_VERSION and plan.multi_source
+        if multi != (sources is not None) or (synthetic is not None and sources is not None):
+            raise ValueError("a multi-source plan needs its sources, and only a multi-source plan takes them")
+        if not multi and (plan.version == batchplan.SYNTHETIC_VERSION) != (synthetic is not None):
             raise ValueError("a version 2 plan needs its clip pool, and only a version 2 plan takes one")
         self.plan, self.pool_dir, self.kind = plan, pool_dir, audio
-        j = plan.verify_journal(pool_dir, clips=synthetic)
+        if multi:
+            j = plan.verify_journal(pool_dir, sources=[s.source for s in sources])
+            extras = list(sources)
+        else:
+            j = plan.verify_journal(pool_dir, clips=synthetic)
+            extras = [] if synthetic is None else [ExtraSource(batchplan.Source(
+                "synthetic", "syn:", synthetic, 0, 0.0, True), synthetic_transform)]
         self.through_batch, self.consumed_batches = plan.n_batches, plan.consumed_batches
         self._ids = j["ids"]
         ids, src, dur = j["ids"], j["sources"], j["durations"]
         self.synthetic, self.synthetic_transform = synthetic, synthetic_transform
-        self._clips = sorted(synthetic.clips, key=lambda c: c["id"]) if synthetic is not None else []
-        csamples = batchplan.clip_samples(synthetic) if synthetic is not None else []
+        self.extras = extras
+        samples = [batchplan.clip_samples(x.pool) for x in extras]
+        keys = [[x.source.key(n) for n in s] for x, s in zip(extras, samples)]
         flag = batchplan.SYN_FLAG
-        self._syn = {}                                     # (batch, row) -> (clip, samples, key) of synthetic rows
+        self._syn = {}                     # (batch, row) -> (source index, clip, samples, key) of the extra rows
         self.batches: list[list[tuple[str, str, float]]] = []
         for t in range(plan.n_batches):
             rows = []
             for r, e in enumerate(plan.batch(t).tolist()):
                 if e >= flag:
-                    c = self._clips[e - flag]
-                    self._syn[(t, r)] = (c, csamples[e - flag], batchplan.synthetic_key(csamples[e - flag]))
-                    rows.append((f"syn:{c['id']}", "synthetic", csamples[e - flag] / batchplan.SAMPLE_RATE))
+                    s, k = batchplan.extra_parts(e)
+                    x = extras[s]
+                    c = x.clips[k]
+                    self._syn[(t, r)] = (s, c, samples[s][k], keys[s][k])
+                    rows.append((f"{x.prefix}{c['id']}", x.name, samples[s][k] / batchplan.SAMPLE_RATE))
                 else:
                     rows.append((ids[e], src[e], dur[e]))
             self.batches.append(rows)
@@ -223,6 +253,8 @@ class PlannedReplay:
         if synthetic is not None:
             self.identity["synthetic"] = {"clip_pool": str(synthetic.identity), "transform": None if synthetic_transform
                                           is None else getattr(synthetic_transform, "identity", repr(type(synthetic_transform)))}
+        if multi:
+            self.identity["sources"] = [x.identity() for x in extras]
         self.identity["sha256"] = hashlib.sha256(json.dumps(self.identity, sort_keys=True).encode()).hexdigest()
 
     def batch_ids(self, b: int) -> list[str]:
@@ -274,14 +306,16 @@ class PlannedReplay:
         return out
 
     def _synthetic_item(self, b: int, r: int) -> dict:
-        c, samples, key = self._syn[(b, r)]
-        a = self.synthetic.read(c["id"])
+        s, c, samples, key = self._syn[(b, r)]
+        x = self.extras[s]
+        a = x.pool.read(c["id"])
         if len(a) != samples:
-            raise RuntimeError(f"synthetic clip {c['id']}: {len(a)} samples, the plan has {samples}")
-        item = {"id": f"syn:{c['id']}", "source": "synthetic", "duration": samples / 16000, "audio": a,
+            raise RuntimeError(f"{x.name} clip {c['id']}: {len(a)} samples, the plan has {samples}")
+        item = {"id": f"{x.prefix}{c['id']}", "source": x.name, "duration": samples / 16000, "audio": a,
                 "label": c["label"]}
-        if self.synthetic_transform is not None:
-            item = self.synthetic_transform(item, b)
+        transform = self.synthetic_transform if self.synthetic is not None else x.transform   # 2c's may be swapped
+        if transform is not None:
+            item = transform(item, b)
             if len(item["audio"]) > key or item["label"] != c["label"]:
                 raise RuntimeError(f"batch {b}: the transform of {c['id']} exceeds its planned length or changed its label")
         return item

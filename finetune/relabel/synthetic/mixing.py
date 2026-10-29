@@ -51,7 +51,10 @@ class ClipPool:
         self.by_id = {c["id"]: c for c in clips}
 
     @classmethod
-    def load(cls, run: str | Path, allow_provisional: bool = False, verify_audio: bool = True) -> "ClipPool":
+    def load(cls, run: str | Path, allow_provisional: bool = False, verify_audio: bool = True,
+             synthetic_hygiene: bool = True) -> "ClipPool":
+        """A clip store's kept clips. synthetic_hygiene=False: a store in the same format from another source (b0prime
+        plan v4 "Extra sources"), which has no synthetic term split to check; its manifest is still checked."""
         d = layout.run_dir(run) if isinstance(run, str) else Path(run)
         meta = json.loads((d / "clips.meta.json").read_text())
         data = (d / "clips.jsonl").read_bytes()
@@ -60,6 +63,8 @@ class ClipPool:
             raise RuntimeError(f"{d}/clips.jsonl does not match clips.meta.json")
         if meta.get("provisional") and not allow_provisional:
             raise RuntimeError(f"{d}: provisional run (hygiene without eval-ext/eval-stem); not usable for training")
+        if not synthetic_hygiene:
+            return cls(read_jsonl(d / "clips.jsonl"), identity=sha, verify_audio=verify_audio)
         current = hashlib.sha256(layout.split_path().read_bytes()).hexdigest() if layout.split_path().exists() else None
         if (meta.get("hygiene_split_sha256") is None or meta["hygiene_split_sha256"] != current) and not allow_provisional:
             raise RuntimeError(f"{d}: hygiene did not run under the current term split (split_sha256 "
@@ -89,13 +94,19 @@ def clip_order(n: int, seed: int, passes: int, first: int = 0) -> list[int]:
 
 
 def plan(real_seconds: Sequence[float], clip_seconds: Sequence[float], seed: int,
-         share: float = layout.SYNTHETIC_SHARE) -> list[list[int]]:
-    """Per batch, the indices (into clip_seconds) of its synthetic clips (module docstring)."""
+         share: float = layout.SYNTHETIC_SHARE, once: bool = False, take_rest: bool = False) -> list[list[int]]:
+    """Per batch, the indices (into clip_seconds) of its synthetic clips (module docstring).
+
+    once (b0prime plan v4 "Extra sources", a source drawn exactly once): one seeded pass (pass 0), never repeated:
+    the draw stops when the pass is used up; with take_rest, the last batch also takes every clip not drawn yet (the
+    journal's last pool), so every clip is drawn exactly once. Without once the rule is the one above, unchanged."""
     n = len(clip_seconds)
     if n == 0:
         raise ValueError("empty clip pool")
+    if take_rest and not once:
+        raise ValueError("take_rest belongs to a source drawn once")
     need = share * float(sum(real_seconds))
-    passes = int(need / max(sum(clip_seconds), 1e-9)) + 2
+    passes = 1 if once else int(need / max(sum(clip_seconds), 1e-9)) + 2
     order = clip_order(n, seed, passes)
     cursor, carry, out = 0, 0.0, []
     for real in real_seconds:
@@ -105,6 +116,8 @@ def plan(real_seconds: Sequence[float], clip_seconds: Sequence[float], seed: int
             got = 0.0
             while True:
                 if cursor >= len(order):
+                    if once:
+                        break
                     order += clip_order(n, seed, 1, first=len(order) // n)
                 d = clip_seconds[order[cursor]]
                 if got + d / 2.0 > target:      # adding would overshoot by more than it closes
@@ -114,6 +127,8 @@ def plan(real_seconds: Sequence[float], clip_seconds: Sequence[float], seed: int
                 cursor += 1
             carry = target - got
         out.append(take)
+    if take_rest and out:
+        out[-1] += order[cursor:]
     return out
 
 
