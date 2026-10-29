@@ -130,6 +130,28 @@ class HeldOutTest(unittest.TestCase):
                     self.assertNotIn(norm(c.sentence), held.sentences)
             self.assertEqual(counts["stages"]["selected"]["clips"], 2)
 
+    def test_bracketed_words_cannot_hide_a_held_out_sentence(self):
+        """The evaluation normalizer deletes bracketed words, which the filters v3 label keeps (review r1): a clip
+        matches a held-out sentence in either form, in both directions."""
+        with tempfile.TemporaryDirectory() as t:
+            tsvs = {"validated.tsv": [row("v1", "b1.mp3", "(Have) many acquaintances, (but) few friends."),
+                                      row("v2", "b2.mp3", "Never judge a book by its cover."),
+                                      row("v3", "b3.mp3", "(Have) many acquaintances, but few friends."),
+                                      row("v4", "b4.mp3", "A kept sentence about weather.")],
+                    "test.tsv": [row("tt", "t1.mp3", "Never judge a book (by its cover).")]}
+            esb = [("esbZ", "Have many acquaintances, but few friends.", "z.mp3")]
+            rel = Release(Path(t), tsvs, esb, {f"b{i}.mp3": 2000 for i in range(1, 5)})
+            norm = normalizer()
+            self.assertNotEqual(norm("(Have) many acquaintances, (but) few friends."),
+                                norm("Have many acquaintances, but few friends."))
+            held = heldout.build_heldout(rel.esb, rel.tsv_rows, norm)
+            clips, _ = select.select(rel.validated(), held, heldout.read_durations(Path(t) / layout.DURATIONS_TSV),
+                                     frozenset(), None, coverage(), norm)
+            self.assertEqual({c.path: c.reason for c in clips},
+                             {"b1.mp3": "sentence", "b2.mp3": "sentence", "b3.mp3": "sentence", "b4.mp3": None})
+            dev_rows = [row("d1", "d1.mp3", "(Have) many acquaintances, (but) few friends!")]
+            self.assertEqual(dev.eligible(dev_rows, held, norm), [])
+
     def test_without_the_path_join_the_changed_speaker_would_leak(self):
         """The changed-id case is real: ESB's id alone does not name spkX."""
         with tempfile.TemporaryDirectory() as t:
@@ -190,8 +212,11 @@ class DenylistTest(unittest.TestCase):
             tsvs = {"validated.tsv": [row("s1", "a1.mp3", " ".join(w[0:9])),             # contained
                                       row("s2", "a2.mp3", "And the quick brown fox jumps over the lazy dog."),  # talk
                                       row("s3", "a3.mp3", "Quick brown fox jumps over the lazy."),  # 7 words of it
-                                      row("s4", "a4.mp3", "Kept by every rule here.")]}
-            rel = Release(rel_dir, tsvs, [], {f"a{i}.mp3": 2000 for i in range(1, 5)})
+                                      row("s4", "a4.mp3", "Kept by every rule here."),
+                                      # only the label (brackets kept) holds the 8-grams (review r1)
+                                      row("s5", "a5.mp3", "(The quick brown) fox jumps over the lazy dog."),
+                                      row("s6", "a6.mp3", "(" + w[0] + ") " + " ".join(w[1:9]))]}
+            rel = Release(rel_dir, tsvs, [], {f"a{i}.mp3": 2000 for i in range(1, 7)})
             norm = normalizer()
             held = heldout.build_heldout([], rel.tsv_rows, norm)
             grams = heldout.talk_grams([talk], norm)
@@ -199,8 +224,8 @@ class DenylistTest(unittest.TestCase):
                                           grams, self._containment(tmp, []), coverage(), norm)
             reason = {c.path: c.reason for c in clips}
             self.assertEqual(reason, {"a1.mp3": "denylist_containment", "a2.mp3": "talk_text_8gram", "a3.mp3": None,
-                                      "a4.mp3": None})
-            self.assertEqual(counts["dropped"]["talk_text_8gram"]["clips"], 1)
+                                      "a4.mp3": None, "a5.mp3": "talk_text_8gram", "a6.mp3": "denylist_containment"})
+            self.assertEqual(counts["dropped"]["talk_text_8gram"]["clips"], 2)
 
     def test_reproduced_boilerplate_must_match_the_denylist_counts(self):
         """reproduce_boilerplate takes the 8-grams in more than 100 recordings, and refuses a scan that does not
@@ -336,7 +361,7 @@ class ConfirmTest(unittest.TestCase):
         recs = [{"id": "a", "status": "ok", "samples": 24000}, {"id": "b", "status": "undecodable"},
                 {"id": "c", "status": "ok", "samples": 16000}]
         audio = {"a": np.zeros(24000, np.int16), "c": np.zeros(16000, np.int16)}
-        out = confirm.run_chunk(Fake(), recs, {"a": "Hello, world!", "c": "Hello world."}, audio)
+        out = confirm.run_chunk(Fake(), recs, {"a": "Hello, world!", "c": "Hello world."}, audio)   # id -> label
         self.assertEqual([o["id"] for o in out], ["a", "c"])
         self.assertEqual([o["kept"] for o in out], [True, False])
         self.assertEqual(out[1]["b0"], "zzz qqq")
@@ -409,38 +434,50 @@ def store_world(tmp: Path, n: int = 5, chunk: int = 2):
     for i in range(n):
         name = f"x_{i}.mp3"
         (raw / name).write_bytes(mp3_bytes(1.2 + 0.1 * i, freq=300 + 50 * i))
-        rows.append({"id": heldout.clip_id(name), "path": name, "client_id": f"s{i % 2}", "sentence": f"Sentence {i}.",
+        # the sentence as written hides words in brackets from the evaluation normalizer; its label keeps them
+        sentence = f"(Sentence {i}) here."
+        rows.append({"id": heldout.clip_id(name), "path": name, "client_id": f"s{i % 2}", "sentence": sentence,
                      "accents": "" if i % 2 else "England English", "ms": 1200 + 100 * i,
-                     "label": f"Sentence {i}.", "reason": None})
+                     "label": heldout.training_text(sentence), "reason": None})
     rows.sort(key=lambda r: r["id"])
     paths = layout.Paths(tmp / "out")
-    store.plan(paths, "sel-sha", [r["id"] for r in rows], chunk_clips=chunk)
+    store.plan(paths, SEL, [r["id"] for r in rows], chunk_clips=chunk)
     return paths, rows, raw
+
+
+SEL = "sel-sha"
+QUIET = {"log": lambda m: None}
 
 
 class StoreChunksTest(unittest.TestCase):
     def test_chunks_resume_and_refuse_another_selection(self):
         with tempfile.TemporaryDirectory() as t:
             paths, rows, raw = store_world(Path(t))
-            first = store.decode_chunks(paths, rows, raw, [0, 1], workers=0, log=lambda m: None)
+            first = store.decode_chunks(paths, rows, SEL, raw, [0, 1], workers=0, **QUIET)
             self.assertEqual(first, {"decoded_chunks": 2, "already_done": 0})
-            again = store.decode_chunks(paths, rows, raw, [0, 1, 2], workers=0, log=lambda m: None)
+            again = store.decode_chunks(paths, rows, SEL, raw, [0, 1, 2], workers=0, **QUIET)
             self.assertEqual(again, {"decoded_chunks": 1, "already_done": 2})
-            per, _ = store.chunk_records(paths, rows)
+            per, _ = store.chunk_records(paths, rows, SEL)
             self.assertEqual([r["id"] for p in per for r in p], [r["id"] for r in rows])
             with self.assertRaises(RuntimeError):
                 store.plan(paths, "another-selection", [r["id"] for r in rows], chunk_clips=2)
             with self.assertRaises(RuntimeError):
-                store.chunk_records(paths, rows[:-1])
+                store.chunk_records(paths, rows[:-1], SEL)
+            # a regenerated selection with the same ids but other text: its records must not be reused (review r1)
+            with self.assertRaises(RuntimeError):
+                store.chunk_records(paths, rows, "another-selection")
+            with self.assertRaises(RuntimeError):
+                store.decode_chunks(paths, rows, "another-selection", raw, [0], workers=0, **QUIET)
 
     def test_finalize_writes_the_clip_source(self):
         from unittest import mock
         with tempfile.TemporaryDirectory() as t:
             paths, rows, raw = store_world(Path(t))
-            store.decode_chunks(paths, rows, raw, [0, 1, 2], workers=0, log=lambda m: None)
-            per, _ = store.chunk_records(paths, rows)
-            # B0 reads the even clips correctly and the odd ones as something else entirely
-            said = {r["samples"]: (f"sentence {i}" if i % 2 == 0 else "completely different words here")
+            store.decode_chunks(paths, rows, SEL, raw, [0, 1, 2], workers=0, **QUIET)
+            per, _ = store.chunk_records(paths, rows, SEL)
+            # B0 reads the even clips correctly (the label's words) and the odd ones as something else entirely;
+            # judged against the sentence as written ("here"), every clip would be dropped
+            said = {r["samples"]: (f"sentence {i} here" if i % 2 == 0 else "completely different words there")
                     for i, r in enumerate(x for p in per for x in p)}
             self.assertEqual(len(said), 5)
 
@@ -451,15 +488,19 @@ class StoreChunksTest(unittest.TestCase):
                 def run(self, clips):
                     return [said[len(c)] for c in clips]
 
-            fake_settings = {"batch_seconds": 10.0, "engine": {}, "model_sha256": "m", "rule": confirm.RULE,
-                             "max_wer": 0.5, "normalizer": "n"}
+            fake_settings = {"selection_sha256": SEL, "batch_seconds": 10.0, "engine": {}, "model_sha256": "m",
+                             "rule": confirm.RULE, "max_wer": 0.5, "normalizer": "n"}
             with mock.patch.object(confirm, "settings", return_value=fake_settings):
-                out = confirm.confirm_chunks(paths, rows, Fake(), 10.0, [0, 1, 2], log=lambda m: None)
+                out = confirm.confirm_chunks(paths, rows, SEL, Fake(), 10.0, [0, 1, 2], **QUIET)
                 self.assertEqual(out["confirmed_chunks"], 3)
+                with self.assertRaises(RuntimeError):
+                    confirm.confirm_chunks(paths, rows, "another-selection", Fake(), 10.0, [0], **QUIET)
                 with mock.patch.object(confirm, "settings", return_value=fake_settings | {"batch_seconds": 20.0}):
                     with self.assertRaises(RuntimeError):
-                        confirm.confirm_chunks(paths, rows, Fake(), 20.0, [0], log=lambda m: None)
-            report = confirm.finalize(paths, rows, {"counts": {"stages": {}}})
+                        confirm.confirm_chunks(paths, rows, SEL, Fake(), 20.0, [0], **QUIET)
+            with self.assertRaises(RuntimeError):
+                confirm.finalize(paths, rows, {"counts": {"stages": {}}, "table_sha256": "another-selection"})
+            report = confirm.finalize(paths, rows, {"counts": {"stages": {}}, "table_sha256": SEL})
             kept_ids = [json.loads(line)["id"] for line in paths.clips.read_text().splitlines()]
             self.assertEqual(kept_ids, [rows[i]["id"] for i in (0, 2, 4)])
             self.assertEqual(report["store"]["checked_by_b0"], 5)

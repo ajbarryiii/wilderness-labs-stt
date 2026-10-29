@@ -1,12 +1,15 @@
 """Held-out removal and the text rules of the read-speech source (b0prime plan "Extra sources", review p3).
 
 Sentences are compared after the evaluation normalizer (finetune/parakeet-ternary/evaluate.py `normalize`, stripped),
-as the global denylist does; words are its whitespace split.
+as the global denylist does; words are its whitespace split. The normalizer deletes bracketed text, while the
+training label (filters version 3, labeling/filters.py map_text) turns brackets into spaces and keeps their words, so
+every text is compared in both forms (sentence_keys): the normalized sentence and the normalized filters version 3
+text. A rule that matches either form applies (review r1).
 
 1. Held-out sets (build_heldout), from the ESB test split of the same corpus (Kea test reporting) and the release's
    own test and dev splits (test.tsv, dev.tsv; dev is reserved for the dev sample):
    - clips: every held-out audio path (the ESB rows' audio.path, the test and dev rows' `path`);
-   - sentences: every held-out normalized sentence;
+   - sentences: both normalized forms of every held-out sentence;
    - speakers: the union of ESB's `id` values, the test and dev `client_id`s, and the `client_id` that any of the
      release's six tsvs (validated, other, invalidated, train, dev, test) records for a held-out clip path. A
      clip's speaker id can change between releases, so the path join catches a held-out speaker whose ESB id
@@ -15,12 +18,12 @@ as the global denylist does; words are its whitespace split.
 2. The global denylist (labeling plan Part B), on every clip left (each clip is its own recording):
    - identity: a held-out set row naming a recording of this source (`identity` {alias: clip id}) drops that clip;
    - containment: a held-out utterance of >= 8 words whose distinct non-boilerplate 8-grams occur at least half
-     (ceil(0.5 x n)) in the clip's sentence drops the clip. The held-out sets are exactly the ones recorded in
+     (ceil(0.5 x n)) in either form of the clip's sentence drops the clip. The held-out sets are exactly the ones recorded in
      denylist.json (paths and SHA-256 verified), and the boilerplate 8-grams are the denylist's own (8-grams in
      more than 100 of its training recordings), reproduced by reproduce_boilerplate and verified against the
      counts denylist.json records. This source's clips do not add to the boilerplate counts.
-3. Talk text (registry alias ted-test-text, the `text` column only): a clip is dropped if its sentence shares any
-   word 8-gram with any talk (all 8-grams of each talk's normalized text). A one-sentence clip is too short for
+3. Talk text (registry alias ted-test-text, the `text` column only): a clip is dropped if either form of its sentence
+   shares any word 8-gram with any talk (all 8-grams of each talk's normalized text). A one-sentence clip is too short for
    the containment rule's 50% test, so this rule is stricter.
 
 Untrusted input: paths read from the tsvs must match SAFE_PATH (a bare file name ending in .mp3) before they are
@@ -61,6 +64,18 @@ class Normalizer:
         if out is None:
             out = self.cache[text] = self.fn(text).strip()
         return out
+
+
+def training_text(sentence: str | None) -> str:
+    """The filters version 3 text of a sentence (the stored training label, before tokenizer coverage)."""
+    from labeling import filters
+    return filters.map_text(sentence or "", version=layout.FILTERS_VERSION)
+
+
+def sentence_keys(sentence: str | None, normalize: Callable[[str], str]) -> tuple[str, ...]:
+    """The distinct normalized forms of a sentence: of the sentence as written, then of its filters v3 text."""
+    a, b = normalize(sentence or ""), normalize(training_text(sentence))
+    return (a,) if a == b else (a, b)
 
 
 def clip_stem(path: str) -> str:
@@ -115,15 +130,16 @@ class HeldOut:
     sentences: frozenset[str]
     esb_paths: frozenset[str]
     esb_speakers: frozenset[str]        # ESB ids and this release's client_id of every ESB path (both id forms)
-    esb_sentences: frozenset[str]
+    esb_sentences: frozenset[str]       # both normalized forms (sentence_keys)
     counts: dict
 
-    def reason(self, client_id: str, path: str, norm: str) -> str | None:
+    def reason(self, client_id: str, path: str, keys: Sequence[str]) -> str | None:
+        """The first held-out rule a clip matches; `keys` are its sentence's normalized forms (sentence_keys)."""
         if client_id in self.speakers:
             return "speaker"
         if path in self.paths:
             return "clip"
-        if norm in self.sentences:
+        if any(k in self.sentences for k in keys):
             return "sentence"
         return None
 
@@ -137,7 +153,7 @@ def build_heldout(esb: Iterable[tuple[str, str, str]], tsv_rows: Callable[[str],
         n_esb += 1
         esb_spk.add(uid)
         esb_path.add(path)
-        esb_sent.add(normalize(text))
+        esb_sent.update(sentence_keys(text, normalize))
     speakers, paths, sentences = set(esb_spk), set(esb_path), set(esb_sent)
     counts = {"esb_test": n_esb, "esb_test_paths": len(esb_path)}
     for name in layout.HELD_SPLITS:
@@ -146,7 +162,7 @@ def build_heldout(esb: Iterable[tuple[str, str, str]], tsv_rows: Callable[[str],
             n += 1
             speakers.add(r["client_id"])
             paths.add(r["path"])
-            sentences.add(normalize(r["sentence"]))
+            sentences.update(sentence_keys(r["sentence"], normalize))
         counts[name] = n
     ids_of_path: dict[str, set[str]] = defaultdict(set)
     for name in layout.TSVS:

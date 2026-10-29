@@ -122,9 +122,10 @@ def cmd_select(args) -> int:
     return 0
 
 
-def _selected(paths=None):
-    paths = paths or layout.Paths(layout.out_dir())
-    rows, meta = select.read_selected(layout.Paths(layout.out_dir()))
+def _selected():
+    """(production paths, selected rows, selection meta)."""
+    paths = layout.Paths(layout.out_dir())
+    rows, meta = select.read_selected(paths)
     return paths, rows, meta
 
 
@@ -135,10 +136,11 @@ def _deadline(minutes: float | None) -> float | None:
 def cmd_decode(args) -> int:
     layout.require_mount()
     paths, rows, meta = _selected()
-    body = store.plan(paths, meta["table_sha256"], [r["id"] for r in rows])
-    out = store.decode_chunks(paths, rows, layout.raw_dir() / "clips", range(len(body["chunks"])), args.workers,
+    sha = meta["table_sha256"]
+    body = store.plan(paths, sha, [r["id"] for r in rows])
+    out = store.decode_chunks(paths, rows, sha, layout.raw_dir() / "clips", range(len(body["chunks"])), args.workers,
                               _deadline(args.budget_minutes), log)
-    per, _ = store.chunk_records(paths, rows)
+    per, _ = store.chunk_records(paths, rows, sha)
     out["chunks_done"] = sum(p is not None for p in per)
     out["chunks"] = len(per)
     out["peak_rss_gb"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 2**20
@@ -147,6 +149,9 @@ def cmd_decode(args) -> int:
 
 
 def cmd_dev(args) -> int:
+    import concurrent.futures as cf
+    import multiprocessing as mp
+
     import pyarrow.parquet as pq
     from pool import common
     layout.require_mount()
@@ -158,8 +163,6 @@ def cmd_dev(args) -> int:
     raw_clips = layout.raw_dir() / "clips"
     tasks = [(r["id"], str(raw_clips / r["path"]), str(paths.dev_audio / f"{heldout.clip_stem(r['path'])}.flac"))
              for r in sample]
-    import concurrent.futures as cf
-    import multiprocessing as mp
     with cf.ProcessPoolExecutor(args.workers, mp_context=mp.get_context("spawn")) as ex:
         recs = {r["id"]: r for r in ex.map(store.decode_clip, tasks, chunksize=8)}
     bad = {k: v["status"] for k, v in recs.items() if v["status"] != "ok"}
@@ -194,12 +197,13 @@ def _labeler(args):
 def cmd_confirm(args) -> int:
     layout.require_mount()
     paths, rows, meta = _selected()
-    with _gpu_lock(f"relabel cv27 confirm pid", args.lock_wait):
+    sha = meta["table_sha256"]
+    with _gpu_lock("relabel cv27 confirm", args.lock_wait):
         labeler = _labeler(args)
-        per, body = store.chunk_records(paths, rows)
+        per, body = store.chunk_records(paths, rows, sha)
         ready = [k for k, p in enumerate(per) if p is not None]
-        out = confirm.confirm_chunks(paths, rows, labeler, args.batch_seconds, ready, _deadline(args.budget_minutes),
-                                     args.threads, log)
+        out = confirm.confirm_chunks(paths, rows, sha, labeler, args.batch_seconds, ready,
+                                     _deadline(args.budget_minutes), args.threads, log)
     import torch
     out["peak_vram_gb"] = torch.cuda.max_memory_reserved() / 2**30
     out["peak_rss_gb"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 2**20
@@ -224,21 +228,29 @@ def _probe_rows(n: int) -> tuple[list[dict], dict]:
 
 
 def cmd_probe_decode(args) -> int:
+    import shutil
     layout.require_mount()
-    paths = layout.Paths(layout.smoke_dir("probe"))
+    base = layout.smoke_dir("probe")
+    if layout.is_production(base):
+        raise RuntimeError(f"{base} is a production path")
+    if base.exists():     # a fresh probe: reused chunks would make the timing meaningless (review r1)
+        shutil.rmtree(base)
+    paths = layout.Paths(base)
     rows, meta = _probe_rows(args.clips)
-    body = store.plan(paths, meta["table_sha256"], [r["id"] for r in rows])
+    sha = meta["table_sha256"]
+    body = store.plan(paths, sha, [r["id"] for r in rows])
     t0 = time.monotonic()
-    out = store.decode_chunks(paths, rows, layout.raw_dir() / "clips", range(len(body["chunks"])), args.workers,
+    out = store.decode_chunks(paths, rows, sha, layout.raw_dir() / "clips", range(len(body["chunks"])), args.workers,
                               None, log)
     wall = time.monotonic() - t0
-    per, _ = store.chunk_records(paths, rows)
+    if out["already_done"]:
+        raise RuntimeError("probe-decode reused chunks; its timing is not a measurement")
+    per, _ = store.chunk_records(paths, rows, sha)
     recs = [r for p in per for r in p]
     audio_s = sum(r.get("samples", 0) for r in recs if r["status"] == "ok") / layout.SAMPLE_RATE
     res = {**out, "clips": len(recs), "status": dict(collections.Counter(r["status"] for r in recs)),
            "wall_s": wall, "clips_per_s": len(recs) / wall, "audio_s_per_s": audio_s / wall, "workers": args.workers,
            "peak_rss_parent_gb": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 2**20,
-           "peak_rss_children_gb": resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss / 2**20,
            "flac_bytes": sum(os.path.getsize(r["audio_filepath"]) for r in recs if r["status"] == "ok"),
            "selected_clips": meta["counts"]["stages"]["selected"]["clips"],
            "selected_hours": meta["counts"]["stages"]["selected"]["hours"]}
@@ -256,10 +268,10 @@ def cmd_probe_b0(args) -> int:
     layout.require_mount()
     paths = layout.Paths(layout.smoke_dir("probe"))
     rows, meta = _probe_rows(layout.PROBE_CLIPS)
-    per, _ = store.chunk_records(paths, rows)
+    per, _ = store.chunk_records(paths, rows, meta["table_sha256"])
     if any(p is None for p in per):
         raise RuntimeError("run probe-decode first")
-    sentences = {r["id"]: r["sentence"] for r in rows}
+    labels = {r["id"]: r["label"] for r in rows}
     with _gpu_lock("relabel cv27 probe-b0", args.lock_wait):
         t0 = time.monotonic()
         labeler = _labeler(args)
@@ -270,23 +282,23 @@ def cmd_probe_b0(args) -> int:
             t1 = time.monotonic()
             audio = confirm.load_audio(recs, args.threads)
             t2 = time.monotonic()
-            results += confirm.run_chunk(labeler, recs, sentences, audio)
+            results += confirm.run_chunk(labeler, recs, labels, audio)
             torch.cuda.synchronize()
             t3 = time.monotonic()
             read_s += t2 - t1
             b0_s += t3 - t2
             audio_s += sum(r["samples"] for r in recs if r["status"] == "ok") / layout.SAMPLE_RATE
     hours = meta["counts"]["stages"]["selected"]["hours"]
-    res = {"batch_seconds": args.batch_seconds, "clips": len(results), "audio_hours": audio_s / 3600,
-           "model_load_s": t_load, "read_s": read_s, "b0_s": b0_s, "rtfx_b0": audio_s / b0_s,
-           "rtfx_with_read": audio_s / (b0_s + read_s),
+    res = {"batch_seconds": args.batch_seconds, "declared_vram_gb": args.declared_vram_gb, "clips": len(results),
+           "audio_hours": audio_s / 3600, "model_load_s": t_load, "read_s": read_s, "b0_s": b0_s,
+           "rtfx_b0": audio_s / b0_s, "rtfx_with_read": audio_s / (b0_s + read_s),
            "peak_vram_reserved_gb": torch.cuda.max_memory_reserved() / 2**30,
            "peak_vram_allocated_gb": torch.cuda.max_memory_allocated() / 2**30,
            "peak_rss_gb": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 2**20,
            "dropped": sum(not r["kept"] for r in results), "selected_hours": hours,
            "gpu_hours_estimate_b0_only": hours * 3600 / (audio_s / b0_s) / 3600,
-           "gpu_hours_estimate_with_warm_reads": hours * 3600 / (audio_s / (b0_s + read_s)) / 3600,
-           "note": "reads are of the just-written probe files (warm page cache); the full pass reads cold files"}
+           "gpu_hours_estimate_serial_reads": hours * 3600 / (audio_s / (b0_s + read_s)) / 3600,
+           "note": "the full pass reads the next chunk while B0 runs (confirm.confirm_chunks); reads here are serial"}
     common.atomic_write_json(paths.base / f"probe-b0-{int(args.batch_seconds)}.json", res)
     print(json.dumps(res, indent=1))
     return 0
@@ -297,7 +309,7 @@ def cmd_status(args) -> int:
     if not paths.decode_plan.exists():
         print(json.dumps({"selected": len(rows), "decode_plan": None}))
         return 0
-    per, body = store.chunk_records(paths, rows)
+    per, body = store.chunk_records(paths, rows, meta["table_sha256"])
     conf = [k for k, p in enumerate(per) if p is not None and confirm.read_confirm(paths, k, p) is not None]
     print(json.dumps({"selected": len(rows), "chunks": len(per), "decoded": sum(p is not None for p in per),
                       "confirmed": len(conf), "finalized": paths.clips_meta.exists()}))

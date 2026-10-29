@@ -2,7 +2,7 @@
 
 Eligible: rows of the release's dev split whose path is not an ESB test path, whose client_id is not an ESB speaker
 in either id form (ESB's `id`, or this release's client_id of an ESB path; heldout.HeldOut.esb_speakers), and whose
-normalized sentence is not an ESB test sentence. The dev split's speakers, clips and sentences are all held out of
+sentence matches no ESB test sentence in either normalized form (heldout.sentence_keys). The dev split's speakers, clips and sentences are all held out of
 training (heldout.py), so the sample never overlaps the training clips.
 
 Sample: the eligible rows sorted by path, shuffled by random.Random(DEV_SEED), then taken in that order with at most
@@ -23,7 +23,7 @@ from cv27 import heldout, layout
 
 def eligible(dev_rows: Iterable[dict], held: heldout.HeldOut, normalize: Callable[[str], str]) -> list[dict]:
     return [r for r in dev_rows if r["path"] not in held.esb_paths and r["client_id"] not in held.esb_speakers
-            and normalize(r["sentence"]) not in held.esb_sentences]
+            and not any(k in held.esb_sentences for k in heldout.sentence_keys(r["sentence"], normalize))]
 
 
 def sample(rows: list[dict], n: int = layout.DEV_SIZE, per_speaker: int = layout.DEV_PER_SPEAKER,

@@ -148,8 +148,8 @@ def read_chunk(path: Path, ids: Sequence[str]) -> list[dict] | None:
     return rows
 
 
-def decode_chunks(paths: layout.Paths, rows: Sequence[dict], raw_clips: Path, chunks: Sequence[int], workers: int,
-                  deadline: float | None = None, log=print) -> dict:
+def decode_chunks(paths: layout.Paths, rows: Sequence[dict], selection_sha256: str, raw_clips: Path,
+                  chunks: Sequence[int], workers: int, deadline: float | None = None, log=print) -> dict:
     """Decode the given chunks (rows: the selected rows sorted by id, as planned); skips done chunks; stops starting
     new chunks after `deadline` (time.monotonic())."""
     import concurrent.futures as cf
@@ -159,6 +159,8 @@ def decode_chunks(paths: layout.Paths, rows: Sequence[dict], raw_clips: Path, ch
     from cv27 import heldout
     from pool import common
     body = json.loads(paths.decode_plan.read_text())
+    if body["selection_sha256"] != selection_sha256:
+        raise RuntimeError(f"{paths.decode_plan} was made from another selection")
     by_id = {r["id"]: r for r in rows}
     ids = [r["id"] for r in rows]
     groups = chunk_ids(ids, body["chunk_clips"])
@@ -189,12 +191,16 @@ def decode_chunks(paths: layout.Paths, rows: Sequence[dict], raw_clips: Path, ch
     return {"decoded_chunks": done, "already_done": skipped}
 
 
-def chunk_records(paths: layout.Paths, rows: Sequence[dict]) -> tuple[list[list[dict] | None], dict]:
-    """(records per chunk or None if not done, decode.json), checked against the selected rows."""
+def chunk_records(paths: layout.Paths, rows: Sequence[dict], selection_sha256: str) -> tuple[list[list[dict] | None], dict]:
+    """(records per chunk or None if not done, decode.json); refuses a store made from another selection table
+    (decode.json's selection SHA-256 and every chunk's id-list SHA-256 must match the current selection)."""
     body = json.loads(paths.decode_plan.read_text())
+    if body["selection_sha256"] != selection_sha256:
+        raise RuntimeError(f"{paths.decode_plan} was made from selection {body['selection_sha256']}, not "
+                           f"{selection_sha256}; refusing to attach its records to another selection")
     groups = chunk_ids([r["id"] for r in rows], body["chunk_clips"])
-    if len(groups) != len(body["chunks"]):
-        raise RuntimeError("the selection does not match decode.json")
+    if len(groups) != len(body["chunks"]) or any(ids_sha256(g) != c["ids_sha256"] for g, c in zip(groups, body["chunks"])):
+        raise RuntimeError("the selected ids do not match decode.json")
     return [read_chunk(paths.decode_chunk(k), g) for k, g in enumerate(groups)], body
 
 

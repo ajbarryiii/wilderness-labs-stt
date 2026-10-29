@@ -5,15 +5,19 @@ the B0 labels of the labeling pass were (labeling/engines.py B0Labeler: parakeet
 bf16 encoder, FP32 greedy TDT, filters off), on batches cut by train.cut_pool with count x longest <= batch_seconds.
 Each decoded clip (store status "ok") gets B0's greedy transcript and
 
-    wer = evaluate.utterance_wer(sentence, B0's transcript)      the evaluation normalizer; the sentence is the reference
+    wer = evaluate.utterance_wer(label, B0's transcript)      the evaluation normalizer; the reference is the label
 
-A clip is kept iff wer <= B0_MAX_WER (0.5); an infinite WER (the sentence normalizes to nothing and B0 wrote words)
-drops it. B0's transcripts are kept for every checked clip.
+The reference is the sentence as it is trained on: its filters version 3 text (the stored label, before cleaning).
+The evaluation normalizer deletes bracketed text, so scoring the sentence as written would leave a parenthetical's
+words, which the label keeps, unchecked (the reason filters version 3 scores mapped text; review r1). A clip is kept
+iff wer <= B0_MAX_WER (0.5); an infinite WER (the label normalizes to nothing and B0 wrote words) drops it. B0's
+transcripts are kept for every checked clip.
 
 Chunks follow decode.json: confirm/chunks/<k>.jsonl ({"id", "b0", "wer", "wer_infinite"} per "ok" clip, in id order)
 with a <k>.json sidecar (settings, timings), each written atomically once the chunk is done, so a job resumes at a
-chunk boundary. confirm/run.json fixes the settings (batch_seconds, engine, model SHA-256, rule) at the first chunk;
-a later job with other settings is refused, so every clip is judged by one configuration.
+chunk boundary. confirm/run.json fixes the settings (selection SHA-256, batch_seconds, engine, model SHA-256, rule) at
+the first chunk; a later job with other settings is refused, so every clip is judged by one configuration, and every
+step refuses a store made from another selection table (store.chunk_records).
 """
 from __future__ import annotations
 
@@ -28,20 +32,22 @@ import numpy as np
 
 from cv27 import layout, store
 
-RULE = "keep iff evaluate.utterance_wer(sentence, B0 greedy) <= 0.5 (an infinite WER drops)"
+RULE = ("keep iff evaluate.utterance_wer(label, B0 greedy) <= 0.5, label = the sentence's filters version 3 text "
+        "(an infinite WER drops)")
 
 
-def utterance_wer(sentence: str, hyp: str) -> float:
+def utterance_wer(reference: str, hyp: str) -> float:
     import evaluate  # finetune/parakeet-ternary
-    return evaluate.utterance_wer(sentence or "", hyp or "")
+    return evaluate.utterance_wer(reference or "", hyp or "")
 
 
 def keep(wer: float) -> bool:
     return math.isfinite(wer) and wer <= layout.B0_MAX_WER
 
 
-def judged(sentence: str, hyp: str) -> dict:
-    w = utterance_wer(sentence, hyp)
+def judged(label: str, hyp: str) -> dict:
+    """B0's transcript judged against the clip's training label."""
+    w = utterance_wer(label, hyp)
     return {"b0": hyp, "wer": w if math.isfinite(w) else None, "wer_infinite": not math.isfinite(w),
             "kept": keep(w)}
 
@@ -84,8 +90,8 @@ def load_audio(records: Sequence[dict], threads: int = 8) -> dict[str, np.ndarra
         return dict(ex.map(one, ok))
 
 
-def run_chunk(labeler, records: Sequence[dict], sentences: dict[str, str], audio: dict[str, np.ndarray]) -> list[dict]:
-    """B0 over the chunk's "ok" clips; one judged row per clip, in record (id) order."""
+def run_chunk(labeler, records: Sequence[dict], labels: dict[str, str], audio: dict[str, np.ndarray]) -> list[dict]:
+    """B0 over the chunk's "ok" clips, each judged against its training label; in record (id) order."""
     ok = [r for r in records if r["status"] == "ok"]
     durations = [r["samples"] / layout.SAMPLE_RATE for r in ok]
     hyps: dict[str, str] = {}
@@ -93,14 +99,15 @@ def run_chunk(labeler, records: Sequence[dict], sentences: dict[str, str], audio
         clips = [audio[ok[i]["id"]].astype(np.float32) / 32768.0 for i in batch]
         for i, text in zip(batch, labeler.run(clips)):
             hyps[ok[i]["id"]] = text
-    return [{"id": r["id"], **judged(sentences[r["id"]], hyps[r["id"]])} for r in ok]
+    return [{"id": r["id"], **judged(labels[r["id"]], hyps[r["id"]])} for r in ok]
 
 
-def settings(labeler, batch_seconds: float) -> dict:
+def settings(labeler, batch_seconds: float, selection_sha256: str) -> dict:
     import evaluate
     src = evaluate.describe_source("pretrained", None, "B0")
-    return {"batch_seconds": float(batch_seconds), "engine": labeler.info(), "model_sha256": src["sha256"],
-            "rule": RULE, "max_wer": layout.B0_MAX_WER, "normalizer": evaluate.NORMALIZER}
+    return {"selection_sha256": selection_sha256, "batch_seconds": float(batch_seconds), "engine": labeler.info(),
+            "model_sha256": src["sha256"], "rule": RULE, "max_wer": layout.B0_MAX_WER,
+            "normalizer": evaluate.NORMALIZER}
 
 
 def fix_settings(paths: layout.Paths, current: dict) -> None:
@@ -123,40 +130,51 @@ def read_confirm(paths: layout.Paths, k: int, records: Sequence[dict]) -> list[d
     return rows
 
 
-def confirm_chunks(paths: layout.Paths, rows: Sequence[dict], labeler, batch_seconds: float, chunks: Sequence[int],
-                   deadline: float | None = None, threads: int = 8, log=print) -> dict:
-    """B0 over the given chunks (decoded; not yet confirmed); stops starting chunks after `deadline`."""
+def confirm_chunks(paths: layout.Paths, rows: Sequence[dict], selection_sha256: str, labeler, batch_seconds: float,
+                   chunks: Sequence[int], deadline: float | None = None, threads: int = 8, log=print) -> dict:
+    """B0 over the given chunks (decoded; not yet confirmed); stops starting chunks after `deadline`. The next
+    chunk's audio is read in a background thread while B0 runs on the current one."""
+    import concurrent.futures as cf
+
     from pool import common
-    per_chunk, body = store.chunk_records(paths, rows)
-    sentences = {r["id"]: r["sentence"] for r in rows}
-    fix_settings(paths, settings(labeler, batch_seconds))
-    done = skipped = 0
-    totals = Counter()
+    per_chunk, body = store.chunk_records(paths, rows, selection_sha256)
+    labels = {r["id"]: r["label"] for r in rows}
+    fix_settings(paths, settings(labeler, batch_seconds, selection_sha256))
+    todo = []
     for k in chunks:
-        recs = per_chunk[k]
-        if recs is None:
+        if per_chunk[k] is None:
             raise RuntimeError(f"chunk {k} is not decoded yet")
-        if read_confirm(paths, k, recs) is not None:
-            skipped += 1
-            continue
-        if deadline is not None and time.monotonic() > deadline:
-            log(f"confirm: budget reached before chunk {k}")
-            break
-        t0 = time.monotonic()
-        audio = load_audio(recs, threads)
-        t1 = time.monotonic()
-        out = run_chunk(labeler, recs, sentences, audio)
-        t2 = time.monotonic()
-        audio_s = sum(r["samples"] for r in recs if r["status"] == "ok") / layout.SAMPLE_RATE
-        common.atomic_write_lines(paths.confirm_chunk(k), (json.dumps({x: o[x] for x in ("id", "b0", "wer", "wer_infinite")},
-                                                                      ensure_ascii=False) for o in out))
-        common.atomic_write_json(paths.confirm_chunk(k).with_suffix(".json"),
-                                 {"chunk": k, "clips": len(out), "audio_seconds": audio_s, "read_seconds": t1 - t0,
-                                  "b0_seconds": t2 - t1, "dropped": sum(not o["kept"] for o in out)})
-        totals.update(clips=len(out), audio_seconds=audio_s, read_seconds=t1 - t0, b0_seconds=t2 - t1)
-        done += 1
-        log(f"confirm: chunk {k}: {len(out)} clips, {audio_s / 3600:.2f} h, read {t1 - t0:.1f} s, "
-            f"B0 {t2 - t1:.1f} s, dropped {sum(not o['kept'] for o in out)}")
+        if read_confirm(paths, k, per_chunk[k]) is None:
+            todo.append(k)
+    done, skipped = 0, len(chunks) - len(todo)
+    totals = Counter()
+    reader = cf.ThreadPoolExecutor(1)
+    pending = None
+    try:
+        for i, k in enumerate(todo):
+            if deadline is not None and time.monotonic() > deadline:
+                log(f"confirm: budget reached before chunk {k}")
+                break
+            recs = per_chunk[k]
+            t0 = time.monotonic()
+            audio = pending.result() if pending is not None else load_audio(recs, threads)
+            pending = reader.submit(load_audio, per_chunk[todo[i + 1]], threads) if i + 1 < len(todo) else None
+            t1 = time.monotonic()
+            out = run_chunk(labeler, recs, labels, audio)
+            t2 = time.monotonic()
+            del audio
+            audio_s = sum(r["samples"] for r in recs if r["status"] == "ok") / layout.SAMPLE_RATE
+            common.atomic_write_lines(paths.confirm_chunk(k), (json.dumps({x: o[x] for x in ("id", "b0", "wer", "wer_infinite")},
+                                                                          ensure_ascii=False) for o in out))
+            common.atomic_write_json(paths.confirm_chunk(k).with_suffix(".json"),
+                                     {"chunk": k, "clips": len(out), "audio_seconds": audio_s, "read_wait_seconds": t1 - t0,
+                                      "b0_seconds": t2 - t1, "dropped": sum(not o["kept"] for o in out)})
+            totals.update(clips=len(out), audio_seconds=audio_s, read_wait_seconds=t1 - t0, b0_seconds=t2 - t1)
+            done += 1
+            log(f"confirm: chunk {k}: {len(out)} clips, {audio_s / 3600:.2f} h, read wait {t1 - t0:.1f} s, "
+                f"B0 {t2 - t1:.1f} s, dropped {sum(not o['kept'] for o in out)}")
+    finally:
+        reader.shutdown(wait=True, cancel_futures=True)
     return {"confirmed_chunks": done, "already_done": skipped, **totals}
 
 
@@ -165,7 +183,10 @@ def finalize(paths: layout.Paths, rows: Sequence[dict], selection_meta: dict) ->
     import pyarrow as pa
     import pyarrow.parquet as pq
     from pool import common
-    per_chunk, body = store.chunk_records(paths, rows)
+    per_chunk, body = store.chunk_records(paths, rows, selection_meta["table_sha256"])
+    run = json.loads(paths.confirm_run.read_text())
+    if run["selection_sha256"] != selection_meta["table_sha256"]:
+        raise RuntimeError(f"{paths.confirm_run} judged another selection table")
     by_id = {r["id"]: r for r in rows}
     status, hours = Counter(), Counter()
     kept, b0rows, accent_rows = [], [], []
@@ -193,7 +214,6 @@ def finalize(paths: layout.Paths, rows: Sequence[dict], selection_meta: dict) ->
                 continue
             kept.append({**r, "label": sel["label"], "sentence": sel["sentence"], "accents": sel["accents"],
                          "b0": c["b0"], "b0_wer": c["wer"], "speaker": sel["client_id"]})
-    run = json.loads(paths.confirm_run.read_text())
     meta = store.write_source(paths, kept, {
         "selection_sha256": body["selection_sha256"], "decode_plan_sha256": common.sha256_file(paths.decode_plan),
         "label": {"field": "label", "filters_version": layout.FILTERS_VERSION, "cleaning":

@@ -1,6 +1,8 @@
 """The selection: every validated clip with the first rule that drops it (b0prime plan "Extra sources").
 
-Rules, in order; a clip gets the first one that applies (REASONS), and the rest of a stage sees only clips left:
+Rules, in order; a clip gets the first one that applies (REASONS), and the rest of a stage sees only clips left. The
+text rules 1-3 test both normalized forms of the sentence, as written (`norm`) and as the training label (`label_norm`,
+the filters version 3 text; heldout.sentence_keys), and drop the clip if either matches:
 1. held out (cv27/heldout.py rule 1): speaker, clip, sentence;
 2. the global denylist (rule 2): denylist_identity, denylist_containment;
 3. the talk text (rule 3): talk_text_8gram;
@@ -36,7 +38,7 @@ REASONS = heldout.REASONS + ("denylist_identity", "denylist_containment", "talk_
                              "speaker_cap", "sentence_cap", "duration", "empty_label", "tokenizer_coverage")
 STAGES = ("validated", "after_heldout", "after_denylist", "after_talk_text", "after_duration_lookup",
           "after_caps", "after_duration", "selected")
-COLUMNS = ("id", "path", "client_id", "sentence", "accents", "ms", "norm", "label", "reason", "detail")
+COLUMNS = ("id", "path", "client_id", "sentence", "accents", "ms", "norm", "label", "label_norm", "reason", "detail")
 
 
 @dataclasses.dataclass(slots=True)
@@ -47,10 +49,14 @@ class Clip:
     sentence: str
     accents: str
     ms: int | None
-    norm: str
-    label: str | None = None
+    norm: str                      # the normalized sentence as written (the sentence cap's key)
+    label: str | None = None       # the filters version 3 text (the training label)
+    label_norm: str | None = None  # its normalized form
     reason: str | None = None
     detail: str | None = None
+
+    def keys(self) -> tuple[str, ...]:
+        return (self.norm,) if self.label_norm in (None, self.norm) else (self.norm, self.label_norm)
 
 
 def apply_caps(clips: list[Clip], seed: int = layout.CAP_SEED, speaker_cap: int = layout.SPEAKER_CAP,
@@ -102,12 +108,13 @@ def select(validated: Iterable[dict], held: heldout.HeldOut, durations: dict[str
             raise RuntimeError(f"validated clip {path!r} is listed twice")
         seen.add(path)
         cid = sys.intern(r["client_id"])
+        label = heldout.training_text(r["sentence"])
         clips.append(Clip(heldout.clip_id(path), path, cid, r["sentence"], sys.intern(r.get("accents") or ""),
-                          durations.get(path), normalize(r["sentence"])))
+                          durations.get(path), normalize(r["sentence"]), label, normalize(label)))
     stages = {"validated": _summary(clips)}
 
     for c in clips:
-        c.reason = held.reason(c.client_id, c.path, c.norm)
+        c.reason = held.reason(c.client_id, c.path, c.keys())
     stages["after_heldout"] = _summary(c for c in clips if c.reason is None)
 
     live = [c for c in clips if c.reason is None]
@@ -117,13 +124,16 @@ def select(validated: Iterable[dict], held: heldout.HeldOut, durations: dict[str
     live = [c for c in live if c.reason is None]
     if containment is not None:
         hits = containment.contained([c.norm.split() for c in live])
+        alt = [i for i, c in enumerate(live) if len(c.keys()) > 1]
+        for j, h in containment.contained([live[i].label_norm.split() for i in alt]).items():
+            hits.setdefault(alt[j], h)
         for pos, h in hits.items():
             live[pos].reason = "denylist_containment"
             live[pos].detail = json.dumps(h[:5], ensure_ascii=False)
     stages["after_denylist"] = _summary(c for c in clips if c.reason is None)
 
     for c in clips:
-        if c.reason is None and heldout.shares_gram(c.norm.split(), talk):
+        if c.reason is None and any(heldout.shares_gram(k.split(), talk) for k in c.keys()):
             c.reason = "talk_text_8gram"
     stages["after_talk_text"] = _summary(c for c in clips if c.reason is None)
 
@@ -143,7 +153,7 @@ def select(validated: Iterable[dict], held: heldout.HeldOut, durations: dict[str
     uncovered = Counter()
     for c in clips:
         if c.reason is None:
-            c.label, c.reason = label_of(c.sentence, coverage)
+            _, c.reason = label_of(c.sentence, coverage)
             if c.reason == "tokenizer_coverage" and hasattr(coverage, "uncovered"):
                 uncovered.update(coverage.uncovered(c.label))
     stages["selected"] = _summary(c for c in clips if c.reason is None)
