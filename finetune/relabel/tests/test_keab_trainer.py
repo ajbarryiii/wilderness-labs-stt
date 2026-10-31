@@ -20,7 +20,10 @@ synthetic union under the TS augmentation, a once source and AMI pairs, tiny NeM
 - arms matched: the same plan hash, seed, sources and settings, except the teacher package;
 - batch plan version 3 production sources (the synthetic union of full, pairs and pairs-c, Common Voice once, AMI SDM
   seven times), the provisional union, step 0's scope, the probe's extremes with the AMI teacher-side metric, the
-  chunk's order and commands, the seam and the training sources.
+  chunk's order and commands, the seam and the training sources;
+- the end of a run: release_training_state lets go of the optimizer (also the scheduler's reference) and its AdamW
+  state, the last step's gradients and the teacher, the student's weights unchanged; finish saves and scores the student
+  only after it, and records the memory figures in the run's scores.json and summary.
 """
 from __future__ import annotations
 
@@ -28,9 +31,11 @@ import argparse
 import contextlib
 import io
 import json
+import shutil
 import tempfile
 import types
 import unittest
+import weakref
 from pathlib import Path
 from unittest import mock
 
@@ -404,6 +409,79 @@ class ArmsMatched(World):
             recs["pc"] = {**b, "scope": "S2"}
             with self.assertRaises(RuntimeError):
                 tk.shared_identity(["pm", "pc"])
+
+
+class EndOfRun(World):
+    """The end of a run (train.main drops ctx.teacher and ctx.optimizer, then finish): the model is saved and scored in
+    this process, so everything only training needs must be let go first."""
+
+    def trained(self):
+        """A pilot's context at its last step (the CPU loop: the encoder-matching term only) and weak references to its
+        teacher, its optimizer and one of its AdamW state tensors."""
+        shutil.rmtree(tk.root() / "runs", ignore_errors=True)
+        ctx = self.h.context("pm", "S1")
+        self.h.loop(ctx, compute_losses=kf.EncoderLosses())
+        self.assertEqual(ctx.state.step, ctx.args.max_steps)
+        self.assertIs(ctx.scheduler.optimizer, ctx.optimizer)
+        state = next(s for s in ctx.optimizer.state.values() if "exp_avg" in s)
+        self.assertTrue(any(p.grad is not None for p in ctx.student.parameters()))   # the last step's gradients
+        return ctx, {"teacher": weakref.ref(ctx.teacher), "optimizer": weakref.ref(ctx.optimizer),
+                     "exp_avg": weakref.ref(state["exp_avg"])}
+
+    def released(self, ctx, refs) -> dict:
+        """What is still held of the training state (each value False / [] once released)."""
+        return {"ctx.optimizer": getattr(ctx, "optimizer", None) is not None,
+                "ctx.scheduler.optimizer": getattr(getattr(ctx, "scheduler", None), "optimizer", None) is not None,
+                "optimizer": refs["optimizer"]() is not None, "adamw state": refs["exp_avg"]() is not None,
+                "gradients": [n for n, p in ctx.student.named_parameters() if p.grad is not None],
+                "ctx.teacher": ctx.teacher is not None, "teacher": refs["teacher"]() is not None}
+
+    NOTHING = {"ctx.optimizer": False, "ctx.scheduler.optimizer": False, "optimizer": False, "adamw state": False,
+               "gradients": [], "ctx.teacher": False, "teacher": False}
+
+    def test_release_lets_go_of_the_optimizer_state_the_gradients_and_the_teacher(self):
+        for main_dropped in (False, True):
+            with self.subTest(main_dropped=main_dropped):
+                ctx, refs = self.trained()
+                weights = {k: v.clone() for k, v in ctx.student.state_dict().items()}
+                if main_dropped:                                # as train.main does before finish
+                    ctx.teacher = None
+                    del ctx.optimizer
+                memory = tk.release_training_state(ctx)
+                self.assertEqual(self.released(ctx, refs), self.NOTHING)
+                after = ctx.student.state_dict()
+                self.assertEqual(set(after), set(weights))
+                self.assertTrue(all(torch.equal(after[k], v) for k, v in weights.items()))
+                self.assertEqual(memory["device"], "cpu")
+                self.assertGreater(memory["dropped"]["gradients"], 0)
+                self.assertGreater(memory["dropped"]["optimizer_state_parameters"], 0)
+                for key in ("allocated_before_gib", "allocated_after_gib", "student_gib", "other_gib",
+                            "session_peak_allocated_gib"):
+                    self.assertIsNone(memory[key])              # GPU figures, on CUDA only
+                del ctx
+
+    def test_finish_saves_and_scores_the_student_only_after_the_release(self):
+        ctx, refs = self.trained()
+        weights = {k: v.clone() for k, v in ctx.student.state_dict().items()}
+        ctx.teacher = None                                      # train.main, before finish
+        del ctx.optimizer
+        seen = []
+
+        def fake_score(net, out, source, device, label, groups, limit=None):
+            seen.append({"student": net is ctx.student, "training": net.training, **self.released(ctx, refs)})
+            return {"dev_wer": {n: 0.05 for n in tk.DEV_SETS}, "dev_utterances": {n: 1 for n in tk.DEV_SETS},
+                    "h4": 5.0, "sets": list(tk.DEV_SETS)}
+        with tk.seam(), kf.contextlib_all(self.h.patches() + [mock.patch.object(tk, "score_torch", fake_score)]):
+            result = tk.finish(ctx, "config-sha")
+        self.assertEqual(seen, [{"student": True, "training": False, **self.NOTHING}])
+        payload = torch.load(ctx.run / "model.pt", map_location="cpu", weights_only=False)
+        self.assertEqual(set(payload["student"]), set(weights))
+        self.assertTrue(all(torch.equal(payload["student"][k], v) for k, v in weights.items()))
+        memory = result["keab"]["memory"]
+        self.assertEqual(json.loads((ctx.run / "scores.json").read_text())["memory"], memory)
+        self.assertEqual(json.loads((ctx.run / "scores.json").read_text())["h4"], 5.0)
+        self.assertIsNone(memory["scoring_peak_allocated_gib"])  # CPU: no GPU figures
+        self.assertIn("scoring_peak_reserved_gib", memory)
 
 
 class Sources(unittest.TestCase):

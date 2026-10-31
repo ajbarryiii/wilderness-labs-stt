@@ -8,14 +8,20 @@ seam and the fused joint+TDT loss, on the stage 4 fixture world (keab_fixtures) 
 - train.main of a pilot-like run through the seam: every planned batch's learning rate, max_steps optimizer steps,
   the teacher's input rows counted, model.pt and model.json written, the run scored (stubbed) and summarized; the
   8-bit form unchanged by training (the frozen parts stay fp32(W8) of their load-time codes);
-- a smoke-like run writes its 8-bit bundle and scoring view (training/keab_export.py) from the CUDA model.
+- a smoke-like run writes its 8-bit bundle and scoring view (training/keab_export.py) from the CUDA model;
+- the end of a run: when finish scores the run, the GPU holds the student's parameters and buffers and nothing of
+  training (AdamW state, gradients, the teacher), up to the allocator's rounding; the release and the scoring peak are
+  recorded in the run's scores.json and summary.
 """
 from __future__ import annotations
 
 import contextlib
+import gc
+import itertools
 import json
 import shutil
 import unittest
+import weakref
 from unittest import mock
 
 import torch
@@ -148,6 +154,64 @@ class OnCuda(unittest.TestCase):
         student, _ = kf.student_factory()(tk.decoder_state(kf.teacher("main")), "S1", True)
         student.load_state_dict(payload["student"], strict=True)
         eb.keab_form(student)                                                   # still fp32(W8) of the same codes
+
+    def test_the_run_is_scored_with_the_student_alone_on_the_gpu(self):
+        run = kf.RUNS["pm"]
+        data = self.h.data(run)
+        args = self.h.args(run, data, "S1")
+        teachers, seen = [], []
+
+        def loader(arm, device="cpu"):
+            model, record = kf.teacher_loader(arm, device)
+            teachers.append(weakref.ref(model))
+            return model, record
+
+        def fake_score(net, out, source, device, label, groups, limit=None):
+            storages = {t.untyped_storage().data_ptr(): t.untyped_storage().nbytes()
+                        for t in itertools.chain(net.parameters(), net.buffers()) if t.is_cuda}
+            seen.append({"allocated": torch.cuda.memory_allocated(), "student": sum(storages.values()),
+                         "tensors": len(storages), "teachers alive": [r() is not None for r in teachers],
+                         "gradients": [n for n, p in net.named_parameters() if p.grad is not None]})
+            return {"dev_wer": {n: 0.05 for n in tk.DEV_SETS}, "dev_utterances": {n: 1 for n in tk.DEV_SETS},
+                    "h4": 5.0, "sets": list(tk.DEV_SETS)}
+
+        # The baseline: what this process holds outside the run (an earlier test's context let go first), with the
+        # cuBLAS workspaces of the forward and the backward threads (FP32 and BF16) already made.
+        tk._ACTIVE["ctx"] = None
+        a = torch.ones(64, 64, device="cuda", requires_grad=True)
+        (a @ a).sum().backward()
+        with torch.autocast("cuda", dtype=torch.bfloat16):
+            (a @ a).float().sum().backward()
+        del a
+        gc.collect()
+        torch.cuda.empty_cache()
+        base = torch.cuda.memory_allocated()
+        patches = self.h.patches() + [mock.patch.object(tk, "parse_args", lambda argv=None: args),
+                                      mock.patch.object(tk, "score_torch", fake_score),
+                                      mock.patch.object(tk, "load_teacher_model", loader)]
+        with tk.seam(), kf.contextlib_all(patches + [mock.patch.object(tk.paths, "gpu_lock", nolock)]):
+            train.parse_args = tk.parse_args                                   # the seam installed the original
+            train.main(["--run", "pm", "--labels-run", "fixture"])
+        self.assertEqual(len(seen), 1)
+        s = seen[0]
+        self.assertEqual(s["gradients"], [])
+        self.assertEqual(s["teachers alive"], [False])
+        tolerance = 512 * s["tensors"] + s["student"] // 10                    # the allocator's 512-byte rounding
+        self.assertLessEqual(abs(s["allocated"] - base - s["student"]), tolerance, f"{s}, baseline {base}")
+        ctx = tk._ACTIVE["ctx"]
+        self.assertIsNone(getattr(ctx, "optimizer", None))
+        self.assertIsNone(getattr(ctx.scheduler, "optimizer", None))
+        d = tk.run_dir("pm")
+        memory = json.loads((d / "summary.json").read_text())["keab"]["memory"]
+        self.assertEqual(json.loads((d / "scores.json").read_text())["memory"], memory)
+        self.assertEqual(memory["device"], "cuda")
+        self.assertAlmostEqual(memory["student_gib"], s["student"] / 2**30, delta=tolerance / 2**30)
+        self.assertLessEqual(abs(memory["other_gib"] - base / 2**30), tolerance / 2**30)
+        self.assertGreater(memory["allocated_before_gib"], memory["allocated_after_gib"])
+        self.assertGreater(memory["dropped"]["gradients"], 0)
+        self.assertGreater(memory["dropped"]["optimizer_state_parameters"], 0)
+        self.assertGreaterEqual(memory["scoring_peak_allocated_gib"], memory["allocated_after_gib"])
+        self.assertGreaterEqual(memory["scoring_peak_reserved_gib"], memory["scoring_peak_allocated_gib"])
 
     def test_a_smoke_writes_its_bundle_and_scoring_view(self):
         from test_keab_export import use_pinned_tokenizer_refs

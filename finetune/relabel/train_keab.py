@@ -55,10 +55,11 @@ the non-finite step guard), the fused joint+TDT loss seam (finetune/tdt-fused), 
    (teacher_inputs) is the batch's own audio, padded as the student's, i.e. the clean audio of a real row and the same
    TS-augmented waveform of a synthetic row (before the student's dither and SpecAugment), except an AMI pair's row,
    whose teacher input is its IHM recording (equal encoder frames are checked here and by train.compute_losses).
-5. train.finish (finish): a pilot writes its latent model (model.pt) and is scored in the training-equivalent PyTorch
-   mode (the student itself in eval mode with its fake-quantized activations and 8-bit parts) on stage 1's dev sets;
-   a branch also writes its 8-bit bundle and scoring view (training/keab_export.py) for the deployed-mode score items;
-   a trunk writes its final branch point.
+5. train.finish (finish): first the training state is let go (release_training_state: AdamW's state, the last
+   step's gradients, the teacher), then a pilot writes its latent model (model.pt) and is scored in the training-
+   equivalent PyTorch mode (the student itself in eval mode with its fake-quantized activations and 8-bit parts) on
+   stage 1's dev sets; a branch also writes its 8-bit bundle and scoring view (training/keab_export.py) for the
+   deployed-mode score items; a trunk writes its final branch point.
 6. paths.RUNS: $RELABEL_ROOT/keab-prime/runs; paths.gpu_lock: bounded by the chunk's deadline; TRAINING_SOURCES gain
    SOURCES (the cleaning version 3 tables included).
 
@@ -77,7 +78,9 @@ import train  # noqa: I001, E402  finetune/parakeet-ternary/train.py first: it c
 
 import argparse
 import contextlib
+import gc
 import hashlib
+import itertools
 import json
 import math
 import os
@@ -1021,17 +1024,87 @@ def save_model(ctx) -> dict:
     return manifest
 
 
+GIB = 2**30
+
+
+def _gib(n: int | None) -> float | None:
+    return None if n is None else n / GIB
+
+
+def module_cuda_bytes(module) -> int:
+    """The bytes of a module's parameters and buffers on the GPU (each storage once)."""
+    storages = {t.untyped_storage().data_ptr(): t.untyped_storage().nbytes()
+                for t in itertools.chain(module.parameters(), module.buffers()) if t.is_cuda}
+    return sum(storages.values())
+
+
+def _clear_state(optimizer) -> int:
+    n = len(optimizer.state)
+    optimizer.state.clear()
+    return n
+
+
+def release_training_state(ctx) -> dict:
+    """Let go of everything only training needs, before the end of a run saves, exports and scores its model in this
+    process (finish). train.main drops ctx.teacher and ctx.optimizer before finish, but then (the pilots' end-of-run
+    OOM): the scheduler (training.seam.ConstantScheduler) still holds the optimizer and with it AdamW's state (twice
+    the trainable parameters' bytes); the last step's gradients stay on the student (train_step zeroes them before its
+    backward, not after); and a NeMo model is in a reference cycle (its wrapped training_step), so the teacher outlives
+    its last reference until the cyclic garbage collector runs, which train.main's torch.cuda.empty_cache() does not do.
+
+    Afterwards no optimizer is reachable from ctx (ctx.optimizer gone, ctx.scheduler None) and its state is emptied,
+    every student parameter's grad is None and ctx.teacher is None; then gc.collect() and torch.cuda.empty_cache().
+    The student (weights, buffers, modes) is unchanged. Returns the record (GPU figures in GiB, None off CUDA): the
+    memory allocated before and after, the student's parameters and buffers on the GPU, the rest (the allocator's and
+    libraries' own, e.g. cuBLAS workspaces), the session's peak before the release, and what was dropped."""
+    device = next(ctx.student.parameters()).device
+    cuda = device.type == "cuda"
+    before = torch.cuda.memory_allocated(device) if cuda else None
+    session_peak = torch.cuda.max_memory_allocated(device) if cuda else None
+    held = (ctx.__dict__.pop("optimizer", None), getattr(getattr(ctx, "scheduler", None), "optimizer", None))
+    states = sum(_clear_state(o) for i, o in enumerate(held) if o is not None and all(o is not p for p in held[:i]))
+    ctx.scheduler = None
+    del held
+    grads = sum(p.grad is not None for p in ctx.student.parameters())
+    ctx.student.zero_grad(set_to_none=True)
+    teacher = ctx.teacher is not None
+    ctx.teacher = None
+    gc.collect()
+    after = student = None
+    if cuda:
+        torch.cuda.empty_cache()
+        after, student = torch.cuda.memory_allocated(device), module_cuda_bytes(ctx.student)
+    return {"device": device.type, "allocated_before_gib": _gib(before), "allocated_after_gib": _gib(after),
+            "student_gib": _gib(student), "other_gib": None if after is None else _gib(after - student),
+            "session_peak_allocated_gib": _gib(session_peak),
+            "dropped": {"optimizer_state_parameters": states, "gradients": grads, "teacher": teacher}}
+
+
+def _released_line(name: str, m: dict) -> str:
+    d = m["dropped"]
+    gpu = (f"GPU allocated {m['allocated_before_gib']:.2f} -> {m['allocated_after_gib']:.2f} GiB (the student "
+           f"{m['student_gib']:.2f} GiB, other {m['other_gib']:.2f} GiB); " if m["device"] == "cuda" else "")
+    return (f"{name}: training state released before the end of the run: {gpu}dropped the AdamW state of "
+            f"{d['optimizer_state_parameters']} parameters, {d['gradients']} gradients"
+            + (", the teacher" if d["teacher"] else ""))
+
+
 def finish(ctx, config_sha: str) -> dict:
-    """train.finish for a stage 4 run (module docstring, item 5)."""
+    """train.finish for a stage 4 run (module docstring, item 5). The run's memory record (release_training_state's,
+    plus the scoring peak of a scored run: allocated and reserved after the release, with the peak statistics reset
+    just before scoring, so that summary.json's max_memory_allocated_gib is that peak too) goes into the result's
+    keab block and a scored run's scores.json."""
     st, args, run, spec = ctx.state, ctx.args, ctx.run, ctx.spec
     if ctx.timer is not None:
         ctx.timer.cancel()
     if st.step != args.max_steps:
         raise RuntimeError(f"final model not ready: step {st.step}/{args.max_steps}")
+    memory = release_training_state(ctx)
+    log(_released_line(spec.name, memory))
     common = {"select": "final", "selected_step": st.step, "ramp_steps": 0, "warmup_steps": int(ctx.stream.schedule.warmup)}
     counts = {"consumed_batches": st.batches_read, "fully_rejected_batches": st.skipped_batches,
               "nonfinite_skipped_steps": st.drop_counts.get(tseam.NONFINITE_KEY, 0),
-              "teacher_audio_rows": st.drop_counts.get(TEACHER_ROWS_KEY, 0)}
+              "teacher_audio_rows": st.drop_counts.get(TEACHER_ROWS_KEY, 0), "memory": memory}
     if not spec.scored and not args.smoke:
         final = [p for p in spec.branch_points if ctx.stream.replay.plan.pool_start(p) == ctx.stream.stop]
         points = {p: tb.final_branch_point(ctx, p, ctx.stream.stop) for p in final}
@@ -1044,9 +1117,17 @@ def finish(ctx, config_sha: str) -> dict:
                          "dev_wer": {}, "dev_mean_wer": math.nan, "scored_on": "not scored (smoke)",
                          "keab": {"run": spec.to_dict(), "scored": False, "model": manifest, **counts}}
     ctx.student.eval()
+    cuda = memory["device"] == "cuda"
+    if cuda:
+        torch.cuda.reset_peak_memory_stats(ctx.device)
     scores = score_torch(ctx.student, scores_dir(spec.name, "torch"), model_source(manifest), ctx.device, spec.name,
                          ("dev",))
-    write_json(run / "scores.json", scores)
+    memory.update(scoring_peak_allocated_gib=_gib(torch.cuda.max_memory_allocated(ctx.device)) if cuda else None,
+                  scoring_peak_reserved_gib=_gib(torch.cuda.max_memory_reserved(ctx.device)) if cuda else None)
+    if cuda:
+        log(f"{spec.name}: scoring peak {memory['scoring_peak_allocated_gib']:.2f} GiB allocated, "
+            f"{memory['scoring_peak_reserved_gib']:.2f} GiB reserved")
+    write_json(run / "scores.json", scores | {"memory": memory})
     full = scores["dev_wer"]
     return common | {"dev_subset_mean_wer": scores["h4"] / 100, "dev_subset_meaning": "H4 on full stage 1 dev "
                      "(fraction), PyTorch fake-quant mode", "dev_wer": full, "dev_mean_wer": sum(full.values()) / len(full),
