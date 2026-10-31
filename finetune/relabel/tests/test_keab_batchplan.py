@@ -229,6 +229,31 @@ class V3(World):
         self.assertEqual(acc["synthetic_rows"], self.plan3.meta["n_extra"] - seen_pairs)
         self.assertIn("pairs", r.identity["sources"][2])
 
+    def test_the_pooled_read_equals_the_sequential_read(self):
+        """The extra rows' files are read in the decode pool (the batcher's): every item, the TS-augmented ones and
+        both recordings of a pair included, is the sequential read's."""
+        import concurrent.futures as cf
+        from synthetic import augment
+        from test_synthetic_mixing import make_aug_pool
+        aug = augment.Augmenter(make_aug_pool(self.root / "src-aug-pooled"), seed=3)
+        extras = [treplay.ExtraSource(self.sources[0], aug), treplay.ExtraSource(self.sources[1], None),
+                  treplay.ExtraSource(self.sources[2], None)]
+        r = treplay.PlannedReplay(self.plan3, self.w.pool, store=self.store, sources=extras)
+        compared = 0
+        with cf.ThreadPoolExecutor(max_workers=4) as pool:
+            for t in range(r.through_batch):
+                seq, par = r.read(t), r.read(t, pool)
+                self.assertEqual([sorted(i) for i in seq], [sorted(i) for i in par])
+                for x, y in zip(seq, par):
+                    for k in x:
+                        if isinstance(x[k], np.ndarray):
+                            self.assertTrue(np.array_equal(x[k], y[k]), (t, x["id"], k))
+                        else:
+                            self.assertEqual(x[k], y[k], (t, x["id"], k))
+                    compared += x["source"] in ("synthetic", "ami-sdm")
+        self.assertGreater(compared, 0)
+        r.close()
+
     def test_a_pair_batch_with_only_rejected_rows_takes_no_step(self):
         """plan()'s accounting counts a pair row only through its label: a batch whose rows are all rejected (real
         and pair rows) is consumed without a step."""

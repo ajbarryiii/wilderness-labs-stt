@@ -319,20 +319,31 @@ class PlannedReplay:
         out: list[dict | None] = [None] * len(all_rows)
         for r, (i, s, d), a in zip(real, rows, audio):
             out[r] = {"id": i, "source": s, "duration": d, "audio": a}
-        for r in range(len(all_rows)):
-            if (b, r) in self._syn:
-                out[r] = self._synthetic_item(b, r)
+        extra = [r for r in range(len(all_rows)) if (b, r) in self._syn]
+        # the extra rows' files are read (and checked) in the decode pool; items and transforms follow in row order
+        reads = (list(pool.map(lambda r: self._extra_audio(b, r), extra)) if pool is not None
+                 else [self._extra_audio(b, r) for r in extra])
+        for r, recordings in zip(extra, reads):
+            out[r] = self._synthetic_item(b, r, recordings)
         return out
 
-    def _synthetic_item(self, b: int, r: int) -> dict:
-        s, c, samples, key = self._syn[(b, r)]
+    def _extra_audio(self, b: int, r: int) -> tuple:
+        """The recordings of an extra row: (its audio,) or, for a pair, (its audio, its teacher's)."""
+        s, c, samples, _ = self._syn[(b, r)]
         x = self.extras[s]
         a = x.pool.read(c["id"])
         if len(a) != samples:
             raise RuntimeError(f"{x.name} clip {c['id']}: {len(a)} samples, the plan has {samples}")
+        return (a, x.pool.read_teacher(c["id"])) if x.pairs else (a,)
+
+    def _synthetic_item(self, b: int, r: int, recordings: tuple | None = None) -> dict:
+        s, c, samples, key = self._syn[(b, r)]
+        x = self.extras[s]
+        recordings = self._extra_audio(b, r) if recordings is None else recordings
+        a = recordings[0]
         if x.pairs:
             return {"id": f"{x.prefix}{c['id']}", "source": x.name, "duration": samples / 16000, "audio": a,
-                    "teacher_audio": x.pool.read_teacher(c["id"])}
+                    "teacher_audio": recordings[1]}
         item = {"id": f"{x.prefix}{c['id']}", "source": x.name, "duration": samples / 16000, "audio": a,
                 "label": c["label"]}
         transform = self.synthetic_transform if self.synthetic is not None else x.transform   # 2c's may be swapped
