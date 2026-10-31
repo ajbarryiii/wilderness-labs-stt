@@ -15,6 +15,11 @@ inference_settings, the fused greedy decoder, evaluate.score; the row keeps the 
 lengths. Audio is prefetched one utterance ahead (fulldev.prefetched). Set WER: evaluate.wer_summary (corpus WER over
 scored records), as fulldev.summarize_set.
 
+Kernel cache: int8_mma compiles its kernels with NVRTC into gpu1bit's cubin cache. relabel_cubin_cache (installed by
+load_x1) reads that cache on a hit and compiles a miss into $RELABEL_ROOT/keab-prime/caches/cubin instead, so nothing
+is written outside $RELABEL_ROOT (the cubins are identical either way: the key covers source, kernel name,
+architecture, options and NVRTC version).
+
 Interpreter: the recorded x1 runs used gpu1bit/shared/python (finetune/parakeet-ternary/python with
 finetune/parakeet-binary on PYTHONPATH and NVRTC 12.9 on the library path, which int8_mma compiles with and NeMo's
 full CUDA-graph decoder needs); finetune/relabel/python-gpu1bit runs relabel code in that environment.
@@ -22,6 +27,8 @@ require_wrapper refuses any other (without NVRTC NeMo silently falls back to ano
 """
 from __future__ import annotations
 
+import contextlib
+import hashlib
 import time
 from pathlib import Path
 
@@ -43,6 +50,37 @@ def require_wrapper() -> dict:
     return facts
 
 
+def cubin_key(source: str, name: str, arch: str, options, version: str) -> str:
+    """gpu1bit.int8_mma.cuda.compile_cubin's cache key."""
+    return hashlib.sha256("\0".join([source, name, arch, *options, version]).encode()).hexdigest()
+
+
+@contextlib.contextmanager
+def relabel_cubin_cache(root: Path):
+    """int8_mma's compile_cubin with misses compiled into root/caches/cubin (module docstring)."""
+    from gpu1bit.int8_mma import cuda
+    original = cuda.compile_cubin
+
+    def compile_cubin(source: str, name: str, arch: str = "120a", options=cuda.OPTIONS) -> bytes:
+        key = cubin_key(source, name, arch, options, cuda.setup())
+        for base in (cuda.ARTIFACTS, Path(root)):
+            path = base / "caches" / "cubin" / f"{key}.cubin"
+            if path.is_file():
+                return path.read_bytes()
+        shared = cuda.ARTIFACTS
+        cuda.ARTIFACTS = Path(root)
+        try:
+            return original(source, name, arch, options)
+        finally:
+            cuda.ARTIFACTS = shared
+
+    cuda.compile_cubin = compile_cubin
+    try:
+        yield
+    finally:
+        cuda.compile_cubin = original
+
+
 def load_x1(export_dir: Path, device: str = "cuda", probe=None):
     """The scoring view at export_dir on the x1 runtime (module docstring); `probe(provider)` may wrap the provider
     transparently (instrumentation, as actprec.parts.build). The caller holds the GPU lock and calls close()."""
@@ -51,6 +89,9 @@ def load_x1(export_dir: Path, device: str = "cuda", probe=None):
     from gpu1bit.actprec import parts as AP
     from gpu1bit.shared import fulldev
     require_wrapper()
+    from training import keab_export
+    stack = contextlib.ExitStack()
+    stack.enter_context(relabel_cubin_cache(keab_export.keab_root()))
     loaded = AP.load_parts()
     made = []
 
@@ -58,9 +99,14 @@ def load_x1(export_dir: Path, device: str = "cuda", probe=None):
         made.append(provider)
         return probe(provider) if probe else provider
 
-    with torch.inference_mode():
-        model = runtime.load_binary_packed(Path(export_dir), runtime=RUNTIME, kernel=KERNEL, device=device,
-                                           _provider_hook=hook, _research_parts=PARTS)
+    try:
+        with torch.inference_mode():
+            model = runtime.load_binary_packed(Path(export_dir), runtime=RUNTIME, kernel=KERNEL, device=device,
+                                               _provider_hook=hook, _research_parts=PARTS)
+    except BaseException:
+        stack.close()
+        raise
+    model._keab_stack = stack                      # the cubin seam stays until close(): graphs compile lazily
     rt = model._gpu1bit_runtime
     if len(made) != 1 or rt.parts != PARTS or rt.kernel != KERNEL or not isinstance(rt.provider, fulldev.PartCount) \
             or rt.provider.n != PARTS:
@@ -81,7 +127,12 @@ def info(model) -> dict:
 
 def close(model) -> None:
     from gpu1bit import runtime
-    runtime.close_binary_packed(model)
+    try:
+        runtime.close_binary_packed(model)
+    finally:
+        stack = getattr(model, "_keab_stack", None)
+        if stack is not None:
+            stack.close()
 
 
 def score_records(model, records: list[tuple[int, dict]], label: str, identity: str) -> dict:

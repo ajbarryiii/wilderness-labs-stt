@@ -12,6 +12,7 @@ parts stages 4-5 train and export in 8 bits.
     ./python-gpu1bit keab_step0.py run --model MB1 --variant V [--sets dev domain] [--limit N]
     ./python keab_step0.py run --model B0p --variant V [--sets dev domain] [--limit N]
     ./python keab_step0.py report [--limit N]       the preregistered rule and the step 0 tables (CPU)
+    ./python keab_step0.py plan                     the production run's jobs (FULL_SETS), one per line
     ./python keab_step0.py status
 
 Models and how each is scored ("Models"; each against its own unquantized scoring, variant "none"):
@@ -26,7 +27,8 @@ Variants (VARIANTS): none; S1-int8, S2-int8 (the rule's scopes); S1-palette, S2-
 S2-int8-w8a8 (informational: the S2 view with pre_encode.out's input passed through the x1 per-frame activation
 quantizer, eightbit.x1_fake_quant, by a forward pre-hook, so pre_encode.out runs as W8A8).
 Sets: "dev", the five stage 1 dev sets (H4 for the rule, YODAS reported); "domain", the dev-medical and dev-technical
-parts with critical-term recall (stage 3's lists: medical, technical).
+parts with critical-term recall (stage 3's lists: medical, technical). The production run (FULL_SETS, `plan`) scores
+the rule's variants on both groups and the informational ones (palettization, W8A8) on the dev sets only.
 
 Rule (preregistered, report): an INT8 scope passes on a model if its H4 cost (quantized minus unquantized, points)
 is at most 0.03, the upper bound of its 90% paired cluster-bootstrap interval (training/bootstrap.py, clusters as
@@ -67,6 +69,11 @@ VARIANTS = {  # name -> (scope, format, w8a8)
 MODEL_VARIANTS = {"MB1": tuple(VARIANTS), "B0p": ("none", "S1-int8", "S2-int8", "S1-palette", "S2-palette")}
 VIEW_VARIANTS = ("none", "S1-int8", "S2-int8", "S1-palette", "S2-palette")   # S2-int8-w8a8 scores the S2-int8 view
 RULE_SCOPES = ("S1", "S2")
+RULE_VARIANTS = ("none", "S1-int8", "S2-int8")
+FULL_SETS = {v: ("dev", "domain") if v in RULE_VARIANTS else ("dev",) for v in VARIANTS}
+FULL_NOTE = ("Full run: the rule's variants (none, S1-int8, S2-int8) on the dev and domain sets; palettization and W8A8 "
+             "on the dev sets only, as information. The rule uses H4 only; the domain sets are reported for the rule's "
+             "variants.")
 COST_MAX, CI_UPPER_MAX, SET_MAX = 0.03, 0.06, 0.10
 H4 = ("librispeech_dev_clean", "librispeech_dev_other", "ami_dev", "voxpopuli_dev")
 YODAS = "yodas_dev"
@@ -687,7 +694,8 @@ def report(args) -> int:
     names_dev = list(DEV_SETS)
     domain_parts = {s: list(devsets.SETS[s]) for s in DOMAIN_SETS}
     names_all = names_dev + [p for s in DOMAIN_SETS for p in domain_parts[s]]
-    out = {"limit": args.limit, "decision": args.limit is None, "models": {}, "rule_scopes": list(RULE_SCOPES)}
+    out = {"limit": args.limit, "decision": args.limit is None, "models": {}, "rule_scopes": list(RULE_SCOPES),
+           "full_run": {"sets": {v: list(g) for v, g in FULL_SETS.items()}, "note": FULL_NOTE}}
     passes: dict[str, dict[str, bool]] = {}
     for model in MODELS:
         base = load_variant(model, "none", args.limit, names_all) or load_variant(model, "none", args.limit, names_dev)
@@ -700,7 +708,11 @@ def report(args) -> int:
         for variant in MODEL_VARIANTS[model]:
             if variant == "none":
                 continue
-            res = load_variant(model, variant, args.limit, list(base))
+            required = [n for n, _ in expand_sets(FULL_SETS[variant]) if n in base]
+            res = load_variant(model, variant, args.limit, required)
+            if res is not None:                                   # sets beyond the full run's (a smoke scores all)
+                more = load_variant(model, variant, args.limit, [n for n in base if n not in res]) or {}
+                res.update(more)
             if res is None:
                 entry["variants"][variant] = {"status": "incomplete"}
                 continue
@@ -733,7 +745,8 @@ def report(args) -> int:
 
 
 def markdown(r: dict) -> str:
-    lines = [f"# Stage 4 step 0: 8-bit floating-point parts{'' if r['decision'] else ' (smoke, not a decision)'}", ""]
+    lines = [f"# Stage 4 step 0: 8-bit floating-point parts{'' if r['decision'] else ' (smoke, not a decision)'}", "",
+             r["full_run"]["note"], ""]
     if r.get("chosen_scope") is not None:
         lines += [f"**Chosen scope: {r['chosen_scope']}** (largest INT8 scope passing on both models).", ""]
     elif r.get("slice_rule_outcome") is not None:
@@ -820,6 +833,7 @@ def parse_args(argv=None) -> argparse.Namespace:
     s = sub.add_parser("report")
     s.add_argument("--limit", type=int)
     sub.add_parser("status")
+    sub.add_parser("plan")
     args = p.parse_args(argv)
     if getattr(args, "limit", None) is not None and args.limit <= 0:
         p.error("--limit must be positive")
@@ -828,9 +842,29 @@ def parse_args(argv=None) -> argparse.Namespace:
     return args
 
 
+def full_plan() -> list[tuple[str, str, tuple[str, ...]]]:
+    """(model, variant, set groups) of the production run, in order: every MB1 variant, then every B0' variant."""
+    return [(m, v, FULL_SETS[v]) for m in MODELS for v in MODEL_VARIANTS[m]]
+
+
+def plan(args) -> int:
+    """One line per production job: MODEL VARIANT GROUP... (training/keab_launch.sh full reads it)."""
+    for m, v, groups in full_plan():
+        print(m, v, *groups)
+    return 0
+
+
+ACTIONS = {"plan": plan, "prepare": prepare, "mb1-check": mb1_check, "run": run, "report": report, "status": status}
+
+
 def main(argv=None) -> int:
+    """Every subcommand runs under training/write_guard.py: no write outside $RELABEL_ROOT except the parakeet GPU
+    lock file (the shared lock, written by design)."""
+    from training import write_guard
     args = parse_args(argv)
-    return {"prepare": prepare, "mb1-check": mb1_check, "run": run, "report": report, "status": status}[args.action](args)
+    relabel_paths.require_mount()
+    with write_guard.active([relabel_paths.ARTIFACTS], files=[relabel_paths.GPU_LOCK]):
+        return ACTIONS[args.action](args)
 
 
 if __name__ == "__main__":

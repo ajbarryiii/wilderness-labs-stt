@@ -13,9 +13,10 @@
 #                                                         without the parakeet GPU lock (a quick smoke; the lease
 #                                                         bounds its VRAM)
 #   training/keab_launch.sh full VRAM_MB1 MEM_MB1 VRAM_B0P MEM_B0P [AFTER]
-#                                                         the production scoring: one job per model x variant
-#                                                         (dev and domain sets), chained with --after (each starts
-#                                                         when the previous succeeded), then the report job
+#                                                         the production scoring (keab_step0.py plan): one job per
+#                                                         model x variant, the rule's variants on the dev and domain
+#                                                         sets, palettization and W8A8 on the dev sets only, chained
+#                                                         with --after (one GPU job at a time), then the report job
 #   training/keab_launch.sh report [LIMIT]                the rule and tables (CPU, foreground)
 #
 # GPU jobs: shared lease, --priority normal, failures notified. MB1's deployed-mode runs use ./python-gpu1bit with
@@ -31,7 +32,7 @@ mb1=(env -u CUBLAS_WORKSPACE_CONFIG ./python-gpu1bit keab_step0.py)
 case "${1:-}" in
   tests)
     export CUDA_VISIBLE_DEVICES=
-    for p in test_keab_eightbit.py test_keab_export.py test_keab_step0.py; do
+    for p in test_keab_eightbit.py test_keab_export.py test_keab_step0.py test_keab_write_guard.py; do
       ./python -m unittest discover -s tests -p "$p" -v
     done ;;
   gpu-tests)
@@ -65,17 +66,15 @@ done
       --stall 60m "${after[@]}" -- bash -c "$script" ;;
   full)
     prev="${6:-}"
-    for v in none S1-int8 S2-int8 S1-palette S2-palette S2-int8-w8a8; do
+    while read -r model variant groups; do
       after=(); [[ -n "$prev" ]] && after=(--after "$prev")
-      job start "relabel-keab-step0-MB1-$v" --cwd "$here" $(gpu "${2:?VRAM_MB1}" "${3:?MEM_MB1}") "${common[@]}" \
-        --stall 60m "${after[@]}" -- "${mb1[@]}" run --model MB1 --variant "$v" >/dev/null
-      prev="relabel-keab-step0-MB1-$v"; echo "$prev"
-    done
-    for v in none S1-int8 S2-int8 S1-palette S2-palette; do
-      job start "relabel-keab-step0-B0p-$v" --cwd "$here" $(gpu "${4:?VRAM_B0P}" "${5:?MEM_B0P}") "${common[@]}" \
-        --stall 60m --after "$prev" -- ./python keab_step0.py run --model B0p --variant "$v" >/dev/null
-      prev="relabel-keab-step0-B0p-$v"; echo "$prev"
-    done
+      if [[ "$model" == MB1 ]]; then py=("${mb1[@]}"); v="${2:?VRAM_MB1}"; m="${3:?MEM_MB1}"
+      else py=(./python keab_step0.py); v="${4:?VRAM_B0P}"; m="${5:?MEM_B0P}"; fi
+      # shellcheck disable=SC2086  # groups is a word list (dev [domain])
+      job start "relabel-keab-step0-$model-$variant" --cwd "$here" $(gpu "$v" "$m") "${common[@]}" --stall 60m \
+        "${after[@]}" -- "${py[@]}" run --model "$model" --variant "$variant" --sets $groups >/dev/null
+      prev="relabel-keab-step0-$model-$variant"; echo "$prev ($groups)"
+    done < <(./python keab_step0.py plan | grep -E "^(MB1|B0p) ")
     exec job start relabel-keab-step0-report --cwd "$here" --mem 8G "${common[@]}" --after "$prev" \
       -- ./python keab_step0.py report ;;
   report)

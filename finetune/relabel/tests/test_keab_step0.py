@@ -44,6 +44,18 @@ class Rule(unittest.TestCase):
             k0.check_variant("B0p", "S2-int8-w8a8")
 
 
+class FullRun(unittest.TestCase):
+    def test_rule_variants_on_all_sets_information_on_dev(self):
+        plan = k0.full_plan()
+        self.assertEqual(len(plan), 11)
+        for model, variant, groups in plan:
+            want = ("dev", "domain") if variant in ("none", "S1-int8", "S2-int8") else ("dev",)
+            self.assertEqual(groups, want, (model, variant))
+        self.assertEqual([v for m, v, _ in plan if m == "MB1"], list(k0.MODEL_VARIANTS["MB1"]))
+        self.assertEqual(plan[0][:2], ("MB1", "none"))
+        self.assertIn("dev sets only", k0.FULL_NOTE)
+
+
 class Mb1Check(unittest.TestCase):
     def test_within_002_per_set(self):
         same = k0.check_against_recorded(dict(k0.RECORDED_X1))
