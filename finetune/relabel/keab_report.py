@@ -272,6 +272,16 @@ def letter_forms_section() -> dict:
     return out
 
 
+def init_section() -> dict:
+    """The main arm's student at step 0 (MB1's encoder, B0''s decoder; deployed x1), informational, against MB1."""
+    d = tk.scores_dir(tk.INIT_MODEL, "x1")
+    recs = {n: _json(d / f"{n}.json") for n in tb.H4}
+    if any(r is None for r in recs.values()):
+        return {"status": "pending"}
+    h4 = sum(_corpus(r["records"]) for r in recs.values()) / len(tb.H4)
+    return {"status": "complete", "h4": h4, "mb1_h4": h4_of("MB1"), "model": _json(tk.init_dir() / "model.json")}
+
+
 def eightbit_section() -> dict:
     model = _json(tk.run_dir(stage4.KEAB_PRIME) / "model.json")
     step0 = _json(tk.step0_report())
@@ -300,6 +310,7 @@ def analyze_all() -> dict:
     for key, fn in (("against_mb1", against_mb1_section), ("fidelity", fidelity_section), ("style", style_section),
                     ("formatted", formatted_section), ("synthetic", synthetic_section),
                     ("other_sets", other_sets_section), ("curve", curve_section), ("letter_forms", letter_forms_section),
+                    ("init_main", init_section),
                     ("eightbit", eightbit_section)):
         try:
             out[key] = fn()

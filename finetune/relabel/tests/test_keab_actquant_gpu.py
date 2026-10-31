@@ -61,7 +61,7 @@ class AgainstTheKernel(unittest.TestCase):
     def check(self, x: torch.Tensor, dim: int, label: str) -> int:
         y, q, s = actquant.quantize(x, dim)
         xx = x.float().transpose(1, 2) if dim == actquant.CONV_DIM else x.float()
-        kq, ks = kernel_codes(xx)
+        kq, ks = kernel_codes(xx if xx.dim() == 3 else xx.unsqueeze(0))         # a 2-D input is one batch row
         self.assertTrue(torch.equal(q, kq), f"{label}: codes differ in {int((q != kq).sum())} places")
         self.assertTrue(torch.equal(s, ks), f"{label}: scales differ in {int((s != ks).sum())} frames")
         want = (kq.float() * ks[:, None]).to(x.dtype)

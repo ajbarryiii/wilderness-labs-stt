@@ -11,8 +11,9 @@
 #                                                         the memory probe, both modes (GPU)
 #   training/keab_train.sh smoke ARM RUN SCOPE STEPS VRAM MEM [PROV] [AFTER]
 #                                                         a smoke run under keab-prime/smoke/ (GPU)
-#   training/keab_train.sh fidelity VRAM MEM [SMOKE RUN] [AFTER]
-#                                                         the export check: MB1 first (the bound), then a smoke model
+#   training/keab_train.sh fidelity VRAM MEM SCOPE|SMOKE [RUN] [AFTER]
+#                                                         the export check: MB1 at SCOPE first (the bound), then a smoke
+#                                                         model (SMOKE RUN) against MB1 at the smoke's scope
 #   training/keab_train.sh chain RUN VRAM MEM N THROUGH [AFTER]
 #                                                         N chained chunk jobs over train_keab.ORDER through pilot, main
 #                                                         or score (the architect launches it; never a smoke)
@@ -55,8 +56,12 @@ case "${1:-}" in
       --timeout 3h $(after "${9:-}") -- ./python train_keab.py smoke --arm "$arm" --labels-run "${3:?RUN}" \
       --scope "${4:?SCOPE}" --steps "${5:?STEPS}" --name "smoke-$arm" ${8:-} ;;
   fidelity)
-    extra=(); name=relabel-keab-fidelity-MB1
-    if [[ -n "${4:-}" ]]; then extra=(--smoke "$4" --run "${5:?RUN}"); name="relabel-keab-fidelity-$4"; fi
+    what="${4:?SCOPE or SMOKE}"
+    if [[ "$what" == none || "$what" == S1 || "$what" == S2 ]]; then
+      extra=(--scope "$what"); name="relabel-keab-fidelity-MB1-$what"
+    else
+      extra=(--smoke "$what" --run "${5:?RUN}"); name="relabel-keab-fidelity-$what"
+    fi
     exec job start "$name" --cwd "$here" $(gpu "${2:?VRAM}" "${3:?MEM}") "${common[@]}" --stall 45m --timeout 2h \
       $(after "${6:-}") -- env -u CUBLAS_WORKSPACE_CONFIG ./python-gpu1bit train_keab.py fidelity "${extra[@]}" ;;
   chain)

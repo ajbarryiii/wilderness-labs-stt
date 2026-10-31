@@ -15,6 +15,7 @@
     ./python-gpu1bit train_keab.py score --model M --mode x1|x3 [--limit N]
     ./python train_keab.py score --model M --mode torch [--limit N]
                                                                     deployed-mode (x1, x3) or PyTorch fake-quant scoring
+    ./python train_keab.py export-init                              the main arm's step 0 student exported (GPU)
     ./python train_keab.py status | report
 
 Arms (training/stage4.py ARMS; the teacher package): "main" trains on T*'s labels with B0' ($RELABEL_ROOT/b0prime/runs/
@@ -1137,6 +1138,7 @@ EVAL_BATCH, EVAL_MAX_SECONDS = td.EVAL_BATCH, td.EVAL_MAX_SECONDS
 MODE_GROUPS = {"x1": SET_GROUPS, "x3": ("dev",), "torch": ("dev",), "fp32": ("ami-sdm",)}
 MB1_X1_GROUPS = ("stem", "cv", "ami-sdm")          # MB1's dev and domain x1 scores are step 0's (scores/MB1/none)
 REFERENCE_MODELS = ("MB1", "B0", "B0p")
+INIT_MODEL = "init-main"          # the main arm's student at step 0: MB1's encoder with B0''s decoder (informational)
 SCORED_RUNS = ("b100-main", "b100-control", "b50-main")
 
 
@@ -1260,9 +1262,52 @@ def view_of(model: str) -> Path:
     if model == "MB1":
         import keab_step0 as k0
         return k0.mb1_export()
+    if model == INIT_MODEL:
+        return init_dir() / "export" / "view"
     if model not in SCORED_RUNS:
         raise ValueError(f"{model} has no scoring view (deployed scoring: {SCORED_RUNS} and MB1)")
     return run_dir(model) / "export" / "view"
+
+
+def init_dir() -> Path:
+    return root() / INIT_MODEL
+
+
+def init_export_job(lock_wait: float, deadline: float | None = None) -> int:
+    """The main arm's student at step 0 (keab-prime plan "Teacher": "At step 0 the main arm's student is MB1's encoder
+    with B0''s decoder. It is scored once, for information"): built as every main-arm run builds it (step 0's scope),
+    exported on CUDA (the training forward's binary scales) to its 8-bit bundle and scoring view under
+    $RELABEL_ROOT/keab-prime/init-main/export, for the x1 score item."""
+    import keab_step0 as k0
+    import score_teacher
+    from training import keab_export as ke
+    llayout.require_mount()
+    scope = step0_scope()
+    out = init_dir()
+    if (out / "export" / "view" / "manifest.json").exists() and (out / "model.json").exists():
+        log(f"{out}: exported")
+        return 0
+    wait = lock_wait if deadline is None else max(0.0, min(lock_wait, deadline - time.time()))
+    try:
+        with k0.waiting_lock("keab init-main export", wait):
+            vram_lease()
+            teacher, rec = load_teacher_model("main", "cpu")
+            student, info = build_student(decoder_state(teacher), scope, resuming=False)
+            del teacher
+            student.to("cuda").eval()
+            extra = {"stage": "keab-prime", "model": INIT_MODEL, "scope": scope, "teacher": rec, "init": info["init"]}
+            bundle = ke.write_bundle(student, out / "export" / "bundle", extra=extra, root=root())
+    except score_teacher.LockBusy as busy:
+        if deadline is None:
+            raise
+        log(f"init-main export: the GPU lock was not free before the chunk deadline ({busy})")
+        return EXIT_BUDGET
+    view = ke.derive_view(out / "export" / "bundle", out / "export" / "view", root=root(), extra=extra)
+    write_json(out / "model.json", {"model": INIT_MODEL, "scope": scope, "teacher": rec, "init": info["init"],
+                                    "teacher_decoder_sha256": info["teacher_decoder_sha256"],
+                                    "bundle_sha256": bundle["sha256"], "view_sha256": view["sha256"],
+                                    "utc": train.utc()})
+    return 0
 
 
 def load_x3(view: Path, device: str = "cuda"):
@@ -1350,17 +1395,28 @@ def latent_model(name: str, smoke: str | None = None):
     return student, {"name": name, "path": str(d / "model.pt"), "sha256": _sha256_file(d / "model.pt")}
 
 
+def score_groups(model: str, mode: str) -> tuple[str, ...]:
+    """The set groups a score item covers: MODE_GROUPS[mode]; MB1 at x1 only what step 0 did not score; the step 0
+    student (informational) on the dev and domain sets."""
+    if (model, mode) == ("MB1", "x1"):
+        return MB1_X1_GROUPS
+    if model == INIT_MODEL:
+        return ("dev", "domain")
+    return MODE_GROUPS[mode]
+
+
 def score_job(model: str, mode: str, limit: int | None, lock_wait: float, deadline: float | None) -> int:
     """One score item (ORDER): a model in one mode on its groups (MODE_GROUPS; MB1's x1 adds what step 0 did not
     score)."""
     import keab_step0 as k0
     import score_teacher
     llayout.require_mount()
-    groups = MB1_X1_GROUPS if (model, mode) == ("MB1", "x1") else MODE_GROUPS[mode]
+    groups = score_groups(model, mode)
     out = scores_dir(model, mode) if limit is None else smoke_root() / "scores" / f"limit{limit}" / model / mode
     wait = lock_wait if deadline is None else max(0.0, min(lock_wait, deadline - time.time()))
     try:
         with k0.waiting_lock(f"keab score {model} {mode}", wait):
+            vram_lease()
             if mode in ("torch", "fp32"):
                 train.deterministic_mode()
             if mode in ("x1", "x3"):
@@ -1388,19 +1444,31 @@ def score_job(model: str, mode: str, limit: int | None, lock_wait: float, deadli
 FIDELITY_LIMIT = 100           # utterances per dev set of the export check's slice
 
 
-def fidelity_job(smoke: str | None, run: str | None, limit: int, lock_wait: float) -> int:
+STEP0_VIEWS = {"none": "none", "S1": "S1-int8", "S2": "S2-int8"}     # step 0's MB1 scoring view of each scope
+
+
+def fidelity_job(smoke: str | None, run: str | None, limit: int, lock_wait: float, scope: str | None = None) -> int:
     """The export contract check (keab-prime plan "Code and review", "Exported checkpoints"): a model's PyTorch
     fake-quant transcripts against its scoring view's on the i8x1 kernels, on the first `limit` utterances of every
-    dev set; MB1 first (its token-sequence mismatch sets the bound, fidelity_bound), then a trained smoke model's.
-    Writes $RELABEL_ROOT/keab-prime/smoke/fidelity/<model>.json; exit EXIT_CHECK when the smoke model exceeds the
-    bound."""
+    dev set. MB1 first, at a scope (its training model in that 8-bit form with the activation quantizer, against step
+    0's MB1 scoring view of the scope): its token-sequence mismatch sets the bound (fidelity_bound); then a trained
+    smoke model's, against MB1's at the smoke's own scope. Writes $RELABEL_ROOT/keab-prime/smoke/fidelity/<model>.json;
+    exit EXIT_CHECK when the smoke model exceeds the bound."""
     import keab_step0 as k0
     llayout.require_mount()
     out = smoke_root() / "fidelity"
-    name = "MB1" if smoke is None else f"{smoke}-{run}"
+    if smoke is None:
+        scope = scope or "none"
+        name = f"MB1-{scope}"
+    else:
+        scope = torch.load(smoke_root() / smoke / "runs" / run / "model.pt", map_location="cpu", mmap=True,
+                           weights_only=False)["scope"]
+        name = f"{smoke}-{run}"
     with k0.waiting_lock(f"keab fidelity {name}", lock_wait):
+        vram_lease()
         if smoke is None:
-            net, source, view = mb1_torch_model(), {"name": "MB1", "sha256": MB1_SHA256}, view_of("MB1")
+            net, source = mb1_torch_model(scope), {"name": "MB1", "sha256": MB1_SHA256, "scope": scope}
+            view = k0.view_dir(STEP0_VIEWS[scope])
         else:
             net, source = latent_model(run, smoke)
             view = smoke_root() / smoke / "runs" / run / "export" / "view"
@@ -1411,10 +1479,15 @@ def fidelity_job(smoke: str | None, run: str | None, limit: int, lock_wait: floa
     rows = {m: [r for n in DEV_SETS for r in json.loads((out / name / m / f"{n}.json").read_text())["records"]]
             for m in ("torch", "x1")}
     mis = k0.mismatch(rows["x1"], rows["torch"])
-    result = {"model": name, "limit": limit, "mismatch": mis, "h4": {"torch": torch_res.get("h4"),
-                                                                     "x1": x1_res.get("h4")}, "utc": train.utc()}
+    result = {"model": name, "scope": scope, "limit": limit, "mismatch": mis,
+              "h4": {"torch": torch_res.get("h4"), "x1": x1_res.get("h4")}, "utc": train.utc()}
     if smoke is not None:
-        ref = json.loads((out / "MB1.json").read_text())
+        ref_path = out / f"MB1-{scope}.json"
+        if not ref_path.exists():
+            raise NotReady(f"no MB1 reference at scope {scope} ({ref_path}): run fidelity --scope {scope} first")
+        ref = json.loads(ref_path.read_text())
+        if ref["limit"] != limit:
+            raise RuntimeError(f"{ref_path} was measured on {ref['limit']} utterances per set, not {limit}")
         bound = fidelity_bound(ref["mismatch"]["rate"])
         result.update(bound=bound, mb1_rate=ref["mismatch"]["rate"], within=mis["rate"] <= bound)
     write_json(out / f"{name}.json", result)
@@ -1622,6 +1695,8 @@ def probe_job(labels_run: str, steps: int, scope: str, provisional: bool, lock_w
             if round_trip is None and res["status"]["timed"] == "ok":
                 round_trip = tb.checkpoint_round_trip(ctx, root() / "probe")
             del ctx
+            import gc
+            gc.collect()                                   # the mode's student, teacher and AdamW state
             torch.cuda.empty_cache()
             modes["ckpt" if ckpt else "no_ckpt"] = res
             log(json.dumps(res))
@@ -1659,7 +1734,7 @@ def probe_job(labels_run: str, steps: int, scope: str, provisional: bool, lock_w
 ORDER = ([("train", n) for n in stage4.PILOT] + [("train", n) for n in stage4.MAIN]
          + [("score", m, "x1") for m in SCORED_RUNS] + [("score", m, "x3") for m in SCORED_RUNS]
          + [("score", "MB1", "x1"), ("score", "MB1", "x3"), ("score", "MB1", "torch"),
-            ("score", "B0", "fp32"), ("score", "B0p", "fp32")])
+            ("score", "B0", "fp32"), ("score", "B0p", "fp32"), ("export", INIT_MODEL), ("score", INIT_MODEL, "x1")])
 THROUGH = {"pilot": len(stage4.PILOT), "main": len(stage4.PILOT) + len(stage4.MAIN), "score": len(ORDER)}
 GPU1BIT_MODES = ("x1", "x3")
 
@@ -1667,12 +1742,13 @@ GPU1BIT_MODES = ("x1", "x3")
 def item_done(item: tuple) -> bool:
     if item[0] == "train":
         return run_done(item[1])
+    if item[0] == "export":
+        return (init_dir() / "model.json").exists()
     _, model, mode = item
     path = scores_dir(model, mode) / "summary.json"
     if not path.exists():
         return False
-    want = {n for n, g in expand_sets(MB1_X1_GROUPS if (model, mode) == ("MB1", "x1") else MODE_GROUPS[mode])
-            if manifest_of(n, g).exists()}
+    want = {n for n, g in expand_sets(score_groups(model, mode)) if manifest_of(n, g).exists()}
     return set(json.loads(path.read_text()).get("sets") or []) >= want
 
 
@@ -1681,6 +1757,8 @@ def item_command(item: tuple, labels_run: str, minutes: float, deadline: float) 
     if item[0] == "train":
         return [str(here / "python"), str(here / "train_keab.py"), "train", "--run", item[1], "--labels-run",
                 labels_run, "--budget-minutes", f"{minutes:.1f}", "--deadline", f"{deadline:.0f}"]
+    if item[0] == "export":
+        return [str(here / "python"), str(here / "train_keab.py"), "export-init", "--deadline", f"{deadline:.0f}"]
     _, model, mode = item
     py = ["env", "-u", "CUBLAS_WORKSPACE_CONFIG", str(here / "python-gpu1bit")] if mode in GPU1BIT_MODES \
         else [str(here / "python")]
@@ -1719,7 +1797,7 @@ def chunk(labels_run: str, budget_minutes: float, through: str, runner=subproces
 def status() -> dict:
     out = {}
     for item in ORDER:
-        key = item[1] if item[0] == "train" else f"score {item[1]} {item[2]}"
+        key = item[1] if item[0] == "train" else " ".join(item)
         if item_done(item):
             out[key] = "done"
         elif item[0] == "train" and (run_dir(item[1]) / "ckpt" / "latest.pt").exists():
@@ -1776,13 +1854,17 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--provisional", action="store_true")
     p.add_argument("--lock-wait", type=float, default=4 * 3600.0)
     p = sub.add_parser("score")
-    p.add_argument("--model", choices=SCORED_RUNS + REFERENCE_MODELS + stage4.PILOT, required=True)
+    p.add_argument("--model", choices=SCORED_RUNS + REFERENCE_MODELS + stage4.PILOT + (INIT_MODEL,), required=True)
     p.add_argument("--mode", choices=tuple(MODE_GROUPS), required=True)
     p.add_argument("--limit", type=int)
     p.add_argument("--lock-wait", type=float, default=4 * 3600.0)
     p.add_argument("--deadline", type=float)
+    p = sub.add_parser("export-init")
+    p.add_argument("--lock-wait", type=float, default=4 * 3600.0)
+    p.add_argument("--deadline", type=float)
     p = sub.add_parser("fidelity")
     p.add_argument("--smoke", help="a smoke's name (default: MB1, which sets the bound)")
+    p.add_argument("--scope", choices=eb.SCOPES, help="MB1's scope (default none; a smoke uses its own)")
     p.add_argument("--run", help="the smoke's run (pilot-<arm>-lr6e-5)")
     p.add_argument("--limit", type=int, default=FIDELITY_LIMIT)
     p.add_argument("--lock-wait", type=float, default=4 * 3600.0)
@@ -1804,8 +1886,10 @@ def main(argv: list[str] | None = None) -> int:
             return probe_job(args.labels_run, args.steps, args.scope, args.provisional, args.lock_wait)
         if args.cmd == "score":
             return score_job(args.model, args.mode, args.limit, args.lock_wait, args.deadline)
+        if args.cmd == "export-init":
+            return init_export_job(args.lock_wait, args.deadline)
         if args.cmd == "fidelity":
-            return fidelity_job(args.smoke, args.run, args.limit, args.lock_wait)
+            return fidelity_job(args.smoke, args.run, args.limit, args.lock_wait, args.scope)
     except tb.NotReady as wait:
         log(f"{args.cmd}: not ready: {wait}")
         return EXIT_NOT_READY
