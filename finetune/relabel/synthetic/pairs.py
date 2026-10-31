@@ -7,7 +7,9 @@
     ./python -m synthetic pairs-prompts --round K     round K's prompts from the remaining need (CPU)
     ./python -m synthetic pairs-hygiene --round K     round K's hygiene under v3 and its selection (CPU)
     ./python -m synthetic pairs-finalize              run pairs: the rounds' clips joined, the report (CPU)
-(textgen, tts-plan, tts, roundtrip and finalize run on the rounds as on any run: --run pairs-r1 .. pairs-r3.)
+    (pairs-prompts, pairs-hygiene and pairs-finalize take --run pairs-c for the contrast top-up, plan v5.2)
+(textgen, tts-plan, tts, roundtrip and finalize run on the rounds as on any run: --run pairs-r1 .. pairs-r3,
+pairs-c-r1 .. pairs-c-r3.)
 
 Curation file (terms/synthetic/pairs.tsv, committed, curated by hand by a blind curator from the candidate file
 $RELABEL_ROOT/synthetic/v5/candidates.json alone). Blank lines and '#' comments are ignored, except one required line
@@ -53,6 +55,15 @@ below T(g) (it must hold the group). Counts start from the state and grow with e
 sentences are rendered (sentences.jsonl); their round trip is v1's, under split v3. Existing clips and contrast clips
 are never dropped to meet T(g). finalize_run joins the rounds' kept clips into runs/pairs/clips.jsonl and reports the
 shortfalls per pair and group; filters are never relaxed to meet a target.
+
+Run pairs-c (plan v5.2, "Contrast top-up"): contrast prompts only, in rounds pairs-c-r1..r3 (runs/pairs-c/r<K>/), for
+each trained pair still below CONTRAST kept contrast clips over runs pairs and pairs-c (the state starts from run
+pairs's joined clips). A prompt holds the pair's two terms plus 0-2 other targeted terms (k from
+textgen.TERMS_PER_PROMPT per prompt, extras k - 1) from a seeded cycle over the targeted terms of the pair's domain,
+or of both members' domains for a cross-domain pair, different groups; registers as above. Its hygiene's earlier kept
+sentences are full's, every round of run pairs's selected ones and its earlier rounds'; selection as above. Its text
+generation seed includes the run name and round (text_stream). finalize_run(run="pairs-c") joins its rounds into
+runs/pairs-c/ and reports contrast clips per pair over both runs. The synthetic source is full, pairs and pairs-c.
 """
 from __future__ import annotations
 
@@ -380,11 +391,23 @@ def _rng(*parts):
     return rng(*parts)
 
 
-def round_prompts(spec: Spec, split: vocab.Split, state: State, round: int, seed: int = layout.SEED) -> list[dict]:
-    """Round `round`'s prompts (module docstring): contrast prompts, then single-term prompts, ids pairs-r<K>-<i>."""
+def text_stream(run: str) -> str | None:
+    """The text-generation seed stream of a run (textgen.generate_chunk): run pairs-c's rounds use their name (run and
+    round, plan v5.2); every run made before has none and keeps its seeds."""
+    return run if run in layout.CONTRAST_ROUNDS else None
+
+
+def round_prompts(spec: Spec, split: vocab.Split, state: State, round: int, seed: int = layout.SEED,
+                  run: str = layout.PAIRS_RUN) -> list[dict]:
+    """Round `round`'s prompts (module docstring): run pairs: contrast prompts, then single-term prompts, ids
+    pairs-r<K>-<i>; run pairs-c: contrast prompts with extras only, ids pairs-c-r<K>-<i>."""
     from synthetic import textgen
     if not 1 <= round <= ROUNDS:
         raise ValueError(f"round {round} outside 1..{ROUNDS}")
+    if run not in layout.PAIRS_RUNS:
+        raise ValueError(f"unknown run {run!r}")
+    if run == layout.CONTRAST_RUN:
+        return _contrast_prompts(spec, split, state, round, seed)
     run = f"{layout.PAIRS_RUN}-r{round}"
     by_term = {e.term: e for e in split.entries}
     registers = Counter()
@@ -434,6 +457,46 @@ def round_prompts(spec: Spec, split: vocab.Split, state: State, round: int, seed
     return out
 
 
+def _contrast_prompts(spec: Spec, split: vocab.Split, state: State, round: int, seed: int) -> list[dict]:
+    """Run pairs-c's round prompts (module docstring)."""
+    from synthetic import textgen
+    run = f"{layout.CONTRAST_RUN}-r{round}"
+    by_term = {e.term: e for e in split.entries}
+    ks, weights = list(textgen.TERMS_PER_PROMPT), list(textgen.TERMS_PER_PROMPT.values())
+    registers, cycles, out = Counter(), {}, []
+    for p in spec.trained:
+        own = [by_term[t] for t in p["terms"]]
+        if any(e.side != "targeted" for e in own):
+            raise RuntimeError(f"pair {p['id']}: a member is not targeted under v3")
+        pool = tuple(sorted(set(p["domains"])))
+        if pool not in cycles:
+            terms = [e for d in pool for e in split.targeted(d)]
+            cycles[pool] = {"terms": terms, "order": [], "pass": 0}
+        c = cycles[pool]
+        others = len({e.group for e in c["terms"]} - set(p["groups"]))
+        for _ in range(math.ceil(FACTOR * max(0, CONTRAST - state.contrast[p["id"]]))):
+            k = _rng(seed, run, "k", len(out)).choices(ks, weights)[0]
+            chosen, groups, tries = list(p["terms"]), set(p["groups"]), 0
+            while len(chosen) < 2 + min(k - 1, others) and tries < 2 * len(c["terms"]):
+                tries += 1
+                if not c["order"]:
+                    c["order"] = list(range(len(c["terms"])))
+                    _rng(seed, run, "+".join(pool), "pass", c["pass"]).shuffle(c["order"])
+                    c["pass"] += 1
+                e = c["terms"][c["order"].pop()]
+                if e.group in groups:
+                    continue
+                groups.add(e.group)
+                chosen.append(e.term)
+            domain = own[0].domain
+            register = layout.REGISTERS[registers[domain] % len(layout.REGISTERS)]
+            registers[domain] += 1
+            out.append({"id": f"{run}-{len(out):06d}", "index": len(out), "kind": "contrast", "domain": domain,
+                        "register": register, "requested": chosen, "pair": p["id"], "target": None,
+                        "domains": [e.domain for e in own]})
+    return out
+
+
 # ----------------------------------------------------------------------------- run pairs: hygiene and selection
 
 def hygiene(records, split: vocab.Split, medical, normalize, coverage, sets, heldout_record, prior: Sequence[str] = (),
@@ -448,12 +511,18 @@ def hygiene(records, split: vocab.Split, medical, normalize, coverage, sets, hel
     return kept, report, rows
 
 
-def prior_sentences(round: int) -> list[str]:
-    """Normalized texts of full's kept sentences, then of the selected sentences of rounds before `round`."""
+def prior_sentences(round: int, run: str = layout.PAIRS_RUN) -> list[str]:
+    """Normalized texts of full's kept sentences, then (run pairs-c) of every round of run pairs's selected sentences,
+    then of the selected sentences of the run's rounds before `round`."""
     from synthetic.textgen import read_jsonl
     out = [s["norm"] for s in read_jsonl(layout.run_dir("full") / "sentences.jsonl")]
+    if run == layout.CONTRAST_RUN:
+        for k in range(1, ROUNDS + 1):
+            f = round_dir(k) / "sentences.jsonl"
+            if f.exists():
+                out += [s["norm"] for s in read_jsonl(f)]
     for k in range(1, round):
-        out += [s["norm"] for s in read_jsonl(layout.run_dir(f"{layout.PAIRS_RUN}-r{k}") / "sentences.jsonl")]
+        out += [s["norm"] for s in read_jsonl(round_dir(k, run) / "sentences.jsonl")]
     return out
 
 
@@ -498,8 +567,8 @@ def shortfalls(spec: Spec, state: State) -> dict:
 
 # ----------------------------------------------------------------------------- run pairs: files
 
-def round_dir(round: int) -> Path:
-    return layout.run_dir(f"{layout.PAIRS_RUN}-r{round}")
+def round_dir(round: int, run: str = layout.PAIRS_RUN) -> Path:
+    return layout.run_dir(f"{run}-r{round}")
 
 
 def load_spec(split: vocab.Split | None = None) -> Spec:
@@ -518,11 +587,28 @@ def load_spec(split: vocab.Split | None = None) -> Spec:
     return spec
 
 
-def round_clips(round: int) -> list[dict]:
+def _checked(d: Path) -> dict:
+    meta = json.loads((d / "clips.meta.json").read_text())
+    if _sha256(d / "clips.jsonl") != meta["clips_sha256"]:
+        raise RuntimeError(f"{d}/clips.jsonl does not match clips.meta.json")
+    if meta.get("hygiene_split_sha256") != _sha256(layout.split_version_path(3)):
+        raise RuntimeError(f"{d}: hygiene did not run under split v3")
+    return meta
+
+
+def joined_clips(run: str) -> list[dict]:
+    """A joined run's kept clips (runs/<run>/clips.jsonl, with kind, pair, target and round), checked as rounds are."""
+    from synthetic.textgen import read_jsonl
+    d = layout.run_dir(run)
+    _checked(d)
+    return read_jsonl(d / "clips.jsonl")
+
+
+def round_clips(round: int, run: str = layout.PAIRS_RUN) -> list[dict]:
     """A finished round's kept clips with their prompt's kind, pair and target (refused unless its clip file matches
     its meta and its hygiene ran under split v3)."""
     from synthetic.textgen import read_jsonl
-    d = round_dir(round)
+    d = round_dir(round, run)
     meta = json.loads((d / "clips.meta.json").read_text())
     if _sha256(d / "clips.jsonl") != meta["clips_sha256"]:
         raise RuntimeError(f"{d}/clips.jsonl does not match clips.meta.json")
@@ -533,44 +619,49 @@ def round_clips(round: int) -> list[dict]:
                  "target": prompts[c["id"]].get("target"), "round": round} for c in read_jsonl(d / "clips.jsonl")]
 
 
-def finished_rounds() -> list[int]:
-    done = [k for k in range(1, ROUNDS + 1) if (round_dir(k) / "clips.meta.json").exists()]
+def finished_rounds(run: str = layout.PAIRS_RUN) -> list[int]:
+    done = [k for k in range(1, ROUNDS + 1) if (round_dir(k, run) / "clips.meta.json").exists()]
     if done != list(range(1, len(done) + 1)):
         raise RuntimeError(f"rounds {done} are not consecutive from 1")
     return done
 
 
-def state_before(spec: Spec, split: vocab.Split, round: int) -> State:
-    done = finished_rounds()
+def base_clips(run: str) -> list[dict]:
+    """The kept clips a run builds on: none for run pairs; run pairs's joined clips for run pairs-c."""
+    return joined_clips(layout.PAIRS_RUN) if run == layout.CONTRAST_RUN else []
+
+
+def state_before(spec: Spec, split: vocab.Split, round: int, run: str = layout.PAIRS_RUN) -> State:
+    done = finished_rounds(run)
     if any(k not in done for k in range(1, round)):
         raise RuntimeError(f"round {round} needs rounds 1..{round - 1} finalized first")
-    return State(spec, split, [c for k in range(1, round) for c in round_clips(k)])
+    return State(spec, split, base_clips(run) + [c for k in range(1, round) for c in round_clips(k, run)])
 
 
-def finalize_run(spec: Spec, split: vocab.Split) -> dict:
-    """runs/pairs/clips.jsonl (the finished rounds' kept clips with kind, pair, target and round), clips.meta.json
+def finalize_run(spec: Spec, split: vocab.Split, run: str = layout.PAIRS_RUN) -> dict:
+    """runs/<run>/clips.jsonl (the finished rounds' kept clips with kind, pair, target and round), clips.meta.json
     and report.json (prompts and clips per round, contrast clips per trained pair and counts per target group against
-    their targets, with shortfalls)."""
+    their targets, with shortfalls; for run pairs-c over runs pairs and pairs-c)."""
     from synthetic.textgen import read_jsonl, write_jsonl
-    rounds = finished_rounds()
+    rounds = finished_rounds(run)
     if not rounds:
         raise RuntimeError("no finished round")
     clips, per_round, provisional = [], {}, False
     for k in rounds:
-        rc = round_clips(k)
+        rc = round_clips(k, run)
         clips += rc
-        meta = json.loads((round_dir(k) / "clips.meta.json").read_text())
+        meta = json.loads((round_dir(k, run) / "clips.meta.json").read_text())
         provisional |= bool(meta.get("provisional"))
-        prompts = read_jsonl(round_dir(k) / "prompts.jsonl")
+        prompts = read_jsonl(round_dir(k, run) / "prompts.jsonl")
         per_round[k] = {"prompts": len(prompts), "contrast_prompts": sum(p["kind"] == "contrast" for p in prompts),
                         "single_prompts": sum(p["kind"] == "single" for p in prompts), "clips": len(rc),
                         "hours": sum(c["duration"] for c in rc) / 3600, "clips_sha256": meta["clips_sha256"]}
     clips.sort(key=lambda c: c["id"])
-    state = State(spec, split, clips)
+    state = State(spec, split, base_clips(run) + clips)
     over = [pid for pid, n in state.contrast.items() if n > CONTRAST]
     if over:
         raise RuntimeError(f"pairs {over} have more than {CONTRAST} contrast clips")
-    d = layout.run_dir(layout.PAIRS_RUN)
+    d = layout.run_dir(run)
     write_jsonl(d / "clips.jsonl", clips)
     v3 = _sha256(layout.split_version_path(3))
     meta = {"clips": len(clips), "hours": sum(c["duration"] for c in clips) / 3600,
@@ -579,7 +670,7 @@ def finalize_run(spec: Spec, split: vocab.Split) -> dict:
             "roundtrip_max_wer": layout.ROUNDTRIP_MAX_WER}
     _write(d / "clips.meta.json", _json(meta))
     short = shortfalls(spec, state)
-    report = {"run": layout.PAIRS_RUN, "rounds": per_round, "spec": spec.record(), **short,
+    report = {"run": run, "rounds": per_round, "spec": spec.record(), **short,
               "total": {"clips": len(clips), "hours": meta["hours"],
                         "contrast_clips": sum(c["kind"] == "contrast" for c in clips),
                         "single_clips": sum(c["kind"] == "single" for c in clips),

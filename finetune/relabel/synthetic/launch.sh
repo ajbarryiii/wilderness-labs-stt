@@ -14,18 +14,19 @@
 #   synthetic/launch.sh roundtrip RUN VRAM N [KIND] [SETTING]  N chained T* chunk jobs (GPU, shared lease)
 #   synthetic/launch.sh after-text RUN              hygiene + tts-plan (CPU, after the textgen chunks)
 #   synthetic/launch.sh finalize RUN                clips, report, listening sample (CPU)
-# Confusable pairs (synthetic plan v5; RUN pairs-r1..pairs-r3 for textgen, tts, roundtrip and finalize):
+# Confusable pairs (synthetic plan v5; RUN pairs-r1..r3 or pairs-c-r1..r3 for textgen, tts, roundtrip, finalize;
+# P is pairs (default) or pairs-c, the contrast top-up of plan v5.2):
 #   synthetic/launch.sh pairs-words                 word counts over main-f3's T* training labels (CPU, ~10 min)
 #   synthetic/launch.sh pairs-detect                the detector's candidate file (CPU)
 #   synthetic/launch.sh pairs-v3                    split v3, full's provenance under it, coverage under v3 (CPU)
-#   synthetic/launch.sh pairs-prompts K             round K's prompts (CPU; rounds 1..K-1 finalized)
-#   synthetic/launch.sh pairs-after-text K          round K's hygiene and selection, then its tts-plan (CPU)
-#   synthetic/launch.sh pairs-finalize              run pairs: the rounds joined, report.json with shortfalls (CPU)
+#   synthetic/launch.sh pairs-prompts K [P]         round K's prompts (CPU; rounds 1..K-1 finalized)
+#   synthetic/launch.sh pairs-after-text K [P]      round K's hygiene and selection, then its tts-plan (CPU)
+#   synthetic/launch.sh pairs-finalize [P]          run P: the rounds joined, report.json with shortfalls (CPU)
 #
 # GPU jobs: a shared lease (--needs gpu:shared --vram VRAM, VRAM in GB), 36G memory cap, low priority, chunks of
 # at most ~110 min; each job takes the parakeet GPU lock for its own duration only (the CLI holds it), so exclusive
 # jobs get the GPU between chunks. Nothing is downloaded under the lock (HF_HUB_OFFLINE=1). RUN is pilot, pilot2,
-# full or pairs-r1..pairs-r3. TTS on the GPU: LEASE = ceil(VRAM) + 1 GB, as in labeling/launch.sh (the supervisor's
+# full or a round of run pairs or pairs-c. TTS on the GPU: LEASE = ceil(VRAM) + 1 GB, as in labeling/launch.sh (the supervisor's
 # lease fraction is over the GPU's nominal size, the engines' check over the smaller size torch reports;
 # engines.vram_fraction).
 set -euo pipefail
@@ -105,15 +106,17 @@ case "${1:-}" in
     exec job start syn-pairs-v3 --cwd "$here" --mem 8G --cpus 2 --timeout 1h -- bash -c \
       "./python -m synthetic pairs-split && ./python -m synthetic pairs-check-full && ./python -m synthetic pairs-coverage" ;;
   pairs-prompts)
-    k="${2:?round}"
-    exec job start "syn-pairs-prompts-r$k" --cwd "$here" --mem 4G --cpus 1 --timeout 1h -- \
-      ./python -m synthetic pairs-prompts --round "$k" ;;
+    k="${2:?round}"; r="${3:-pairs}"
+    exec job start "syn-$r-prompts-r$k" --cwd "$here" --mem 4G --cpus 1 --timeout 1h -- \
+      ./python -m synthetic pairs-prompts --round "$k" --run "$r" ;;
   pairs-after-text)
-    k="${2:?round}"
-    exec job start "syn-pairs-after-text-r$k" --cwd "$here" --mem 16G --cpus 4 --timeout 2h -- \
-      bash -c "./python -m synthetic pairs-hygiene --round $k && ./python -m synthetic tts-plan --run pairs-r$k" ;;
+    k="${2:?round}"; r="${3:-pairs}"
+    exec job start "syn-$r-after-text-r$k" --cwd "$here" --mem 6G --cpus 4 --timeout 2h -- \
+      bash -c "./python -m synthetic pairs-hygiene --round $k --run $r && ./python -m synthetic tts-plan --run $r-r$k" ;;
   pairs-finalize)
-    exec job start syn-pairs-finalize --cwd "$here" --mem 8G --cpus 2 --timeout 1h -- ./python -m synthetic pairs-finalize ;;
+    r="${2:-pairs}"
+    exec job start "syn-$r-finalize" --cwd "$here" --mem 4G --cpus 2 --timeout 1h -- \
+      ./python -m synthetic pairs-finalize --run "$r" ;;
   *)
-    sed -n '2,30p' "$0" >&2; exit 2 ;;
+    sed -n '2,31p' "$0" >&2; exit 2 ;;
 esac

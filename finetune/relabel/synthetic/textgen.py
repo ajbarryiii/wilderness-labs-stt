@@ -7,14 +7,17 @@ Prompts (make_prompts, seeded, written once to runs/<run>/prompts.jsonl):
   requested about equally often; the terms of one prompt are from different groups;
 - registers take turns per domain (conversational, explanatory, dictated notes).
 Run pairs (synthetic plan v5; synthetic/pairs.py) writes its own prompts; its contrast prompts ("kind": "contrast")
-ask for both terms of a pair as two different things (CONTRAST_USER, the same rules), naming both fields when the
-pair crosses domains.
+ask for both terms of a pair (the first two requested) as two different things (CONTRAST_USER, the same rules),
+naming both fields when the pair crosses domains, and for the other requested terms (run pairs-c's 0-2 extras) as v1
+asks for its terms.
 
 Generation (generate_chunk): the pinned open-weights generator (alias syn-textgen) runs locally through
 transformers in bf16, chat template with thinking off, sampling with the model card's non-thinking settings,
 one sentence per prompt. Prompts are processed in blocks of BLOCK; each block is written atomically to
 runs/<run>/text/<block>.jsonl, so a chunk job resumes at the first missing block and stops after its time budget.
-The sampling seed of a batch is a function of (run seed, block, batch), recorded with the outputs.
+The sampling seed of a batch is a function of (run seed, block, batch), recorded with the outputs; with a `stream`
+(run pairs-c's rounds, plan v5.2: the run name and round, pairs.text_stream) also of the stream, so two runs or rounds
+with the same prompts do not draw the same samples. Runs made before v5.2 have no stream and keep their seeds.
 """
 from __future__ import annotations
 
@@ -48,7 +51,8 @@ Rules:
 - Use between eight and forty words.
 Output only the sentence, without quotes."""
 CONTRAST_USER = ("Write one natural English sentence that {register}, in {field}. It must use both of these terms "
-                 "naturally, as two different things: {terms}.\n" + USER[USER.index("Rules:"):])
+                 "naturally, as two different things: {terms}.{extra}\n" + USER[USER.index("Rules:"):])
+CONTRAST_EXTRA = " It must also use {these} naturally: {terms}."
 
 
 def _rng(*parts) -> random.Random:
@@ -91,8 +95,11 @@ def prompt_text(p: dict) -> str:
     if p.get("kind") == "contrast":
         names = list(dict.fromkeys(DOMAIN_NAMES[d] for d in p.get("domains") or [p["domain"]]))
         field = f"the field of {names[0]}" if len(names) == 1 else f"the fields of {' and '.join(names)}"
-        return CONTRAST_USER.format(register=REGISTER_TEXT[p["register"]], field=field,
-                                    terms=" and ".join(f'"{t}"' for t in p["requested"]))
+        pair, more = p["requested"][:2], p["requested"][2:]
+        extra = "" if not more else CONTRAST_EXTRA.format(these="this term" if len(more) == 1 else "these terms",
+                                                          terms=", ".join(f'"{t}"' for t in more))
+        return CONTRAST_USER.format(register=REGISTER_TEXT[p["register"]], field=field, extra=extra,
+                                    terms=" and ".join(f'"{t}"' for t in pair))
     terms = ", ".join(f'"{t}"' for t in p["requested"])
     return USER.format(register=REGISTER_TEXT[p["register"]], domain=DOMAIN_NAMES[p["domain"]],
                        these="this term" if len(p["requested"]) == 1 else "these terms", terms=terms)
@@ -223,7 +230,14 @@ class Generator:
                 "transformers": transformers.__version__, "torch": torch.__version__}
 
 
-def generate_chunk(run_dir: Path, generator, seed: int, budget_minutes: float, log=print) -> dict:
+def batch_seed(seed: int, block: int, batch: int, stream: str | None = None) -> int:
+    """The sampling seed of a batch (module docstring)."""
+    key = f"{seed}|{block}|{batch}" if stream is None else f"{seed}|{stream}|{block}|{batch}"
+    return int.from_bytes(hashlib.sha256(key.encode()).digest()[:4], "big")
+
+
+def generate_chunk(run_dir: Path, generator, seed: int, budget_minutes: float, log=print,
+                   stream: str | None = None) -> dict:
     """Generate the missing text blocks of a run until all are done or the budget is spent."""
     prompts = read_jsonl(run_dir / "prompts.jsonl")
     t0 = time.monotonic()
@@ -237,7 +251,7 @@ def generate_chunk(run_dir: Path, generator, seed: int, budget_minutes: float, l
         rows, tb = [], time.monotonic()
         for b in range(s, e, generator.batch):
             batch = prompts[b:min(e, b + generator.batch)]
-            bseed = int.from_bytes(hashlib.sha256(f"{seed}|{s}|{b}".encode()).digest()[:4], "big")
+            bseed = batch_seed(seed, s, b, stream)
             outs = generator.generate([prompt_text(p) for p in batch], bseed)
             for p, (raw, capped) in zip(batch, outs):
                 rows.append({**p, "raw": raw, "hit_cap": capped, "seed": bseed})
