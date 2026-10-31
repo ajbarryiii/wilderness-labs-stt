@@ -613,7 +613,7 @@ class Version3Store(World):
             for i, texts in self.raw.items():
                 want = spec.clean(texts[col], i, ls, texts[1] if ls == "T*" else None)
                 self.assertEqual(store.text(i), want)
-                for piece in ("Fitz, F-I-T-Z,", "10 mg/kg", "the U.S. I hope", "the Schrodinger cat"):
+                for piece in ("Fitz, F-I-T-Z,", "10 mg/kg", "the USI hope", "the Schrodinger cat"):
                     self.assertIn(piece, want)
             ident = store.identity["cleaning"]
             self.assertEqual((ident["version"], ident["lexicon_sha256"]), (3, self.lexicon["file_sha256"]))
@@ -650,15 +650,14 @@ class Version3Store(World):
         v = r["version3"]
         both = {"T*": 3, "B0": 3}
         self.assertEqual(v["labels_changed_vs_version_2"], both)
-        self.assertEqual(v["labels_changed_vs_version_2_per_kind"]["undone"], both)
-        self.assertEqual(v["labels_changed_vs_version_2_per_kind"]["trim"], both)
+        self.assertEqual(v["labels_changed_vs_version_2_per_kind"], {"undone": both})        # no trim
         self.assertEqual(v["occurrences"][R.UNITS_CLASS], both)
         self.assertEqual(v["occurrences"]["variants:Schrodinger"], both)
         self.assertEqual(v["layer2_spans_of_added_sets"]["choices:OpEx|OPX"], both)
         self.assertEqual(v["unattributed_labels"], {})
         self.assertEqual(v["expected"][R.UNITS_CLASS]["T*"]["measured"], 3)
         self.assertTrue(v["expected"][R.UNITS_CLASS]["T*"]["over_25_percent"])
-        self.assertEqual(v["runs_per_class"]["trim"], both)
+        self.assertEqual(v["runs_per_class"]["acronym"], both)                               # "U.S. I"
         rows = [line.split("\t") for line in (sheets / "check-sample-layer1.tsv").read_text().splitlines()[1:]]
         self.assertEqual(sum(row[3] == "spelling" for row in rows), 2)
         self.assertEqual(sum(row[2] == "units" for row in rows), 2)
@@ -667,9 +666,9 @@ class Version3Store(World):
         out = self.root / "census"
         first = sorted(self.raw)[0]
         r = R.census(self.lab, out, lexicon_dir=self.work3, tables_dir=self.tables3, exclude={(first, "FITZ")})
-        self.assertEqual(r["population"], {"changes words": 3, "trim": 3})
+        self.assertEqual(r["population"], {"changes words": 3, "compacted": 3})
         self.assertEqual(r["excluded_tuning_runs"], {"changes words": 1})
-        self.assertEqual(r["sample"], {"changes words": 2, "compacted": 0, "trim": 3})
+        self.assertEqual(r["sample"], {"changes words": 2, "compacted": 3})
         sheet = [line.split("\t") for line in (out / "census-sheet.tsv").read_text().splitlines()]
         key = [line.split("\t") for line in (out / "census-key.tsv").read_text().splitlines()]
         self.assertEqual(len(sheet), 1 + r["rows"])
@@ -684,12 +683,40 @@ class Version3Store(World):
         by_run = {row[header.index("run")]: row for row in key[1:]}
         self.assertEqual(by_run["F I T Z"][header.index("class")], "spelling")
         self.assertEqual(by_run["F I T Z"][header.index("version 2 output")], "FITZ")
-        self.assertEqual(by_run["U.S. I"][header.index("strata")], "trim")
-        self.assertEqual(by_run["U.S. I"][header.index("drawn in")], "trim")
-        with mock.patch.object(R, "CENSUS_TRIMS", 1):                         # membership is not the sample
+        self.assertEqual(by_run["U.S. I"][header.index("strata")], "compacted")
+        self.assertEqual(by_run["U.S. I"][header.index("version 3 output")], "USI")
+        with mock.patch.object(R, "CENSUS_COMPACTED", 1):                     # membership is not the sample
             R.census(self.lab, out, lexicon_dir=self.work3, tables_dir=self.tables3, exclude=set())
         key = [line.split("\t") for line in (out / "census-key.tsv").read_text().splitlines()]
-        self.assertEqual(sorted(row[1] for row in key[1:]), ["changes words"] * 3 + ["trim"])
+        self.assertEqual(sorted(row[1] for row in key[1:]), ["changes words"] * 3 + ["compacted"])
+
+    def test_census_supplement_lists_only_new_first_stratum_runs(self):
+        out = self.root / "census-supplement"
+        first, *rest = sorted(self.raw)
+        R.census(self.lab, out, lexicon_dir=self.work3, tables_dir=self.tables3, exclude=set())
+        key = (out / "census-key.tsv").read_text().splitlines()
+        head = key[0].split("\t")
+        kept = [key[0]] + [line for line in key[1:] if line.split("\t")[head.index("id")] != first]
+        # an earlier census holding the other ids' rows, one spelling row recorded with another class
+        k = next(n for n, line in enumerate(kept) if n and line.split("\t")[head.index("class")] == "spelling")
+        kept[k] = kept[k].replace("\tspelling\t", "\tacronym\t")
+        earlier = out / "earlier-key.tsv"
+        earlier.write_text("\n".join(kept) + "\n")
+        before = {p.name: p.read_bytes() for p in out.iterdir()}
+        r = R.census(self.lab, out, lexicon_dir=self.work3, tables_dir=self.tables3, exclude=set(),
+                     supplement_of=earlier)
+        sheet = [line.split("\t") for line in (out / "census-sheet-supplement.tsv").read_text().splitlines()]
+        skey = [line.split("\t") for line in (out / "census-key-supplement.tsv").read_text().splitlines()]
+        self.assertEqual(sheet[0], (out / "census-sheet.tsv").read_text().splitlines()[0].split("\t"))
+        self.assertEqual(len(sheet), 2)                                       # the one id not in the earlier census
+        self.assertEqual(sheet[1][2:], ["", "", ""])
+        self.assertIn("[[F I T Z]]", sheet[1][1])
+        self.assertEqual(int(sheet[1][0]), 1 + max(int(line.split("\t")[0]) for line in kept[1:]))
+        self.assertEqual((skey[1][skey[0].index("id")], skey[1][skey[0].index("drawn in")]), (first, "changes words"))
+        self.assertEqual([c["n"] for c in r["earlier_rows_changed"]], [int(kept[k].split("\t")[0])])
+        self.assertEqual(r["earlier_rows_changed"][0]["now"]["class"], "spelling")
+        for name, data in before.items():                                    # the earlier files are untouched
+            self.assertEqual((out / name).read_bytes(), data, name)
 
     def test_census_requires_the_tuning_runs_to_exclude(self):
         out = self.root / "census-no-exclude"

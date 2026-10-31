@@ -1,5 +1,5 @@
 """Contract tests (CPU): cleaning version 3 (cleaning plan v7, Check 1's version 3 additions): spellings versus
-acronyms (one case per class, trims, version 2's exclusions, the output form, never compacting what version 2 leaves,
+acronyms (one case per class, no trim, version 2's exclusions, the output form, never compacting what version 2 leaves,
 idempotence, the lexicon artifact and its identity), dose units after a digit (every conversion and every case left as
 written, "per" under both settings), the Schrödinger rows and their loader rule, the OpEx set, and version 2's
 reproducibility (its texts and identity are today's, byte for byte). Store and runner contracts of version 3 are in
@@ -145,28 +145,30 @@ class Classes(unittest.TestCase):
             self.assertEqual(classes(t)[0][1:], ("other", ev), t)
 
 
-class Trims(unittest.TestCase):
-    """Class 1: a final "I" or "A" after a space or a comma, followed by a lowercase word, is split off."""
+class NoTrim(unittest.TestCase):
+    """Contract change (cleaning plan v7, Check 6's preregistered fallback, 2026-10-30): the trim floor failed, so the
+    trim is dropped. A run ending in a lone "I" or "A" goes through the class order whole, that letter included; the
+    rule's identity records it (SPELLING["trim"] False, rule version 2)."""
 
-    def test_trims(self):
-        self.assertEqual(v3("those of us in the U.S. I hope"), "those of us in the U.S. I hope")      # v2: USI
-        self.assertEqual(v3("some kind of C. P. U. I guess"), "some kind of CPU I guess")             # v2: CPUI
-        self.assertEqual(v3("A. B, I would"), "AB, I would")                                          # as version 2
-        self.assertEqual(v3("Rossi, R O S S I said"), "Rossi, R-O-S-S I said")                       # the stated cost
-        for t in ("those of us in the U.S. I hope", "some kind of C. P. U. I guess", "A. B, I would",
-                  "Rossi, R O S S I said"):
+    def test_a_final_i_or_a_stays_in_the_run(self):
+        for t, want, cls in (("those of us in the U.S. I hope", "those of us in the USI hope", ("acronym", "short")),
+                             ("some kind of C. P. U. I guess", "some kind of CPUI guess", ("ambiguous", "")),
+                             ("A. B, I would", "A. B, I would", ("other", "comma")),
+                             ("Rossi, R O S S I said", "Rossi, R-O-S-S-I said", ("spelling", "echo")),
+                             ("S.L.I. was attached", "SLI was attached", ("acronym", "short")),
+                             ("the C P U I. Then", "the CPUI. Then", ("ambiguous", "")),
+                             ("the X-Y-A said", "the X-Y-A said", ("spelling", "hyphen"))):
+            self.assertEqual(v3(t), want, t)
             (d,) = spec3().classify(t)
-            self.assertEqual(d.cls, "trim", t)
-            self.assertIsNotNone(d.rest)
-        (d,) = spec3().classify("Rossi, R O S S I said")
-        self.assertEqual((d.rest.run, d.rest.cls, d.rest.evidence), ("R O S S", "spelling", "echo"))
+            self.assertEqual((d.cls, d.evidence), cls, t)
+        # the glue is version 2's, the fallback's accepted cost
+        two = C.Cleaning(tables2(), version=2)
+        for t in ("those of us in the U.S. I hope", "some kind of C. P. U. I guess"):
+            self.assertEqual(v3(t), two.clean(t, "i", "B0"), t)
 
-    def test_non_trims(self):
-        self.assertEqual(v3("S.L.I. was attached"), "SLI was attached")          # a dotted final "I." without a space
-        self.assertEqual(classes("S.L.I. was attached")[0][1], "acronym")
-        self.assertEqual(v3("the C P U I. Then"), "the CPUI. Then")                # no lowercase word follows
-        self.assertEqual(v3("the X-Y-A said"), "the X-Y-A said")                  # a hyphen is no space or comma
-        self.assertEqual(classes("the X-Y-A said")[0][1], "spelling")
+    def test_the_identity_records_the_dropped_trim(self):
+        rule = spec3().identity()["layer1"]["spelling"]
+        self.assertEqual((rule["trim"], rule["version"]), (False, 2))
 
 
 class Exclusions(unittest.TestCase):
@@ -202,10 +204,10 @@ class OutputForm(unittest.TestCase):
         spec = spec3()
         text = "spelled F I T Z, and then the other one, the C. P. U. I guess, and 10 milligrams"
         out, edits = spec.edits(text, "i", "B0")
-        self.assertEqual(out, "spelled F-I-T-Z, and then the other one, the CPU I guess, and 10 mg")
+        self.assertEqual(out, "spelled F-I-T-Z, and then the other one, the CPUI guess, and 10 mg")
         self.assertEqual([(e.layer, e.table, e.group, e.original, e.replacement) for e in edits],
                          [(1, "acronyms", "spelling", "F I T Z", "F-I-T-Z"),
-                          (1, "acronyms", "spelled-out", "C. P. U.", "CPU"),
+                          (1, "acronyms", "spelled-out", "C. P. U. I", "CPUI"),
                           (1, "units", "mg", " milligrams", " mg")])
         for e in edits:
             self.assertEqual((text[e.start:e.end], out[e.out_start:e.out_end]), (e.original, e.replacement))

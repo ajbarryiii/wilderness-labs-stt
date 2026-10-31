@@ -105,9 +105,9 @@ joined by ". ", ".", " ", "-" or ", ", with version 2's final "." (a dotted run)
 one space; a lowercase run takes "'s" only) and whole-token boundaries. Each run is judged, first match wins:
   pre-classes (version 2's behaviour, taking precedence): two letters ("pair"), only "I" ("i-repeat"), initials (one
       space and a word that starts with a capital and is not all capitals, as the tables write it);
-  1 trim: a final "I" or "A" (a capital, no plural) whose separator holds a space or a comma, followed by whitespace
-      and a lowercase letter, is split off ("the U.S. I hope", "C. P. U. I guess"; a dotted "S.L.I." is no trim) and
-      the rest (with its own final "." if the separator began with one) is judged again;
+  1 trim: dropped (Check 6's trim floor failed: the plan's preregistered fallback, SPELLING["trim"] False). A run
+      ending in a lone "I" or "A" goes through the classes below whole ("Rossi, R O S S I said" -> "R-O-S-S-I"; "the
+      U.S. I hope" -> "the USI hope", version 2's glue, the fallback's accepted cost);
   2 other: a comma inside the run, an alphabet run from A of 3+ letters, or 4+ letters all within A-G (notes);
   3 spelling: a name echo (the joined letters equal, case-insensitively and without apostrophes, one of the previous
       SPELLING["echo_before"] or next SPELLING["echo_after"] words; edit distance 1 at 4+ letters, 2 at 7+) or a
@@ -235,9 +235,9 @@ _NONWORD = re.compile(r"\W")
 # version 3 (cleaning plan v7): spellings versus acronyms, the acronym lexicon, dose units
 SPELLING_GROUP, COMPACT_GROUP = "spelling", ACRONYM_GROUP
 UNITS_TABLE = "units"
-SPELLING = {"name": "spelling versus acronym", "version": 1, "echo_before": 12, "echo_after": 3, "echo_edit1": 4,
+SPELLING = {"name": "spelling versus acronym", "version": 2, "echo_before": 12, "echo_after": 3, "echo_edit1": 4,
             "echo_edit2": 7, "cue_before": 6, "alphabet_letters": 3, "notes": "ABCDEFG", "notes_letters": 4,
-            "short_letters": 3, "trim": "IA", "output": "hyphenated capitals"}
+            "short_letters": 3, "trim": False, "output": "hyphenated capitals"}   # trim dropped: Check 6
 LEXICON = {"name": "acronym lexicon", "version": 1, "compact": 5, "recordings": 10, "split_compact": 20,
            "split_recordings": 10, "split_letters": [3, 5], "compact_letters": [2, 7], "recordings_cap": 300,
            "label_sets": ["T*", "B0"], "texts": "the stored text and b0_raw of every kept id"}
@@ -247,7 +247,6 @@ _SEP3 = r"(?:\. ?| |-|, )"
 _CHAIN3 = re.compile(r"(?<![^\W_])(?<![^\W_]['.\-])(?:[A-Z](?:" + _SEP3 + r"[A-Z])+|[a-z](?:" + _SEP3 + r"[a-z])+)")
 _PLURAL_LOWER = re.compile(r" ?'s(?![^\W_])(?!['.\-][^\W_])")
 _WORDS = re.compile(r"[A-Za-z]+(?:['’][A-Za-z]+)*")              # the probe's words (echo and cue windows)
-_TRIM_NEXT = re.compile(r"\s+[a-z]")
 _COMPACT = re.compile(r"(?<![\w'’.\-])([A-Z]{2,7})(?:'?s)?(?![\w'’\-])")   # a compact token of the lexicon
 _ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 _NUM = r"(?:\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)"
@@ -341,17 +340,16 @@ class Run:
 @dataclass(frozen=True)
 class Decision:
     """The spelling rule's decision on one run of a layer 1 input text: its class and evidence, and version 2's and
-    version 3's output of [start, end); a trim's rest is judged again (`rest`)."""
+    version 3's output of [start, end)."""
     start: int
     end: int
     run: str
     letters: str
-    cls: str           # pair | i-repeat | initials | trim | other | spelling | acronym | ambiguous
+    cls: str           # pair | i-repeat | initials | other | spelling | acronym | ambiguous
     evidence: str      # other: comma, alphabet, notes, lowercase; spelling: echo, cue, hyphen; acronym: lexicon,
-                       # split, short; trim: the rest's class
+                       # split, short
     v2: str
     v3: str
-    rest: "Decision | None" = None
 
 
 def _cut(text: str, letters: list[int], lower: bool) -> Run | None:
@@ -386,15 +384,6 @@ def letter_runs(text: str) -> list[Run]:
         if r is not None:
             out.append(r)
     return out
-
-
-def _rest(text: str, r: Run) -> Run:
-    """A trimmed run without its last letter (and the separator before it); a dotted rest keeps the "." that began
-    that separator as its final "."."""
-    letters, seps = r.letters[:-1], r.seps[:-1]
-    e = letters[-1] + 1
-    final = any("." in sep for sep in seps) and text.startswith(".", e)
-    return Run(letters[0], e + final, letters, seps, final, "")
 
 
 def _lev(a: str, b: str, cap: int) -> int:
@@ -668,7 +657,6 @@ class Layer1:
     def _judge(self, text: str, r: Run, protect, lexicon, v2) -> tuple[Decision, list]:
         """(the run's Decision, its ops (start, end, replacement, group))."""
         letters = "".join(text[p] for p in r.letters).upper()
-        rest = None
         word = self._next_word(text, r.end, protect)
         if len(letters) == 2:
             cls, evidence, ops = "pair", "", self._v2_output(text, r, protect, v2)
@@ -676,10 +664,6 @@ class Layer1:
             cls, evidence, ops = "i-repeat", "", []
         elif word and word[0].isupper() and word != word.upper():
             cls, evidence, ops = "initials", "", []
-        elif (not r.plural and text[r.letters[-1]] in SPELLING["trim"] and (" " in r.seps[-1] or "," in r.seps[-1])
-              and _TRIM_NEXT.match(text, r.end)):
-            rest, ops = self._judge(text, _rest(text, r), protect, lexicon, v2)
-            cls, evidence = "trim", rest.cls
         else:
             cls, evidence = self._class(text, r, letters, lexicon)
             if cls == "spelling":
@@ -692,7 +676,7 @@ class Layer1:
                 ops = self._v2_output(text, r, protect, v2)
         v2_here = [x for x in v2 if r.start <= x[0] and x[1] <= r.end]
         d = Decision(r.start, r.end, text[r.start:r.end], letters, cls, evidence,
-                     _apply_ops(text, r.start, r.end, v2_here), _apply_ops(text, r.start, r.end, ops), rest)
+                     _apply_ops(text, r.start, r.end, v2_here), _apply_ops(text, r.start, r.end, ops))
         return d, ops
 
     def _class(self, text: str, r: Run, letters: str, lexicon) -> tuple[str, str]:

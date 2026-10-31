@@ -14,7 +14,8 @@ model is loaded.
     ./python -m training.cleaning_run check --labels-run RUN [--layer1-only] [--workers N] [--audit-dir D]  CPU
     ./python -m training.cleaning_run audit --labels-run RUN [--workers N]          CPU (architect's sheets)
     ./python -m training.cleaning_run lexicon --labels-run RUN --version 3 [--workers N]          CPU
-    ./python -m training.cleaning_run census --labels-run RUN --version 3 [--exclude TSV] [--out D]  CPU (Check 6)
+    ./python -m training.cleaning_run census --labels-run RUN --version 3 --exclude TSV [--out D]
+                                     [--supplement-of KEY]                          CPU (Check 6)
 
 Every command takes --version V (a cleaning version, cleaning.VERSIONS; default cleaning.VERSION). Everything is
 written under $RELABEL_ROOT/cleaning/<RUN>/v<V>/ (training/cleaning.production_dir), the architect's sheets under
@@ -190,10 +191,10 @@ _W: dict = {}
 
 
 def _init(run_dir, tables_dir, with_spec: bool = False, choices_dir=None, version: int = C.VERSION,
-          lexicon_dir=None, compare: tuple | None = None, exclude=None) -> None:
+          lexicon_dir=None, compare: tuple | None = None, exclude=None, known=None) -> None:
     """Per worker: the run, the tables of `version` and (with_spec) the cleaning spec of `version` with the choices
     artifact, if any, and (version 3) the acronym lexicon; compare = (tables_dir, choices_dir): version 2's spec, the
-    size check's reference; exclude: the census's excluded (id, letters)."""
+    size check's reference; exclude: the census's excluded (id, letters); known: an earlier census's (id, start)."""
     _W["run"] = Run(run_dir)
     _W["tables"] = C.Tables.load(tables_dir, version)
     _W["spec"] = None if not with_spec else C.Cleaning(
@@ -202,6 +203,7 @@ def _init(run_dir, tables_dir, with_spec: bool = False, choices_dir=None, versio
     _W["spec_v2"] = None if compare is None else C.Cleaning(
         C.Tables.load(compare[0], 2), None if compare[1] is None else C.Choices.load(compare[1]), 2)
     _W["exclude"] = frozenset(exclude or ())
+    _W["known"] = frozenset(tuple(k) for k in (known or ()))
 
 
 # ----------------------------------------------------------------------------- spans
@@ -641,11 +643,9 @@ SPELLING_CLASS, UNITS_CLASS = "spelling versus acronym", "dose units after a dig
 def _change_kind(d: C.Decision) -> str | None:
     """How the spelling rule's decision on a run differs from version 2 (None: it does not): a spelling where
     version 2 compacted ("undone", the calls that change normalized words), a spelling version 2 left as written
-    ("rewritten"), a trim, a compaction of another run undone ("other undone"), or anything else ("other: <class>")."""
+    ("rewritten"), a compaction of another run undone ("other undone"), or anything else ("other: <class>")."""
     if d.v3 == d.v2:
         return None
-    if d.cls == "trim":
-        return "trim"
     compacted = d.v2 != d.run
     if d.cls == "spelling":
         return "undone" if compacted else "rewritten"
@@ -960,43 +960,43 @@ def lexicon(run_dir: Path, out: Path, workers: int = 1, sample_shards: int | Non
 
 CENSUS_SEED = "cleaning-v3-census"
 CENSUS_COMPACTED = 100           # Check 6 stratum 2: runs the rule compacts (acronym or ambiguous)
-CENSUS_TRIMS = 50                # Check 6 stratum 3: trims
 CENSUS_BEFORE, CENSUS_AFTER = 160, 90
-CENSUS_STRATA = ("changes words", "compacted", "trim")
+CENSUS_STRATA = ("changes words", "compacted")      # the trim stratum went with the trim (Check 6's fallback)
+CENSUS_SHEET_HEADER = ("n\tcontext (the run in [[ ]])\tlabel (spelling / acronym / other / unsure; for a run ending in "
+                       "a word I or A, the letters before it)\tends in the word I or A? (y / n; blank if its last letter "
+                       "is not I or A)\tnote\n")
+CENSUS_KEY_HEADER = ("n\tdrawn in\tstrata\tid\tstart\tend\trun\tletters\tclass\tevidence\tversion 2 output\t"
+                     "version 3 output\n")
 
 
 def census_strata(d: C.Decision) -> list[str]:
     """The Check 6 strata of a T* run's decision (cleaning plan v7 Check 6): a spelling call where version 2 compacted
-    (directly or as a trim's rest; the calls that change normalized words), a compaction by the rule (acronym or
-    ambiguous), a trim."""
+    (the calls that change normalized words), a compaction by the rule (acronym or ambiguous)."""
     out = []
-    compacted_v2 = d.v2 != d.run
-    if compacted_v2 and (d.cls == "spelling" or d.cls == "trim" and d.rest.cls == "spelling"):
+    if d.cls == "spelling" and d.v2 != d.run:
         out.append("changes words")
     if d.cls in ("acronym", "ambiguous") and d.v3 != d.run:
         out.append("compacted")
-    if d.cls == "trim":
-        out.append("trim")
     return out
 
 
 def _census_item(i: str, text: str, d: C.Decision, strata: list[str]) -> tuple:
     ctx = (text[max(0, d.start - CENSUS_BEFORE):d.start] + "[[" + d.run + "]]" + text[d.end:d.end + CENSUS_AFTER])
-    rest = d.rest
-    return (_rank(CENSUS_SEED, i, d.start), i, d.start, d.end, d.run, d.letters, d.cls, d.evidence,
-            "" if rest is None else rest.cls, "" if rest is None else rest.evidence, d.v2, d.v3,
+    return (_rank(CENSUS_SEED, i, d.start), i, d.start, d.end, d.run, d.letters, d.cls, d.evidence, d.v2, d.v3,
             ",".join(strata), ctx.replace("\t", " ").replace("\n", " "))
 
 
 def _census_shard(shard):
-    run, spec, exclude = _W["run"], _W["spec"], _W["exclude"]
+    run, spec, exclude, known = _W["run"], _W["spec"], _W["exclude"], _W["known"]
     t = run.read(shard, LABEL_COLUMNS)
-    out = {"items": {k: [] for k in CENSUS_STRATA}, "population": Counter(), "excluded": Counter()}
+    out = {"items": {k: [] for k in CENSUS_STRATA}, "population": Counter(), "excluded": Counter(), "known": {}}
     for i, _source, _rk, texts in kept_texts(t):
         text, trace = texts["T*"], {}
         spec.edits(text, i, "T*", texts["B0"], trace=trace)
         for d in trace.get("runs", []):
             strata = census_strata(d)
+            if (i, d.start) in known:
+                out["known"][(i, d.start)] = (d.run, d.cls, d.evidence, d.v3, ",".join(strata))
             if not strata:
                 continue
             item = _census_item(i, trace["text"], d, strata)
@@ -1007,18 +1007,30 @@ def _census_shard(shard):
                     continue
                 out["items"][k].append(item)
     out["items"]["compacted"] = sorted(out["items"]["compacted"])[:CENSUS_COMPACTED]
-    out["items"]["trim"] = sorted(out["items"]["trim"])[:CENSUS_TRIMS]
     return out
 
 
+def read_census_key(path: Path) -> dict:
+    """{(id, start): row} of a census key (census-key.tsv)."""
+    lines = Path(path).read_text(encoding="utf-8").splitlines()
+    head = lines[0].split("\t")
+    rows = [dict(zip(head, line.split("\t"))) for line in lines[1:] if line.strip()]
+    return {(r["id"], int(r["start"])): r for r in rows}
+
+
 def census(run_dir: Path, out: Path, workers: int = 1, lexicon_dir: Path | None = None, tables_dir: Path | None = None,
-           *, exclude: set, sample_shards: int | None = None, version: int = 3) -> dict:
+           *, exclude: set, sample_shards: int | None = None, version: int = 3, supplement_of: Path | None = None) -> dict:
     """Check 6's sheet (cleaning plan v7, before any training run reads version 3; CPU): over T*'s kept labels
     (layer 1 input after layer 0; layer 2 spans left as written), every run of the first stratum and, drawn with a
-    fixed seed, CENSUS_COMPACTED compacted runs and CENSUS_TRIMS trims, without the tuning runs in `exclude` ((id,
-    letters; required, an empty set only by explicit choice)). Writes census-sheet.tsv (blind: the run in its context only, shuffled), census-key.tsv (the samples a
-    row was drawn in, every stratum it belongs to, the class, version 2's and version 3's outputs) and census.json
-    (populations, sample sizes) to out."""
+    fixed seed, CENSUS_COMPACTED compacted runs, without the tuning runs in `exclude` ((id, letters); required, an
+    empty set only by explicit choice). Writes census-sheet.tsv (blind: the run in its context only, shuffled),
+    census-key.tsv (the samples a row was drawn in, every stratum it belongs to, the class, version 2's and version 3's
+    outputs) and census.json (populations, sample sizes) to out.
+
+    supplement_of (an earlier census's key): the first stratum's runs that are not rows of that census, written as
+    census-sheet-supplement.tsv and census-key-supplement.tsv (numbered after its rows; the same columns and
+    blindness), and census-supplement.json, which also lists the earlier rows whose class, evidence or version 3
+    output differ now (or whose run is gone). The earlier sheet and key are not touched."""
     if version < 3:
         raise ValueError("the census is of cleaning version 3")
     if exclude is None:
@@ -1027,45 +1039,63 @@ def census(run_dir: Path, out: Path, workers: int = 1, lexicon_dir: Path | None 
     run = Run(run_dir, sample_shards)
     spec = C.Cleaning(C.Tables.load(tables_dir, version), None, version, C.Lexicon.load(lexicon_dir))
     spec.bind_run(run.contract_sha256)
+    known = {} if supplement_of is None else read_census_key(supplement_of)
     items = {k: [] for k in CENSUS_STRATA}
-    population, excluded = Counter(), Counter()
+    population, excluded, now = Counter(), Counter(), {}
     for n, part in enumerate(_pool_map(_census_shard, run.shards, workers,
                                        (run_dir, tables_dir, True, None, version, lexicon_dir, None,
-                                        sorted(exclude or ())))):
+                                        sorted(exclude), sorted(known)))):
         population.update(part["population"])
         excluded.update(part["excluded"])
+        now.update(part["known"])
         items["changes words"] += part["items"]["changes words"]
         items["compacted"] = sorted(items["compacted"] + part["items"]["compacted"])[:CENSUS_COMPACTED]
-        items["trim"] = sorted(items["trim"] + part["items"]["trim"])[:CENSUS_TRIMS]
         if (n + 1) % 200 == 0:
             log(f"census: {n + 1}/{len(run.shards)} shards")
+    strata = ("changes words",) if supplement_of is not None else CENSUS_STRATA
     rows, drawn = {}, defaultdict(list)
-    for k in CENSUS_STRATA:
+    for k in strata:
         for it in items[k]:
+            if (it[1], it[2]) in known:
+                continue
             rows.setdefault((it[1], it[2]), it)
             drawn[(it[1], it[2])].append(k)
     order = sorted(rows.values(), key=lambda it: _rank(CENSUS_SEED, "order", it[1], it[2]))
+    first = 1 + max((int(r["n"]) for r in known.values()), default=0)
+    suffix = "" if supplement_of is None else "-supplement"
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
-    with open(out / "census-sheet.tsv", "w", encoding="utf-8") as f:
-        f.write("n\tcontext (the run in [[ ]])\tlabel (spelling / acronym / other / unsure; for a run ending in a word "
-                "I or A, the letters before it)\tends in the word I or A? (y / n; blank if its last letter is not I or "
-                "A)\tnote\n")
-        for n, it in enumerate(order, 1):
-            f.write(f"{n}\t{it[13]}\t\t\t\n")
-    with open(out / "census-key.tsv", "w", encoding="utf-8") as f:
-        f.write("n\tdrawn in\tstrata\tid\tstart\tend\trun\tletters\tclass\tevidence\trest class\trest evidence\t"
-                "version 2 output\tversion 3 output\n")
-        for n, it in enumerate(order, 1):
-            f.write("\t".join([str(n), ",".join(drawn[(it[1], it[2])]), it[12], it[1], str(it[2]), str(it[3])] +
-                               [x.replace("\t", " ") for x in it[4:12]]) + "\n")
+    with open(out / f"census-sheet{suffix}.tsv", "w", encoding="utf-8") as f:
+        f.write(CENSUS_SHEET_HEADER)
+        for n, it in enumerate(order, first):
+            f.write(f"{n}\t{it[11]}\t\t\t\n")
+    with open(out / f"census-key{suffix}.tsv", "w", encoding="utf-8") as f:
+        f.write(CENSUS_KEY_HEADER)
+        for n, it in enumerate(order, first):
+            f.write("\t".join([str(n), ",".join(drawn[(it[1], it[2])]), it[10], it[1], str(it[2]), str(it[3])] +
+                               [x.replace("\t", " ") for x in it[4:10]]) + "\n")
     report = {"version": version, "label_run": run.rel, "label_set": "T*", "seed": CENSUS_SEED,
               "tables_sha256": spec.tables.sha256, "lexicon_sha256": spec.lexicon.file_sha256,
-              "sampled_shards": run.sampled, "population": dict(population), "excluded_tuning_runs": dict(excluded),
-              "sample": {k: len(items[k]) for k in CENSUS_STRATA}, "rows": len(order),
-              "floor": "first stratum and trims: the lower bound of a 90% Wilson interval >= 0.5; unsure counts "
-                       "against the rule", "seconds": round(time.time() - t0, 1)}
-    write_json(out / "census.json", report)
+              "spelling_rule": spec.identity()["layer1"]["spelling"], "sampled_shards": run.sampled,
+              "population": dict(population), "excluded_tuning_runs": dict(excluded),
+              "sample": {k: sum(k in v for v in drawn.values()) for k in strata}, "rows": len(order),
+              "floor": "first stratum: the lower bound of a 90% Wilson interval on spelling precision >= 0.5; unsure "
+                       "counts against the rule", "seconds": round(time.time() - t0, 1)}
+    if supplement_of is not None:
+        changed = []
+        for key, r in sorted(known.items(), key=lambda kv: int(kv[1]["n"])):
+            got = now.get(key)
+            was = (r["run"], r["class"], r["evidence"], r["version 3 output"])
+            if got is None or got[:4] != was:
+                changed.append({"n": int(r["n"]), "drawn in": r["drawn in"], "run": r["run"],
+                                "was": {"class": r["class"], "evidence": r["evidence"], "version 3": r["version 3 output"]},
+                                "now": None if got is None else {"run": got[0], "class": got[1], "evidence": got[2],
+                                                                 "version 3": got[3], "strata": got[4]}})
+        report |= {"supplement_of": str(supplement_of), "first_n": first,
+                   "first_stratum_already_in_the_census": sum("changes words" in (now.get(k) or ("",) * 5)[4].split(",")
+                                                              for k in known),
+                   "earlier_rows_changed": changed}
+    write_json(out / f"census{suffix}.json", report)
     return report
 
 
@@ -1570,6 +1600,8 @@ def main(argv: list[str] | None = None) -> int:
         if name == "census":
             s.add_argument("--exclude", type=Path, required=True,
                            help="a TSV (id, letters) of the tuning runs to leave out (Check 6: required)")
+            s.add_argument("--supplement-of", type=Path, metavar="KEY",
+                           help="an earlier census key: write the first stratum's new runs as a supplement")
         if name == "choose":
             s.add_argument("--engine", choices=sorted(ENGINES), default="vllm")
             s.add_argument("--probe", type=int, metavar="N", help="score N prompts and report; write no decisions")
@@ -1612,7 +1644,7 @@ def main(argv: list[str] | None = None) -> int:
         if a.version < 3:
             p.error("the census is of cleaning version 3 (--version 3)")
         r = census(run_dir, out or work, a.workers, lexicon_dir=work, exclude=read_exclude(a.exclude),
-                   sample_shards=sample, version=a.version)
+                   sample_shards=sample, version=a.version, supplement_of=a.supplement_of)
         print(json.dumps(r, indent=1))
         return 0
     if a.cmd == "audit":
