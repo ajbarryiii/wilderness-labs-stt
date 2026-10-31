@@ -837,8 +837,8 @@ class Tables:
         """Version 3: the unit forms and the tables are disjoint (module docstring, load-time checks)."""
         forms = set(units) | set(units.values())
         for f in sorted(forms):
-            hit = self.layer1.search(f) or (self._span_re.search(f).group(0) if self._span_re is not None
-                                            and self._span_re.search(f) else None)
+            member = None if self._span_re is None else self._span_re.search(f)
+            hit = self.layer1.search(f) or (member.group(0) if member else None)
             if hit:
                 raise ValueError(f"units.tsv: the unit form {f!r} is matched by the table form or member {hit!r}")
         listed = [k for k in self.layer1.entries] + [e.output for e in self.layer1.entries.values()] + \
