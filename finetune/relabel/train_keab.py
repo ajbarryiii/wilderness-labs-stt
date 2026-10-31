@@ -71,7 +71,9 @@ $RELABEL_ROOT/keab-prime/scores/<model>/<mode>/<set>.json.
 """
 from __future__ import annotations
 
-import train  # noqa: I001  finetune/parakeet-ternary/train.py first: it configures CUDA/numba
+import os as _os
+_CUBLAS_AT_START = _os.environ.get("CUBLAS_WORKSPACE_CONFIG")  # train.py sets it on import; deployed scoring unsets it
+import train  # noqa: I001, E402  finetune/parakeet-ternary/train.py first: it configures CUDA/numba
 
 import argparse
 import contextlib
@@ -1366,6 +1368,14 @@ def score_deployed(model_name: str, mode: str, out: Path, groups, limit: int | N
     return summarize(out, sets, model_name, mode)
 
 
+def deployed_environment() -> None:
+    """The recorded x1 arm's environment for a deployed-mode process (training/deployed.py, keab_step0): when the caller
+    started this process with CUBLAS_WORKSPACE_CONFIG unset, the value train.py set on import is removed again, before
+    any CUDA work (cuBLAS reads it when its first handle is made)."""
+    if _CUBLAS_AT_START is None:
+        os.environ.pop("CUBLAS_WORKSPACE_CONFIG", None)
+
+
 def _close_x3(net) -> None:
     from gpu1bit import runtime
     try:
@@ -1875,6 +1885,8 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("status")
     sub.add_parser("report")
     args = parser.parse_args(argv)
+    if args.cmd == "fidelity" or (args.cmd == "score" and args.mode in GPU1BIT_MODES):
+        deployed_environment()
     try:
         if args.cmd == "plan":
             return build_plan(args.provisional)

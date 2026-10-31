@@ -464,6 +464,19 @@ class Sources(unittest.TestCase):
         self.assertEqual(tk.scope_record("none")["parts"], [])
 
 
+class DeployedEnvironment(unittest.TestCase):
+    def test_the_recorded_x1_arms_cublas_setting_is_restored(self):
+        import os
+        with mock.patch.dict(os.environ, {"CUBLAS_WORKSPACE_CONFIG": ":4096:8"}):
+            with mock.patch.object(tk, "_CUBLAS_AT_START", None):            # the caller started it unset
+                tk.deployed_environment()
+                self.assertNotIn("CUBLAS_WORKSPACE_CONFIG", os.environ)
+            os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":16:8"
+            with mock.patch.object(tk, "_CUBLAS_AT_START", ":16:8"):          # the caller's own value stays
+                tk.deployed_environment()
+                self.assertEqual(os.environ["CUBLAS_WORKSPACE_CONFIG"], ":16:8")
+
+
 class Extremes(unittest.TestCase):
     def test_the_ami_teacher_side_metric(self):
         plan = types.SimpleNamespace(n_batches=3, shuffle=np.arange(3), order=np.arange(6),
