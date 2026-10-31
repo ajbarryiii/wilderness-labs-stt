@@ -136,6 +136,8 @@ class Harness4:
 
     def patches(self):
         return [mock.patch.object(tk, "build_student", student_factory()),
+                mock.patch.object(tk.tb, "label_manifest",                     # the fixture run has no manifest.json
+                                  lambda run: {"path": f"labels/fixture/{run}/manifest.json", "sha256": "fixture"}),
                 mock.patch.object(tk, "load_teacher_model", teacher_loader),
                 mock.patch.object(tk, "RUNS", RUNS),
                 mock.patch.object(train, "DevEvaluator", fx.FakeEvaluator)]
