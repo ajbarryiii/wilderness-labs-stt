@@ -270,6 +270,39 @@ class Balance(Fixture):
         self.assertEqual(short["pairs"][self.pair_id("gpu", "tpu")], {"target": 40, "count": 0, "shortfall": 40})
 
 
+class RoundReport(Fixture):
+    def test_a_cross_domain_contrast_round_reports_coverage_by_the_terms_domain(self):
+        from synthetic import pronounce, roundtrip
+        with roots():
+            v3_path = layout.split_version_path(3)
+            v3_path.parent.mkdir(parents=True, exist_ok=True)
+            v3_path.write_text(json.dumps(self.v3.data) + "\n")
+            pid = self.pair_id("Schrodinger equation", "Cantor-Bernstein-Schroeder theorem")
+            d = layout.run_dir("pairs-r1")
+            label = "Unlike the Cantor-Bernstein-Schroeder theorem, the Schrodinger equation describes a wave."
+            prompt = {"id": "pairs-r1-000000", "index": 0, "kind": "contrast", "pair": pid, "target": None,
+                      "domain": "chemistry", "domains": ["chemistry", "mathematics"], "register": "explanatory",
+                      "requested": ["Schrodinger equation", "Cantor-Bernstein-Schroeder theorem"]}
+            plan = {"id": prompt["id"], "domain": "chemistry", "label": label, "tts_text": label,
+                    "engine": layout.TTS_ENGINES[0], "voice": "v", "seed": 0}
+            write_jsonl(d / "prompts.jsonl", [prompt])
+            write_jsonl(d / "sentences.jsonl", [{"id": prompt["id"], "domain": "chemistry", "label": label,
+                                                 "requested": prompt["requested"]}])
+            write_jsonl(d / "tts_plan.jsonl", [plan])
+            write_jsonl(d / "tts" / plan["engine"] / "00000.jsonl",
+                        [plan | {"audio_filepath": "/dev/null", "duration": 3.0, "sha256": "0"}])
+            write_jsonl(d / "roundtrip" / "00000.jsonl", [{"id": prompt["id"], "hyp": label, "hit_cap": False,
+                                                           "wer": 0.0, "kept": True, "reason": None}])
+            (d / "hygiene.json").write_text(json.dumps({"generated": 1, "kept": 1, "reasons": {},
+                                                        "heldout": {"provisional": False},
+                                                        "split_sha256": sha256(v3_path)}))
+            rep = roundtrip.finalize(d, self.v3, listen=False, lexicon=pronounce.Lexicon.load(), split_path=v3_path)
+            for dom in ("chemistry", "mathematics"):
+                cov = rep["domains"][dom]["term_coverage"]
+                self.assertEqual((cov["requested"], cov["in_kept_clips"], cov["requested_but_not_kept"]), (1, 1, 0), dom)
+            self.assertFalse(json.loads((d / "clips.meta.json").read_text())["split_stale"])
+
+
 class FinalizeRun(Fixture):
     def test_the_run_joins_its_rounds_and_reports_shortfalls(self):
         with roots():

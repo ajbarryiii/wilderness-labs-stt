@@ -19,9 +19,9 @@ pronunciation.json, had the label as its TTS input) into
   current split, so mixing.ClipPool refuses the run for training);
 - report.json: per domain and per engine, generated vs kept clips and hours (retained hours per generated hour),
   the reasons, requested vs kept term coverage (distinct targeted terms requested by prompts, present in hygiene-
-  kept sentences, present in rendered clips, present in kept clips) and term-level agreement: for every term
-  occurrence of the split in a rendered clip's text, whether T* reproduced it (score_domain's aligned-occurrence
-  definition), over all rendered clips, kept and rejected; also split into acronym and other terms
+  kept sentences, present in rendered clips, present in kept clips; by the term's domain) and term-level agreement:
+  for every term occurrence of the split in a rendered clip's text, whether T* reproduced it (score_domain's
+  aligned-occurrence definition), over all rendered clips, kept and rejected; also split into acronym and other terms
   (pronounce.is_acronym_term, under the lexicon that rendered the run: finalize refuses another one) per domain
   ("term_agreement_by_kind") and pooled over domains (total "term_agreement", "term_agreement_by_kind"), with the
   run's pronunciation summary ("pronunciation": clips whose tts_text differs from the label);
@@ -185,11 +185,13 @@ def finalize(run_dir: Path, split, listen: bool = True, lexicon=None, split_path
     import evaluate
 
     def requested_set(rows):
+        # by the term's domain (a contrast prompt of run pairs may request terms of two domains), else the prompt's
         out = defaultdict(set)
         for r in rows:
             for t in r["requested"]:
                 ph = tuple(evaluate.normalize(t).split())
-                out[r["domain"]].add(" ".join(ph))
+                e = split.by_phrase.get(ph)
+                out[e.domain if e else r["domain"]].add(" ".join(ph))
         return out
 
     def present_set(rows, text_key):
