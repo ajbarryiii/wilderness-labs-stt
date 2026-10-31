@@ -25,7 +25,8 @@ held-out(v2), and full's clips stay clean. split.v3.json also lists every accept
 terms, groups, domains, sides under v2 and v3, rule, reason, the detector's token pairs ("hits"), forced, seed, and
 "trained": both members targeted under v3), the moved groups with their reasons, and the dev-informed groups;
 split-changes-v3.json lists each move with its pair or seed reason. Both are written once (a later build that differs
-is refused).
+is refused). An accepted held-out-held-out pair whose two members other pairs move is refused: the plan generates
+nothing for held-out-held-out pairs but contrast sentences for every pair targeted under v3, so it needs a decision.
 
 Provenance (recheck, called by mixing.ClipPool.load): a pool whose hygiene ran under a split's base (v2 for v3) is
 accepted under the narrower split if every clip's label passes its held-out guard (text only); a failing clip refuses
@@ -220,6 +221,12 @@ def build_v3(v2: vocab.Split, curation: Curation, base: dict, curation_record: d
                        "sides_v3": [side3[g] for g in p["groups"]], "rule": p["rule"], "reason": p["reason"],
                        "hits": p["hits"], "forced": p["forced"], "seed": p["seed"],
                        "trained": all(side3[g] == "targeted" for g in p["groups"])})
+    unresolved = [p["id"] for p in listed if p["sides_v2"] == ["heldout", "heldout"] and p["trained"]]
+    if unresolved:
+        # the plan generates nothing for held-out-held-out pairs, and contrast sentences for every pair targeted under
+        # v3; these accepted held-out-held-out pairs are both, because other pairs moved both members
+        raise RuntimeError(f"accepted held-out-held-out pairs {unresolved} have both members targeted under v3 (moved "
+                           "by other pairs); whether they get contrast sentences needs a plan decision")
     moved = [{"group": g, "terms": sorted(terms_of[g]), "domain": domain[g], "reasons": reasons[g],
               "dev_informed": g in dev_informed} for g in sorted(reasons)]
     data["version"] = 3
