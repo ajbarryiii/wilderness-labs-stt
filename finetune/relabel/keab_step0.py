@@ -524,6 +524,7 @@ def _run_b0p(out, todo, groups, configs, limit, scope: str, fmt: str | None) -> 
             attach_tokens(result["records"], evaluate.read_manifest(manifest)[:limit], captured)
             result["decoder_graphs_mode"] = binary_train.require_decoder_graphs_mode(net, label)
             result["decoder_sha256"] = facts["decoder_sha256"]
+            result["decoder_form"], result["palette"] = facts["decoder_form"], facts["palette"]
             _finish_set(out, name, groups[name], result, configs[name])
     finally:
         restore()
@@ -682,6 +683,20 @@ def palette_summary(infos: dict[str, dict]) -> dict:
             "max_iterations": eb.PALETTE_MAX_ITERATIONS}
 
 
+def b0p_palette(limit: int | None) -> dict:
+    """palette_summary of each B0' palette variant, from its scored sets (each set records the palette it was scored
+    with, so a run stopped before run.json keeps it)."""
+    out = {}
+    for v in MODEL_VARIANTS["B0p"]:
+        d = scores_dir("B0p", v, limit)
+        for path in sorted(d.glob("*.json")) if d.exists() else []:
+            info = read_json(path).get("palette")
+            if path.stem != "run" and info:
+                out[v] = palette_summary(info)
+                break
+    return out
+
+
 def stage3_records(name: str) -> Path:
     """B0''s stage 3 record of a dev set or domain part (b100's eval-dev/ or domain/)."""
     run = relabel_paths.ARTIFACTS / "b0prime" / "runs" / "b100"
@@ -765,12 +780,7 @@ def report(args) -> int:
     if check.exists():
         out["mb1_x1_check"] = read_json(check)
     out["crosschecks"] = crosschecks(args.limit)
-    b0p = {}
-    for v in MODEL_VARIANTS["B0p"]:
-        run_json = scores_dir("B0p", v, args.limit) / "run.json"
-        if run_json.exists() and read_json(run_json).get("palette"):
-            b0p[v] = palette_summary(read_json(run_json)["palette"])
-    out["palette"]["B0p"] = b0p
+    out["palette"]["B0p"] = b0p_palette(args.limit)
     root = out_root(args.limit)
     write_json(root / "report.json", out)
     (root / "report.md").write_text(markdown(out))

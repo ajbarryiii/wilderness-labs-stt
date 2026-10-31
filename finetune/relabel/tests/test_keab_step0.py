@@ -176,6 +176,28 @@ class PaletteReport(unittest.TestCase):
         self.assertEqual(summary["max_iterations"], eb.PALETTE_MAX_ITERATIONS)
 
 
+class PaletteResume(unittest.TestCase):
+    def test_palette_info_survives_a_stop_before_run_json(self):
+        import shutil
+        import tempfile
+        from pathlib import Path
+        from unittest import mock
+        import relabel_paths
+        tmp = Path(tempfile.mkdtemp(prefix="keab-pal-", dir=relabel_paths.ARTIFACTS / "tmp"))
+        try:
+            with mock.patch.object(k0, "out_root", lambda limit: tmp):
+                d = k0.scores_dir("B0p", "S1-palette", 8)
+                d.mkdir(parents=True)
+                info = {"decoder.prediction.embed.weight": {"entries": 256, "iterations": 1000, "converged": False,
+                                                            "max_abs_error": 0.1}}
+                k0.write_json(d / "librispeech_dev_clean.json", {"records": [], "palette": info})
+                self.assertFalse((d / "run.json").exists())
+                got = k0.b0p_palette(8)
+            self.assertEqual(got["S1-palette"]["not_converged"], ["decoder.prediction.embed.weight"])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
 class Paths(unittest.TestCase):
     def test_smoke_never_in_production(self):
         prod = k0.out_root(None)
