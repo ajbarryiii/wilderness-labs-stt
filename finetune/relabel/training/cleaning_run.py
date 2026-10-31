@@ -1012,15 +1012,17 @@ def _census_shard(shard):
 
 
 def census(run_dir: Path, out: Path, workers: int = 1, lexicon_dir: Path | None = None, tables_dir: Path | None = None,
-           exclude: set | None = None, sample_shards: int | None = None, version: int = 3) -> dict:
+           *, exclude: set, sample_shards: int | None = None, version: int = 3) -> dict:
     """Check 6's sheet (cleaning plan v7, before any training run reads version 3; CPU): over T*'s kept labels
     (layer 1 input after layer 0; layer 2 spans left as written), every run of the first stratum and, drawn with a
     fixed seed, CENSUS_COMPACTED compacted runs and CENSUS_TRIMS trims, without the tuning runs in `exclude` ((id,
-    letters)). Writes census-sheet.tsv (blind: the run in its context only, shuffled), census-key.tsv (the samples a
+    letters; required, an empty set only by explicit choice)). Writes census-sheet.tsv (blind: the run in its context only, shuffled), census-key.tsv (the samples a
     row was drawn in, every stratum it belongs to, the class, version 2's and version 3's outputs) and census.json
     (populations, sample sizes) to out."""
     if version < 3:
         raise ValueError("the census is of cleaning version 3")
+    if exclude is None:
+        raise ValueError("the census needs the tuning runs to exclude (Check 6: disjoint from the probe's sample)")
     t0 = time.time()
     run = Run(run_dir, sample_shards)
     spec = C.Cleaning(C.Tables.load(tables_dir, version), None, version, C.Lexicon.load(lexicon_dir))
@@ -1566,7 +1568,8 @@ def main(argv: list[str] | None = None) -> int:
             s.add_argument("--layer1-only", action="store_true", help="no choices artifact (layer 1 only)")
             s.add_argument("--audit-dir", type=Path, help="the sheets' directory (default: cleaning.audit_dir)")
         if name == "census":
-            s.add_argument("--exclude", type=Path, help="a TSV (id, letters) of tuning runs to leave out")
+            s.add_argument("--exclude", type=Path, required=True,
+                           help="a TSV (id, letters) of the tuning runs to leave out (Check 6: required)")
         if name == "choose":
             s.add_argument("--engine", choices=sorted(ENGINES), default="vllm")
             s.add_argument("--probe", type=int, metavar="N", help="score N prompts and report; write no decisions")
@@ -1608,9 +1611,8 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "census":
         if a.version < 3:
             p.error("the census is of cleaning version 3 (--version 3)")
-        r = census(run_dir, out or work, a.workers, lexicon_dir=work,
-                   exclude=None if a.exclude is None else read_exclude(a.exclude), sample_shards=sample,
-                   version=a.version)
+        r = census(run_dir, out or work, a.workers, lexicon_dir=work, exclude=read_exclude(a.exclude),
+                   sample_shards=sample, version=a.version)
         print(json.dumps(r, indent=1))
         return 0
     if a.cmd == "audit":

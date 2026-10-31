@@ -687,9 +687,19 @@ class Version3Store(World):
         self.assertEqual(by_run["U.S. I"][header.index("strata")], "trim")
         self.assertEqual(by_run["U.S. I"][header.index("drawn in")], "trim")
         with mock.patch.object(R, "CENSUS_TRIMS", 1):                         # membership is not the sample
-            R.census(self.lab, out, lexicon_dir=self.work3, tables_dir=self.tables3)
+            R.census(self.lab, out, lexicon_dir=self.work3, tables_dir=self.tables3, exclude=set())
         key = [line.split("\t") for line in (out / "census-key.tsv").read_text().splitlines()]
         self.assertEqual(sorted(row[1] for row in key[1:]), ["changes words"] * 3 + ["trim"])
+
+    def test_census_requires_the_tuning_runs_to_exclude(self):
+        out = self.root / "census-no-exclude"
+        with self.assertRaises(TypeError):
+            R.census(self.lab, out, lexicon_dir=self.work3, tables_dir=self.tables3)
+        with self.assertRaises(ValueError):
+            R.census(self.lab, out, lexicon_dir=self.work3, tables_dir=self.tables3, exclude=None)
+        with self.assertRaises(SystemExit), mock.patch("sys.stderr"):
+            R.main(["census", "--labels-run", "fixture", "--version", "3"])
+        self.assertFalse(out.exists())
 
 
 class AcronymRisks(unittest.TestCase):
