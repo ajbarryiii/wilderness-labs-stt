@@ -324,6 +324,11 @@ class Palettization(unittest.TestCase):
         grid = torch.round((w - lo) / step) * step + lo
         self.assertLess(mse, (grid - w).pow(2).mean().item(), "k-means beats a uniform 256-level grid")
 
+    def test_every_entry_is_used_on_a_peaked_tensor(self):
+        w = torch.randn(640, 640, generator=torch.Generator().manual_seed(9)) ** 5       # most mass in a few bins
+        _, info = eb.palettize(w)
+        self.assertEqual(info["entries"], 256)
+
     def test_exact_on_few_values(self):
         vals = torch.tensor([-0.5, -0.125, 0.0, 0.25, 1.0])
         w = vals[torch.randint(0, 5, (40, 9), generator=torch.Generator().manual_seed(6))]

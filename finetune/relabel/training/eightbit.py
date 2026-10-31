@@ -31,12 +31,11 @@ Training forms ("Use"):
   checks the state against it. apply_decoder_scope quantizes B0''s decoder parts (INT8 or palettized).
 
 Informational only (never trained or exported as a bundle):
-  - palettization: one k-means table of 256 entries per tensor (Core ML palettization), here 1-D Lloyd iterations on
-    the sorted values (FP64 sums) until no centroid changes (at most 1000 iterations), started from the
-    Panter-Dite point density (256 quantiles of the 4096-bin histogram's density^(1/3), the MSE-optimal spacing,
-    deterministic where Core ML's k-means++ start is random); a tensor with at most 256 distinct values keeps them.
-    The entries are stored in FP16 and each weight becomes its entry (palettize, palettize_frozen,
-    apply_keab_palette);
+  - palettization: one k-means table of 256 entries per tensor (Core ML palettization: k-means++ seeding and Lloyd
+    iterations, which coremltools runs through scikit-learn with a fixed random state), here k-means++ seeding from
+    a fixed torch generator, then 1-D Lloyd iterations on the sorted values (FP64 sums) until no centroid changes (at
+    most 1000); a tensor with at most 256 distinct values keeps them. The entries are stored in FP16 and each weight
+    becomes its entry (palettize, palettize_frozen, apply_keab_palette);
   - x1_fake_quant: the x1 per-frame activation quantizer emulated in PyTorch for the pre_encode.out W8A8
     measurement (per frame across the last axis, s = max(max|x| / 127, 1e-30), q = round-half-even(x / s), x̂ = q s,
     computed in FP32 and returned in the input's dtype).
@@ -59,7 +58,7 @@ FLOOR = 1e-30
 QMAX = 127
 PALETTE_ENTRIES = 256
 PALETTE_MAX_ITERATIONS = 1000
-PALETTE_BINS = 4096
+PALETTE_SEED = 0
 PARTS = {
     "prediction_network": ("decoder.prediction.embed.weight",
                            "decoder.prediction.dec_rnn.lstm.weight_ih_l0", "decoder.prediction.dec_rnn.lstm.weight_hh_l0",
@@ -134,13 +133,14 @@ def palette_table(weight: Tensor, entries: int = PALETTE_ENTRIES,
     converged, iterations = len(distinct) <= entries, 0
     if converged:                                             # few values: the table is the values themselves
         c = distinct
-    else:                                                     # Panter-Dite start: density^(1/3) quantiles
-        lo, hi = float(xs[0]), float(xs[-1])
-        density = torch.histc(xs, bins=PALETTE_BINS, min=lo, max=hi).pow(1.0 / 3.0)
-        cdf = torch.cumsum(density, 0) / density.sum()
-        targets = (torch.arange(entries, dtype=torch.float64) + 0.5) / entries
-        bins = torch.searchsorted(cdf, targets).clamp_max(PALETTE_BINS - 1)
-        c = torch.unique(lo + (bins.to(torch.float64) + 0.5) * ((hi - lo) / PALETTE_BINS))   # sorted
+    else:                                                     # k-means++ seeding, a fixed generator
+        g = torch.Generator().manual_seed(PALETTE_SEED)
+        seeds = [float(xs[torch.randint(n, (1,), generator=g)])]
+        d2 = (xs - seeds[0]) ** 2
+        for _ in range(entries - 1):
+            seeds.append(float(xs[torch.multinomial((d2 / d2.sum()).to(torch.float32), 1, generator=g)]))
+            d2 = torch.minimum(d2, (xs - seeds[-1]) ** 2)
+        c = torch.unique(torch.tensor(seeds, dtype=torch.float64))   # sorted
     for iterations in range(1, 0 if converged else max_iterations + 1):
         bounds = (c[1:] + c[:-1]) / 2
         ends = torch.cat([torch.searchsorted(xs, bounds, right=True), torch.tensor([n])])
