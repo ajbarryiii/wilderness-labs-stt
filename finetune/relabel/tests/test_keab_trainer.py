@@ -23,7 +23,9 @@ synthetic union under the TS augmentation, a once source and AMI pairs, tiny NeM
   chunk's order and commands, the seam and the training sources;
 - the end of a run: release_training_state lets go of the optimizer (also the scheduler's reference) and its AdamW
   state, the last step's gradients and the teacher, the student's weights unchanged; finish saves and scores the student
-  only after it, and records the memory figures in the run's scores.json and summary.
+  only after it, and records the memory figures in the run's scores.json and summary;
+- a trunk's mid-run dev-subset evaluations: each starts with no gradients on the student, and the evaluations leave the
+  training unchanged (the same weights as the trunk trained without them).
 """
 from __future__ import annotations
 
@@ -456,7 +458,7 @@ class EndOfRun(World):
                 self.assertGreater(memory["dropped"]["gradients"], 0)
                 self.assertGreater(memory["dropped"]["optimizer_state_parameters"], 0)
                 for key in ("allocated_before_gib", "allocated_after_gib", "student_gib", "other_gib",
-                            "session_peak_allocated_gib"):
+                            "peak_allocated_since_reset_gib"):
                     self.assertIsNone(memory[key])              # GPU figures, on CUDA only
                 del ctx
 
@@ -482,6 +484,53 @@ class EndOfRun(World):
         self.assertEqual(json.loads((ctx.run / "scores.json").read_text())["h4"], 5.0)
         self.assertIsNone(memory["scoring_peak_allocated_gib"])  # CPU: no GPU figures
         self.assertIn("scoring_peak_reserved_gib", memory)
+
+
+class MidRunEvaluation(World):
+    """A trunk's dev-subset evaluations (train.run_eval through train_keab.run_eval) run with the training state alive;
+    the last step's gradients are not part of it (the next step's backward starts from none)."""
+
+    def trunk(self, evaluations: bool = True):
+        """The trunk "tm" trained through the CPU loop (the encoder-matching term only), recording per evaluation the
+        number of student parameters holding a gradient when train.run_eval is entered (the step's) and the names of
+        those holding one when the evaluator runs; without evaluations if `evaluations` is False."""
+        shutil.rmtree(tk.root() / "runs", ignore_errors=True)
+        ctx = self.h.context("tm", "S1")
+        seen = []
+        if evaluations:
+            original = ctx.evaluator.subset
+
+            def subset(model):
+                seen[-1].update(gradients=[n for n, p in model.named_parameters() if p.grad is not None])
+                return original(model)
+            ctx.evaluator.subset = subset
+        else:
+            ctx.evaluator = None
+        run_eval = tk.run_eval
+
+        def entered(c):
+            seen.append({"step": c.state.step, "entered_with": sum(p.grad is not None for p in c.student.parameters())})
+            run_eval(c)
+        with mock.patch.object(tk, "run_eval", entered):                 # the seam installs it as train.run_eval
+            self.h.loop(ctx, compute_losses=kf.EncoderLosses())
+        self.assertEqual(ctx.state.step, ctx.args.max_steps)
+        return ctx, seen
+
+    def test_each_evaluation_starts_with_no_gradients_on_the_student(self):
+        ctx, seen = self.trunk()
+        self.assertGreater(len(seen), 1)
+        self.assertEqual(seen[-1]["step"], ctx.args.max_steps)
+        self.assertTrue(all(s["entered_with"] > 0 for s in seen), seen)       # the step's gradients were there
+        self.assertEqual([s for s in seen if s.get("gradients") != []], [])
+
+    def test_the_evaluations_leave_the_training_unchanged(self):
+        weights = []
+        for evaluations in (True, False):
+            ctx, _ = self.trunk(evaluations)
+            weights.append({k: v.clone() for k, v in ctx.student.state_dict().items()})
+            del ctx
+        self.assertEqual(set(weights[0]), set(weights[1]))
+        self.assertEqual([k for k, v in weights[0].items() if not torch.equal(v, weights[1][k])], [])
 
 
 class Sources(unittest.TestCase):

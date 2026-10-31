@@ -11,7 +11,9 @@ seam and the fused joint+TDT loss, on the stage 4 fixture world (keab_fixtures) 
 - a smoke-like run writes its 8-bit bundle and scoring view (training/keab_export.py) from the CUDA model;
 - the end of a run: when finish scores the run, the GPU holds the student's parameters and buffers and nothing of
   training (AdamW state, gradients, the teacher), up to the allocator's rounding; the release and the scoring peak are
-  recorded in the run's scores.json and summary.
+  recorded in the run's scores.json and summary;
+- a trunk's mid-run dev-subset evaluations: the GPU holds the student, the teacher and the AdamW state, and not the
+  last step's gradients, up to the allocator's rounding.
 """
 from __future__ import annotations
 
@@ -39,6 +41,26 @@ HAS_CUDA = torch.cuda.is_available()
 @contextlib.contextmanager
 def nolock(label):
     yield                                                                       # the test job holds the GPU lock
+
+
+def cuda_baseline() -> int:
+    """What this process holds on the GPU outside a run (an earlier test's context let go first), with the cuBLAS
+    workspaces of the forward and the backward threads (FP32 and BF16) already made: memory_allocated()."""
+    tk._ACTIVE["ctx"] = None
+    a = torch.ones(64, 64, device="cuda", requires_grad=True)
+    (a @ a).sum().backward()
+    with torch.autocast("cuda", dtype=torch.bfloat16):
+        (a @ a).float().sum().backward()
+    del a
+    gc.collect()
+    torch.cuda.empty_cache()
+    return torch.cuda.memory_allocated()
+
+
+def cuda_storages(tensors) -> dict[int, int]:
+    """{storage pointer: bytes} of the CUDA tensors among `tensors` (each storage once)."""
+    return {t.untyped_storage().data_ptr(): t.untyped_storage().nbytes() for t in tensors
+            if torch.is_tensor(t) and t.is_cuda}
 
 
 def mixed_batch(world, labels):
@@ -167,25 +189,14 @@ class OnCuda(unittest.TestCase):
             return model, record
 
         def fake_score(net, out, source, device, label, groups, limit=None):
-            storages = {t.untyped_storage().data_ptr(): t.untyped_storage().nbytes()
-                        for t in itertools.chain(net.parameters(), net.buffers()) if t.is_cuda}
+            storages = cuda_storages(itertools.chain(net.parameters(), net.buffers()))
             seen.append({"allocated": torch.cuda.memory_allocated(), "student": sum(storages.values()),
                          "tensors": len(storages), "teachers alive": [r() is not None for r in teachers],
                          "gradients": [n for n, p in net.named_parameters() if p.grad is not None]})
             return {"dev_wer": {n: 0.05 for n in tk.DEV_SETS}, "dev_utterances": {n: 1 for n in tk.DEV_SETS},
                     "h4": 5.0, "sets": list(tk.DEV_SETS)}
 
-        # The baseline: what this process holds outside the run (an earlier test's context let go first), with the
-        # cuBLAS workspaces of the forward and the backward threads (FP32 and BF16) already made.
-        tk._ACTIVE["ctx"] = None
-        a = torch.ones(64, 64, device="cuda", requires_grad=True)
-        (a @ a).sum().backward()
-        with torch.autocast("cuda", dtype=torch.bfloat16):
-            (a @ a).float().sum().backward()
-        del a
-        gc.collect()
-        torch.cuda.empty_cache()
-        base = torch.cuda.memory_allocated()
+        base = cuda_baseline()
         patches = self.h.patches() + [mock.patch.object(tk, "parse_args", lambda argv=None: args),
                                       mock.patch.object(tk, "score_torch", fake_score),
                                       mock.patch.object(tk, "load_teacher_model", loader)]
@@ -212,6 +223,32 @@ class OnCuda(unittest.TestCase):
         self.assertGreater(memory["dropped"]["optimizer_state_parameters"], 0)
         self.assertGreaterEqual(memory["scoring_peak_allocated_gib"], memory["allocated_after_gib"])
         self.assertGreaterEqual(memory["scoring_peak_reserved_gib"], memory["scoring_peak_allocated_gib"])
+
+    def test_a_trunks_evaluations_hold_no_gradients_on_the_gpu(self):
+        base = cuda_baseline()
+        ctx = self.h.context("tm", "S1")
+        trainable = sum(p.numel() * p.element_size() for p in ctx.student.parameters() if p.requires_grad)
+        seen, original = [], ctx.evaluator.subset
+
+        def subset(model):
+            torch.cuda.synchronize()
+            storages = cuda_storages(itertools.chain(
+                model.parameters(), model.buffers(), ctx.teacher.parameters(), ctx.teacher.buffers(),
+                (t for s in ctx.optimizer.state.values() for t in s.values())))
+            seen.append({"step": ctx.state.step, "allocated": torch.cuda.memory_allocated(),
+                         "held": sum(storages.values()), "tensors": len(storages),
+                         "gradients": [n for n, p in model.named_parameters() if p.grad is not None]})
+            return original(model)
+        ctx.evaluator.subset = subset
+        self.h.loop(ctx)                                                        # the fused TDT loss, on CUDA
+        self.assertEqual(ctx.state.step, ctx.args.max_steps)
+        self.assertGreater(len(seen), 1)
+        for s in seen:
+            tolerance = 512 * s["tensors"] + trainable // 4                     # the allocator's 512-byte rounding
+            self.assertLess(tolerance, trainable)                               # held gradients would exceed it
+            self.assertEqual(s["gradients"], [])
+            self.assertLessEqual(abs(s["allocated"] - base - s["held"]), tolerance,
+                                 f"{s}, baseline {base}, trainable {trainable}")
 
     def test_a_smoke_writes_its_bundle_and_scoring_view(self):
         from test_keab_export import use_pinned_tokenizer_refs

@@ -983,8 +983,12 @@ def build_context(args, run: Path, device: str = "cuda"):
 
 
 def run_eval(ctx) -> None:
-    """The trunks' dev-subset evaluations (train.run_eval, informational); none for the other runs."""
+    """The trunks' dev-subset evaluations (train.run_eval, informational); none for the other runs. The step's
+    gradients are let go first (2.3 GiB at full scale): math-neutral, since nothing reads them before the next step's
+    optimizer.zero_grad(set_to_none=True), which comes before its backward (the non-finite guard also clears them), and
+    the optimizer holds exactly the student's parameters that require gradients."""
     if ctx.evaluator is not None:
+        ctx.student.zero_grad(set_to_none=True)
         tb._TRAIN["run_eval"](ctx)
         return
     train.log(f"step {ctx.state.step}: no dev-subset evaluation ({ctx.args.run_name} is scored after training)")
@@ -1056,11 +1060,15 @@ def release_training_state(ctx) -> dict:
     every student parameter's grad is None and ctx.teacher is None; then gc.collect() and torch.cuda.empty_cache().
     The student (weights, buffers, modes) is unchanged. Returns the record (GPU figures in GiB, None off CUDA): the
     memory allocated before and after, the student's parameters and buffers on the GPU, the rest (the allocator's and
-    libraries' own, e.g. cuBLAS workspaces), the session's peak before the release, and what was dropped."""
+    libraries' own, e.g. cuBLAS workspaces), the allocator's peak since its statistics were last reset, and what was
+    dropped. Pinned train.py resets them when train_loop starts and at every metrics flush, the final step's included,
+    so that peak covers the end of the run after the last flush (a trunk's final evaluation, the final checkpoint), or
+    the whole process when it resumed at max_steps; it is not the training peak, which metrics.jsonl records per flush
+    (gpu_max_allocated_gib)."""
     device = next(ctx.student.parameters()).device
     cuda = device.type == "cuda"
     before = torch.cuda.memory_allocated(device) if cuda else None
-    session_peak = torch.cuda.max_memory_allocated(device) if cuda else None
+    since_reset = torch.cuda.max_memory_allocated(device) if cuda else None
     held = (ctx.__dict__.pop("optimizer", None), getattr(getattr(ctx, "scheduler", None), "optimizer", None))
     states = sum(_clear_state(o) for i, o in enumerate(held) if o is not None and all(o is not p for p in held[:i]))
     ctx.scheduler = None
@@ -1076,7 +1084,7 @@ def release_training_state(ctx) -> dict:
         after, student = torch.cuda.memory_allocated(device), module_cuda_bytes(ctx.student)
     return {"device": device.type, "allocated_before_gib": _gib(before), "allocated_after_gib": _gib(after),
             "student_gib": _gib(student), "other_gib": None if after is None else _gib(after - student),
-            "session_peak_allocated_gib": _gib(session_peak),
+            "peak_allocated_since_reset_gib": _gib(since_reset),
             "dropped": {"optimizer_state_parameters": states, "gradients": grads, "teacher": teacher}}
 
 
