@@ -235,6 +235,13 @@ class LockWait(unittest.TestCase):
                     pass
 
 
+class B0pProcess(unittest.TestCase):
+    def test_stage3_allocator_settings_before_cuda(self):
+        import torch
+        self.assertFalse(torch.cuda.is_initialized())
+        self.assertIn("expandable_segments:True", k0.b0p_process_setup())
+
+
 class Paths(unittest.TestCase):
     def test_smoke_never_in_production(self):
         prod = k0.out_root(None)

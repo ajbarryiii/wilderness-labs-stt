@@ -396,6 +396,17 @@ def gpu_lock(args, label: str):
     return waiting_lock(label, args.lock_wait)
 
 
+def b0p_process_setup() -> str | None:
+    """B0''s scoring process as stage 3's: finetune/parakeet-ternary/train.py imported before CUDA is touched, so its
+    CUDA, numba and allocator settings apply (PYTORCH_CUDA_ALLOC_CONF expandable_segments, without which batch-64
+    decoding fragments past a 20 GB lease); returns the allocator setting."""
+    import torch
+    if torch.cuda.is_initialized():
+        raise RuntimeError("B0' process setup must run before CUDA is initialized")
+    import train  # noqa: F401
+    return os.environ.get("PYTORCH_CUDA_ALLOC_CONF")
+
+
 def vram_lease() -> None:
     import torch
     fraction = os.environ.get("AGENT_JOBS_VRAM_FRACTION")
@@ -418,6 +429,7 @@ def run(args) -> int:
         vman = read_json(vdir / "manifest.json")
         weights = {"view": str(vdir), "view_sha256": vman["sha256"], "w8a8_pre_encode_out": w8a8}
     else:
+        b0p_process_setup()
         weights = {"nemo": str(b0p_nemo()), "sha256": B0P_SHA256, "scope": scope, "format": fmt,
                    "quantizer_sha256": sha256_file(Path(__file__).resolve().parent / "training" / "eightbit.py")}
     configs = {n: set_config(args.model, args.variant, n, g, args.limit, weights) for n, g in sets}
