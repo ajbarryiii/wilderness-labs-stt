@@ -685,6 +685,11 @@ class Version3Store(World):
         self.assertEqual(by_run["F I T Z"][header.index("class")], "spelling")
         self.assertEqual(by_run["F I T Z"][header.index("version 2 output")], "FITZ")
         self.assertEqual(by_run["U.S. I"][header.index("strata")], "trim")
+        self.assertEqual(by_run["U.S. I"][header.index("drawn in")], "trim")
+        with mock.patch.object(R, "CENSUS_TRIMS", 1):                         # membership is not the sample
+            R.census(self.lab, out, lexicon_dir=self.work3, tables_dir=self.tables3)
+        key = [line.split("\t") for line in (out / "census-key.tsv").read_text().splitlines()]
+        self.assertEqual(sorted(row[1] for row in key[1:]), ["changes words"] * 3 + ["trim"])
 
 
 class AcronymRisks(unittest.TestCase):

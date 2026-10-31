@@ -1016,8 +1016,9 @@ def census(run_dir: Path, out: Path, workers: int = 1, lexicon_dir: Path | None 
     """Check 6's sheet (cleaning plan v7, before any training run reads version 3; CPU): over T*'s kept labels
     (layer 1 input after layer 0; layer 2 spans left as written), every run of the first stratum and, drawn with a
     fixed seed, CENSUS_COMPACTED compacted runs and CENSUS_TRIMS trims, without the tuning runs in `exclude` ((id,
-    letters)). Writes census-sheet.tsv (blind: the run in its context only, shuffled), census-key.tsv (the class, the
-    strata, version 2's and version 3's outputs) and census.json (populations, sample sizes) to out."""
+    letters)). Writes census-sheet.tsv (blind: the run in its context only, shuffled), census-key.tsv (the samples a
+    row was drawn in, every stratum it belongs to, the class, version 2's and version 3's outputs) and census.json
+    (populations, sample sizes) to out."""
     if version < 3:
         raise ValueError("the census is of cleaning version 3")
     t0 = time.time()
@@ -1036,10 +1037,11 @@ def census(run_dir: Path, out: Path, workers: int = 1, lexicon_dir: Path | None 
         items["trim"] = sorted(items["trim"] + part["items"]["trim"])[:CENSUS_TRIMS]
         if (n + 1) % 200 == 0:
             log(f"census: {n + 1}/{len(run.shards)} shards")
-    rows = {}
+    rows, drawn = {}, defaultdict(list)
     for k in CENSUS_STRATA:
         for it in items[k]:
             rows.setdefault((it[1], it[2]), it)
+            drawn[(it[1], it[2])].append(k)
     order = sorted(rows.values(), key=lambda it: _rank(CENSUS_SEED, "order", it[1], it[2]))
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
@@ -1050,11 +1052,11 @@ def census(run_dir: Path, out: Path, workers: int = 1, lexicon_dir: Path | None 
         for n, it in enumerate(order, 1):
             f.write(f"{n}\t{it[13]}\t\t\t\n")
     with open(out / "census-key.tsv", "w", encoding="utf-8") as f:
-        f.write("n\tstrata\tid\tstart\tend\trun\tletters\tclass\tevidence\trest class\trest evidence\t"
+        f.write("n\tdrawn in\tstrata\tid\tstart\tend\trun\tletters\tclass\tevidence\trest class\trest evidence\t"
                 "version 2 output\tversion 3 output\n")
         for n, it in enumerate(order, 1):
-            f.write("\t".join([str(n), it[12], it[1], str(it[2]), str(it[3])] + [x.replace("\t", " ") for x in it[4:12]])
-                    + "\n")
+            f.write("\t".join([str(n), ",".join(drawn[(it[1], it[2])]), it[12], it[1], str(it[2]), str(it[3])] +
+                               [x.replace("\t", " ") for x in it[4:12]]) + "\n")
     report = {"version": version, "label_run": run.rel, "label_set": "T*", "seed": CENSUS_SEED,
               "tables_sha256": spec.tables.sha256, "lexicon_sha256": spec.lexicon.file_sha256,
               "sampled_shards": run.sampled, "population": dict(population), "excluded_tuning_runs": dict(excluded),
