@@ -370,11 +370,9 @@ class Store(unittest.TestCase):
             c[field] = value if value is not None else c[field] + 1
             if field == "samples":
                 c["duration"] = c["samples"] / SR
+            self.assertEqual(ami_store.encoder_frames(c["samples"]), ami_store.encoder_frames(c["ihm_samples"]))
             d = self.root / f"bad-{field}"
-            try:
-                ami_store.write_store(d, clips, {})
-            except ValueError:
-                continue                                     # refused at write (frames no longer equal)
+            ami_store.write_store(d, clips, {})                 # one more sample keeps the frames: the record is valid
             store = ami_store.PairStore.load(d)
             read = store.read_teacher if field.startswith("ihm_") else store.read
             with self.assertRaises(RuntimeError, msg=field):
