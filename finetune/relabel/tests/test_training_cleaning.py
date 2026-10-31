@@ -483,9 +483,10 @@ class Versions(unittest.TestCase):
     """Cleaning plan v5 "Version": version 2 adds the acronym rule; version 1 (stages 2b and 2c) is unchanged."""
 
     def test_versions(self):
-        self.assertEqual(C.VERSIONS, (1, 2))
+        # contract change (cleaning plan v7, 2026-10-30): version 3 exists; the default stays version 2 (stage 3)
+        self.assertEqual(C.VERSIONS, (1, 2, 3))
         self.assertEqual(C.VERSION, 2)
-        for bad in (0, 3):
+        for bad in (0, 4):
             with self.assertRaises(ValueError):
                 C.Cleaning(tables(), version=bad)
 
@@ -505,7 +506,7 @@ class Versions(unittest.TestCase):
         self.assertEqual((a["version"], b["version"]), (1, 2))
         self.assertEqual(a["tables_sha256"], b["tables_sha256"])
         self.assertNotEqual(a, b)
-        self.assertEqual(C.Cleaning(t).identity(), b)                      # the default is the latest version
+        self.assertEqual(C.Cleaning(t).identity(), b)                      # the default is version 2
 
     def test_an_artifact_of_the_other_version_is_refused(self):
         t = tables()

@@ -1,0 +1,31 @@
+# Label cleaning, layer 1, cleaning version 3: strong cues that a run of single letters is a deliberate spelling, not
+# an acronym (cleaning plan v7 "Spellings versus acronyms", class 3; training/cleaning.py). "position<TAB>pattern",
+# one Python regular expression per line, matched case-insensitively:
+#   before   searched in the run's previous SPELLING["cue_before"] words (letters and inner apostrophes; lowercased and
+#            joined by single spaces), as a whole word or phrase (no letter directly on either side);
+#   after    matched at the start of the text right after the run, after optional whitespace (an address).
+# Weak cues ("called", "code") are not listed: they also precede acronyms ("a protocol called ...").
+before	spell\w*
+before	spelt
+before	letters?
+before	last name
+before	first name
+before	surname
+before	my name
+before	name is
+before	username
+before	user name
+before	password
+before	email
+before	e-mail
+before	handle
+before	twitter
+before	instagram
+after	,?\s*as in\b
+after	\.com\b
+after	\.org\b
+after	\.net\b
+after	dot\s+(?:com|org|net|p|[a-z]{2,4}\b)
+after	at\s+(?:gmail|yahoo|hotmail|v-t)
+after	underscore\b
+after	@

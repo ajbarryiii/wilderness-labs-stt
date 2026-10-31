@@ -1,0 +1,5 @@
+# Label cleaning, layer 2, cleaning version 3: same-sound choice sets added to choices.tsv (same format and rules;
+# versions 1 and 2 read choices.tsv alone, unchanged).
+# OpEx (cleaning plan v7): "OPX" is also a trade group's name and a geology abbreviation, so the model chooses from
+# context; "OpEx" is option-only, so only "OPX", in any casing, starts a span.
+OpEx*	OPX
