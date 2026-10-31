@@ -49,6 +49,7 @@ smoke test; the job's lease still bounds the VRAM).
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import os
@@ -365,15 +366,34 @@ def pending(out: Path, configs: dict) -> list[str]:
     return todo
 
 
-def gpu_lock(args, label: str):
-    """The parakeet GPU lock (score_teacher.gpu_lock), or none for a --limit smoke run with --no-gpu-lock."""
-    import contextlib
+LOCK_LOG_S = 600.0
+
+
+@contextlib.contextmanager
+def waiting_lock(label: str, wait_s: float, chunk: float = LOCK_LOG_S):
+    """score_teacher.gpu_lock waited for up to wait_s seconds in chunks, with a log line per busy chunk (a long wait
+    behind another holder is not a stalled job); LockBusy after wait_s."""
     import score_teacher
+    deadline = time.monotonic() + wait_s
+    with contextlib.ExitStack() as stack:
+        while True:
+            try:
+                stack.enter_context(score_teacher.gpu_lock(label, min(chunk, max(0.0, deadline - time.monotonic()))))
+                break
+            except score_teacher.LockBusy as busy:
+                if time.monotonic() >= deadline:
+                    raise
+                log(f"waiting for the GPU lock: {busy}")
+        yield
+
+
+def gpu_lock(args, label: str):
+    """The parakeet GPU lock (waiting_lock), or none for a --limit smoke run with --no-gpu-lock."""
     if getattr(args, "no_gpu_lock", False):
         if args.limit is None:
             raise SystemExit("--no-gpu-lock is for --limit smoke runs only")
         return contextlib.nullcontext()
-    return score_teacher.gpu_lock(label, args.lock_wait)
+    return waiting_lock(label, args.lock_wait)
 
 
 def vram_lease() -> None:

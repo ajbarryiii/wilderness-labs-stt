@@ -198,6 +198,43 @@ class PaletteResume(unittest.TestCase):
             shutil.rmtree(tmp, ignore_errors=True)
 
 
+class LockWait(unittest.TestCase):
+    def test_long_wait_logs_every_chunk_then_takes_the_lock(self):
+        import contextlib
+        from unittest import mock
+        import score_teacher
+        calls, held = [], []
+
+        @contextlib.contextmanager
+        def fake_lock(label, wait_s):
+            calls.append(wait_s)
+            if len(calls) < 3:
+                raise score_teacher.LockBusy("held by synthetic")
+            held.append(label)
+            yield
+
+        with mock.patch.object(score_teacher, "gpu_lock", fake_lock), mock.patch.object(k0, "log") as logged:
+            with k0.waiting_lock("x", 3600.0, chunk=1.0):
+                self.assertEqual(held, ["x"])
+        self.assertEqual(calls, [1.0, 1.0, 1.0])
+        self.assertEqual(logged.call_count, 2, "one line per busy chunk keeps the job from looking stalled")
+
+    def test_gives_up_after_the_wait(self):
+        import contextlib
+        from unittest import mock
+        import score_teacher
+
+        @contextlib.contextmanager
+        def busy(label, wait_s):
+            raise score_teacher.LockBusy("held")
+            yield
+
+        with mock.patch.object(score_teacher, "gpu_lock", busy), mock.patch.object(k0, "log"):
+            with self.assertRaises(score_teacher.LockBusy):
+                with k0.waiting_lock("x", 0.0, chunk=1.0):
+                    pass
+
+
 class Paths(unittest.TestCase):
     def test_smoke_never_in_production(self):
         prod = k0.out_root(None)
