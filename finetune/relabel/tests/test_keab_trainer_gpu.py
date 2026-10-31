@@ -150,7 +150,9 @@ class OnCuda(unittest.TestCase):
         eb.keab_form(student)                                                   # still fp32(W8) of the same codes
 
     def test_a_smoke_writes_its_bundle_and_scoring_view(self):
+        from test_keab_export import use_pinned_tokenizer_refs
         ctx = self.h.context("pc", "S2", smoke=True)
+        use_pinned_tokenizer_refs(ctx.student)                 # the exporter copies the pinned .nemo's tokenizer
         with tk.seam(), kf.contextlib_all(self.h.patches()):
             ctx.state.step = ctx.args.max_steps
             manifest = tk.save_model(ctx)
