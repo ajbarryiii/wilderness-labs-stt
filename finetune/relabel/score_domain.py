@@ -29,7 +29,8 @@ normalized words. An occurrence is reproduced if, in the word alignment of refer
 match and no hypothesis word is inserted between its words, or (spelling variants, 2026-10-24) another listed form
 of the same term (terms.variant_key: "dataset" / "data set") is a contiguous run of the hypothesis words aligned
 to the occurrence or inserted in its gaps, including one aligned word. An occurrence is counted once, whichever
-listed form it has. A reference occurrence directly after a number token (terms.NUMBER, after normalization) is also
+listed form it has. A reference occurrence directly after a number token (terms.number_token, after normalization: digits or "one") is
+also
 reproduced by any form of its group in terms/equivalents.tsv at that position (cleaning plan v7 "Scoring changes" 1,
 2026-10-30: "500 mg" reproduces "500 milligrams", and the reverse). Recall = reproduced / occurrences, per part.
 
@@ -117,7 +118,7 @@ def term_occurrences(ref_norm: str, hyp_norm: str, matcher: terms.Matcher,
         if not ok and variants:
             others = [v for v in matcher.variants(occ.phrase) if v != occ.phrase]
             ok = bool(others) and _variant_at(a, hyp, occ.start, occ.end, others)
-        if not ok and variants and occ.start > 0 and terms.NUMBER.fullmatch(ref[occ.start - 1]):
+        if not ok and variants and occ.start > 0 and terms.number_token(ref[occ.start - 1]):
             others = [v for v in matcher.equivalents(occ.phrase) if v != occ.phrase]
             ok = bool(others) and _variant_at(a, hyp, occ.start, occ.end, others)
         out.append((occ.start, occ.end, ok))

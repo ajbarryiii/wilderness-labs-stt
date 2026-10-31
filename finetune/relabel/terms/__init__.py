@@ -22,7 +22,7 @@ Stable API (imported by Part B):
     matcher(kind, normalize=None)       a Matcher over load(kind); `normalize` defaults to the evaluation
                                         normalizer (finetune/parakeet-ternary/evaluate.py normalize)
     load_equivalents(path=None)         the groups of terms/equivalents.tsv
-    NUMBER                              a number token after normalization ("500", "2.5")
+    number_token(token)                 a number token after normalization: digits ("500", "2.5") or "one"
 
 A term is matched in its normalized form (the same normalizer as the references), so spelling variants the
 normalizer unifies (British/American spellings, number words, a hyphen versus a space) match the same tokens.
@@ -39,7 +39,8 @@ Equivalences after a number (cleaning plan v7 "Scoring changes" 1, a contract ch
 terms/equivalents.tsv groups a dose unit with its abbreviation ("mg", "milligram", "milligrams"; "mg kg", how
 "mg/kg" normalizes, with "milligrams per kilogram"). Matcher.equivalents(phrase) gives every form of the phrase's group
 (normalized; with their listed variants), or () outside every group; score_domain.term_occurrences accepts them for a
-reference occurrence that directly follows a NUMBER token. Every Matcher reads the committed table unless given
+reference occurrence that directly follows a number token (number_token: digits, or "one", which is how the normalizer
+writes a lone "1"; cleaning plan v7.2). Every Matcher reads the committed table unless given
 `equivalents` (an iterable of groups of forms; () for none). The groups never add occurrences: only listed terms are
 found.
 """
@@ -54,6 +55,12 @@ HERE = Path(__file__).resolve().parent
 KINDS = ("medical", "technical")
 EQUIVALENTS_FILE = HERE / "equivalents.tsv"
 NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
+NUMBER_WORDS = ("one",)          # the evaluation normalizer writes a lone "1" as "one" (cleaning plan v7.2)
+
+
+def number_token(token: str) -> bool:
+    """A number token after normalization (cleaning plan v7 "Scoring changes" 1, v7.2): digits, or "one"."""
+    return token in NUMBER_WORDS or NUMBER.fullmatch(token) is not None
 _CATEGORIES = {
     "medical": ("drugs", "anatomy", "procedures", "conditions", "dosages_units", "tccc"),
     "technical": ("computing", "engineering", "science", "finance"),

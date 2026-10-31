@@ -12,7 +12,8 @@ standard normalizer (evaluate.normalize) and the edit distance:
     cmp  compounds: the bigrams of terms/style/compounds.tsv (hand-filtered) joined on normalized tokens
     dis  disfluencies: "uh-huh" and marked false starts ("the- ") removed before the normalizer (bound prefixes kept);
          extra fillers removed and immediate repeats of 1-3 word n-grams collapsed after it
-    unit dose units (cleaning plan v7): after a number token (terms.NUMBER), a unit form of terms/cleaning/units.tsv
+    unit dose units (cleaning plan v7): after a number token (terms.number_token: digits, or the normalizer's "one"
+         for a lone "1", v7.2), a unit form of terms/cleaning/units.tsv
          and its abbreviation become one token (the abbreviation, normalized), and "per" between two listed units is
          dropped: "500 milligrams per kilogram" and "500 mg/kg" both give "500 mg kg"
     all  acr, cmp, dis and unit together
@@ -131,12 +132,12 @@ def _unit_at(tokens: list[str], i: int) -> tuple[int, str] | None:
 def join_units(tokens: list[str]) -> list[str]:
     """unit (module docstring): after a number token, a unit form becomes its abbreviation; "per" between two listed
     units is dropped."""
-    from terms import NUMBER
+    from terms import number_token
     out, i, n = [], 0, len(tokens)
     while i < n:
         out.append(tokens[i])
         i += 1
-        if not NUMBER.fullmatch(out[-1]) or i >= n:
+        if not number_token(out[-1]) or i >= n:
             continue
         hit = _unit_at(tokens, i)
         if hit is None:

@@ -28,6 +28,7 @@ class UnitTerms(unittest.TestCase):
         for ref, hyp in (("500 milligrams", "500 mg"), ("500 mg", "500 milligrams"),
                          ("five hundred milligrams a day", "500 mg a day"),
                          ("give 2 milligrams", "give 2 mg"), ("250 micrograms", "250 mcg"), ("250 mcg", "250 micrograms"),
+                         ("1 mg", "one milligram"), ("one milligram", "1 mg"),        # v7.2: "one" is a number token
                          ("20 milliequivalents", "20 mEq"), ("20 meq", "20 milliequivalents"),
                          ("3 millimoles", "3 mmol"), ("3 mmol", "3 millimoles"),
                          ("5 milligrams per kilogram", "5 mg/kg"),
@@ -110,7 +111,8 @@ class UnitGroup(unittest.TestCase):
         self.assertIn("unit", sm.VARIANTS["all"])
         for ref, hyp in (("500 milligrams", "500 mg"), ("5 milligrams per kilogram", "5 mg/kg"),
                          ("120 millimeters of mercury", "120 mmHg"), ("10 milliliters", "10 mL"),
-                         ("0.5 micrograms", "0.5 µg"), ("20 milliequivalents", "20 mEq")):
+                         ("0.5 micrograms", "0.5 µg"), ("20 milliequivalents", "20 mEq"),
+                         ("1 mg", "one milligram")):                                 # v7.2: "one" is a number token
             e = sm.utterance_errors(ref, hyp)
             self.assertGreater(e["std"][0], 0, ref)
             self.assertEqual((e["unit"][0], e["all"][0]), (0, 0), ref)
