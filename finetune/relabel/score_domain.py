@@ -29,7 +29,10 @@ normalized words. An occurrence is reproduced if, in the word alignment of refer
 match and no hypothesis word is inserted between its words, or (spelling variants, 2026-10-24) another listed form
 of the same term (terms.variant_key: "dataset" / "data set") is a contiguous run of the hypothesis words aligned
 to the occurrence or inserted in its gaps, including one aligned word. An occurrence is counted once, whichever
-listed form it has. Recall = reproduced / occurrences, per part.
+listed form it has. A reference occurrence directly after a number token (terms.number_token, after normalization: digits or "one") is
+also
+reproduced by any form of its group in terms/equivalents.tsv at that position (cleaning plan v7 "Scoring changes" 1,
+2026-10-30: "500 mg" reproduces "500 milligrams", and the reverse). Recall = reproduced / occurrences, per part.
 
 Reported: per part WER (and S, D, I, words, utterances, hours) and term recall; per set the unweighted mean
 of its parts' WERs, and for dev-medical the unweighted mean of its parts' term recalls (pooled counts too).
@@ -101,7 +104,7 @@ def _variant_at(a, hyp: list[str], start: int, end: int, forms) -> bool:
 def term_occurrences(ref_norm: str, hyp_norm: str, matcher: terms.Matcher,
                      variants: bool = True) -> list[tuple[int, int, bool]]:
     """(start, end, reproduced) for every term occurrence in the reference (see module docstring). variants=False is
-    the rule before 2026-10-24 (term_rescore.py's "old" column only)."""
+    the rule before 2026-10-24, without listed variants or equivalences (term_rescore.py's "old" column only)."""
     ref, hyp = ref_norm.split(), hyp_norm.split()
     found = matcher.find(ref)
     if not found:
@@ -114,6 +117,9 @@ def term_occurrences(ref_norm: str, hyp_norm: str, matcher: terms.Matcher,
         ok = matched and not inserted
         if not ok and variants:
             others = [v for v in matcher.variants(occ.phrase) if v != occ.phrase]
+            ok = bool(others) and _variant_at(a, hyp, occ.start, occ.end, others)
+        if not ok and variants and occ.start > 0 and terms.number_token(ref[occ.start - 1]):
+            others = [v for v in matcher.equivalents(occ.phrase) if v != occ.phrase]
             ok = bool(others) and _variant_at(a, hyp, occ.start, occ.end, others)
         out.append((occ.start, occ.end, ok))
     return out

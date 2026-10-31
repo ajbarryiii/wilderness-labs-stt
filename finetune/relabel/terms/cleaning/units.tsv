@@ -1,0 +1,43 @@
+# Label cleaning, layer 1, cleaning version 3: dose units after a digit (cleaning plan v7 "Dose units after a digit";
+# training/cleaning.py). "written<TAB>abbreviation": a written form directly after a number token (digits with optional
+# thousands commas and a decimal part, or a hyphenated range of two such numbers), separated by one space or, as an
+# adjective, a hyphen ("10-milligram"), becomes " " + its abbreviation, written exactly as listed (the capitalization
+# rule does not apply). Matched case-insensitively on whole tokens, longest first, so other casings of an abbreviation
+# ("MG", "ml") take the listed casing and a plural abbreviation ("mgs") becomes singular. "<number> <unit> per <unit>",
+# both units listed here, becomes "<number> <abbr>/<abbr>" ("5 milligrams per kilogram" -> "5 mg/kg").
+# Left as written: a unit after a number word or without a number; "units" (never "U" or "IU": the Joint Commission's
+# do-not-use list), "cc", grams and every non-medical unit; "percent" (the normalizer already unifies it with "%").
+milligram	mg
+milligrams	mg
+mg	mg
+mgs	mg
+microgram	mcg
+micrograms	mcg
+mcg	mcg
+mcgs	mcg
+µg	mcg
+μg	mcg
+ug	mcg
+milliliter	mL
+milliliters	mL
+millilitre	mL
+millilitres	mL
+ml	mL
+mls	mL
+kilogram	kg
+kilograms	kg
+kg	kg
+kgs	kg
+milliequivalent	mEq
+milliequivalents	mEq
+meq	mEq
+meqs	mEq
+millimole	mmol
+millimoles	mmol
+mmol	mmol
+mmols	mmol
+millimeter of mercury	mmHg
+millimeters of mercury	mmHg
+millimetre of mercury	mmHg
+millimetres of mercury	mmHg
+mmhg	mmHg

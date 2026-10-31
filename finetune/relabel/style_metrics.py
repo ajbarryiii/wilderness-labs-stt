@@ -4,16 +4,22 @@ per-utterance records (parakeet-ternary evaluate.py's layout: id, ref, hyp, scor
 Style-neutral WER (variants): canonicalizers applied identically to the reference and the hypothesis, then the
 standard normalizer (evaluate.normalize) and the edit distance:
     std  the standard normalizer only (the gate's WER)
-    acr  acronym runs: before the normalizer, dotted letter runs ("U.S.", "A. P. I.") and hyphen-spelled runs
-         ("O-Y-E") are joined; after it, a run of single-letter tokens is joined into a word where the other side has
-         more occurrences of that word (greedy, longest sub-run first), so a spelled-out repeat of a word the other
-         side wrote once is not joined
+    acr  acronym runs (cleaning plan v7 "Scoring changes" 2, replacing stage 3's counting rule): after the normalizer,
+         identically on both sides, every maximal run of 2 or more letter tokens is joined into one token. A letter
+         token is a single letter a-z, or the normalizer's "0" / "00" (a spoken "O" / "O O") inside a run that has a
+         letter, read as "o" / "oo". A run made only of "i" (a stutter) is not joined. So a spelled run counts as one
+         reference word and a wrong letter as one error per run
     cmp  compounds: the bigrams of terms/style/compounds.tsv (hand-filtered) joined on normalized tokens
     dis  disfluencies: "uh-huh" and marked false starts ("the- ") removed before the normalizer (bound prefixes kept);
          extra fillers removed and immediate repeats of 1-3 word n-grams collapsed after it
-    all  acr, cmp and dis together
-A group's contribution is WER(std) - WER(group). utterance_errors gives every variant's (errors, reference words) per
-utterance, for paired bootstraps.
+    unit dose units (cleaning plan v7): after a number token (terms.number_token: digits, or the normalizer's "one"
+         for a lone "1", v7.2), a unit form of terms/cleaning/units.tsv
+         and its abbreviation become one token (the abbreviation, normalized), and "per" between two listed units is
+         dropped: "500 milligrams per kilogram" and "500 mg/kg" both give "500 mg kg"
+    all  acr, cmp, dis and unit together
+A group's contribution is WER(std) - WER(group). Every canonicalizer reads one side only, so the canonical reference
+words do not depend on the hypothesis. utterance_errors gives every variant's (errors, reference words) per utterance,
+for paired bootstraps.
 
 Formatted metrics (formatted_counts per utterance, formatted_summary over a set): tokens are words (case kept,
 inner apostrophes kept, numbers with inner . , : whole) and clause marks . , ? ! ; : (a run of marks is its first).
@@ -27,19 +33,20 @@ import collections
 import re
 from pathlib import Path
 
-VARIANTS = {"std": (), "acr": ("acr",), "cmp": ("cmp",), "dis": ("dis",), "all": ("acr", "cmp", "dis")}
+VARIANTS = {"std": (), "acr": ("acr",), "cmp": ("cmp",), "dis": ("dis",), "unit": ("unit",),
+            "all": ("acr", "cmp", "dis", "unit")}
 COMPOUNDS_FILE = Path(__file__).resolve().parent / "terms" / "style" / "compounds.tsv"
+UNITS_FILE = Path(__file__).resolve().parent / "terms" / "cleaning" / "units.tsv"
 EXTRA_FILLERS = {"er", "erm", "ah", "ahh", "ahm", "eh", "hm", "uhm", "umm", "uhh", "uhhh", "ummm", "mhmm", "mmhmm"}
 PREFIXES = {"non", "pre", "post", "anti", "re", "co", "sub", "multi", "self", "semi", "inter", "intra", "over",
             "under", "mid", "ex", "pro", "de", "bi", "tri", "mini", "micro", "macro", "mono", "poly", "cross"}
 MARKS = ".,?!;:"
 PER_MARK = ".,?"
-_DOTTED = re.compile(r"(?<![\w.])(?:[A-Za-z]\.[ \t]*){2,}")
-_HYPHEN_LETTERS = re.compile(r"(?<![\w-])[A-Za-z](?:-[A-Za-z])+(?![\w-])")
 _UH_HUH = re.compile(r"\buh-huh\b", re.IGNORECASE)
 _FALSE_START = re.compile(r"(?<![\w'-])([a-z']+|[A-Z][a-z']*)-(?=\s|$)")
 _FMT = re.compile(r"\d+(?:[.,:]\d+)+|\w+(?:['’]\w+)*|[.,?!;:]+")
 _COMPOUNDS: dict = {}
+_UNITS: dict = {}
 
 
 def compounds(path: Path = COMPOUNDS_FILE) -> dict[tuple[str, str], str]:
@@ -65,11 +72,6 @@ def normalize(text: str) -> list[str]:
     return evaluate.normalize(text).split()
 
 
-def _join_dotted(m: re.Match) -> str:
-    g = m.group(0)
-    return "".join(ch for ch in g if ch.isalpha()) + (" " if g[-1].isspace() else "")
-
-
 def _false_start(m: re.Match) -> str:
     return m.group(0) if m.group(1).lower() in PREFIXES else ""
 
@@ -77,39 +79,76 @@ def _false_start(m: re.Match) -> str:
 def pre(text: str, groups) -> str:
     if "dis" in groups:
         text = _FALSE_START.sub(_false_start, _UH_HUH.sub(" ", text))
-    if "acr" in groups:
-        text = _HYPHEN_LETTERS.sub(lambda m: m.group(0).replace("-", ""), _DOTTED.sub(_join_dotted, text))
     return text
 
 
 def _letter(tok: str) -> bool:
-    return len(tok) == 1 and (tok.isalpha() or tok == "0")
+    return len(tok) == 1 and "a" <= tok <= "z"
 
 
-def _collapse_runs(tokens: list[str], other: collections.Counter) -> list[str]:
-    own = collections.Counter(tokens)
+def _o(tok: str) -> bool:
+    return tok in ("0", "00")                                  # the normalizer writes a spoken "O" as "0"
+
+
+def join_letter_runs(tokens: list[str]) -> list[str]:
+    """acr (module docstring): every maximal run of 2 or more letter tokens joined into one token."""
     out, i, n = [], 0, len(tokens)
     while i < n:
-        if not _letter(tokens[i]):
+        if not (_letter(tokens[i]) or _o(tokens[i])):
             out.append(tokens[i])
             i += 1
             continue
         j = i
-        while j < n and _letter(tokens[j]):
+        while j < n and (_letter(tokens[j]) or _o(tokens[j])):
             j += 1
-        k = i
-        while k < j:
-            for end in range(j, k + 1, -1):                  # sub-run tokens[k:end], at least two letters
-                joined = "".join(tokens[k:end]).replace("0", "o")      # the normalizer writes a lone "o" as "0"
-                if other[joined] > own[joined]:
-                    own[joined] += 1
-                    out.append(joined)
-                    k = end
-                    break
-            else:
-                out.append(tokens[k])
-                k += 1
+        run = tokens[i:j]
+        if len(run) >= 2 and any(_letter(t) for t in run) and any(t != "i" for t in run):
+            out.append("".join("o" * len(t) if _o(t) else t for t in run))
+        else:
+            out.extend(run)
         i = j
+    return out
+
+
+def units() -> dict[tuple[str, ...], str]:
+    """{normalized unit form: normalized abbreviation} of terms/cleaning/units.tsv."""
+    if not _UNITS:
+        for line in UNITS_FILE.read_text(encoding="utf-8").splitlines():
+            if line.strip() and not line.lstrip().startswith("#"):
+                written, abbr = (f.strip() for f in line.split("\t"))
+                _UNITS[tuple(normalize(written))] = " ".join(normalize(abbr))
+    return _UNITS
+
+
+def _unit_at(tokens: list[str], i: int) -> tuple[int, str] | None:
+    table = units()
+    for length in sorted({len(k) for k in table}, reverse=True):
+        key = tuple(tokens[i:i + length])
+        if len(key) == length and key in table:
+            return length, table[key]
+    return None
+
+
+def join_units(tokens: list[str]) -> list[str]:
+    """unit (module docstring): after a number token, a unit form becomes its abbreviation; "per" between two listed
+    units is dropped."""
+    from terms import number_token
+    out, i, n = [], 0, len(tokens)
+    while i < n:
+        out.append(tokens[i])
+        i += 1
+        if not number_token(out[-1]) or i >= n:
+            continue
+        hit = _unit_at(tokens, i)
+        if hit is None:
+            continue
+        out.append(hit[1])
+        i += hit[0]
+        if i < n and tokens[i] == "per":
+            second = _unit_at(tokens, i + 1)
+            if second is not None:
+                out.append(second[1])
+                i += 1 + second[0]
     return out
 
 
@@ -146,7 +185,9 @@ def _compound(tokens: list[str]) -> list[str]:
 
 def post(ref: list[str], hyp: list[str], groups) -> tuple[list[str], list[str]]:
     if "acr" in groups:
-        ref, hyp = _collapse_runs(ref, collections.Counter(hyp)), _collapse_runs(hyp, collections.Counter(ref))
+        ref, hyp = join_letter_runs(ref), join_letter_runs(hyp)
+    if "unit" in groups:
+        ref, hyp = join_units(ref), join_units(hyp)
     if "cmp" in groups:
         ref, hyp = _compound(ref), _compound(hyp)
     if "dis" in groups:
