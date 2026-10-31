@@ -70,6 +70,7 @@ MODEL_VARIANTS = {"MB1": tuple(VARIANTS), "B0p": ("none", "S1-int8", "S2-int8", 
 VIEW_VARIANTS = ("none", "S1-int8", "S2-int8", "S1-palette", "S2-palette")   # S2-int8-w8a8 scores the S2-int8 view
 RULE_SCOPES = ("S1", "S2")
 RULE_VARIANTS = ("none", "S1-int8", "S2-int8")
+ALSO_AGAINST = {"S2-int8-w8a8": "S2-int8"}       # W8A8 is reported against "none" and against S2 (its INT8 weights)
 FULL_SETS = {v: ("dev", "domain") if v in RULE_VARIANTS else ("dev",) for v in VARIANTS}
 FULL_NOTE = ("Full run: the rule's variants (none, S1-int8, S2-int8) on the dev and domain sets; palettization and W8A8 "
              "on the dev sets only, as information. The rule uses H4 only; the domain sets are reported for the rule's "
@@ -511,7 +512,8 @@ def _run_b0p(out, todo, groups, configs, limit, scope: str, fmt: str | None) -> 
     mode = binary_train.pin_decoder_graphs_mode(net, label)
     form = eb.apply_decoder_scope(net, scope, fmt or "int8")
     keys = eb.keys_of(("prediction_network", "joint"))
-    facts = {"decoder_form": form, "decoder_sha256": decoder_sha256(net, keys), "decoder_graphs_mode": mode}
+    facts = {"decoder_form": form, "decoder_sha256": decoder_sha256(net, keys), "decoder_graphs_mode": mode,
+             "palette": {k: v["info"] for k, v in eb.frozen_palette(net).items()} or None}
     captured, restore = capture_tokens(net)
     device = torch.device("cuda")
     try:
@@ -659,6 +661,27 @@ def summarize_variant(model: str, variant: str, res: dict, base: dict, domain_pa
     return out
 
 
+def compare_variant(model: str, variant: str, res: dict, baselines: dict[str, dict | None], domain_parts: dict) -> dict:
+    """summarize_variant against "none", plus, for the variants in ALSO_AGAINST, the same summary against that
+    variant (over the sets both have) under "against"."""
+    out = summarize_variant(model, variant, res, baselines["none"], domain_parts)
+    other = ALSO_AGAINST.get(variant)
+    if other is not None and baselines.get(other) is not None:
+        ref = {n: baselines[other][n] for n in res if n in baselines[other]}
+        out["against"] = {other: summarize_variant(model, variant, {n: res[n] for n in ref}, ref, domain_parts)}
+    return out
+
+
+def palette_summary(infos: dict[str, dict]) -> dict:
+    """Per tensor: entries, Lloyd iterations, convergence and the largest error; the tensors that did not converge
+    within eightbit.PALETTE_MAX_ITERATIONS."""
+    from training import eightbit as eb
+    tensors = {k: {f: v.get(f) for f in ("entries", "iterations", "converged", "max_abs_error")}
+               for k, v in sorted(infos.items())}
+    return {"tensors": tensors, "not_converged": [k for k, v in tensors.items() if not v["converged"]],
+            "max_iterations": eb.PALETTE_MAX_ITERATIONS}
+
+
 def stage3_records(name: str) -> Path:
     """B0''s stage 3 record of a dev set or domain part (b100's eval-dev/ or domain/)."""
     run = relabel_paths.ARTIFACTS / "b0prime" / "runs" / "b100"
@@ -705,6 +728,7 @@ def report(args) -> int:
         entry = {"none": {"wer": {n: base[n]["wer_percent"] if "wer_percent" in base[n] else 100 * base[n]["wer"]["wer"]
                                   for n in names_dev}}, "variants": {}}
         entry["none"]["h4"] = sum(entry["none"]["wer"][n] for n in H4) / len(H4)
+        loaded = {"none": base}
         for variant in MODEL_VARIANTS[model]:
             if variant == "none":
                 continue
@@ -716,7 +740,8 @@ def report(args) -> int:
             if res is None:
                 entry["variants"][variant] = {"status": "incomplete"}
                 continue
-            entry["variants"][variant] = summarize_variant(model, variant, res, base, domain_parts)
+            loaded[variant] = res
+            entry["variants"][variant] = compare_variant(model, variant, res, loaded, domain_parts)
         passes[model] = {VARIANTS[v][0]: entry["variants"][v]["rule"]["pass"] for v in entry["variants"]
                          if VARIANTS[v][1] == "int8" and not VARIANTS[v][2] and "rule" in entry["variants"][v]}
         out["models"][model] = entry
@@ -727,9 +752,12 @@ def report(args) -> int:
         out["slice_rule_outcome"] = choose(passes)       # a smoke slice: never a decision
     if not complete:
         out["note"] = "the rule needs S1-int8 and S2-int8 on both models"
+    out["palette"] = {}
     idx = exports_root() / "index.json"
     if idx.exists():
         index = read_json(idx)
+        out["palette"]["MB1"] = {v: palette_summary(e["palette"]) for v, e in index["variants"].items()
+                                 if e.get("palette")}
         out["exports"] = {v: {"bundle_tensor_mb": (e.get("bundle") or {}).get("tensor_mb"),
                               "bundle_parts": ((e.get("bundle") or {}).get("bytes") or {}).get("parts"),
                               "view_sha256": e["view"]["sha256"]} for v, e in index["variants"].items()}
@@ -737,6 +765,12 @@ def report(args) -> int:
     if check.exists():
         out["mb1_x1_check"] = read_json(check)
     out["crosschecks"] = crosschecks(args.limit)
+    b0p = {}
+    for v in MODEL_VARIANTS["B0p"]:
+        run_json = scores_dir("B0p", v, args.limit) / "run.json"
+        if run_json.exists() and read_json(run_json).get("palette"):
+            b0p[v] = palette_summary(read_json(run_json)["palette"])
+    out["palette"]["B0p"] = b0p
     root = out_root(args.limit)
     write_json(root / "report.json", out)
     (root / "report.md").write_text(markdown(out))
@@ -782,6 +816,21 @@ def markdown(r: dict) -> str:
         for v, e in r["exports"].items():
             lines.append(f"| {v} | {'–' if e['bundle_tensor_mb'] is None else f'{e['bundle_tensor_mb']:.3f}'} |")
         lines.append("")
+    for model, variants in (r.get("palette") or {}).items():
+        for v, summ in variants.items():
+            nc = summ["not_converged"]
+            lines.append(f"Palette {model} {v}: {len(summ['tensors'])} tensors, "
+                         + (f"not converged within {summ['max_iterations']} iterations: {', '.join(nc)}" if nc
+                            else "all converged"))
+    lines.append("")
+    for model, m in r["models"].items():
+        for v, e in (m.get("variants") or {}).items():
+            for other, a in (e.get("against") or {}).items():
+                lines.append(f"{model} {v} against {other}: H4 Δ {a['h4_delta']:+.3f} [{a['h4_ci'][0]:+.3f}, "
+                             f"{a['h4_ci'][1]:+.3f}], worst H4 set {a['rule']['worst_set_delta']:+.3f} "
+                             f"({a['rule']['worst_set']}), token mismatch (dev) "
+                             f"{100 * a['token_mismatch_dev_pooled']['rate']:.2f}%")
+    lines.append("")
     for name, sets in (r.get("crosschecks") or {}).items():
         if sets:
             key = "identical_text" if "B0p" in name else "identical_tokens"

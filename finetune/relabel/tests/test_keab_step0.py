@@ -142,6 +142,40 @@ class Summary(unittest.TestCase):
         self.assertEqual(s["token_mismatch_dev_pooled"]["rate"], 0.0)
 
 
+class SecondBaseline(unittest.TestCase):
+    def test_w8a8_is_also_compared_with_s2(self):
+        self.assertEqual(k0.ALSO_AGAINST, {"S2-int8-w8a8": "S2-int8"})
+        n = 12
+        none = {s: result(records(s, [1] * n)) for s in k0.DEV_SETS}
+        s2 = {s: result(records(s, [1] * n)) for s in k0.DEV_SETS}
+        s2["ami_dev"] = result(records("ami_dev", [1] * (n - 1) + [2]))           # S2 costs one error on AMI
+        w8a8 = {s: result(records(s, [1] * n)) for s in k0.DEV_SETS}
+        w8a8["ami_dev"] = result(records("ami_dev", [1] * (n - 2) + [2, 2]))      # W8A8 one more
+        out = k0.compare_variant("MB1", "S2-int8-w8a8", w8a8, {"none": none, "S2-int8": s2}, {})
+        self.assertAlmostEqual(out["delta"]["ami_dev"], 200 / 120)
+        self.assertAlmostEqual(out["against"]["S2-int8"]["delta"]["ami_dev"], 100 / 120)
+        self.assertEqual(out["against"]["S2-int8"]["token_mismatch"]["ami_dev"]["mismatches"], 1)
+        self.assertEqual(out["token_mismatch"]["ami_dev"]["mismatches"], 2)
+        plain = k0.compare_variant("MB1", "S1-int8", s2, {"none": none, "S2-int8": s2}, {})
+        self.assertNotIn("against", plain)
+
+
+class PaletteReport(unittest.TestCase):
+    def test_iteration_limit_and_non_converged_tensors_are_reported(self):
+        import torch
+        from training import eightbit as eb
+        w = torch.randn(400, 400, generator=torch.Generator().manual_seed(3))
+        _, _, info = eb.palette_table(w, max_iterations=2)
+        self.assertEqual(info["iterations"], 2)
+        self.assertFalse(info["converged"])
+        summary = k0.palette_summary({"a.weight": {k: v for k, v in info.items() if k != "centroids"},
+                                      "b.weight": {"entries": 5, "iterations": 0, "converged": True,
+                                                   "max_abs_error": 0.0}})
+        self.assertEqual(summary["not_converged"], ["a.weight"])
+        self.assertEqual(summary["tensors"]["a.weight"]["iterations"], 2)
+        self.assertEqual(summary["max_iterations"], eb.PALETTE_MAX_ITERATIONS)
+
+
 class Paths(unittest.TestCase):
     def test_smoke_never_in_production(self):
         prod = k0.out_root(None)
