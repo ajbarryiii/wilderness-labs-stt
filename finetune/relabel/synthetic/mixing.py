@@ -105,20 +105,27 @@ def clip_order(n: int, seed: int, passes: int, first: int = 0) -> list[int]:
 
 
 def plan(real_seconds: Sequence[float], clip_seconds: Sequence[float], seed: int,
-         share: float = layout.SYNTHETIC_SHARE, once: bool = False, take_rest: bool = False) -> list[list[int]]:
+         share: float = layout.SYNTHETIC_SHARE, once: bool = False, take_rest: bool = False,
+         passes: int | None = None) -> list[list[int]]:
     """Per batch, the indices (into clip_seconds) of its synthetic clips (module docstring).
 
     once (b0prime plan v4 "Extra sources", a source drawn exactly once): one seeded pass (pass 0), never repeated:
     the draw stops when the pass is used up; with take_rest, the last batch also takes every clip not drawn yet (the
-    journal's last pool), so every clip is drawn exactly once. Without once the rule is the one above, unchanged."""
+    journal's last pool), so every clip is drawn exactly once. Without once the rule is the one above, unchanged.
+    passes (keab-prime plan v1.2, AMI distant microphone: each clip drawn exactly `passes` times): `passes` seeded
+    passes (0 .. passes - 1), never more: the draw stops when they are used up, and take_rest gives the last batch
+    every clip of them not drawn yet. once is passes = 1."""
     n = len(clip_seconds)
     if n == 0:
         raise ValueError("empty clip pool")
-    if take_rest and not once:
-        raise ValueError("take_rest belongs to a source drawn once")
+    if passes is not None and (once or int(passes) != passes or passes < 1):
+        raise ValueError(f"passes must be a positive integer, without once (got {passes!r})")
+    limit = 1 if once else (None if passes is None else int(passes))
+    if take_rest and limit is None:
+        raise ValueError("take_rest belongs to a source drawn a fixed number of times")
     need = share * float(sum(real_seconds))
-    passes = 1 if once else int(need / max(sum(clip_seconds), 1e-9)) + 2
-    order = clip_order(n, seed, passes)
+    n_passes = limit if limit is not None else int(need / max(sum(clip_seconds), 1e-9)) + 2
+    order = clip_order(n, seed, n_passes)
     cursor, carry, out = 0, 0.0, []
     for real in real_seconds:
         take: list[int] = []
@@ -127,7 +134,7 @@ def plan(real_seconds: Sequence[float], clip_seconds: Sequence[float], seed: int
             got = 0.0
             while True:
                 if cursor >= len(order):
-                    if once:
+                    if limit is not None:
                         break
                     order += clip_order(n, seed, 1, first=len(order) // n)
                 d = clip_seconds[order[cursor]]

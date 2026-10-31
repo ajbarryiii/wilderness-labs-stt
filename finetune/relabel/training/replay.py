@@ -37,6 +37,14 @@ A multi-source version 2 plan (training/batchplan.py compute_sources; b0prime pl
 ExtraSource per plan source, in the plan's order (its batchplan.Source, and the transform of its rows or None).
 Source s's rows are {"id": "<prefix><clip id>", "source": <name>, "duration", "audio", "label"}, served and checked
 as the synthetic rows above. synthetic_mask(b) marks every extra row.
+
+A version 3 plan (training/batchplan.py; keab-prime plan "Batch plan version 3") is served as a multi-source version 2
+plan. A pair source (a clip store with read_teacher, training/ami_store.PairStore: the AMI distant-microphone pairs)
+takes no transform; its rows are {"id": "<prefix><clip id>", "source": <name>, "duration", "audio" (the student's
+recording, SDM), "teacher_audio" (the teacher's recording of the same segment, IHM)} with no "label": their text is
+the label store's, through the run's labels (label_sources.Labels; ami_store.PairLabels), so a pair row can be
+rejected like a real one. label_mask(b) marks the rows whose text comes from the labels (real and pair rows); plan()
+counts a batch's optimizer step from those rows' labels and the rows that carry their own label.
 """
 from __future__ import annotations
 
@@ -176,10 +184,16 @@ class ExtraSource:
         self.source, self.transform = source, transform
         self.name, self.prefix, self.pool = source.name, source.prefix, source.clips
         self.clips = sorted(source.clips.clips, key=lambda c: c["id"])
+        self.pairs = callable(getattr(source.clips, "read_teacher", None))
+        if self.pairs and transform is not None:
+            raise ValueError(f"source {self.name}: a pair source takes no transform")
 
     def identity(self) -> dict:
         t = self.transform
-        return {**self.source.config(), "transform": None if t is None else getattr(t, "identity", repr(type(t)))}
+        out = {**self.source.config(), "transform": None if t is None else getattr(t, "identity", repr(type(t)))}
+        if self.pairs:
+            out["pairs"] = "student: the clip's recording; teacher: read_teacher; text: the label store's"
+        return out
 
 
 class PlannedReplay:
@@ -193,7 +207,7 @@ class PlannedReplay:
         from training.labels import needed_shards
         if audio not in self.AUDIO:
             raise ValueError(f"audio must be one of {self.AUDIO}")
-        multi = plan.version == batchplan.SYNTHETIC_VERSION and plan.multi_source
+        multi = plan.version in batchplan.MULTI_VERSIONS and plan.multi_source
         if multi != (sources is not None) or (synthetic is not None and sources is not None):
             raise ValueError("a multi-source plan needs its sources, and only a multi-source plan takes them")
         if not multi and (plan.version == batchplan.SYNTHETIC_VERSION) != (synthetic is not None):
@@ -263,6 +277,11 @@ class PlannedReplay:
     def synthetic_mask(self, b: int) -> list[bool]:
         return [(b, r) in self._syn for r in range(len(self.batches[b]))]
 
+    def label_mask(self, b: int) -> list[bool]:
+        """Per row of planned batch b: whether its text comes from the labels (a real or a pair row), not the row's
+        own stored label."""
+        return [(b, r) not in self._syn or self.extras[self._syn[(b, r)][0]].pairs for r in range(len(self.batches[b]))]
+
     def pool_of(self, b: int) -> int:
         return int(self._pool_of[b])
 
@@ -311,6 +330,9 @@ class PlannedReplay:
         a = x.pool.read(c["id"])
         if len(a) != samples:
             raise RuntimeError(f"{x.name} clip {c['id']}: {len(a)} samples, the plan has {samples}")
+        if x.pairs:
+            return {"id": f"{x.prefix}{c['id']}", "source": x.name, "duration": samples / 16000, "audio": a,
+                    "teacher_audio": x.pool.read_teacher(c["id"])}
         item = {"id": f"{x.prefix}{c['id']}", "source": x.name, "duration": samples / 16000, "audio": a,
                 "label": c["label"]}
         transform = self.synthetic_transform if self.synthetic is not None else x.transform   # 2c's may be swapped
@@ -327,20 +349,28 @@ def plan(replay: JournalReplay, labels, stop: int) -> dict:
     if stop > replay.through_batch:
         raise ValueError(f"stop {stop} beyond the replay's {replay.through_batch} batches")
     empty, occ, kept, syn, last = [], 0, 0, 0, None
+    pair_rows = pair_kept = 0
     for b in range(stop):
         ids = replay.batch_ids(b)
         mask = replay.synthetic_mask(b) if hasattr(replay, "synthetic_mask") else [False] * len(ids)
+        from_labels = replay.label_mask(b) if hasattr(replay, "label_mask") else [not m for m in mask]
         k = sum(labels.text(i) is not None for i, m in zip(ids, mask) if not m)
-        s = sum(mask)
-        occ += len(ids) - s
+        p = [labels.text(i) is not None for i, m, f in zip(ids, mask, from_labels) if m and f]
+        s = sum(m and not f for m, f in zip(mask, from_labels))
+        occ += len(ids) - sum(mask)
         kept += k
         syn += s
-        if k + s:
+        pair_rows += len(p)
+        pair_kept += sum(p)
+        if k + s + sum(p):
             last = b
         else:
             empty.append(b)
-    return {"stop_batch": int(stop), "steps": stop - len(empty), "empty_batches": empty, "occurrences": occ,
-            "kept_occurrences": kept, "synthetic_rows": syn, "last_step_batch": last}
+    out = {"stop_batch": int(stop), "steps": stop - len(empty), "empty_batches": empty, "occurrences": occ,
+           "kept_occurrences": kept, "synthetic_rows": syn, "last_step_batch": last}
+    if pair_rows:
+        out.update(pair_rows=pair_rows, kept_pair_rows=pair_kept)
+    return out
 
 
 class ReplayBatcher:

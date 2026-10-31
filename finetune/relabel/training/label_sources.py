@@ -33,7 +33,13 @@ Batcher (a training/replay.py ReplayBatcher) takes every row's text from Labels.
 its own "label" (an extra row) must carry the provider's stored label (raw). Cleaning versions (cleaning plan; the version enters
 the store identity, hence labels_sha256): 0 = no cleaning; 1 and 2 = training/cleaning.py's committed tables with the
 label run's choices artifact of that version (2: spelled-out acronyms and layer 0's punctuation transfer into T*'s
-labels, cleaning plan v6; stage 3 reads it).
+labels, cleaning plan v6; stage 3 reads it; CLEANING_VERSIONS are stage 3's); 3 = cleaning plan v7 (spellings keep their letters, dose units; the label
+run's acronym lexicon, in the choices artifact's directory; stages 4-5 read it). Layer1 at version 3 reads that lexicon
+too (layer 1's spelling rule; still no choices artifact and no donor).
+
+A pair row (training/replay.py: an AMI distant-microphone pair, served with "teacher_audio" and no label) takes its
+text from Labels.text like a real row (training/ami_store.PairLabels: its IHM id's label); the Batcher passes the
+teacher recordings on as batch["teacher_audio"] = {row: float32 samples} (only when the batch has a pair row).
 """
 from __future__ import annotations
 
@@ -44,7 +50,7 @@ from pathlib import Path
 from training import replay as treplay
 
 COMPOSITE_VERSION = 1
-CLEANING_VERSIONS = (0, 1, 2)
+CLEANING_VERSIONS = (0, 1, 2)       # stage 3's; stage 4 (train_keab.py) reads version 3 (cleaning_spec's versions)
 REJECT_NAME = "talk-text-reject"
 
 
@@ -52,11 +58,12 @@ def _sha(obj) -> str:
     return hashlib.sha256(json.dumps(obj, sort_keys=True, default=str).encode()).hexdigest()
 
 
-def cleaning_spec(labels_run: str, version: int):
-    """The label cleaning a run reads through at `version` (module docstring); None for version 0."""
+def cleaning_spec(labels_run: str, version: int, versions: tuple[int, ...] = CLEANING_VERSIONS):
+    """The label cleaning a run reads through at `version` (module docstring); None for version 0. `versions`: the
+    versions the calling stage reads (stage 3: CLEANING_VERSIONS; stage 4: (3,))."""
     from training import cleaning as tcleaning
-    if version not in CLEANING_VERSIONS:
-        raise ValueError(f"cleaning version {version} is not available in this checkout (versions {CLEANING_VERSIONS})")
+    if version not in versions:
+        raise ValueError(f"cleaning version {version} is not available in this checkout (versions {versions})")
     if version == 0:
         return None
     spec = tcleaning.production(labels_run, version)
@@ -146,13 +153,17 @@ class ClipLabels:
 
 
 class Layer1:
-    """Cleaning layer 1 alone at `version` as a label transform (module docstring, ClipLabels)."""
+    """Cleaning layer 1 alone at `version` as a label transform (module docstring, ClipLabels); version 3 reads the
+    acronym lexicon at lexicon_dir (the label run's, cleaning.production_dir(run, 3))."""
 
-    def __init__(self, version: int, label_set: str):
+    def __init__(self, version: int, label_set: str, lexicon_dir: Path | None = None):
         from training import cleaning
         if version not in cleaning.VERSIONS:
             raise ValueError(f"cleaning version {version} has no layer 1 here (versions {cleaning.VERSIONS})")
-        self.spec = cleaning.Cleaning.load(version=version)
+        if (version >= 3) != (lexicon_dir is not None):
+            raise ValueError(f"cleaning version {version}'s layer 1 {'needs' if version >= 3 else 'reads no'} "
+                             "acronym lexicon")
+        self.spec = cleaning.Cleaning.load(version=version, lexicon_dir=lexicon_dir)
         if self.spec.choices is not None or self.spec.needs_donor(label_set):
             raise RuntimeError("layer 1 alone reads no choices artifact and no B0 donor")
         self.label_set = label_set
@@ -162,9 +173,9 @@ class Layer1:
         return self.spec.clean(text, clip_id, self.label_set)
 
 
-def layer1(version: int, label_set: str) -> Layer1 | None:
+def layer1(version: int, label_set: str, lexicon_dir: Path | None = None) -> Layer1 | None:
     """Layer1 at the run's cleaning version; None at version 0 (no cleaning)."""
-    return None if version == 0 else Layer1(version, label_set)
+    return None if version == 0 else Layer1(version, label_set, lexicon_dir)
 
 
 class Labels:
@@ -220,4 +231,7 @@ class Batcher(treplay.ReplayBatcher):
             raise RuntimeError("extra clips come through the plan (version 2), not appended after the cut")
         batch = train.collate(items)
         batch.update(index=b, position_after={"batch": b + 1}, labels=texts, extra_rows=0)
+        teacher = {r: it["teacher_audio"] for r, it in enumerate(items) if "teacher_audio" in it}
+        if teacher:
+            batch["teacher_audio"] = teacher
         return batch

@@ -107,10 +107,13 @@ def time_region(replay, start: int, stop: int, max_seconds: float) -> dict:
 
 
 def region_extra_files(replay, start: int, stop: int) -> list[str]:
-    """The audio files of the extra-source rows (a version 2 plan's clip stores) of planned batches [start, stop),
-    so a region starts cold for them too."""
+    """The audio files of the extra-source rows (a version 2 or 3 plan's clip stores; both recordings of a pair) of
+    planned batches [start, stop), so a region starts cold for them too."""
     rows = getattr(replay, "_syn", None) or {}
-    return sorted({c["audio_filepath"] for (t, _), (_, c, _, _) in rows.items() if start <= t < stop})
+    files = {c["audio_filepath"] for (t, _), (_, c, _, _) in rows.items() if start <= t < stop}
+    files |= {c["ihm_audio_filepath"] for (t, _), (_, c, _, _) in rows.items()        # a pair's teacher recording
+              if start <= t < stop and "ihm_audio_filepath" in c}
+    return sorted(files)
 
 
 def run(plan, pool_dir: Path, store: Path, regions: list[tuple[int, int]], readers: list[str],
