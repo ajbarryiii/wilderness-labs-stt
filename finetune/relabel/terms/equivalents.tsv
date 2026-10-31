@@ -1,0 +1,13 @@
+# Term-recall equivalences (labeling plan Part A, cleaning plan v7 "Scoring changes" 1; terms.Matcher,
+# score_domain.term_occurrences). One group per line, "form<TAB>form[<TAB>...]", written as the evaluation normalizer
+# writes them ("mg kg" is how "mg/kg" normalizes). A reference occurrence of a listed term that directly follows a
+# number token (after normalization: "five hundred milligrams" is "500 milligrams") is reproduced by any form of its
+# group at the aligned position, in either direction ("500 mg" reproduces "500 milligrams", and the reverse). Only
+# listed terms are occurrences; forms that are not listed terms today ("ml", "mmhg") are left out. Approved by AJ:
+# mg; confirmed 2026-10-30: mcg, meq, mmol and the "per" forms.
+mg	milligram	milligrams
+mcg	microgram	micrograms
+meq	milliequivalents
+mmol	millimoles
+mg kg	milligrams per kilogram
+mcg kg	micrograms per kilogram

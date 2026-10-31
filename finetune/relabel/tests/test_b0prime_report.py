@@ -59,8 +59,10 @@ class StyleNeutral(unittest.TestCase):
 
 
 class StyleBootstrap(unittest.TestCase):
-    """The style-neutral intervals: each model keeps its own canonical reference words (an acronym run is joined
-    where the other side wrote the word), in the points and in every replicate; otherwise bootstrap.paired's rule."""
+    """The style-neutral intervals: each model keeps its own canonical reference words, in the points and in every
+    replicate; otherwise bootstrap.paired's rule. Contract change (cleaning plan v7 "Scoring changes" 2): the acr
+    canonicalizer no longer reads the other side (no counting rule), so every model's canonical reference words are
+    the same; the bootstrap still keeps each model's own, which now agree."""
 
     def recs(self):
         refs = {"s1-a": "call a p i now the cat", "s1-b": "the dog ran", "s2-a": "use the s q l table now",
@@ -74,7 +76,7 @@ class StyleBootstrap(unittest.TestCase):
         r0, r1 = self.recs()
         scored = {"B0": sm.score_records(r0), "B0p": sm.score_records(r1)}
         table = rep.variant_table(scored, "acr", lambda i: i.split("-")[0])
-        self.assertNotEqual(table["words"]["B0"].tolist(), table["words"]["B0p"].tolist())
+        self.assertEqual(table["words"]["B0"].tolist(), table["words"]["B0p"].tolist())
         res = rep.variant_bootstrap({"x": table}, ("B0p", "B0"), ["x"], replicates=500)
         for m in ("B0", "B0p"):
             self.assertAlmostEqual(res["wer"]["x"][m], scored[m]["wer"]["acr"])

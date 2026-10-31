@@ -13,12 +13,16 @@ Stable API (imported by Part B):
     categories(kind) -> list[str]       the category files of a kind, in a fixed order
     load(kind, only=None)               the terms as written, de-duplicated (case-insensitive), in category
                                         then file order
-    Matcher(terms, normalize)           .find(tokens) -> [Occurrence(start, end, phrase)]: greedy longest
+    Matcher(terms, normalize, equivalents=None)
+                                        .find(tokens) -> [Occurrence(start, end, phrase)]: greedy longest
                                         match, left to right, non-overlapping, over normalized word tokens
                                         (`end` exclusive); .count(tokens) -> int; .variants(phrase) and
-                                        .groups(): the listed spelling variants of a term (below)
+                                        .groups(): the listed spelling variants of a term (below);
+                                        .equivalents(phrase): its forms after a number (below)
     matcher(kind, normalize=None)       a Matcher over load(kind); `normalize` defaults to the evaluation
                                         normalizer (finetune/parakeet-ternary/evaluate.py normalize)
+    load_equivalents(path=None)         the groups of terms/equivalents.tsv
+    NUMBER                              a number token after normalization ("500", "2.5")
 
 A term is matched in its normalized form (the same normalizer as the references), so spelling variants the
 normalizer unifies (British/American spellings, number words, a hyphen versus a space) match the same tokens.
@@ -30,15 +34,26 @@ matches a listed single word, and an unlisted joined form never matches a listed
 lists every attested form it wants scored (reviewed for collisions). score_domain.term_occurrences counts an
 occurrence once, whichever listed form it has, and accepts any listed form of the same term in the hypothesis. Terms that normalize to
 nothing or to a single character are dropped by the Matcher (reported in Matcher.dropped).
+
+Equivalences after a number (cleaning plan v7 "Scoring changes" 1, a contract change approved by AJ 2026-10-30):
+terms/equivalents.tsv groups a dose unit with its abbreviation ("mg", "milligram", "milligrams"; "mg kg", how
+"mg/kg" normalizes, with "milligrams per kilogram"). Matcher.equivalents(phrase) gives every form of the phrase's group
+(normalized; with their listed variants), or () outside every group; score_domain.term_occurrences accepts them for a
+reference occurrence that directly follows a NUMBER token. Every Matcher reads the committed table unless given
+`equivalents` (an iterable of groups of forms; () for none). The groups never add occurrences: only listed terms are
+found.
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable
 
 HERE = Path(__file__).resolve().parent
 KINDS = ("medical", "technical")
+EQUIVALENTS_FILE = HERE / "equivalents.tsv"
+NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
 _CATEGORIES = {
     "medical": ("drugs", "anatomy", "procedures", "conditions", "dosages_units", "tccc"),
     "technical": ("computing", "engineering", "science", "finance"),
@@ -83,6 +98,26 @@ def variant_key(phrase: tuple[str, ...]) -> str:
     return "".join(phrase)
 
 
+_EQUIVALENTS: dict = {}
+
+
+def load_equivalents(path: Path | None = None) -> list[list[str]]:
+    """The groups of the equivalence table (one per line, forms separated by one TAB; "#" comments)."""
+    path = EQUIVALENTS_FILE if path is None else Path(path)
+    key = str(path)
+    if key not in _EQUIVALENTS:
+        groups = []
+        for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if not line.strip() or line.lstrip().startswith("#"):
+                continue
+            forms = [f.strip() for f in line.split("\t")]
+            if len(forms) < 2 or not all(forms):
+                raise ValueError(f"{path.name}:{n}: a group needs two or more forms separated by one TAB")
+            groups.append(forms)
+        _EQUIVALENTS[key] = groups
+    return [list(g) for g in _EQUIVALENTS[key]]
+
+
 @dataclass(frozen=True)
 class Occurrence:
     start: int   # first token index
@@ -93,7 +128,8 @@ class Occurrence:
 class Matcher:
     """Greedy longest-match finder of normalized term phrases in a normalized token sequence."""
 
-    def __init__(self, terms: Iterable[str], normalize: Callable[[str], str]) -> None:
+    def __init__(self, terms: Iterable[str], normalize: Callable[[str], str],
+                 equivalents: Iterable[Iterable[str]] | None = None) -> None:
         self.phrases: dict[tuple[str, ...], str] = {}
         self.dropped: list[str] = []
         for term in terms:
@@ -111,10 +147,23 @@ class Matcher:
         for phrase in self.phrases:
             by_key.setdefault(variant_key(phrase), []).append(phrase)
         self._variants = {k: tuple(sorted(v)) for k, v in by_key.items()}
+        self._equivalents: dict[str, tuple[tuple[str, ...], ...]] = {}
+        for group in (load_equivalents() if equivalents is None else equivalents):
+            forms = {tuple(normalize(f).split()) for f in group} - {()}
+            for p in list(forms):
+                forms.update(self._variants.get(variant_key(p), ()))
+            for p in forms:
+                key = variant_key(p)
+                self._equivalents[key] = tuple(sorted(set(self._equivalents.get(key, ())) | forms))
 
     def variants(self, phrase: tuple[str, ...]) -> tuple[tuple[str, ...], ...]:
         """Every listed phrase that is a variant of `phrase` (itself included), sorted."""
         return self._variants.get(variant_key(tuple(phrase)), ())
+
+    def equivalents(self, phrase: tuple[str, ...]) -> tuple[tuple[str, ...], ...]:
+        """Every form equivalent to `phrase` after a number token (itself included), sorted; () outside every group of
+        the equivalence table."""
+        return self._equivalents.get(variant_key(tuple(phrase)), ())
 
     def groups(self) -> dict[str, tuple[tuple[str, ...], ...]]:
         """The variant groups with more than one listed form: {variant key: phrases}."""

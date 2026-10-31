@@ -409,7 +409,8 @@ def markdown_v4(g: dict) -> list[str]:
     import style_metrics as sm
     L = ["", "## Style-neutral WER (v4)", "",
          "Canonicalizers applied identically to reference and hypothesis (style_metrics): acr (acronym runs), cmp "
-         "(compound list), dis (fillers, false starts, repetitions), all. B0′ − B0 per variant, 90% paired "
+         "(compound list), dis (fillers, false starts, repetitions), unit (dose units after a number), all. B0′ − B0 "
+         "per variant, 90% paired "
          "cluster-bootstrap interval:", "", "| Variant | H4 B0 | H4 B0′ | B0′ − B0 (H4) |", "|---|---:|---:|---:|"]
     for v in sm.VARIANTS:
         c = g["style_neutral"]["contrast"].get(v) or {}
