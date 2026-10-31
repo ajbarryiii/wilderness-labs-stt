@@ -6,6 +6,9 @@ Prompts (make_prompts, seeded, written once to runs/<run>/prompts.jsonl):
   from a seeded cycle over the domain's targeted terms (reshuffled each pass) so that every targeted term is
   requested about equally often; the terms of one prompt are from different groups;
 - registers take turns per domain (conversational, explanatory, dictated notes).
+Run pairs (synthetic plan v5; synthetic/pairs.py) writes its own prompts; its contrast prompts ("kind": "contrast")
+ask for both terms of a pair as two different things (CONTRAST_USER, the same rules), naming both fields when the
+pair crosses domains.
 
 Generation (generate_chunk): the pinned open-weights generator (alias syn-textgen) runs locally through
 transformers in bf16, chat template with thinking off, sampling with the model card's non-thinking settings,
@@ -44,6 +47,8 @@ Rules:
 - Do not mention medicine, health, patients, drugs or the human body.
 - Use between eight and forty words.
 Output only the sentence, without quotes."""
+CONTRAST_USER = ("Write one natural English sentence that {register}, in {field}. It must use both of these terms "
+                 "naturally, as two different things: {terms}.\n" + USER[USER.index("Rules:"):])
 
 
 def _rng(*parts) -> random.Random:
@@ -83,6 +88,11 @@ def make_prompts(split, n: int, seed: int, run: str) -> list[dict]:
 
 
 def prompt_text(p: dict) -> str:
+    if p.get("kind") == "contrast":
+        names = list(dict.fromkeys(DOMAIN_NAMES[d] for d in p.get("domains") or [p["domain"]]))
+        field = f"the field of {names[0]}" if len(names) == 1 else f"the fields of {' and '.join(names)}"
+        return CONTRAST_USER.format(register=REGISTER_TEXT[p["register"]], field=field,
+                                    terms=" and ".join(f'"{t}"' for t in p["requested"]))
     terms = ", ".join(f'"{t}"' for t in p["requested"])
     return USER.format(register=REGISTER_TEXT[p["register"]], domain=DOMAIN_NAMES[p["domain"]],
                        these="this term" if len(p["requested"]) == 1 else "these terms", terms=terms)

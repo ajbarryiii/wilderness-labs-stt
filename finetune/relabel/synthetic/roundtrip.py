@@ -151,8 +151,11 @@ def _rate(c: Counter) -> dict:
             "rate": c["reproduced"] / c["occurrences"] if c["occurrences"] else None}
 
 
-def finalize(run_dir: Path, split, listen: bool = True, lexicon=None) -> dict:
+def finalize(run_dir: Path, split, listen: bool = True, lexicon=None, split_path: Path | None = None) -> dict:
+    """split_path: the file of `split`, the split the run's hygiene ran under (default split.json; split v3 for the
+    rounds of run pairs, layout.run_split_path)."""
     from synthetic import pronounce
+    split_path = layout.split_path() if split_path is None else Path(split_path)
     lexicon = pronounce.Lexicon.load() if lexicon is None else lexicon
     pron_path = run_dir / "pronunciation.json"
     pron = json.loads(pron_path.read_text()) if pron_path.exists() else None
@@ -300,11 +303,11 @@ def finalize(run_dir: Path, split, listen: bool = True, lexicon=None) -> dict:
                                                  for k in ("all", "kept", "rejected") for side in ("targeted", "heldout")}
     write_jsonl(run_dir / "clips.jsonl", clips)
     meta = {"clips": len(clips), "hours": kept / 3600, "clips_sha256": _sha256(run_dir / "clips.jsonl"),
-            "split_sha256": _sha256(layout.split_path()), "hygiene_heldout": hyg["heldout"],
+            "split_sha256": _sha256(split_path), "hygiene_heldout": hyg["heldout"],
             "hygiene_sha256": _sha256(run_dir / "hygiene.json"), "sentences_sha256": _sha256(run_dir / "sentences.jsonl"),
             "excluded_by_current_hygiene": excluded[:1000],
             "hygiene_split_sha256": hyg.get("split_sha256"),
-            "split_stale": hyg.get("split_sha256") != _sha256(layout.split_path()),
+            "split_stale": hyg.get("split_sha256") != _sha256(split_path),
             "provisional": bool(hyg["heldout"]["provisional"]), "roundtrip_max_wer": layout.ROUNDTRIP_MAX_WER}
     (run_dir / "clips.meta.json").write_text(json.dumps(meta, indent=1) + "\n")
     (run_dir / "report.json").write_text(json.dumps(report, indent=1) + "\n")

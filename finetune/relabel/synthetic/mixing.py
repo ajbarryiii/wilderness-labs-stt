@@ -1,7 +1,9 @@
 """The synthetic clip source of the TS / TSn arms (synthetic plan "Mixing"), for training/replay.py's `extra`.
 
 ClipPool.load(run): the kept clips of a generation run (runs/<run>/clips.jsonl, checked against clips.meta.json;
-a provisional run, whose hygiene lacked eval-ext or eval-stem, is refused for training).
+a provisional run, whose hygiene lacked eval-ext or eval-stem, is refused for training). Its hygiene must have run
+under the consumer's term split (split_path; default split.json), or (synthetic plan v5, split v3) under that split's
+base, with every clip's label passing the split's held-out guard (pairs.recheck; a failing clip refuses the pool).
 
 plan(real_seconds, clip_seconds, seed, share): the fixed, seeded assignment of synthetic clips to consumed batches.
 - Clip order: a seeded permutation of the pool (pass 0), then a new seeded permutation for each further pass, so
@@ -52,10 +54,11 @@ class ClipPool:
 
     @classmethod
     def load(cls, run: str | Path, allow_provisional: bool = False, verify_audio: bool = True,
-             synthetic_hygiene: bool = True) -> "ClipPool":
+             synthetic_hygiene: bool = True, split_path: Path | None = None) -> "ClipPool":
         """A clip store's kept clips. synthetic_hygiene=False: a store in the same format from another source (b0prime
         plan v4 "Extra sources"), which has no synthetic term split to check; its manifest is still checked, and its
-        meta must say it is complete."""
+        meta must say it is complete. split_path: the term split the consumer trains under (default split.json); a
+        pool of its base split is accepted if every label passes its held-out guard (module docstring)."""
         d = layout.run_dir(run) if isinstance(run, str) else Path(run)
         meta = json.loads((d / "clips.meta.json").read_text())
         data = (d / "clips.jsonl").read_bytes()
@@ -68,11 +71,16 @@ class ClipPool:
             if meta.get("complete") is not True:
                 raise RuntimeError(f"{d}: the clip source is not complete (clips.meta.json)")
             return cls(read_jsonl(d / "clips.jsonl"), identity=sha, verify_audio=verify_audio)
-        current = hashlib.sha256(layout.split_path().read_bytes()).hexdigest() if layout.split_path().exists() else None
+        path = layout.split_path() if split_path is None else Path(split_path)
+        current = hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else None
+        clips = read_jsonl(d / "clips.jsonl")
         if (meta.get("hygiene_split_sha256") is None or meta["hygiene_split_sha256"] != current) and not allow_provisional:
-            raise RuntimeError(f"{d}: hygiene did not run under the current term split (split_sha256 "
-                               f"{meta.get('hygiene_split_sha256')} vs {current}); rerun hygiene and finalize")
-        return cls(read_jsonl(d / "clips.jsonl"), identity=sha, verify_audio=verify_audio)
+            if split_path is None:
+                raise RuntimeError(f"{d}: hygiene did not run under the current term split (split_sha256 "
+                                   f"{meta.get('hygiene_split_sha256')} vs {current}); rerun hygiene and finalize")
+            from synthetic import pairs
+            pairs.recheck(clips, path, meta.get("hygiene_split_sha256"))
+        return cls(clips, identity=sha, verify_audio=verify_audio)
 
     def read(self, clip_id: str) -> np.ndarray:
         import soundfile as sf

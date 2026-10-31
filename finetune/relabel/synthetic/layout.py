@@ -3,12 +3,16 @@
 Roots come from the environment (./python fills it from private/local.env). Everything stage 2c writes is under
 $RELABEL_ROOT:
 
-    synthetic/terms/split.json              the frozen term split (targeted / held out, by group)
+    synthetic/terms/split.json              the frozen term split (targeted / held out, by group; version 2)
+    synthetic/terms/split.v<N>.json         split versions of record: split.v2.json (a copy of split.json, stages 2c
+                                             and 3) and split.v3.json (synthetic plan v5: confusable pairs; pairs.py)
     synthetic/terms/raw/<alias>/             knowledge-base query results used to write the term lists
     synthetic/engines/<alias>/               TTS model files (downloads, verified)
     synthetic/sources/<alias>/               noise and RIR downloads (download/) and extracted files
     synthetic/noise/pool.json                the TRAIN noise/RIR pool (augmentation), with audio/ (16 kHz clips)
-    synthetic/runs/<run>/                    one generation run ("pilot", "pilot2", "full"):
+    synthetic/v5/                            confusable pairs (plan v5): label word counts, the detector's candidates
+    synthetic/runs/<run>/                    one generation run ("pilot", "pilot2", "full"; "pairs" is generated in
+                                             rounds pairs-r1..r3, in runs/pairs/r1..r3, and joined in runs/pairs/):
         prompts.jsonl                        the seeded prompts
         text/<chunk>.jsonl                   raw generator outputs, one file per chunk job
         sentences.jsonl, hygiene.json        sentences after hygiene, and the hygiene report
@@ -41,7 +45,9 @@ LISTEN_KEPT, LISTEN_REJECTED = 50, 20   # per domain
 FULL_SENTENCES = 135_000
 PILOT_HOURS = 5.0
 SEED = 20261025
-RUNS = ("pilot", "pilot2", "full")   # pilot2: the pilot's sentences re-rendered with the pronunciation layer
+PAIRS_RUN = "pairs"                  # synthetic plan v5: confusable pairs, under split v3
+PAIRS_ROUNDS = ("pairs-r1", "pairs-r2", "pairs-r3")
+RUNS = ("pilot", "pilot2", "full", PAIRS_RUN) + PAIRS_ROUNDS   # pilot2: the pilot's sentences, pronunciation layer
 
 TEXTGEN = "syn-textgen"
 TTS_ENGINES = ("syn-tts-a", "syn-tts-b")
@@ -82,6 +88,19 @@ def split_path() -> Path:
     return terms_dir() / "split.json"
 
 
+def split_version_path(version: int) -> Path:
+    return terms_dir() / f"split.v{int(version)}.json"
+
+
+def run_split_path(run: str) -> Path:
+    """The split a run's hygiene runs under: split v3 for run pairs and its rounds, else split.json."""
+    return split_version_path(3) if run == PAIRS_RUN or run in PAIRS_ROUNDS else split_path()
+
+
+def v5_dir() -> Path:
+    return base() / "v5"
+
+
 def engine_dir(alias: str) -> Path:
     return base() / "engines" / alias
 
@@ -97,6 +116,8 @@ def noise_dir() -> Path:
 def run_dir(run: str) -> Path:
     if run not in RUNS:
         raise ValueError(f"unknown production run {run!r} ({', '.join(RUNS)})")
+    if run in PAIRS_ROUNDS:
+        return base() / "runs" / PAIRS_RUN / run.rsplit("-", 1)[1]
     return base() / "runs" / run
 
 
