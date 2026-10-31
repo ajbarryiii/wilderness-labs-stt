@@ -17,9 +17,23 @@
     roundtrip --run R         T* transcription chunk job (GPU, lock held)
     finalize --run R          clips.jsonl, report.json, listening sample (CPU)
 
---run is "pilot", "pilot2" (the pilot's sentences re-rendered with the pronunciation layer) or "full" (production,
-$RELABEL_ROOT/synthetic/runs/<run>/); --smoke NAME instead writes
-everything to $RELABEL_ROOT/smoke/synthetic/<NAME>/ (never a production path).
+Confusable pairs (synthetic plan v5; synthetic/confusable.py, synthetic/pairs.py, synthetic/pair_metrics.py):
+    pairs-words               word counts over main-f3's T* training labels (CPU job)
+    pairs-detect              the detector: $RELABEL_ROOT/synthetic/v5/candidates.json for the blind curator (CPU)
+    pairs-split               split v3 from the curated terms/synthetic/pairs.tsv (and split.v2.json, once)
+    pairs-check-full          full's clips under v3's held-out guard (CPU)
+    pairs-coverage            coverage under v3 (synthetic/terms/coverage.v3.json; reads references)
+    pairs-prompts --round K   round K's prompts from the need left by rounds 1..K-1 (CPU)
+    textgen, tts-plan, tts, roundtrip, finalize --run pairs-rK   as for any run
+    pairs-hygiene --round K   round K's hygiene under v3 and its selection (CPU; instead of hygiene)
+    pairs-finalize            run pairs: the rounds' clips joined, report.json with the shortfalls (CPU)
+    (pairs-prompts, pairs-hygiene, pairs-finalize --run pairs-c: the contrast top-up, plan v5.2; rounds pairs-c-rK)
+    pairs-metrics --model NAME TECH_DIR STEM_DIR ... [--contrast A B] --out NAME   metrics from saved hypotheses (CPU)
+
+--run is "pilot", "pilot2" (the pilot's sentences re-rendered with the pronunciation layer), "full" or a round of run
+pairs or pairs-c, "pairs-r1".."pairs-r3", "pairs-c-r1".."pairs-c-r3" (production, $RELABEL_ROOT/synthetic/runs/<run>/,
+a round in runs/<pairs run>/r<K>/);
+--smoke NAME instead writes everything to $RELABEL_ROOT/smoke/synthetic/<NAME>/ (never a production path).
 """
 from __future__ import annotations
 
@@ -43,7 +57,20 @@ def run_dir(args) -> Path:
         d = layout.smoke_dir(args.smoke)
         assert not layout.is_production(d)
         return d
+    if args.run in layout.PAIRS_RUNS:
+        raise SystemExit(f"run {args.run} is generated in rounds: --run {args.run}-r1 .. {args.run}-r3; "
+                         f"pairs-finalize --run {args.run} joins them")
     return layout.run_dir(args.run)
+
+
+def refuse_pairs(args, instead: str) -> None:
+    if getattr(args, "run", None) in layout.ROUND_RUNS:
+        raise SystemExit(f"{args.run}: run pairs uses {instead}")
+
+
+def split_of(args) -> Path:
+    """The split file a run's hygiene runs under (layout.run_split_path; split.json for smoke runs)."""
+    return layout.run_split_path(args.run) if getattr(args, "run", None) else layout.split_path()
 
 
 class _NoLock:
@@ -71,6 +98,7 @@ def write_json(path: Path, obj) -> None:
 
 def cmd_prompts(args) -> int:
     from synthetic import textgen, vocab
+    refuse_pairs(args, "pairs-prompts --round K")
     d = run_dir(args)
     p = d / "prompts.jsonl"
     split = vocab.Split.load()
@@ -92,7 +120,7 @@ def _sha(path: Path) -> str:
 
 
 def cmd_textgen(args) -> int:
-    from synthetic import textgen
+    from synthetic import pairs, textgen
     textgen.placement(args.device)    # accelerate on sys.path before score_teacher imports transformers
     import score_teacher
     d = run_dir(args)
@@ -105,7 +133,8 @@ def cmd_textgen(args) -> int:
                 log(f"batch {batch}, declared VRAM {declared} GB (probe peak + {textgen.DECLARE_MARGIN_GB} GB)")
             declared = None if declared is None else float(declared)
             gen = textgen.Generator(args.device, declared, batch)
-            res = textgen.generate_chunk(d, gen, layout.SEED, args.budget_minutes, log)
+            res = textgen.generate_chunk(d, gen, layout.SEED, args.budget_minutes, log,
+                                         stream=pairs.text_stream(args.run) if args.run else None)
     except score_teacher.LockBusy as busy:
         print(f"refused: {busy}", file=sys.stderr)
         return LOCK_BUSY_EXIT
@@ -155,6 +184,7 @@ def cmd_textgen_probe(args) -> int:
 def cmd_hygiene(args) -> int:
     from labeling.filters import Coverage, b0_tokenizer_file
     from synthetic import hygiene, textgen, vocab
+    refuse_pairs(args, "pairs-hygiene --round K")
     d = run_dir(args)
     prompts = textgen.read_jsonl(d / "prompts.jsonl")
     missing = [s for s, _ in textgen.blocks(len(prompts)) if not (d / "text" / f"{s:07d}.jsonl").exists()]
@@ -180,7 +210,7 @@ def cmd_forms_dry_run(args) -> int:
     from collections import Counter
     from synthetic import forms, pronounce, textgen, vocab
     d = run_dir(args)
-    f, lex, split = forms.Forms.load(), pronounce.Lexicon.load(), vocab.Split.load()
+    f, lex, split = forms.Forms.load(), pronounce.Lexicon.load(), vocab.Split.load(split_of(args))
     n = vocab.default_normalize()
     med = vocab.medical_matcher(n)
     sents = textgen.read_jsonl(d / "sentences.jsonl")
@@ -229,6 +259,9 @@ def cmd_reuse_text(args) -> int:
     forms. Refuses a target whose text differs."""
     import shutil
     from synthetic import textgen
+    refuse_pairs(args, "its own text")
+    if args.source in layout.PAIRS_RUNS or args.source in layout.ROUND_RUNS:
+        raise SystemExit("run pairs' text is not reused")
     src, d = layout.run_dir(args.source), run_dir(args)
     if src.resolve() == d.resolve():
         raise SystemExit("--from and the target are the same run")
@@ -337,8 +370,126 @@ def cmd_roundtrip(args) -> int:
 def cmd_finalize(args) -> int:
     from synthetic import pronounce, roundtrip, vocab
     d = run_dir(args)
-    report = roundtrip.finalize(d, vocab.Split.load(), listen=not args.no_listen, lexicon=pronounce.Lexicon.load())
+    sp = split_of(args)
+    report = roundtrip.finalize(d, vocab.Split.load(sp), listen=not args.no_listen, lexicon=pronounce.Lexicon.load(),
+                                split_path=sp)
     log(json.dumps(report["total"]))
+    return 0
+
+
+# ----------------------------------------------------------------------------- confusable pairs (plan v5)
+
+def cmd_pairs_words(args) -> int:
+    from synthetic import confusable
+    res = confusable.build_words(version=args.cleaning_version, log=log)
+    lab = res["labels"]
+    log(json.dumps({"tokens": res["tokens"], "distinct": res["distinct"]} |
+                   {k: lab[k] for k in ("run", "through_batch", "cleaning_version", "records", "kept", "labels_counted",
+                                        "store_identity_sha256")}))
+    return 0
+
+
+def cmd_pairs_detect(args) -> int:
+    from synthetic import confusable
+    out = confusable.run()
+    log(json.dumps(out["summary"]))
+    return 0
+
+
+def cmd_pairs_split(args) -> int:
+    from synthetic import pairs
+    v3 = pairs.freeze_v3()
+    log(json.dumps({"moved": len(v3["moved"]), "pairs": len(v3["pairs"]),
+                    "trained": sum(p["trained"] for p in v3["pairs"]), "counts": v3["counts"], "groups": v3["groups"],
+                    "dev_informed_groups": v3["dev_informed_groups"]}))
+    return 0
+
+
+def cmd_pairs_check_full(args) -> int:
+    from synthetic import pairs
+    log(json.dumps(pairs.check_full()))
+    return 0
+
+
+def cmd_pairs_coverage(args) -> int:
+    from synthetic import coverage, pairs
+    res = coverage.run(pairs.load_v3(), out=layout.terms_dir() / "coverage.v3.json")
+    log(json.dumps({"totals": res["totals"], "underpowered": res["underpowered"], "missing": res["missing_parts"]}))
+    return 0
+
+
+def cmd_pairs_prompts(args) -> int:
+    from synthetic import pairs, textgen
+    split = pairs.load_v3()
+    spec = pairs.load_spec(split)
+    state = pairs.state_before(spec, split, args.round, args.run)
+    prompts = pairs.round_prompts(spec, split, state, args.round, run=args.run)
+    if not prompts:
+        log(f"round {args.round}: no remaining need; nothing written (run pairs-finalize)")
+        return 0
+    d = pairs.round_dir(args.round, args.run)
+    p = d / "prompts.jsonl"
+    if p.exists():
+        if textgen.read_jsonl(p) != prompts:
+            raise SystemExit(f"{p} exists and differs (prompts are written once per round)")
+        return 0
+    textgen.write_jsonl(p, prompts)
+    write_json(d / "run.json", {"run": f"{args.run}-r{args.round}", "prompts": len(prompts),
+                                "seed": layout.SEED, "split_sha256": _sha(layout.split_version_path(3)),
+                                "need": pairs.shortfalls(spec, state),
+                                "created": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
+    kinds = {k: sum(x["kind"] == k for x in prompts) for k in ("contrast", "single")}
+    log(f"round {args.round}: {len(prompts)} prompts {kinds} -> {p}")
+    return 0
+
+
+def cmd_pairs_hygiene(args) -> int:
+    from collections import Counter
+    from labeling.filters import Coverage, b0_tokenizer_file
+    from synthetic import hygiene, pairs, textgen, vocab
+    d = pairs.round_dir(args.round, args.run)
+    prompts = textgen.read_jsonl(d / "prompts.jsonl")
+    missing = [s for s, _ in textgen.blocks(len(prompts)) if not (d / "text" / f"{s:07d}.jsonl").exists()]
+    if missing:
+        raise SystemExit(f"{len(missing)} text blocks missing (finish textgen first)")
+    records = [r for s, _ in textgen.blocks(len(prompts)) for r in textgen.read_jsonl(d / "text" / f"{s:07d}.jsonl")]
+    split = pairs.load_v3()
+    spec = pairs.load_spec(split)
+    state = pairs.state_before(spec, split, args.round, args.run)
+    normalize = vocab.default_normalize()
+    coverage = Coverage(b0_tokenizer_file(layout.relabel_root() / "caches" / "b0-tokenizer"))
+    sets, record = hygiene.heldout_sets()
+    kept, report, rows = pairs.hygiene(records, split, vocab.medical_matcher(normalize), normalize, coverage, sets,
+                                       record, prior=pairs.prior_sentences(args.round, args.run))
+    selected, decisions = pairs.select(kept, {p["id"]: p for p in prompts}, spec, split, state)
+    summary = dict(Counter(x["decision"] for x in decisions.values()))
+    textgen.write_jsonl(d / "hygiene_rows.jsonl", rows)
+    textgen.write_jsonl(d / "hygiene_kept.jsonl", kept)
+    textgen.write_jsonl(d / "sentences.jsonl", sorted(selected, key=lambda x: x["id"]))
+    write_json(d / "selection.json", {"summary": summary, "decisions": decisions,
+                                      "counts_before": pairs.shortfalls(spec, state)})
+    write_json(d / "hygiene.json", report | {"split_sha256": _sha(layout.split_version_path(3)),
+                                             "selection": summary})
+    log(f"pairs hygiene round {args.round}: kept {report['kept']} of {report['generated']}; reasons "
+        f"{report['reasons']}; selected {len(selected)} {summary}; provisional={record['provisional']}")
+    return 0
+
+
+def cmd_pairs_finalize(args) -> int:
+    from synthetic import pairs
+    split = pairs.load_v3()
+    rep = pairs.finalize_run(pairs.load_spec(split), split, args.run)
+    log(json.dumps(rep["total"]))
+    return 0
+
+
+def cmd_pairs_metrics(args) -> int:
+    from synthetic import pair_metrics
+    models = {name: (Path(tech), Path(stem)) for name, tech, stem in args.model}
+    contrasts = {f"{a}-{b}": (a, b) for a, b in args.contrast or []}
+    res = pair_metrics.main(models, contrasts, args.out)
+    log(json.dumps({g: res["groups"][g]["recall"] for g in ("stable-heldout", "pair-recall", "pair-recall-no-seed",
+                                                            "partner-substitution", "near-forms")}))
     return 0
 
 
@@ -409,6 +560,20 @@ def main(argv=None) -> int:
     q = sub.add_parser("finalize")
     run_args(q)
     q.add_argument("--no-listen", action="store_true")
+    q = sub.add_parser("pairs-words")
+    q.add_argument("--cleaning-version", type=int, help="default: training.cleaning.VERSION (current at build time)")
+    for name in ("pairs-detect", "pairs-split", "pairs-check-full", "pairs-coverage"):
+        sub.add_parser(name)
+    q = sub.add_parser("pairs-finalize")
+    q.add_argument("--run", choices=layout.PAIRS_RUNS, default=layout.PAIRS_RUN)
+    for name in ("pairs-prompts", "pairs-hygiene"):
+        q = sub.add_parser(name)
+        q.add_argument("--round", type=int, required=True, choices=range(1, len(layout.PAIRS_ROUNDS) + 1))
+        q.add_argument("--run", choices=layout.PAIRS_RUNS, default=layout.PAIRS_RUN)
+    q = sub.add_parser("pairs-metrics")
+    q.add_argument("--model", nargs=3, action="append", required=True, metavar=("NAME", "TECH_DIR", "STEM_DIR"))
+    q.add_argument("--contrast", nargs=2, action="append", metavar=("A", "B"))
+    q.add_argument("--out", required=True)
     args = p.parse_args(argv)
     layout.require_mount()
     if args.cmd == "fetch":
@@ -443,7 +608,11 @@ def main(argv=None) -> int:
         return 0 if res["train_check"]["pass"] else 1
     return {"prompts": cmd_prompts, "textgen": cmd_textgen, "textgen-probe": cmd_textgen_probe, "hygiene": cmd_hygiene, "forms-dry-run": cmd_forms_dry_run, "reuse-text": cmd_reuse_text,
             "tts-plan": cmd_tts_plan,
-            "tts": cmd_tts, "roundtrip": cmd_roundtrip, "finalize": cmd_finalize}[args.cmd](args)
+            "tts": cmd_tts, "roundtrip": cmd_roundtrip, "finalize": cmd_finalize,
+            "pairs-words": cmd_pairs_words, "pairs-detect": cmd_pairs_detect, "pairs-split": cmd_pairs_split,
+            "pairs-check-full": cmd_pairs_check_full, "pairs-coverage": cmd_pairs_coverage,
+            "pairs-prompts": cmd_pairs_prompts, "pairs-hygiene": cmd_pairs_hygiene,
+            "pairs-finalize": cmd_pairs_finalize, "pairs-metrics": cmd_pairs_metrics}[args.cmd](args)
 
 
 if __name__ == "__main__":

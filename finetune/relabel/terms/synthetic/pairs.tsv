@@ -1,0 +1,128 @@
+# Confusable term pairs (synthetic plan v5, "Curation and seeds"): one row per detector candidate,
+# curated blind from the candidate file named below. Format: synthetic/pairs.py.
+# candidates_sha256: 5220dd6b93e0c3f620f863608d8a08d734e134af82af0648d0efa8e1b38a923c
+# term_a	term_b	rule	decision	reason
+acetone	ketone	edit	reject	soft c vs k; only spelling folds them together
+actinium	actinide	shared-prefix	accept	shared actin- onset; short ending difference
+acylation	alkylation	edit	accept	near-homophones; same stressed -ylation
+acylation	Robinson annulation	edit	accept	same stressed -lation; short pretonic difference
+ebitda	ebit	prefix	accept	always accepted (AJ's request, 2026-10-30)
+alkane	alkene	edit	accept	one vowel difference
+alkane	alkyne	edit	accept	one vowel difference
+Bayes' theorem	bayesian	prefix	accept	Bayes vs Bayesian; short -ian extension
+calorimeter	calorimetry	shared-prefix	accept	-meter vs -metry near-homophones
+Boyle's law	Boole's inequality	edit	accept	near-homophone names; one vowel differs
+caesium	cerium	edit	accept	near-homophone element names
+multivariable calculus	multivariate probability distribution	shared-prefix	accept	shared onset; unstressed ending differs
+callback function	Kullback-Leibler divergence	edit	accept	near-homophones; one vowel differs
+carbonatation	carbonylation	edit	reject	stressed syllable differs (-tation vs -lation)
+catalysis	catalysts	shared-prefix	accept	near-identical sounds in fast speech
+catalysis	catalytic converter	edit	reject	stress moves to -lyt-; endings sound distinct
+catalysis	catalytic cycle	edit	reject	stress moves to -lyt-; endings sound distinct
+chemical polarity	molarity	edit	accept	one consonant differs (p/m)
+convertible bond	catalytic converter	shared-prefix	reject	cross-domain common words; -ible vs -er distinct
+data mapper pattern	Mayer's relation	edit	reject	mapper vs Mayer sound different
+degasification	gasification	edit	accept	differ only by short de- prefix
+integro-differential equation	integrals	shared-prefix	accept	integro- vs integral near-homophones
+dissipation	distillation	edit	reject	stressed syllable differs (pay vs lay)
+dow jones	dew point	edit	reject	common words; different vowels; context disambiguates
+electrolytic cell	electrolysis	shared-prefix	reject	stress moves to -lyt-; endings sound distinct
+electrophilic addition	electrolytic conductivity	edit	reject	stressed syllable differs (fil vs lit)
+etf	etl	edit	accept	one letter differs when spelled out
+exergonic reaction	exergy	shared-prefix	reject	hard vs soft g; different length
+galvanic cell	galvanization	shared-prefix	reject	long suffix difference with stress shift
+Gauss-Markov theorem	gaussian	prefix	accept	Gauss vs Gaussian; short -ian extension
+hydroxyl group	sodium hydroxide	shared-prefix	accept	shared onset; short ending difference
+injective function	inductive effect	edit	reject	stressed syllable differs (jec vs duc)
+Kaplan-Meier estimator	Mayer's relation	edit	accept	homophone names
+Kolbe-Schmitt reaction	Gram-Schmidt process	edit	accept	homophone names
+krypton	cryptographic	shared-prefix	reject	only crypt- shared; long difference
+krypton	cryptography	shared-prefix	reject	only crypt- shared; long difference
+law of cotangents	law of tangents	edit	accept	differ only by short co- prefix
+megabyte	petabyte	edit	reject	distinct unit prefixes; two sounds differ
+megabyte	terabyte	edit	reject	distinct unit prefixes; two sounds differ
+modularity theorem	molarity	edit	accept	one extra unstressed syllable; same -larity
+molality	molarity	edit	accept	one consonant differs (l/r)
+molality	osmolality	edit	accept	differ only by short os- prefix
+nitric acid	nitrile	shared-prefix	accept	shared onset; short ending difference
+palladium	vanadium	edit	reject	rhyme only; two consonants differ
+phishing	hashing	edit	reject	rhyme only; onset and vowel differ
+pretraining	pretrained	shared-prefix	accept	shared stem; unstressed -ing vs -ed
+rhenium	Arrhenius plot	edit	accept	rhenium nearly embedded in Arrhenius
+rhenium	rhodium	edit	reject	stressed vowel and consonant differ
+roi	roa	shared-prefix	accept	one letter differs when spelled out
+roi	roe	prefix	accept	one letter differs when spelled out
+roi	roic	prefix	accept	one extra letter when spelled out
+Rolle's theorem	Boole's inequality	edit	reject	onset and vowel differ
+Schrodinger equation	Cantor-Bernstein-Schroeder theorem	shared-prefix	accept	always accepted (AJ's request, 2026-10-30)
+Sharpe ratio	Sharpless epoxidation	shared-prefix	accept	name prefix; one extra syllable
+Theorema Egregium	Sylow theorems	shared-prefix	reject	incidental generic word inside phrases
+thorium	rhodium	edit	reject	onset, vowel and consonant differ
+thorium	thallium	edit	reject	stressed vowel and liquid differ
+van der Waals equation	Wald-Wolfowitz runs test	edit	accept	near-homophone names (final s vs d)
+Wittig reaction	Wurtz-Fittig reaction	edit	accept	names differ by one consonant (v/f)
+abelian group	Abel's theorem	prefix	reject	stem vowels shift (AY-bel vs a-BEE-lian)
+abelian group	Abel-Ruffini theorem	prefix	reject	stem vowels shift (AY-bel vs a-BEE-lian)
+Abel's theorem	Appel reaction	edit	accept	near-homophone names (b/p)
+Abel-Ruffini theorem	Appel reaction	edit	accept	near-homophone names (b/p)
+polymers	polymerization	shared-prefix	reject	long suffix difference
+alkene	alkyne	edit	accept	one vowel difference
+allotrope	allotropy	shared-prefix	accept	shared stem; one-letter ending difference
+allotrope	azeotrope	edit	reject	rhyme only; onset differs
+amide	amine	edit	accept	one consonant difference
+amphoteric	amphoterism	shared-prefix	accept	shared stem; short ending difference
+angle bisector theorem	Morley's trisector theorem	edit	accept	differ only in bi- vs tri-
+Apollonius' theorem	polonium	edit	accept	polonium nearly embedded in Apollonius
+bootstrapping	bootstrap resampling	prefix	accept	bootstrap vs bootstrapping; short extension
+bps	eps	edit	accept	one letter differs when spelled out
+Bristol-Fisher-Roach randomised tasting trial	hashing	edit	reject	incidental word; sounds differ
+caching	hashing	edit	accept	one consonant differs (cashing/hashing)
+carbonylation	carboxylation	edit	accept	differ only in -n- vs -x-
+carboxylation	carboxylic acid	shared-prefix	reject	stressed -ation vs -ic sound distinct
+carboxylation	Krapcho decarboxylation	edit	accept	differ only by short de- prefix
+Ziegler-Natta catalyst	Pictet-Spengler reaction	edit	reject	rhyme only; onsets differ
+catalytic converter	concerted reaction	edit	reject	stressed syllable differs (ver vs cer)
+chelating agent	chelation	shared-prefix	accept	shared stem; unstressed ending differs
+cis-trans isomerism	isomerization	shared-prefix	reject	stressed -ization tail sounds distinct
+cis-trans isomerism	isomorphism	edit	reject	stressed syllable differs (som vs mor)
+dispersity	London dispersion forces	shared-prefix	accept	shared stem; unstressed ending differs
+electrolysis	electrolytic conductivity	shared-prefix	reject	stress moves to -lyt-; endings sound distinct
+endothermic reaction	exothermic reaction	edit	accept	differ only in endo- vs exo-
+ester	esterification	shared-prefix	reject	long suffix difference
+Euclidean division	Euclid's theorem	prefix	accept	Euclid vs Euclidean; short extension
+gigahertz	megahertz	edit	reject	distinct unit prefixes; two sounds differ
+gpus	tpu	edit	accept	one letter differs when spelled out
+Hessian matrix	Hess's law	prefix	accept	Hess vs Hessian; short extension
+Hofmann elimination	van 't Hoff equation	prefix	accept	name prefix; short -mann extension
+Hofmann rearrangement	van 't Hoff equation	prefix	accept	name prefix; short -mann extension
+hydration reaction	titration	edit	reject	onset and stressed consonant differ
+hydrolysis	pyrolysis	edit	reject	onsets differ (hydr- vs pyr-)
+hydroxylation	sodium hydroxide	shared-prefix	reject	long tail difference
+isomerization	structural isomer	shared-prefix	reject	long suffix difference
+iterator pattern	law of the iterated logarithm	shared-prefix	accept	flapped -tor vs -ted near-homophones
+lanthanide	lanthanum	shared-prefix	accept	shared onset; short ending difference
+refrigeration	refrigerant	shared-prefix	reject	stressed -ation vs -ant sound distinct
+mass spectrometry	spectrometer	shared-prefix	accept	-metry vs -meter near-homophones
+parallelism	parallelogram law	shared-prefix	reject	distinct tails; cross-domain
+petabyte	terabyte	edit	reject	distinct unit prefixes; two sounds differ
+recursion	recursive	shared-prefix	accept	shared stem; unstressed ending differs
+roa	roe	prefix	accept	one letter differs when spelled out
+roa	roic	shared-prefix	reject	two letters differ when spelled out
+titrant	titration	shared-prefix	reject	stressed -ation vs -ant sound distinct
+tokenization	tokenizer	shared-prefix	reject	stressed -ation vs -er sound distinct
+van der Waals forces	Wald-Wolfowitz runs test	edit	accept	near-homophone names (final s vs d)
+Walden inversion	Wald-Wolfowitz runs test	prefix	accept	name prefix; one extra syllable
+acylation	amination	edit	reject	stressed syllable differs (lay vs nay)
+alkali metal	alkaline earth metal	prefix	accept	differ only by final n
+Arrhenius equation	rhenium	edit	accept	rhenium nearly embedded in Arrhenius
+Baeyer-Villiger oxidation	Kaplan-Meier estimator	edit	accept	names differ by one consonant (b/m)
+carbonatation	carbonyl group	shared-prefix	reject	long tail difference
+chemical polarity	molality	edit	reject	two consonants differ (p/m, r/l)
+deprotonation	protonation	edit	accept	differ only by short de- prefix
+dissipation	dissipative system	shared-prefix	accept	shared stem; unstressed ending differs
+electrolytic cell	electrophilic addition	edit	reject	stressed syllable differs (lit vs fil)
+endergonic reaction	exergonic reaction	edit	accept	differ only in ender- vs exer-
+gigabyte	megabyte	edit	reject	distinct unit prefixes; two sounds differ
+Reimer-Tiemann reaction	Riemann sum	edit	accept	names differ by one consonant (t/r)
+rhenium	ruthenium	edit	reject	extra stressed syllable (roo-THEE)
+underfitting	underwriting	edit	reject	stressed syllable differs (fit vs write)
