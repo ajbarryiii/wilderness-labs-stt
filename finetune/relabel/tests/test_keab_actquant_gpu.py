@@ -104,6 +104,7 @@ class AgainstTheKernel(unittest.TestCase):
             self.assertTrue(torch.equal(x.grad, w))
 
     def test_a_binary_module_under_autocast(self):
+        from training import eightbit  # noqa: F401  puts finetune/parakeet-binary on sys.path
         import binary_quant
         lin = torch.nn.Linear(1024, 512).cuda()
         mod = binary_quant.BinaryLinear.from_linear(lin, "ternary")

@@ -490,6 +490,13 @@ class Chunk(unittest.TestCase):
         self.assertEqual(cmd[:3], ["env", "-u", "CUBLAS_WORKSPACE_CONFIG"])
         self.assertTrue(cmd[3].endswith("python-gpu1bit"))
         self.assertTrue(tk.item_command(("score", "B0", "fp32"), "R", 30.0, 1e9)[0].endswith("/python"))
+        export = ("export", tk.INIT_MODEL)                                      # the step 0 student, scored once
+        self.assertLess(tk.ORDER.index(export), tk.ORDER.index(("score", tk.INIT_MODEL, "x1")))
+        self.assertEqual(tk.item_command(export, "R", 30.0, 1e9)[2], "export-init")
+        self.assertEqual(tk.score_groups(tk.INIT_MODEL, "x1"), ("dev", "domain"))
+        self.assertEqual(tk.score_groups("MB1", "x1"), tk.MB1_X1_GROUPS)
+        self.assertEqual(tk.score_groups("b100-main", "x1"), tk.SET_GROUPS)
+        self.assertEqual(tk.score_groups("b100-main", "x3"), ("dev",))
         train_cmd = tk.item_command(("train", "pilot-main-lr2e-5"), "R", 30.0, 1e9)
         self.assertIn("--labels-run", train_cmd)
         self.assertNotIn("--scope", train_cmd)                              # production runs read step 0's scope
