@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# ./python in gpu1bit's interpreter environment, for deployed-mode (i8x1 kernel) scoring (keab-prime plan "Scoring and
+# gate"): finetune/parakeet-binary/gpu1bit/shared/python, the wrapper of the recorded x1 runs (it runs
+# finetune/parakeet-ternary/python with finetune/parakeet-binary on PYTHONPATH and NVRTC on the library path), as
+# SHARED_RUNTIME. ./python then reads the roots, checks the mount and runs relabel_boot.py, which points the caches at
+# $RELABEL_ROOT/caches and puts this directory first on sys.path. training/deployed.py checks the environment.
+set -euo pipefail
+here="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+export SHARED_RUNTIME="$here/../parakeet-binary/gpu1bit/shared/python"
+exec "$here/python" "$@"
