@@ -40,9 +40,9 @@ mb1-x1-check/, scores/<model>/<variant>/<set>.json (records with token IDs) and 
 --limit N (first N utterances per set: manifest order for MB1's dev sets as fulldev, id order otherwise) writes under
 $RELABEL_ROOT/keab-prime/smoke/step0-limit<N>/ instead, never the production path; its report is not a decision.
 A set already written with the same configuration is skipped. Each GPU process holds the parakeet GPU lock for its
-whole run (exit 3 if it is not free within --lock-wait seconds); a --limit smoke may skip it with --no-gpu-lock
-(paths.gpu_lock's convention: the lock is for GPU jobs longer than a quick smoke test; the job's lease still bounds
-its VRAM).
+whole run (exit 3 if it is not free within --lock-wait seconds); a --limit smoke, and prepare (seconds of CUDA work
+per variant), may skip it with --no-gpu-lock (paths.gpu_lock's convention: the lock is for GPU jobs longer than a quick
+smoke test; the job's lease still bounds the VRAM).
 """
 from __future__ import annotations
 
@@ -288,6 +288,8 @@ def prepare(args) -> int:
 
 
 def _prepare(args, models, index: dict, index_path: Path) -> int:
+    import contextlib
+
     import torch
     import score_teacher
     from training import eightbit as eb
@@ -305,7 +307,9 @@ def _prepare(args, models, index: dict, index_path: Path) -> int:
         t = time.perf_counter()
         extra = {"stage": "keab-prime step 0", "variant": variant, "checkpoint": ckpt}
         entry = {"scope": scope, "format": fmt, "checkpoint_sha256": ckpt["sha256"], "bundle": None}
-        with score_teacher.gpu_lock(f"keab-step0 prepare {variant}", args.lock_wait):
+        lock = (contextlib.nullcontext() if args.no_gpu_lock
+                else score_teacher.gpu_lock(f"keab-step0 prepare {variant}", args.lock_wait))
+        with lock:
             model = models().to("cuda")
             if fmt == "palette":
                 entry["form"] = eb.apply_keab_palette(model, scope)
@@ -386,7 +390,8 @@ def run(args) -> int:
         vman = read_json(vdir / "manifest.json")
         weights = {"view": str(vdir), "view_sha256": vman["sha256"], "w8a8_pre_encode_out": w8a8}
     else:
-        weights = {"nemo": str(b0p_nemo()), "sha256": B0P_SHA256, "scope": scope, "format": fmt}
+        weights = {"nemo": str(b0p_nemo()), "sha256": B0P_SHA256, "scope": scope, "format": fmt,
+                   "quantizer_sha256": sha256_file(Path(__file__).resolve().parent / "training" / "eightbit.py")}
     configs = {n: set_config(args.model, args.variant, n, g, args.limit, weights) for n, g in sets}
     todo = pending(out, configs)
     if not todo:
@@ -705,7 +710,9 @@ def report(args) -> int:
         out["models"][model] = entry
     complete = all(set(passes.get(m, {})) == set(RULE_SCOPES) for m in MODELS)
     out["passes"] = passes
-    out["chosen_scope"] = choose(passes) if complete else None
+    out["chosen_scope"] = choose(passes) if complete and args.limit is None else None
+    if complete and args.limit is not None:
+        out["slice_rule_outcome"] = choose(passes)       # a smoke slice: never a decision
     if not complete:
         out["note"] = "the rule needs S1-int8 and S2-int8 on both models"
     idx = exports_root() / "index.json"
@@ -729,6 +736,8 @@ def markdown(r: dict) -> str:
     lines = [f"# Stage 4 step 0: 8-bit floating-point parts{'' if r['decision'] else ' (smoke, not a decision)'}", ""]
     if r.get("chosen_scope") is not None:
         lines += [f"**Chosen scope: {r['chosen_scope']}** (largest INT8 scope passing on both models).", ""]
+    elif r.get("slice_rule_outcome") is not None:
+        lines += [f"Rule outcome on this slice: {r['slice_rule_outcome']} (a smoke; not a decision).", ""]
     for model, m in r["models"].items():
         lines += [f"## {model}", ""]
         if "variants" not in m:
@@ -795,6 +804,8 @@ def parse_args(argv=None) -> argparse.Namespace:
     s.add_argument("--variants", nargs="+", default=list(VIEW_VARIANTS), choices=VIEW_VARIANTS)
     s.add_argument("--force", action="store_true")
     s.add_argument("--lock-wait", type=float, default=1800.0)
+    s.add_argument("--no-gpu-lock", action="store_true",
+                   help="skip the parakeet GPU lock (prepare's CUDA work is seconds per variant)")
     s = sub.add_parser("mb1-check")
     s.add_argument("--limit", type=int)
     s.add_argument("--lock-wait", type=float, default=1800.0)
@@ -812,7 +823,7 @@ def parse_args(argv=None) -> argparse.Namespace:
     args = p.parse_args(argv)
     if getattr(args, "limit", None) is not None and args.limit <= 0:
         p.error("--limit must be positive")
-    if getattr(args, "no_gpu_lock", False) and args.limit is None:
+    if args.action in ("run", "mb1-check") and args.no_gpu_lock and args.limit is None:
         p.error("--no-gpu-lock is for --limit smoke runs only")
     return args
 

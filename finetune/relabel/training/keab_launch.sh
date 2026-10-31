@@ -4,7 +4,8 @@
 #
 #   training/keab_launch.sh tests                         the CPU contract tests (foreground, CUDA hidden)
 #   training/keab_launch.sh gpu-tests VRAM MEM            the CUDA contract tests on MB1's checkpoint and export
-#   training/keab_launch.sh prepare VRAM MEM              MB1's bundles and scoring views (exports/, GPU)
+#   training/keab_launch.sh prepare VRAM MEM [OPTIONS]    MB1's bundles and scoring views (exports/, GPU; options
+#                                                         as keab_step0.py prepare, e.g. --variants, --no-gpu-lock)
 #   training/keab_launch.sh mb1-check VRAM MEM [LIMIT]    MB1's export re-scored at x1 on full dev (or a smoke)
 #   training/keab_launch.sh run MODEL VARIANT VRAM MEM [keab_step0.py run options, e.g. --sets dev --limit 20]
 #   training/keab_launch.sh smoke LIMIT VRAM MEM [AFTER]  every model x variant on the first LIMIT utterances per
@@ -39,7 +40,7 @@ case "${1:-}" in
       -- flock "$lock" ./python -m unittest discover -s tests -p 'test_keab_export_gpu.py' -v ;;
   prepare)
     exec job start relabel-keab-step0-prepare --cwd "$here" $(gpu "${2:?VRAM}" "${3:?MEM}") "${common[@]}" \
-      --timeout 90m -- ./python keab_step0.py prepare ;;
+      --timeout 90m -- ./python keab_step0.py prepare "${@:4}" ;;
   mb1-check)
     extra=(); name=relabel-keab-step0-mb1-check
     if [[ -n "${4:-}" ]]; then extra=(--limit "$4"); name="$name-limit$4"; fi
