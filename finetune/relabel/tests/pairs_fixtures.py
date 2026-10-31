@@ -33,10 +33,10 @@ HELDOUT = ("ebitda", "schrodinger equation", "roe", "opex", "alkane", "alkene", 
 CLIPS = {"ebit": 214, "cantor bernstein schroeder theorem": 183, "capex": 372, "gpu": 300, "tpu": 120, "roi": 90}
 
 
-def make_split(heldout=HELDOUT) -> vocab.Split:
-    """The fixture split (v2): LISTS built by the split's own rules, sides chosen by group (HELDOUT)."""
+def make_split(heldout=HELDOUT, lists=LISTS) -> vocab.Split:
+    """The fixture split (v2): `lists` built by the split's own rules, sides chosen by group (`heldout`)."""
     n = normalize()
-    data = vocab.build_split(LISTS, n, vocab.medical_matcher(n))
+    data = vocab.build_split(lists, n, vocab.medical_matcher(n))
     groups = {e["phrase"]: e["group"] for e in data["entries"]}
     held = {groups[p] for p in heldout}
     for e in data["entries"]:
@@ -119,11 +119,11 @@ def deep(obj):
     return copy.deepcopy(obj)
 
 
-def make_v3(decisions=None, heldout=HELDOUT):
+def make_v3(decisions=None, heldout=HELDOUT, lists=LISTS):
     """(split v2, split v3) built in memory from the fixture's candidates, every candidate accepted except `decisions`
     ({(term_a, term_b): (decision, reason)})."""
     from synthetic import confusable, pairs
-    s = make_split(heldout)
+    s = make_split(heldout, lists)
     cands = confusable.detect(s, lexicon(), {}, clip_counts(s))
     sha = "ab" * 32
     cur = pairs.Curation.parse(curation_text(cands, sha, decisions), cands, sha, s)

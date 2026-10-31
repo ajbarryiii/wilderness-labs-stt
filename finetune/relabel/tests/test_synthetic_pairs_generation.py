@@ -2,6 +2,8 @@
 
 - prompts request only terms targeted under v3, and contrast prompts request both members; a round issues 2.5 times
   the remaining need (40 contrast clips per trained pair; T(g) single-term clips per group);
+- sides are read after the moves (plan v5.1): a held-out-held-out candidate whose two members other accepted pairs
+  move gets contrast prompts; one with a member still held out gets none;
 - v3's guard rejects every remaining held-out term in v1's covered forms;
 - the medical and TCCC exclusion and the denylist still apply; duplicates are checked against `full`;
 - balance: counts are per group over `full` and `pairs`, and a contrast clip counts for both members; no single-term
@@ -21,7 +23,7 @@ from pathlib import Path
 
 from synthetic import layout, pairs, textgen, vocab
 from synthetic.textgen import read_jsonl, write_jsonl
-from pairs_fixtures import clip_counts, group_of, make_v3, sha256
+from pairs_fixtures import LISTS, clip_counts, group_of, make_v3, sha256
 from synthetic_fixtures import heldout_sets, normalize, record, roots
 
 HELDOUT_UTT = ("so the next thing we want to look at is how the market reacted to the earnings call "
@@ -100,6 +102,36 @@ class Prompts(Fixture):
         self.assertTrue(all(p["id"].startswith("pairs-r2-") for p in ps))
         with self.assertRaises(ValueError):
             pairs.round_prompts(self.spec, self.v3, state, pairs.ROUNDS + 1)
+
+
+class SidesAfterMoves(unittest.TestCase):
+    def test_a_heldout_pair_whose_members_both_move_gets_contrast_prompts(self):
+        # "alkyne" (targeted) pairs with both "alkane" and "alkene" (held out): both move, so the held-out-held-out
+        # candidate alkane/alkene is a targeted-targeted pair under v3
+        lists = LISTS | {"chemistry": LISTS["chemistry"] + ["alkyne"]}
+        v2, v3 = make_v3({("roe", "roi"): ("reject", "different ratios")}, lists=lists)
+        pair = next(p for p in v3.data["pairs"] if set(p["terms"]) == {"alkane", "alkene"})
+        self.assertEqual(pair["sides_v2"], ["heldout", "heldout"])
+        self.assertEqual((pair["side_type_v3"], pair["trained"]), ("targeted-targeted", True))
+        spec = pairs.Spec(v3, clip_counts(v2))
+        ps = pairs.round_prompts(spec, v3, pairs.State(spec, v3), 1)
+        contrast = [p for p in ps if p["kind"] == "contrast" and p["pair"] == pair["id"]]
+        self.assertEqual(len(contrast), math.ceil(2.5 * 40))
+        self.assertTrue(all(p["requested"] == pair["terms"] for p in contrast))
+        for g in pair["groups"]:
+            self.assertIn(g, spec.targets)
+
+    def test_a_pair_with_a_member_still_heldout_gets_nothing(self):
+        # only "alkene" moves (through "alkyne", while alkane/alkyne is rejected): alkane/alkene is not trained
+        lists = LISTS | {"chemistry": LISTS["chemistry"] + ["alkyne"]}
+        v2, v3 = make_v3({("roe", "roi"): ("reject", "different ratios"),
+                          ("alkane", "alkyne"): ("reject", "fixture")}, lists=lists)
+        pair = next(p for p in v3.data["pairs"] if set(p["terms"]) == {"alkane", "alkene"})
+        self.assertEqual((pair["side_type_v3"], pair["trained"]), ("heldout-targeted", False))
+        spec = pairs.Spec(v3, clip_counts(v2))
+        ps = pairs.round_prompts(spec, v3, pairs.State(spec, v3), 1)
+        self.assertFalse([p for p in ps if p.get("pair") == pair["id"]])
+        self.assertFalse([p for p in ps if "alkane" in p["requested"]])
 
 
 class Guard(Fixture):
