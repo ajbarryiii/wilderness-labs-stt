@@ -189,9 +189,10 @@ def _git(*args: str) -> str | None:
 
 
 def code_identity() -> dict:
-    """The git head (and whether finetune/ differs from it) and the SHA-256 of this stage's files (OWN_FILES), of
-    every file under finetune/ imported by this process, of every .py and .json file of the x1 runtime's source trees
-    and of the interpreter wrappers."""
+    """The git head, whether tracked files under finetune/ differ from it (untracked machine-local files such as
+    private/local.env do not count; imported ones are hashed below), and the SHA-256 of this stage's files
+    (OWN_FILES), of every file under finetune/ imported by this process, of every .py and .json file of the x1
+    runtime's source trees and of the interpreter wrappers."""
     rels = {r for r in WRAPPERS + OWN_FILES if (FINETUNE / r).is_file()}
     for tree in X1_TREES:
         for p in (FINETUNE / tree).rglob("*"):
@@ -205,7 +206,7 @@ def code_identity() -> dict:
             if p.is_relative_to(FINETUNE) and p.is_file():
                 rels.add(p.relative_to(FINETUNE).as_posix())
     files = {r: k0.sha256_file(FINETUNE / r) for r in sorted(rels)}
-    status = _git("status", "--porcelain", "--", ".")
+    status = _git("status", "--porcelain", "--untracked-files=no", "--", ".")
     return {"sha256": hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest(),
             "git_head": _git("rev-parse", "HEAD"), "git_dirty": None if status is None else bool(status),
             "files": files}
