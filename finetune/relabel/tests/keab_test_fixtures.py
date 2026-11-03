@@ -10,9 +10,17 @@ keab_test_paths (its pins recomputed from the fixture files), paths.MANIFESTS an
   held-out counts of these inputs, derived by hand in CV_COUNTS), and its clip store; an AMI SDM pair store;
 - the private plan file whose Status line holds keab_test_paths.py's SHA-256.
 Model loading and decoding are fakes: training/deployed.py's load_x1 / score_records / close / require_wrapper (x1),
-binary_export.load_export and evaluate.evaluate_set (fp), whose WERs are the world's known values; binary_train's
-decoder-mode helpers run for real against a stand-in decoding computer. The GPU lock is a fake that records whether it
-is held. The normalizer is the real one.
+binary_export.load_export and evaluate.evaluate_set (fp), whose WERs are the world's known values; the fake
+evaluate_set calls the model's encoder once per decoded batch (evaluate.make_batches), as the real one does, so the
+K-fp encoder check sees what it would see. binary_train's decoder-mode helpers run for real against a stand-in
+decoding computer. The GPU lock is a fake that records whether it is held. The normalizer is the real one.
+
+The real K-fp path: every manifest utterance has a real 16 kHz audio file (utterance i lasts 1 + i s, a quiet sine),
+and TinyModel is a CPU stand-in with what the REAL evaluate.evaluate_set uses (FP32 parameters, preprocessor with its
+featurizer, encoder called through nn.Module __call__, decoding with rnnt_decoder_predictions_tensor and the decoding
+computer, cfg.decoding). Its encoder fills every row's padding frames with NaN (the check must look only at valid
+frames) and, when poisoned, NaN over the valid frames of a clip that is the constant POISON; its decoder then emits
+garbage text without raising (a clip that is the constant CRASH makes it raise). World.real_fp() installs it.
 """
 from __future__ import annotations
 
@@ -29,8 +37,13 @@ import types
 from pathlib import Path
 from unittest import mock
 
+import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
+import soundfile as sf
+import torch
+from omegaconf import OmegaConf
+from torch import nn
 
 import binary_export
 import evaluate
@@ -72,6 +85,8 @@ DECODING_CONFIG = {"strategy": "greedy_batch", "model_type": "tdt", "durations":
                    "greedy": {"max_symbols": 10},
                    "beam": {"beam_size": 2, "return_best_hypothesis": False, "score_norm": True,
                             "tsd_max_sym_exp": 50, "alsd_max_target_len": 2.0}}
+POISON, CRASH = 0.5, -0.5          # constant clips the TinyModel turns into non-finite encoder output / a crash
+FRAME = 1600                        # TinyModel: one encoder frame per 0.1 s
 SIZES = {"bundle_tensor_bytes": 91_236_520, "mb1_file_bytes": 105_299_804, "m1_file_bytes": 180_797_564,
          "original_nemo_bytes": 2_472_222_720}
 
@@ -149,6 +164,64 @@ class FakeModel:
         self.label = label
         self.computer = FakeComputer()
         self.decoding = types.SimpleNamespace(decoding=types.SimpleNamespace(decoding_computer=self.computer))
+        self.encoder = FakeEncoder()
+
+
+class TinyEncoder(nn.Module):
+    def __init__(self, poison: bool, extra_call: bool) -> None:
+        super().__init__()
+        self.weight = nn.Parameter(torch.ones(1))
+        self.poison, self.extra_call = poison, extra_call
+
+    def forward(self, audio_signal, length):
+        enc = audio_signal.repeat(1, 4, 1) * self.weight          # [B, D=4, T]
+        valid = torch.arange(enc.shape[-1])[None, :] < length[:, None]
+        enc = enc.masked_fill(~valid[:, None, :], float("nan"))   # padding frames: never looked at
+        if self.poison:
+            for b in range(enc.shape[0]):
+                n = int(length[b])
+                if torch.all(audio_signal[b, 0, :n] == POISON):
+                    enc[b, :, :n] = float("nan")
+        return enc, length
+
+
+class TinyModel(nn.Module):
+    def __init__(self, label: str, poison: bool = False, extra_call: bool = False) -> None:
+        super().__init__()
+        self.label = label
+        self.preprocessor = nn.Module()
+        self.preprocessor.featurizer = types.SimpleNamespace(dither=1e-5, pad_to=16)
+        self.encoder = TinyEncoder(poison, extra_call)
+        self.cfg = OmegaConf.create({"decoding": copy.deepcopy(DECODING_CONFIG)})
+        self.computer = FakeComputer()
+        self.decoding = types.SimpleNamespace(decoding=types.SimpleNamespace(decoding_computer=self.computer),
+                                              rnnt_decoder_predictions_tensor=self.decode)
+
+    def forward(self, input_signal, input_signal_length):
+        n = input_signal.shape[1] // FRAME
+        feats = input_signal[:, :n * FRAME].reshape(input_signal.shape[0], n, FRAME).mean(-1)[:, None, :]
+        lengths = input_signal_length // FRAME
+        if self.encoder.extra_call:
+            self.encoder(audio_signal=feats, length=lengths)
+        return self.encoder(audio_signal=feats, length=lengths)
+
+    def decode(self, encoder_output, encoded_lengths, return_hypotheses=False):
+        out = []
+        for b in range(encoder_output.shape[0]):
+            n = int(encoded_lengths[b])
+            row = encoder_output[b, :, :n]
+            if torch.isfinite(row).all() and torch.all(row == CRASH):
+                raise RuntimeError("simulated decoder failure")
+            text = TEXTS[n // 10 - 1] if torch.isfinite(row).all() else "garbage garbage"
+            out.append(types.SimpleNamespace(text=text))
+        return out
+
+
+class FakeEncoder(nn.Module):
+    """The fake path's encoder: finite output, one call per decoded batch (the fake evaluate_set calls it)."""
+
+    def forward(self, audio_signal, length):
+        return audio_signal.repeat(1, 4, 1), length
 
 
 class World:
@@ -181,6 +254,8 @@ class World:
         self.invalid: set[tuple[str, str]] = set()      # (mode, set): a structurally invalid row
         self.empty: dict[tuple[str, str], int] = {}    # (mode, set): number of empty hypotheses
         self.fail_on: dict[str, str] = {}               # mode -> set whose decoding raises
+        self.poison_models: set[str] = set()            # TinyModel labels ("MB1", "keab") whose encoder is poisoned
+        self.extra_call = False                         # TinyModel calls its encoder twice per batch
         self.calls: list[dict] = []
         self.loads: list[dict] = []
         self.closed = 0
@@ -206,11 +281,25 @@ class World:
         self.build_stage4()
         self.write_plan()
 
-    @staticmethod
-    def write_manifest(path: Path, ids: list[str]) -> None:
+    def audio_path(self, name: str, i: int) -> Path:
+        return self.root / "audio" / name / f"{i}.wav"
+
+    def write_audio(self, name: str, i: int, constant: float | None = None) -> None:
+        n = (1 + i) * paths.SAMPLE_RATE
+        clip = (np.full(n, constant, np.float32) if constant is not None
+                else (0.1 * np.sin(np.arange(n) * 0.05 * (1 + i))).astype(np.float32))
+        path = self.audio_path(name, i)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text("".join(json.dumps({"id": uid, "audio_filepath": f"/nonexistent/{i}.flac", "duration": 1.0 + i,
-                                            "text": TEXTS[i % 3]}) + "\n" for i, uid in enumerate(ids)))
+        sf.write(path, clip, paths.SAMPLE_RATE, subtype="PCM_16")
+
+    def write_manifest(self, path: Path, ids: list[str]) -> None:
+        name = path.stem.removeprefix("test_")
+        for i in range(len(ids)):
+            self.write_audio(name, i)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("".join(json.dumps({"id": uid, "audio_filepath": str(self.audio_path(name, i)),
+                                            "duration": 1.0 + i, "text": TEXTS[i % 3]}) + "\n"
+                                for i, uid in enumerate(ids)))
 
     def build_run(self) -> None:
         (self.view / "tokenizer").mkdir(parents=True)
@@ -491,10 +580,10 @@ class World:
             raise RuntimeError(f"simulated crash in {name}")
         manifest = Path(a["manifest"])
         records = list(enumerate(evaluate.read_manifest(manifest)[:a["limit"]]))
+        for batch in evaluate.make_batches([r for _, r in records], a["batch_size"], a["max_batch_seconds"]):
+            model.encoder(audio_signal=torch.zeros(len(batch), 1, 10), length=torch.full((len(batch),), 10))
         rows = [{k: r[k] for k in ("id", "ref", "hyp", "ref_norm", "hyp_norm", "S", "D", "I", "scored")}
                 | {"duration": r["duration"]} for r in self.rows("fp", name, records)]
-        if ("fp", name) in self.invalid:              # a row the path marks structurally invalid
-            rows[0]["decode_error"] = "RuntimeError('simulated')"
         if name in DEV:
             wer = (self.mb1_dev_wer if model.label == "MB1" else self.keab_fp_dev_wer)[name]
         else:
@@ -505,6 +594,23 @@ class World:
                 "normalizer": evaluate.NORMALIZER,
                 "wer": {"wer": wer, "utterances": len(rows), "excluded_empty_reference": 0},
                 "wall_s": 1.0, "padded_short": 0, "padded_short_ids": [], "records": rows}
+
+    def load_tiny(self, out_dir, device="cpu"):
+        label = "MB1" if Path(out_dir).resolve() == self.mb1_export.resolve() else "keab"
+        self.loads.append({"mode": "fp", "path": Path(out_dir), "label": label, "lock_held": self.lock_held})
+        return TinyModel(label, poison=label in self.poison_models, extra_call=self.extra_call)
+
+    @contextlib.contextmanager
+    def real_fp(self):
+        """The REAL evaluate.evaluate_set with TinyModel as the loaded export. TinyModel transcribes every clean clip
+        exactly, so MB1's recorded dev check is rewritten to WER 0 (and repinned)."""
+        gate_path = self.mb1_dev_check / "gate.json"
+        self.edit_json(gate_path, lambda g: (g.__setitem__("per_set", {n: {"wer": 0.0} for n in DEV}),
+                                             g.__setitem__("mean", 0.0)), repin=False)
+        self.repin()                                # also updates the installed scalar pins (gate hash, mean)
+        with mock.patch.object(evaluate, "evaluate_set", REAL_EVALUATE_SET), \
+                mock.patch.object(binary_export, "load_export", side_effect=self.load_tiny):
+            yield
 
     @contextlib.contextmanager
     def installed(self):

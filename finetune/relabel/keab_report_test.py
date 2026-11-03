@@ -17,7 +17,8 @@ with, or one that did not pass or records other bindings than the outputs; manif
 from the current file; a set missing, duplicated or partial, or an utterance ID duplicated or missing against the
 manifest; K-fp decoding, cuDNN flags, interpreter versions or normalizer metadata differing from MB1-test's (x1:
 the normalizer); a reused arm other than its pinned files and sources; any structurally invalid row (finite false or a
-decode_error) in a mode. Every input is read once; a file both parsed and hashed is parsed and hashed from the same
+decode_error) in a mode, a record without its "finite" field, or a K-fp set whose encoder finiteness check is missing
+or did not see every batch. Every input is read once; a file both parsed and hashed is parsed and hashed from the same
 bytes.
 
 Sanity checks (pause the write-up for investigation, never a re-score): a set where Kea-B′'s WER (either mode) is more
@@ -200,8 +201,17 @@ def load_mode(mode: str, manifests: dict, mb1_docs: dict[str, dict], mb1_summary
             refuse(f"{label} {name}: numerical settings differ from {next(iter(paths.TEST_SETS))}'s")
         if doc.get("normalizer") != mb1_docs[name].get("normalizer"):
             refuse(f"{label} {name}: normalizer metadata differ from MB1-test's")
-        bad = structural(doc.get("records") or [])
-        if bad:
+        records = doc.get("records") or []
+        if any(not isinstance(r.get("finite"), bool) for r in records):
+            refuse(f"{label} {name}: records without their finite field (the encoder finiteness check did not run)")
+        if mode == "fp":
+            check = doc.get("encoder_finiteness") or {}
+            if not check or check.get("calls") != check.get("batches") \
+                    or any(e.get("id") is None for e in check.get("not_finite") or []):
+                refuse(f"{label} {name}: the encoder finiteness check is missing or did not see every batch "
+                       f"({check.get('calls')} calls, {check.get('batches')} batches)")
+        bad = structural(records)
+        if bad or doc.get("structurally_valid") is not True:
             refuse(f"{label} {name}: {len(bad)} structurally invalid rows (finite false or a decode_error), first "
                    f"{bad[:3]}: no numerical result for mode {mode}; investigate the rows")
         if mode == "fp":

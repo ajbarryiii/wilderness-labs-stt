@@ -18,7 +18,10 @@ Modes (plan "What is scored"):
       binary_train's DECODER_GRAPHS_MODE (no_while_loops) and checked before and after every set,
       evaluate.evaluate_set at batch 64 and 1200 s under evaluate.py's strict_fp32 and inference_settings, no extra
       cuDNN flags; under ./python (no NVRTC on the library path, as MB1-test's interpreter), with the torch, NeMo
-      and CUDA versions MB1-test recorded.
+      and CUDA versions MB1-test recorded. evaluate_set never checks the encoder output, so a forward hook on the
+      model's encoder (EncoderFiniteness, read-only) checks every row's output over its valid frames for finiteness
+      during the set; each record gets "finite" as x1's rows do. A decoder exception inside evaluate_set propagates:
+      the run crashes and its attempt stays open (the set has no file and no set_done record).
 
 Every pinned input is a constant in keab_test_paths. --dev-check and --test re-run the precheck in-process and refuse
 unless it passes. Refusals that need no GPU come before any model is loaded; the shared GPU lock (paths.gpu_lock's
@@ -187,14 +190,65 @@ def manifest_hashes() -> dict[str, str | None]:
     return {name: digest(tp.manifest_path(name)) for name in [*paths.DEV_SETS, *paths.TEST_SETS]}
 
 
-def structural(records: list[dict]) -> dict:
-    """Rows a decoder failure or a non-finite encoder output produced (plan "Structural validity")."""
+def structural(records: list[dict], encoder_check: list[str] | None = None) -> dict:
+    """Rows a decoder failure or a non-finite encoder output produced (plan "Structural validity"), and a K-fp set's
+    encoder-check problems (EncoderFiniteness.apply)."""
     return {"not_finite": [r.get("id") for r in records if r.get("finite") is False],
-            "decode_errors": [r.get("id") for r in records if r.get("decode_error")]}
+            "decode_errors": [r.get("id") for r in records if r.get("decode_error")],
+            "encoder_check": list(encoder_check or [])}
 
 
 def is_valid(s: dict) -> bool:
-    return not s["not_finite"] and not s["decode_errors"]
+    return not s["not_finite"] and not s["decode_errors"] and not s.get("encoder_check")
+
+
+class EncoderFiniteness:
+    """A read-only forward hook on model.encoder for one evaluate.evaluate_set call (code review round 1). Each call is
+    one decoded batch: evaluate.decode feeds evaluate.make_batches' batches in order (a DataLoader without shuffling),
+    so call k is batch k and row r of it is records[batches[k][r]]. A row is not finite if its encoder output has a
+    non-finite value within its valid frames (the encoder output lengths); padding frames are not looked at."""
+
+    CHECK = ("isfinite over each row's valid encoder output frames (the encoder output lengths), a forward hook on "
+             "model.encoder")
+
+    def __init__(self, model, records: list[dict], batch_size: int, max_batch_seconds: float) -> None:
+        self.batches = evaluate.make_batches(records, batch_size, max_batch_seconds)
+        self.ids = [r["id"] for r in records]
+        self.calls = 0
+        self.not_finite: list[dict] = []
+        self.handle = model.encoder.register_forward_hook(self._hook)
+
+    def _hook(self, module, inputs, output) -> None:
+        enc, lengths = output[0], output[1]
+        with torch.no_grad():
+            valid = torch.arange(enc.shape[-1], device=enc.device)[None, :] < lengths.to(enc.device)[:, None]
+            bad = ~(torch.isfinite(enc).all(dim=1) | ~valid).all(dim=1)
+            rows = bad.nonzero().flatten().tolist()
+        k = self.calls
+        self.calls += 1
+        batch = self.batches[k] if k < len(self.batches) else None
+        for r in rows:
+            uid = self.ids[batch[r]] if batch is not None and r < len(batch) else None
+            self.not_finite.append({"batch": k, "row": r, "id": uid})
+
+    def close(self) -> None:
+        self.handle.remove()
+
+    def apply(self, result: dict) -> list[str]:
+        """Each record's "finite", the evidence in result["encoder_finiteness"]; returns the check's own problems (an
+        encoder call count other than the batch count, a non-finite row not mapped to an utterance)."""
+        bad = {e["id"] for e in self.not_finite if e["id"] is not None}
+        for r in result["records"]:
+            r["finite"] = r["id"] not in bad
+        result["encoder_finiteness"] = {"check": self.CHECK, "batches": len(self.batches), "calls": self.calls,
+                                        "not_finite": list(self.not_finite)}
+        problems = []
+        if self.calls != len(self.batches):
+            problems.append(f"the encoder ran {self.calls} times for {len(self.batches)} batches")
+        unmapped = [e for e in self.not_finite if e["id"] is None]
+        if unmapped:
+            problems.append(f"{len(unmapped)} non-finite rows not mapped to an utterance, first {unmapped[:3]}")
+        return problems
 
 
 # ----------------------------------------------------------------------------- stage 4 state
@@ -768,8 +822,8 @@ def export_source_fp(export_dir: Path, description: str, want_sha256: str, label
 
 
 def finish_set(result: dict, *, mode: str, model: str, phase: str, name: str, manifest: Path, source: dict,
-               limit: int | None, settings: dict, **extra) -> dict:
-    s = structural(result["records"])
+               limit: int | None, settings: dict, encoder_check: list[str] | None = None, **extra) -> dict:
+    s = structural(result["records"], encoder_check)
     result.update(set=name, mode=mode, model=model, phase=phase, manifest=str(manifest),
                   manifest_sha256=digest(manifest), limit=limit, normalizer=evaluate.NORMALIZER, source=source,
                   identity=identity(), scorer=scorer_record(), settings=settings, structural=s,
@@ -841,11 +895,18 @@ def _decode_fp(export_dir, model_label, source, sets, out_dir, limit, settings, 
         if numerical_settings("fp") != settings:
             refuse(f"numerical settings changed since start-up (before {name})")
         before = binary_train.require_decoder_graphs_mode(model, f"{model_label} before {name}")
-        result = evaluate.evaluate_set(model, name, manifest, source, tp.BATCH_SIZE, limit, device,
-                                       max_batch_seconds=tp.MAX_BATCH_SECONDS)
+        check = EncoderFiniteness(model, evaluate.read_manifest(manifest)[:limit], tp.BATCH_SIZE,
+                                  tp.MAX_BATCH_SECONDS)
+        try:
+            result = evaluate.evaluate_set(model, name, manifest, source, tp.BATCH_SIZE, limit, device,
+                                           max_batch_seconds=tp.MAX_BATCH_SECONDS)
+        finally:
+            check.close()
         after = binary_train.require_decoder_graphs_mode(model, f"{model_label} after {name}")
+        problems = check.apply(result)
         finish_set(result, mode="fp", model=model_label, phase=phase, name=name, manifest=manifest, source=source,
-                   limit=limit, settings=settings, decoder_graphs_mode={"before": before, "after": after})
+                   limit=limit, settings=settings, encoder_check=problems,
+                   decoder_graphs_mode={"before": before, "after": after})
         _write_set(out_dir, name, result, on_done)
         results[name] = result
     return results

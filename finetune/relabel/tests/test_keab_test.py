@@ -546,11 +546,6 @@ class DevCheckTest(WorldCase):
         self.assertFalse(gate["pass"])
         self.assertIsNone(gate["keab"])
 
-    def test_a_structurally_invalid_row_fails_the_fp_gate(self) -> None:
-        self.w.invalid.add(("fp", "yodas_dev"))
-        self.assertEqual(self.dev_check("fp"), 1)
-        self.assertFalse(self.gate("fp")["pass"])
-
     def test_a_limit_dev_check_is_a_smoke_never_a_gate(self) -> None:
         self.assertEqual(self.dev_check("x1", "--limit", "2"), 0)
         self.assertTrue(all(c["n"] == 2 for c in self.w.calls))
@@ -596,6 +591,90 @@ class DevCheckTest(WorldCase):
                          lambda s: s["settings"]["versions"].__setitem__("nemo", "2.9.0"), repin=False)
         self.refused(["--test", "fp"], "versions")
         self.assertEqual(self.w.loads, [])
+
+
+# ======================================================================= K-fp structural validity (real evaluate_set)
+
+class RealFpPathTest(WorldCase):
+    """K-fp through the REAL evaluate.evaluate_set (TinyModel, real audio files): the encoder output of every row is
+    checked for finiteness over its valid frames during the forward; nothing in evaluate_set itself does."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.enterContext(self.w.real_fp())
+
+    def doc(self, *parts: str) -> dict:
+        return fx.read_json(tp.dev_check_dir("fp").joinpath(*parts))
+
+    def test_clean_dev_check_passes_and_records_every_rows_finiteness(self) -> None:
+        """TinyModel fills every row's padding frames with NaN: only valid frames are checked."""
+        self.assertEqual(self.dev_check("fp"), 0)
+        gate = self.gate("fp")
+        self.assertTrue(gate["pass"], gate.get("structural"))
+        for part in ("MB1", "keab"):
+            for name in DEV:
+                doc = self.doc(part, f"{name}.json")
+                self.assertTrue(all(r["finite"] is True for r in doc["records"]), (part, name))
+                check = doc["encoder_finiteness"]
+                self.assertEqual(check["calls"], check["batches"])
+                self.assertEqual(check["not_finite"], [])
+                self.assertTrue(doc["structurally_valid"])
+                self.assertEqual(doc["wer"]["wer"], 0.0)
+
+    def test_non_finite_encoder_output_fails_the_fp_gate_with_the_evidence_kept(self) -> None:
+        self.w.write_audio("ami_dev", 1, fx.POISON)
+        self.w.poison_models = {"keab"}             # MB1's encoder output stays finite; Kea-B''s does not
+        self.assertEqual(self.dev_check("fp"), 1)
+        gate = self.gate("fp")
+        self.assertTrue(gate["mb1"]["pass"])
+        self.assertFalse(gate["structurally_valid"])
+        self.assertFalse(gate["pass"])
+        doc = self.doc("keab", "ami_dev.json")
+        self.assertFalse(doc["structurally_valid"])
+        self.assertEqual({r["id"]: r["finite"] for r in doc["records"]},
+                         {"ami_dev:0": True, "ami_dev:1": False, "ami_dev:2": True})
+        # one batch, longest first: ami_dev:2 (3 s), ami_dev:1 (2 s), ami_dev:0 (1 s)
+        self.assertEqual(doc["encoder_finiteness"]["not_finite"], [{"batch": 0, "row": 1, "id": "ami_dev:1"}])
+        self.assertEqual(doc["structural"]["not_finite"], ["ami_dev:1"])
+        self.assertTrue(all(r["finite"] for r in self.doc("MB1", "ami_dev.json")["records"]))
+
+    def test_an_encoder_call_count_other_than_the_batches_is_structurally_invalid(self) -> None:
+        self.w.extra_call = True
+        self.assertEqual(self.dev_check("fp"), 1)
+        gate = self.gate("fp")
+        self.assertFalse(gate["structurally_valid"])
+        doc = self.doc("MB1", "librispeech_dev_clean.json")
+        self.assertNotEqual(doc["encoder_finiteness"]["calls"], doc["encoder_finiteness"]["batches"])
+        self.assertFalse(doc["structurally_valid"])
+
+    def test_a_non_finite_test_utterance_is_kept_as_evidence_and_the_report_refuses(self) -> None:
+        self.assertEqual(self.dev_check("fp"), 0)
+        self.w.write_audio("voxpopuli", 1, fx.POISON)
+        self.w.poison_models = {"keab"}
+        code, out = run_main(["--test", "fp"])
+        self.assertEqual(code, 0)
+        self.assertIn("structurally invalid", out)
+        self.assertEqual(self.w.ledger("fp")[-1]["state"], "complete")
+        doc = fx.read_json(tp.test_dir("fp") / "voxpopuli.json")
+        self.assertFalse(doc["structurally_valid"])
+        self.assertEqual([r["id"] for r in doc["records"] if r["finite"] is False], ["voxpopuli:1"])
+        self.assertFalse(fx.read_json(tp.test_dir("fp") / "summary.json")["structurally_valid"])
+        self.complete("x1")
+        self.report_refused("structurally invalid")
+
+    def test_a_decoder_exception_crashes_and_leaves_the_attempt_open(self) -> None:
+        self.assertEqual(self.dev_check("fp"), 0)
+        self.w.write_audio("earnings22", 0, fx.CRASH)
+        with self.assertRaises(RuntimeError):
+            run_main(["--test", "fp"])
+        ledger = self.w.ledger("fp")
+        self.assertEqual([e["state"] for e in ledger], ["started", "set_done", "set_done", "set_done"])
+        self.assertEqual([e["set"] for e in ledger[1:]], TEST[:3])
+        self.assertFalse((tp.test_dir("fp") / "earnings22.json").exists())
+        self.refused(["--summarize", "fp"], "all eight")
+        self.w.write_audio("earnings22", 0)          # investigated and fixed: the open attempt resumes
+        self.assertEqual(run_main(["--test", "fp"])[0], 0)
+        self.assertEqual([e["state"] for e in self.w.ledger("fp")][-2:], ["set_done", "complete"])
 
 
 # ============================================================================ --test refusals and runs
@@ -938,6 +1017,18 @@ class ReportTest(WorldCase):
     def test_a_gate_other_than_the_one_the_attempt_started_with(self) -> None:
         self.edit_gate("fp", lambda g: g.__setitem__("utc", "2099-01-01T00:00:00Z"))
         self.report_refused("gate")
+
+    def test_an_output_without_the_finiteness_record_is_refused(self) -> None:
+        self.w.tamper("fp", "earnings22", lambda d: [r.pop("finite") for r in d["records"]])
+        self.report_refused("finite")
+
+    def test_an_fp_output_without_its_encoder_check_is_refused(self) -> None:
+        self.w.tamper("fp", "gigaspeech", lambda d: d.pop("encoder_finiteness"))
+        self.report_refused("encoder")
+
+    def test_an_fp_output_whose_encoder_check_missed_batches_is_refused(self) -> None:
+        self.w.tamper("fp", "gigaspeech", lambda d: d["encoder_finiteness"].__setitem__("calls", 0))
+        self.report_refused("encoder")
 
     def test_a_structurally_invalid_row_refuses_a_numerical_result(self) -> None:
         self.w.tamper("fp", "common_voice", lambda d: d["records"][1].__setitem__("finite", False))
