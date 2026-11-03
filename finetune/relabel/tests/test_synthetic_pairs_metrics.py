@@ -151,5 +151,37 @@ class Analysis(Fixture):
         self.assertEqual(g["partner-substitution"]["reproduced"]["B"], 0)
 
 
+HYP_A = ["we expect EBITA of ten million and the op ex fell", "the roe of the bank rose while the alkene burned",
+         "the Schroeder equation and the Cantor-Bernstein-Schroeder theorem", "the gpu and the tpu were busy",
+         "adjusted EBIT and the free cash flow", "the ebit and the capex moved with the yield curve"]
+
+
+class PartsOfDifferentSizes(Fixture):
+    """Parts with different numbers of recordings, and term groups that occur in some parts only, in either order:
+    each group's counts over the parts are the sums of the parts analyzed alone, and the order does not matter."""
+
+    @staticmethod
+    def part(name, refs, hyps):
+        return {"A": records(zip(refs, hyps), name), "B": records(zip(refs, refs), name)}
+
+    def counts(self, res):
+        return {g: (e["occurrences"], e["reproduced"]) for g, e in res["groups"].items()}
+
+    def test_group_counts_are_the_sums_of_the_parts_in_either_order(self):
+        small = self.part("tech-dev-2", REFS[3:5], HYP_A[3:5])        # 2 recordings, one term group (EBITDA)
+        big = self.part("stem-chem", REFS, HYP_A)                     # 3 recordings, every term group
+        alone = [self.counts(pair_metrics.analyze({p: d}, self.v2, self.v3, replicates=50))
+                 for p, d in (("tech-dev-2", small), ("stem-chem", big))]
+        orders = ({"tech-dev-2": small, "stem-chem": big}, {"stem-chem": big, "tech-dev-2": small})
+        results = [self.counts(pair_metrics.analyze(parts, self.v2, self.v3, {"A-B": ("A", "B")}, replicates=50))
+                   for parts in orders]
+        self.assertEqual(results[0], results[1])
+        self.assertGreater(results[0]["stable-heldout"][0], alone[0]["stable-heldout"][0])   # roe, alkane: big only
+        for g, (occ, rep) in results[0].items():
+            self.assertEqual(occ, sum(a[g][0] for a in alone), g)
+            for m in ("A", "B"):
+                self.assertEqual(rep[m], sum(a[g][1][m] for a in alone), (g, m))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -36,6 +36,7 @@ from __future__ import annotations
 import json
 import math
 from collections import defaultdict
+from functools import partial
 from pathlib import Path
 
 from synthetic import layout, vocab
@@ -159,8 +160,9 @@ def tables(parts: dict[str, dict[str, list[dict]]], v2: vocab.Split, v3: vocab.S
                     raise ValueError(f"{i}: scored or reference differs between {models[0]} and {m}")
         names = sorted({srep.recording_of(i) for i in chosen})
         index = {c: j for j, c in enumerate(names)}
-        occ = defaultdict(lambda: np.zeros(len(names)))
-        rep = {m: defaultdict(lambda: np.zeros(len(names))) for m in models}
+        zeros = partial(np.zeros, len(names))       # this part's size: a key filled in later is this part's length
+        occ = defaultdict(zeros)
+        rep = {m: defaultdict(zeros) for m in models}
         for m in models:
             for i in chosen:
                 r, c = keyed[m][i], index[srep.recording_of(i)]
