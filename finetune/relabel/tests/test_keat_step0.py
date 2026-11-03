@@ -210,13 +210,25 @@ class Rule(unittest.TestCase):
         self.assertEqual((k0.COST_MAX, k0.CI_UPPER_MAX, k0.SET_MAX), (0.03, 0.06, 0.10))
 
 
-def write_scores(root: Path, variant: str, ami_errors: list[int], n: int = 12) -> None:
+SCORER = "5" * 64
+
+
+def write_scores(root: Path, variant: str, ami_errors: list[int], n: int = 12, scorer: str = SCORER) -> None:
     d = root / "scores" / "M1" / variant
     d.mkdir(parents=True, exist_ok=True)
     for s in k0.DEV_SETS:
         res = result(records(s, ami_errors if s == "ami_dev" else [1] * n))
         res["wer_percent"] = 100 * res["wer"]["wer"]
+        res["config"] = {"variant": variant, "scorer": {"code_sha256": scorer}}
         (d / f"{s}.json").write_text(json.dumps(res))
+
+
+def write_check(root: Path, passed: bool = True, scorer: str = SCORER, limit=None) -> None:
+    d = root / "m1-x1-check"
+    d.mkdir(parents=True, exist_ok=True)
+    summary = t0.check_against_recorded(dict(t0.RECORDED_X1))
+    summary.update({"pass": passed, "limit": limit, "scorer_sha256": scorer})
+    (d / "summary.json").write_text(json.dumps(summary))
 
 
 class Report(unittest.TestCase):
@@ -243,7 +255,9 @@ class Report(unittest.TestCase):
         write_scores(self.dir / "prod", "none", [1] * n)
         write_scores(self.dir / "prod", "S1-int8", [1] * n)
         write_scores(self.dir / "prod", "S2-int8", [1] * (n - 1) + [2])          # +0.83 on AMI: S2 fails on M1
+        write_check(self.dir / "prod")
         r = self.run_report()
+        self.assertTrue(r["m1_check_gate"]["pass"])
         self.assertTrue(r["decision"])
         self.assertEqual(r["passes"]["M1"], {"S1": True, "S2": False})
         self.assertEqual(r["passes"]["B0p"], {"S1": True, "S2": True})
@@ -253,6 +267,26 @@ class Report(unittest.TestCase):
         self.assertAlmostEqual(m1["S2-int8"]["delta"]["ami_dev"], 100 / 120)
         self.assertEqual(m1["S1-int8"]["h4_delta"], 0.0)
         self.assertTrue((self.dir / "prod" / "report.md").exists())
+
+    def test_no_decision_without_a_passing_m1_check_of_the_same_scorer(self):
+        for v in t0.VARIANTS:
+            write_scores(self.dir / "prod", v, [1] * 12)
+        cases = {"absent": None, "failed": dict(passed=False), "other scorer": dict(scorer="6" * 64),
+                 "smoke check": dict(limit=8)}
+        for case, check in cases.items():
+            with self.subTest(case=case):
+                shutil.rmtree(self.dir / "prod" / "m1-x1-check", ignore_errors=True)
+                if check is not None:
+                    write_check(self.dir / "prod", **check)
+                r = self.run_report()
+                self.assertEqual(r["passes"]["M1"], {"S1": True, "S2": True})
+                self.assertFalse(r["m1_check_gate"]["pass"])
+                self.assertIsNone(r["chosen_scope"])
+        write_check(self.dir / "prod")
+        write_scores(self.dir / "prod", "S2-int8", [1] * 12, scorer="7" * 64)     # one variant by another scorer
+        r = self.run_report()
+        self.assertFalse(r["m1_check_gate"]["pass"])
+        self.assertIsNone(r["chosen_scope"])
 
     def test_incomplete_or_smoke_is_never_a_decision(self):
         write_scores(self.dir / "prod", "none", [1] * 12)
@@ -265,6 +299,105 @@ class Report(unittest.TestCase):
         self.assertFalse(r["decision"])
         self.assertIsNone(r["chosen_scope"])
         self.assertEqual(r["slice_rule_outcome"], "S2")
+
+
+class RequireCheck(unittest.TestCase):
+    def setUp(self):
+        self.dir = tmpdir("keat-req-")
+        self.addCleanup(shutil.rmtree, self.dir, True)
+        for p in (mock.patch.object(t0, "step0_root", lambda: self.dir),
+                  mock.patch.object(t0, "require_x1_process", lambda: None)):
+            p.start()
+            self.addCleanup(p.stop)
+
+    def test_production_scoring_needs_the_passing_check_of_this_scorer(self):
+        scorer = t0.scorer_identity()["sha256"]
+        with self.assertRaises(SystemExit):
+            t0.require_m1_check(scorer)
+        for kw in (dict(passed=False, scorer=scorer), dict(scorer="6" * 64), dict(scorer=scorer, limit=8)):
+            write_check(self.dir, **kw)
+            with self.subTest(kw=kw), self.assertRaises(SystemExit):
+                t0.require_m1_check(scorer)
+        write_check(self.dir, scorer=scorer)
+        self.assertTrue(t0.require_m1_check(scorer)["pass"])
+
+    def test_run_refuses_before_any_scoring(self):
+        scored = mock.Mock(return_value=None)
+        args = argparse.Namespace(variant="S1-int8", sets=["dev"], limit=None, lock_wait=0.0, no_gpu_lock=False)
+        with mock.patch.object(t0, "checked_weights", lambda v: (self.dir, {"view": "v"})), \
+                mock.patch.object(t0, "_scored", scored), mock.patch.object(t0, "scores_dir", lambda v, l: self.dir):
+            with self.assertRaises(SystemExit):
+                t0.run(args)
+            scored.assert_not_called()
+            t0.run(argparse.Namespace(**{**vars(args), "limit": 8}))            # a smoke needs no check
+            scored.assert_called_once()
+
+    def test_set_config_names_the_scorer(self):
+        ident = t0.scorer_identity()
+        cfg = t0.set_config("none", "librispeech_dev_clean", "dev", 4, {"export": "x"})
+        self.assertEqual(cfg["scorer"]["code_sha256"], ident["sha256"])
+        for key in ("relabel/training/keat_deployed.py", "relabel/training/deployed.py", "relabel/keab_step0.py",
+                    "relabel/python-gpu1bit", "parakeet-ternary/evaluate.py", "whisper-ternary/wer.py",
+                    "parakeet-binary/gpu1bit/runtime_m1.py", "parakeet-ternary/inference/encoder4.py"):
+            self.assertIn(key, ident["files"])
+        self.assertNotIn("relabel/keat_step0.py", ident["files"], "report-side code does not invalidate the check")
+
+
+class FakeModels:
+    facts = {"sha256": "c" * 64, "step": km1.M1_STEP}
+
+    def __call__(self):
+        model = mock.Mock()
+        model.to.return_value = model
+        return model
+
+
+class PrepareA2(unittest.TestCase):
+    """The none view must equal M1's export (A2); a failure is refused on every retry and no other view is built."""
+
+    def setUp(self):
+        self.dir = tmpdir("keat-prep-")
+        self.addCleanup(shutil.rmtree, self.dir, True)
+        self.built: list[str] = []
+        self.none_sha = "0" * 64
+
+        def derive(bdir, vdir, extra=None):
+            sha_ = self.none_sha if extra["variant"] == "none" else hashlib.sha256(str(vdir).encode()).hexdigest()
+            self.built.append(extra["variant"])
+            Path(vdir).mkdir(parents=True, exist_ok=True)
+            (Path(vdir) / "manifest.json").write_text(json.dumps({"sha256": sha_}))
+            return {"sha256": sha_, "bytes": {"file_bytes": 10, "header_bytes": 2}}
+
+        from training import keat_eightbit as teb
+        for p in (mock.patch.object(t0, "exports_root", lambda: self.dir / "exports"),
+                  mock.patch.object(teb, "apply_keat_scope", lambda m, s: {"scope": s}),
+                  mock.patch.object(tke, "write_bundle", lambda m, d, extra=None: {"sha256": "b", "bytes": {
+                      "tensor_bytes": 8}}),
+                  mock.patch.object(tke, "derive_view", derive)):
+            p.start()
+            self.addCleanup(p.stop)
+
+    def prepare(self, variants=t0.VARIANTS) -> int:
+        index_path = self.dir / "exports" / "index.json"
+        index = json.loads(index_path.read_text()) if index_path.exists() else {"variants": {}}
+        args = argparse.Namespace(variants=list(variants), force=False, no_gpu_lock=True, lock_wait=0.0)
+        with mock.patch.object(t0, "log"):
+            return t0._prepare(args, FakeModels(), index, index_path)
+
+    def test_failure_is_refused_on_every_retry(self):
+        self.assertEqual(self.prepare(), t0.EXIT_CHECK)
+        self.assertEqual(self.built, ["none"])
+        self.assertEqual(self.prepare(), t0.EXIT_CHECK, "the retry must not skip the failed none view")
+        self.assertEqual(self.prepare(("S1-int8", "S2-int8")), t0.EXIT_CHECK, "no view without a passing none")
+        self.assertNotIn("S1-int8", self.built)
+
+    def test_views_after_a_passing_none(self):
+        self.none_sha = km1.M1_EXPORT_SHA256
+        self.assertEqual(self.prepare(("S2-int8", "none", "S1-int8")), 0)
+        self.assertEqual(self.built, ["none", "S1-int8", "S2-int8"], "none first, whatever the order asked")
+        self.built.clear()
+        self.assertEqual(self.prepare(), 0)
+        self.assertEqual(self.built, [], "existing views are kept")
 
 
 class Paths(unittest.TestCase):

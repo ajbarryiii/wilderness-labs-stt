@@ -12,10 +12,13 @@
 #   training/keat_launch.sh m1-check VRAM MEM [LIMIT]     M1's export re-scored at x1 on full dev (or a smoke)
 #   training/keat_launch.sh run VARIANT VRAM MEM [keat_step0.py run options, e.g. --sets dev --limit 20]
 #   training/keat_launch.sh full VRAM MEM [AFTER] [LOCK_WAIT]
-#                                                         the production scoring (keat_step0.py plan): one job per
-#                                                         variant on the dev and domain sets, chained with --after
-#                                                         (one GPU job at a time), then the report job; each waits up
-#                                                         to LOCK_WAIT s (default 21600) for the GPU lock
+#                                                         the production scoring (keat_step0.py plan): the M1 check
+#                                                         (a no-op if it already passed with this scorer), then one
+#                                                         job per variant on the dev and domain sets, chained with
+#                                                         --after (one GPU job at a time), then the report job; each
+#                                                         waits up to LOCK_WAIT s (default 21600) for the GPU lock.
+#                                                         Run it at COMPUTE=100: the recorded x1 arm ran on the whole
+#                                                         GPU, and under MPS a smaller share changes the SMs seen
 #   training/keat_launch.sh report [LIMIT]                the rule and tables (CPU, foreground)
 #
 # GPU jobs: shared lease with an explicit compute share, --priority normal, failures notified. Deployed-mode runs use
@@ -55,6 +58,10 @@ env -u CUBLAS_WORKSPACE_CONFIG ./python-gpu1bit -m unittest discover -s tests -p
       -- "${x1[@]}" run --variant "$variant" "$@" ;;
   full)
     prev="${4:-}"; wait_s="${5:-21600}"
+    after=(); [[ -n "$prev" ]] && after=(--after "$prev")
+    job start relabel-keat-step0-m1-check --cwd "$here" $(gpu "${2:?VRAM}" "${3:?MEM}") "${common[@]}" --stall 60m \
+      "${after[@]}" -- "${x1[@]}" m1-check --lock-wait "$wait_s" >/dev/null
+    prev=relabel-keat-step0-m1-check; echo "$prev"
     while read -r variant groups; do
       after=(); [[ -n "$prev" ]] && after=(--after "$prev")
       # shellcheck disable=SC2086  # groups is a word list (dev domain)
@@ -69,5 +76,5 @@ env -u CUBLAS_WORKSPACE_CONFIG ./python-gpu1bit -m unittest discover -s tests -p
     if [[ -n "${2:-}" ]]; then exec ./python keat_step0.py report --limit "$2"; fi
     exec ./python keat_step0.py report ;;
   *)
-    sed -n '2,21p' "$0"; exit 2 ;;
+    sed -n '2,26p' "$0"; exit 2 ;;
 esac

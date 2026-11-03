@@ -37,6 +37,10 @@ SHA-256 of every imported file under finetune/, of the x1 runtime's source trees
 the GPU share it ran under (lease_record: under MPS a compute share caps the SMs the process sees, which library
 heuristics choose kernels from; the recorded x1 arm ran on the whole GPU, so the production M1 check runs at
 --compute 100).
+Order and gates: prepare builds "none" first and refuses every other view (also on a retry) unless the none view
+reproduces M1's export (none_matches, the plan's A2). Every scored set's configuration names the x1 scorer
+(scorer_identity); production scoring (run without --limit) needs the production M1 check to have passed with that
+scorer (require_m1_check), and the report takes the decision only then (check_gate).
 --limit N (first N utterances per set) writes under $RELABEL_ROOT/keat-prime/smoke/step0-limit<N>/ instead, never the
 production path; its report is not a decision. A set already written with the same configuration is skipped. Each
 GPU process holds the parakeet GPU lock for its run (exit 3 if it is not free within --lock-wait seconds); a --limit
@@ -207,6 +211,33 @@ def code_identity() -> dict:
             "files": files}
 
 
+SCORER_FILES = ("relabel/training/keat_deployed.py", "relabel/training/deployed.py", "relabel/keab_step0.py",
+                "relabel/relabel_boot.py", "relabel/relabel_paths.py", "relabel/python", "relabel/python-gpu1bit",
+                "parakeet-ternary/evaluate.py", "parakeet-ternary/export.py", "parakeet-ternary/quant.py",
+                "parakeet-ternary/paths.py", "parakeet-ternary/python", "parakeet-binary/python",
+                "whisper-ternary/wer.py", "whisper-ternary/quant.py", "stt/models/whisper-tiny.en/normalizer.json")
+_SCORER: dict = {}
+
+
+def scorer_identity() -> dict:
+    """The x1 scorer the M1 check validates: SCORER_FILES (the loader, stage 4's per-utterance procedure, the dev-set
+    record order, the evaluator, the normalizer data and the interpreter wrappers) and every .py and .json file of the
+    x1 runtime's source trees, hashed once per process. Every scored set's configuration names it, so a set scored by
+    another scorer is scored again, and production scoring and the step 0 decision need the M1 check of this one
+    (require_m1_check, report). This driver's own file is not part of it (its report code does not change a score);
+    it is in code_identity."""
+    if not _SCORER:
+        rels = set(SCORER_FILES)
+        for tree in X1_TREES:
+            for p in (FINETUNE / tree).rglob("*"):
+                rel = p.relative_to(FINETUNE)
+                if p.is_file() and p.suffix in X1_TREE_SUFFIXES and "__pycache__" not in rel.parts:
+                    rels.add(rel.as_posix())
+        files = {r: k0.sha256_file(FINETUNE / r) for r in sorted(rels)}
+        _SCORER.update(sha256=hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest(), files=files)
+    return dict(_SCORER)
+
+
 def code_record(identity: dict) -> dict:
     return {k: identity[k] for k in ("sha256", "git_head", "git_dirty")}
 
@@ -271,6 +302,15 @@ class M1Models:
         shutil.rmtree(self.tokenizer, ignore_errors=True)
 
 
+def none_matches(index: dict, ckpt: dict) -> bool:
+    """The A2 check holds: the "none" view of this checkpoint is on disk and its export.safetensors is M1's."""
+    entry = index["variants"].get("none") or {}
+    manifest = view_dir("none") / "manifest.json"
+    return (entry.get("checkpoint_sha256") == ckpt["sha256"] and entry.get("matches_m1_export") is True
+            and entry["view"]["sha256"] == km1.M1_EXPORT_SHA256 and manifest.exists()
+            and read_json(manifest)["sha256"] == km1.M1_EXPORT_SHA256)
+
+
 def prepare(args) -> int:
     import torch
     if not torch.cuda.is_available():
@@ -289,12 +329,16 @@ def _prepare(args, models, index: dict, index_path: Path) -> int:
     from training import keat_eightbit as teb
     ckpt = models.facts
     index.update(checkpoint=ckpt, m1_export={"path": str(km1.m1_export()), "sha256": km1.M1_EXPORT_SHA256})
-    for variant in args.variants:
+    for variant in sorted(set(args.variants), key=VARIANTS.index):         # "none" (the A2 check) first
         scope = SCOPE_OF[variant]
         vdir, bdir = view_dir(variant), bundle_dir(variant)
         entry = index["variants"].get(variant)
+        if variant != "none" and not none_matches(index, ckpt):
+            log(f"{variant}: refused, the none view does not reproduce M1's export (prepare --variants none first)")
+            return EXIT_CHECK
         if entry and entry.get("checkpoint_sha256") == ckpt["sha256"] and (vdir / "manifest.json").exists() \
-                and read_json(vdir / "manifest.json")["sha256"] == entry["view"]["sha256"] and not args.force:
+                and read_json(vdir / "manifest.json")["sha256"] == entry["view"]["sha256"] and not args.force \
+                and (variant != "none" or none_matches(index, ckpt)):
             log(f"{variant}: view exists ({entry['view']['sha256'][:12]}), skipping")
             continue
         t = time.perf_counter()
@@ -331,7 +375,8 @@ def _prepare(args, models, index: dict, index_path: Path) -> int:
 def set_config(variant: str, name: str, group: str, limit: int | None, weights: dict) -> dict:
     return {"model": "M1", "variant": variant, "set": name, "group": group, "limit": limit, "weights": weights,
             "manifest_sha256": k0.sha256_file(k0.manifest_of(name, group)),
-            "scorer": {"kind": "deployed x1", "loader": "training/keat_deployed.load_x1", "batch": 1}}
+            "scorer": {"kind": "deployed x1", "loader": "training/keat_deployed.load_x1", "batch": 1,
+                       "code_sha256": scorer_identity()["sha256"]}}
 
 
 def require_x1_process() -> None:
@@ -379,11 +424,33 @@ def _scored(out: Path, configs: dict, groups: dict, limit: int | None, wdir: Pat
     return facts
 
 
+def m1_check_summary() -> Path:
+    return step0_root() / "m1-x1-check" / "summary.json"
+
+
+def require_m1_check(scorer_sha256: str) -> dict:
+    """The production M1 check's summary; SystemExit unless it passed on full dev with this scorer ("Before anything
+    else is scored, M1's export is re-scored with this loader")."""
+    path = m1_check_summary()
+    if not path.exists():
+        raise SystemExit(f"no M1 check ({path}): run keat_step0.py m1-check first")
+    summary = read_json(path)
+    if summary.get("pass") is not True or summary.get("limit") is not None:
+        raise SystemExit(f"{path}: the M1 check did not pass on full dev (pass {summary.get('pass')}, "
+                         f"limit {summary.get('limit')})")
+    if summary.get("scorer_sha256") != scorer_sha256:
+        raise SystemExit(f"{path}: the M1 check validated scorer {summary.get('scorer_sha256')}, not this one "
+                         f"({scorer_sha256}); run keat_step0.py m1-check again")
+    return summary
+
+
 def run(args) -> int:
     import score_teacher
     check_variant(args.variant)
     relabel_paths.require_mount()
     require_x1_process()
+    if args.limit is None:
+        require_m1_check(scorer_identity()["sha256"])
     wdir, weights = checked_weights(args.variant)
     out = scores_dir(args.variant, args.limit)
     sets = k0.expand_sets(args.sets)
@@ -428,6 +495,7 @@ def m1_check(args) -> int:
         write_json(out / "x1.json", {**facts, "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
     rows = {n: read_json(out / f"{n}.json") for n in DEV_SETS}
     summary = check_against_recorded({n: rows[n]["wer_percent"] for n in DEV_SETS})
+    scorers = {(rows[n].get("config") or {}).get("scorer", {}).get("code_sha256") for n in DEV_SETS}
     codes = {json.dumps(rows[n].get("code"), sort_keys=True) for n in DEV_SETS}
     leases = {json.dumps(rows[n].get("lease"), sort_keys=True) for n in DEV_SETS}
     summary.update(limit=args.limit, code=[json.loads(c) for c in sorted(codes)],
@@ -435,7 +503,8 @@ def m1_check(args) -> int:
                    structurally_valid=all(rows[n]["structurally_valid"] for n in DEV_SETS),
                    utterances={n: rows[n]["utterances"] for n in DEV_SETS},
                    empty_hypotheses={n: rows[n]["empty_hypotheses"] for n in DEV_SETS})
-    if not summary["structurally_valid"]:
+    summary["scorer_sha256"] = scorers.pop() if len(scorers) == 1 else None
+    if not summary["structurally_valid"] or summary["scorer_sha256"] is None:
         summary["pass"] = False
     if args.limit is not None:
         summary["pass"] = None
@@ -492,6 +561,26 @@ def crosscheck_none(limit: int | None) -> dict:
     return sets
 
 
+def check_gate(base: dict | None, limit: int | None) -> dict:
+    """Whether the step 0 decision may be taken: the production M1 check passed on full dev, and every M1 scoring the
+    report reads (none, S1-int8, S2-int8, at this limit) names the scorer it validated."""
+    path = m1_check_summary()
+    if not path.exists():
+        return {"pass": False, "reason": "no M1 check"}
+    summary = read_json(path)
+    if summary.get("pass") is not True or summary.get("limit") is not None:
+        return {"pass": False, "reason": f"the M1 check did not pass on full dev (pass {summary.get('pass')})"}
+    names = list(base or [])
+    scorers = set()
+    for variant in VARIANTS:
+        for res in (load_variant(variant, limit, names) or {}).values():
+            scorers.add(((res.get("config") or {}).get("scorer") or {}).get("code_sha256"))
+    if scorers != {summary.get("scorer_sha256")}:
+        return {"pass": False, "reason": f"M1 scored by {sorted(map(str, scorers))}, the M1 check validated "
+                                         f"{summary.get('scorer_sha256')}"}
+    return {"pass": True, "reason": None, "scorer_sha256": summary["scorer_sha256"]}
+
+
 def report(args) -> int:
     import devsets
     domain_parts = {s: list(devsets.SETS[s]) for s in DOMAIN_SETS}
@@ -518,18 +607,21 @@ def report(args) -> int:
     passes = {"M1": m1_passes, "B0p": b0p["passes"]}
     complete = set(m1_passes) == set(RULE_SCOPES)
     out["passes"] = passes
-    out["chosen_scope"] = choose(passes) if complete and args.limit is None else None
+    out["m1_check_gate"] = check_gate(base, args.limit)
+    out["chosen_scope"] = choose(passes) if complete and args.limit is None and out["m1_check_gate"]["pass"] else None
     if complete and args.limit is not None:
         out["slice_rule_outcome"] = choose(passes)           # a smoke slice: never a decision
     if not complete:
         out["note"] = "the rule needs M1's S1-int8 and S2-int8 (B0''s rows are stage 4's)"
+    elif not out["m1_check_gate"]["pass"] and args.limit is None:
+        out["note"] = f"no decision: {out['m1_check_gate']['reason']}"
     idx = exports_root() / "index.json"
     if idx.exists():
         index = read_json(idx)
         out["exports"] = {v: {"bundle_tensor_mb": e["bundle"]["tensor_mb"], "bundle_parts": e["bundle"]["bytes"]["parts"],
                               "view_sha256": e["view"]["sha256"], "matches_m1_export": e.get("matches_m1_export")}
                           for v, e in index["variants"].items()}
-    check = step0_root() / "m1-x1-check" / "summary.json"
+    check = m1_check_summary()
     if check.exists():
         out["m1_x1_check"] = read_json(check)
     out["crosscheck_none_vs_m1_check"] = crosscheck_none(args.limit)
