@@ -162,8 +162,8 @@ class PinnedConstantsTest(unittest.TestCase):
         self.assertNotIn("relabel/keab_test_paths.py", keys)     # its hash is in the plan's Status line
         self.assertFalse(any("/tests/" in k for k in keys))
 
-    def test_scorer_hashes_are_not_pinned_before_review(self) -> None:
-        self.assertEqual(tp.SCORER_HASHES, {})
+    def test_scorer_hashes_are_pinned_after_review(self) -> None:
+        self.assertTrue(tp.SCORER_HASHES)          # pinned after code review (keab_test.py --scorer-hashes)
 
     def test_committed_files_hold_no_machine_paths(self) -> None:
         here = Path(kt.__file__).resolve().parent
