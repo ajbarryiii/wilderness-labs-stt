@@ -1,0 +1,54 @@
+{
+ "check": "gate 2, per module: coremltools constexpr decompression (materialized_val_inference) of each arm's chain for every 1-bit projection of MB1 (incl. the 24 linear_pos, which the encoder folds into position tables) vs codes x FP16(s), FP16 bit patterns",
+ "model": {
+  "name": "mb1",
+  "export_dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/cpu1bit/data/exports/MB1",
+  "export_sha256": "9873d2f1a53127c673d0201db98cd3ba859ba432f334fef55e9e24fd057b9651",
+  "format": "parakeet-binary-v1"
+ },
+ "modules": 264,
+ "weights": 603979776,
+ "arms": {
+  "B1L": {
+   "modules_checked": 264,
+   "bit_exact": true,
+   "failures": []
+  },
+  "B1S": {
+   "modules_checked": 264,
+   "bit_exact": true,
+   "failures": []
+  },
+  "B1Q": {
+   "modules_checked": 264,
+   "bit_exact": true,
+   "failures": []
+  },
+  "B1P": {
+   "modules_checked": 264,
+   "bit_exact": true,
+   "failures": []
+  },
+  "Bg2": {
+   "modules_checked": 264,
+   "bit_exact": true,
+   "failures": []
+  },
+  "Bg4": {
+   "modules_checked": 264,
+   "bit_exact": true,
+   "failures": []
+  },
+  "Bg8": {
+   "modules_checked": 264,
+   "bit_exact": true,
+   "failures": []
+  },
+  "Bi4": {
+   "modules_checked": 264,
+   "bit_exact": true,
+   "failures": []
+  }
+ },
+ "seconds": 50.3
+}

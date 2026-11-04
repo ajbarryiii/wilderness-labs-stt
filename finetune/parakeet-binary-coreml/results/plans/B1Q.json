@@ -1,0 +1,459 @@
+{
+ "arm": "B1Q",
+ "path": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/kea-b1/B1Q/bundle/Encoder.mlmodelc",
+ "compute_plans": {
+  "cpuAndNeuralEngine": {
+   "b4": {
+    "ops_by_device": {
+     "ane": 1374,
+     "cpu": 19
+    },
+    "cost_share": {
+     "ane": 0.9952,
+     "cpu": 0.0048
+    },
+    "matmul_ops_by_device": {
+     "ane": 342,
+     "cpu": 0
+    },
+    "cpu_operators": {
+     "identity": 1,
+     "ios18.cast": 2,
+     "ios18.relu": 1,
+     "ios19.add": 3,
+     "ios19.expand_dims": 1,
+     "ios19.floor_div": 3,
+     "ios19.less": 4,
+     "ios19.sub": 3,
+     "ios19.transpose": 1
+    },
+    "gpu_operators": {},
+    "plan_load_s": 24.8
+   },
+   "b8": {
+    "ops_by_device": {
+     "ane": 1374,
+     "cpu": 19
+    },
+    "cost_share": {
+     "ane": 0.9909,
+     "cpu": 0.0091
+    },
+    "matmul_ops_by_device": {
+     "ane": 342,
+     "cpu": 0
+    },
+    "cpu_operators": {
+     "identity": 1,
+     "ios18.cast": 2,
+     "ios18.relu": 1,
+     "ios19.add": 3,
+     "ios19.expand_dims": 1,
+     "ios19.floor_div": 3,
+     "ios19.less": 4,
+     "ios19.sub": 3,
+     "ios19.transpose": 1
+    },
+    "gpu_operators": {},
+    "plan_load_s": 27.6
+   },
+   "b15": {
+    "ops_by_device": {
+     "ane": 1376,
+     "cpu": 17
+    },
+    "cost_share": {
+     "ane": 0.9944,
+     "cpu": 0.0056
+    },
+    "matmul_ops_by_device": {
+     "ane": 342,
+     "cpu": 0
+    },
+    "cpu_operators": {
+     "identity": 1,
+     "ios18.cast": 2,
+     "ios18.relu": 1,
+     "ios19.add": 3,
+     "ios19.floor_div": 3,
+     "ios19.less": 4,
+     "ios19.sub": 3
+    },
+    "gpu_operators": {},
+    "plan_load_s": 26.9
+   },
+   "b30": {
+    "ops_by_device": {
+     "ane": 1375,
+     "cpu": 18
+    },
+    "cost_share": {
+     "ane": 0.9898,
+     "cpu": 0.0102
+    },
+    "matmul_ops_by_device": {
+     "ane": 342,
+     "cpu": 0
+    },
+    "cpu_operators": {
+     "identity": 1,
+     "ios18.cast": 2,
+     "ios18.relu": 2,
+     "ios19.add": 3,
+     "ios19.floor_div": 3,
+     "ios19.less": 4,
+     "ios19.sub": 3
+    },
+    "gpu_operators": {},
+    "plan_load_s": 30.1
+   },
+   "_wall_s": 109.6
+  },
+  "cpuAndGPU": {
+   "b4": {
+    "ops_by_device": {
+     "cpu": 1386,
+     "gpu": 7
+    },
+    "cost_share": {
+     "cpu": 0.9981,
+     "gpu": 0.0019
+    },
+    "matmul_ops_by_device": {
+     "cpu": 338,
+     "gpu": 4
+    },
+    "cpu_operators": {
+     "ios18.cast": 6,
+     "ios18.conv": 74,
+     "ios18.layer_norm": 120,
+     "ios18.linear": 192,
+     "ios18.logical_not": 2,
+     "ios18.matmul": 72,
+     "ios18.relu": 1,
+     "ios18.sigmoid": 24,
+     "ios18.silu": 72,
+     "ios18.softmax": 24,
+     "ios19.add": 171,
+     "ios19.expand_dims": 9,
+     "ios19.floor_div": 3,
+     "ios19.less": 4,
+     "ios19.logical_and": 1,
+     "ios19.mul": 100,
+     "ios19.reshape": 145,
+     "ios19.select": 72,
+     "ios19.slice_by_index": 48,
+     "ios19.split": 24,
+     "ios19.sub": 3,
+     "ios19.transpose": 171,
+     "pad": 48
+    },
+    "gpu_operators": {
+     "identity": 1,
+     "ios18.conv": 3,
+     "ios18.linear": 1,
+     "ios18.relu": 2
+    },
+    "plan_load_s": 7.5
+   },
+   "b8": {
+    "ops_by_device": {
+     "cpu": 1387,
+     "gpu": 6
+    },
+    "cost_share": {
+     "cpu": 0.9982,
+     "gpu": 0.0018
+    },
+    "matmul_ops_by_device": {
+     "cpu": 338,
+     "gpu": 4
+    },
+    "cpu_operators": {
+     "ios18.cast": 6,
+     "ios18.conv": 74,
+     "ios18.layer_norm": 120,
+     "ios18.linear": 192,
+     "ios18.logical_not": 2,
+     "ios18.matmul": 72,
+     "ios18.relu": 2,
+     "ios18.sigmoid": 24,
+     "ios18.silu": 72,
+     "ios18.softmax": 24,
+     "ios19.add": 171,
+     "ios19.expand_dims": 9,
+     "ios19.floor_div": 3,
+     "ios19.less": 4,
+     "ios19.logical_and": 1,
+     "ios19.mul": 100,
+     "ios19.reshape": 145,
+     "ios19.select": 72,
+     "ios19.slice_by_index": 48,
+     "ios19.split": 24,
+     "ios19.sub": 3,
+     "ios19.transpose": 171,
+     "pad": 48
+    },
+    "gpu_operators": {
+     "identity": 1,
+     "ios18.conv": 3,
+     "ios18.linear": 1,
+     "ios18.relu": 1
+    },
+    "plan_load_s": 7.0
+   },
+   "b15": {
+    "ops_by_device": {
+     "cpu": 1384,
+     "gpu": 9
+    },
+    "cost_share": {
+     "cpu": 0.9981,
+     "gpu": 0.0019
+    },
+    "matmul_ops_by_device": {
+     "cpu": 336,
+     "gpu": 6
+    },
+    "cpu_operators": {
+     "ios18.cast": 6,
+     "ios18.conv": 72,
+     "ios18.layer_norm": 120,
+     "ios18.linear": 192,
+     "ios18.logical_not": 2,
+     "ios18.matmul": 72,
+     "ios18.relu": 1,
+     "ios18.sigmoid": 24,
+     "ios18.silu": 72,
+     "ios18.softmax": 24,
+     "ios19.add": 171,
+     "ios19.expand_dims": 9,
+     "ios19.floor_div": 3,
+     "ios19.less": 4,
+     "ios19.logical_and": 1,
+     "ios19.mul": 100,
+     "ios19.reshape": 145,
+     "ios19.select": 72,
+     "ios19.slice_by_index": 48,
+     "ios19.split": 24,
+     "ios19.sub": 3,
+     "ios19.transpose": 171,
+     "pad": 48
+    },
+    "gpu_operators": {
+     "identity": 1,
+     "ios18.conv": 5,
+     "ios18.linear": 1,
+     "ios18.relu": 2
+    },
+    "plan_load_s": 7.1
+   },
+   "b30": {
+    "ops_by_device": {
+     "cpu": 1384,
+     "gpu": 9
+    },
+    "cost_share": {
+     "cpu": 0.9957,
+     "gpu": 0.0043
+    },
+    "matmul_ops_by_device": {
+     "cpu": 336,
+     "gpu": 6
+    },
+    "cpu_operators": {
+     "ios18.cast": 6,
+     "ios18.conv": 72,
+     "ios18.layer_norm": 120,
+     "ios18.linear": 192,
+     "ios18.logical_not": 2,
+     "ios18.matmul": 72,
+     "ios18.relu": 1,
+     "ios18.sigmoid": 24,
+     "ios18.silu": 72,
+     "ios18.softmax": 24,
+     "ios19.add": 171,
+     "ios19.expand_dims": 9,
+     "ios19.floor_div": 3,
+     "ios19.less": 4,
+     "ios19.logical_and": 1,
+     "ios19.mul": 100,
+     "ios19.reshape": 145,
+     "ios19.select": 72,
+     "ios19.slice_by_index": 48,
+     "ios19.split": 24,
+     "ios19.sub": 3,
+     "ios19.transpose": 171,
+     "pad": 48
+    },
+    "gpu_operators": {
+     "identity": 1,
+     "ios18.conv": 5,
+     "ios18.linear": 1,
+     "ios18.relu": 2
+    },
+    "plan_load_s": 7.5
+   },
+   "_wall_s": 29.5
+  },
+  "cpuOnly": {
+   "b4": {
+    "ops_by_device": {
+     "cpu": 1393
+    },
+    "cost_share": {
+     "cpu": 1
+    },
+    "matmul_ops_by_device": {
+     "cpu": 342
+    },
+    "cpu_operators": {
+     "identity": 1,
+     "ios18.cast": 6,
+     "ios18.conv": 77,
+     "ios18.layer_norm": 120,
+     "ios18.linear": 193,
+     "ios18.logical_not": 2,
+     "ios18.matmul": 72,
+     "ios18.relu": 3,
+     "ios18.sigmoid": 24,
+     "ios18.silu": 72,
+     "ios18.softmax": 24,
+     "ios19.add": 171,
+     "ios19.expand_dims": 9,
+     "ios19.floor_div": 3,
+     "ios19.less": 4,
+     "ios19.logical_and": 1,
+     "ios19.mul": 100,
+     "ios19.reshape": 145,
+     "ios19.select": 72,
+     "ios19.slice_by_index": 48,
+     "ios19.split": 24,
+     "ios19.sub": 3,
+     "ios19.transpose": 171,
+     "pad": 48
+    },
+    "gpu_operators": {},
+    "plan_load_s": 6.0
+   },
+   "b8": {
+    "ops_by_device": {
+     "cpu": 1393
+    },
+    "cost_share": {
+     "cpu": 1
+    },
+    "matmul_ops_by_device": {
+     "cpu": 342
+    },
+    "cpu_operators": {
+     "identity": 1,
+     "ios18.cast": 6,
+     "ios18.conv": 77,
+     "ios18.layer_norm": 120,
+     "ios18.linear": 193,
+     "ios18.logical_not": 2,
+     "ios18.matmul": 72,
+     "ios18.relu": 3,
+     "ios18.sigmoid": 24,
+     "ios18.silu": 72,
+     "ios18.softmax": 24,
+     "ios19.add": 171,
+     "ios19.expand_dims": 9,
+     "ios19.floor_div": 3,
+     "ios19.less": 4,
+     "ios19.logical_and": 1,
+     "ios19.mul": 100,
+     "ios19.reshape": 145,
+     "ios19.select": 72,
+     "ios19.slice_by_index": 48,
+     "ios19.split": 24,
+     "ios19.sub": 3,
+     "ios19.transpose": 171,
+     "pad": 48
+    },
+    "gpu_operators": {},
+    "plan_load_s": 6.3
+   },
+   "b15": {
+    "ops_by_device": {
+     "cpu": 1393
+    },
+    "cost_share": {
+     "cpu": 1
+    },
+    "matmul_ops_by_device": {
+     "cpu": 342
+    },
+    "cpu_operators": {
+     "identity": 1,
+     "ios18.cast": 6,
+     "ios18.conv": 77,
+     "ios18.layer_norm": 120,
+     "ios18.linear": 193,
+     "ios18.logical_not": 2,
+     "ios18.matmul": 72,
+     "ios18.relu": 3,
+     "ios18.sigmoid": 24,
+     "ios18.silu": 72,
+     "ios18.softmax": 24,
+     "ios19.add": 171,
+     "ios19.expand_dims": 9,
+     "ios19.floor_div": 3,
+     "ios19.less": 4,
+     "ios19.logical_and": 1,
+     "ios19.mul": 100,
+     "ios19.reshape": 145,
+     "ios19.select": 72,
+     "ios19.slice_by_index": 48,
+     "ios19.split": 24,
+     "ios19.sub": 3,
+     "ios19.transpose": 171,
+     "pad": 48
+    },
+    "gpu_operators": {},
+    "plan_load_s": 5.8
+   },
+   "b30": {
+    "ops_by_device": {
+     "cpu": 1393
+    },
+    "cost_share": {
+     "cpu": 1
+    },
+    "matmul_ops_by_device": {
+     "cpu": 342
+    },
+    "cpu_operators": {
+     "identity": 1,
+     "ios18.cast": 6,
+     "ios18.conv": 77,
+     "ios18.layer_norm": 120,
+     "ios18.linear": 193,
+     "ios18.logical_not": 2,
+     "ios18.matmul": 72,
+     "ios18.relu": 3,
+     "ios18.sigmoid": 24,
+     "ios18.silu": 72,
+     "ios18.softmax": 24,
+     "ios19.add": 171,
+     "ios19.expand_dims": 9,
+     "ios19.floor_div": 3,
+     "ios19.less": 4,
+     "ios19.logical_and": 1,
+     "ios19.mul": 100,
+     "ios19.reshape": 145,
+     "ios19.select": 72,
+     "ios19.slice_by_index": 48,
+     "ios19.split": 24,
+     "ios19.sub": 3,
+     "ios19.transpose": 171,
+     "pad": 48
+    },
+    "gpu_operators": {},
+    "plan_load_s": 6.1
+   },
+   "_wall_s": 24.6
+  }
+ }
+}

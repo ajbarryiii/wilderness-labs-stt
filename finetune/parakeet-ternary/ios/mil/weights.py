@@ -3,6 +3,8 @@
 Source(name) reads one tensor at a time (numpy), with NeMo state_dict names:
 - "mp2": the pilot P2 export (reference.ExportSource; packed 2-bit codes unpacked to int8, FP32 row
   scales, FP16 floating tensors returned as FP32, exactly). The export file's SHA-256 is verified.
+- "mb1": the 1-bit MB1 / kea-b export (binary_export.BinaryExportSource; LSB-first 1-bit codes unpacked to
+  int8 +-1, FP32 row scales, FP16 floats as FP32). The export file's SHA-256 is verified.
 - "seed0".."seed2": a written surrogate model.safetensors (int8 codes, FP32 scales and floats), verified
   against its manifest (models._verify_surrogate_file).
 ternary(module) -> (codes int8 [out, in], scale float32 [out]); floating(key) -> float32 array.
@@ -39,6 +41,9 @@ def default_path(name: str) -> Path:
     if name == "mp2":
         return (MAC_ART / "models" / "pilot-P2-lr5e-4-export" if mac
                 else LINUX_ART / "parakeet-ternary" / "runs" / "pilot-P2-lr5e-4" / "export")
+    if name == "mb1":  # the 1-bit kea-b export (parakeet-binary-v1), read natively by binary_export.py
+        return (MAC_ART.parent / "cpu1bit" / "data" / "exports" / "MB1" if mac
+                else LINUX_ART / "parakeet-binary" / "runs" / "main-binB-m1-lr2e-4" / "export")
     if name.startswith("seed"):
         return (MAC_ART if mac else LINUX_ART / "parakeet-ios") / "random" / name / "model.safetensors"
     if name == "c0":
@@ -64,6 +69,14 @@ class Source:
             self._get = lambda k: src[k].numpy()
             self._keys = set(src)
             self.provenance = {"name": name, "export_dir": str(path), "export_sha256": src.manifest["sha256"]}
+        elif name == "mb1":
+            from .binary_export import BinaryExportSource
+
+            src = BinaryExportSource(path)
+            self._get = src.__getitem__
+            self._keys = set(src)
+            self.provenance = {"name": name, "export_dir": str(path), "export_sha256": src.manifest["sha256"],
+                               "format": src.FORMAT}
         elif name.startswith("seed"):
             import models
             from safetensors import safe_open

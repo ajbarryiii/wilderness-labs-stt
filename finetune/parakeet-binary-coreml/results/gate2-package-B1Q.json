@@ -1,0 +1,27 @@
+{
+ "package": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/kea-b1/B1Q/conversion/mb1/B1Q/multi-localflow.mlpackage",
+ "arm": "B1Q",
+ "functions": {
+  "b8": {
+   "modules_checked": 240,
+   "failures": []
+  },
+  "b4": {
+   "modules_checked": 240,
+   "failures": []
+  },
+  "b15": {
+   "modules_checked": 240,
+   "failures": []
+  },
+  "b30": {
+   "modules_checked": 240,
+   "failures": []
+  }
+ },
+ "chains": {
+  "constexpr_lut_to_dense -> constexpr_blockwise_shift_scale -> linear": 768,
+  "constexpr_lut_to_dense -> constexpr_blockwise_shift_scale -> conv": 192
+ },
+ "bit_exact": true
+}

@@ -1,0 +1,411 @@
+{
+ "arm": "B1Q",
+ "bundle": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/kea-b1/B1Q/bundle",
+ "bundle_json_sha256": "3f7a89ae75f3880e9391071afd5f713631853412665790d8e4ac57ff0dc75d7b",
+ "export": {
+  "dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/cpu1bit/data/exports/MB1",
+  "sha256": "9873d2f1a53127c673d0201db98cd3ba859ba432f334fef55e9e24fd057b9651",
+  "format": "parakeet-binary-v1"
+ },
+ "tokenizer": {
+  "dir": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/freeflow-main/export/tokenizer",
+  "verified_against_export_manifest": {
+   "tokenizer/tokenizer.model": "5a3a82c48998709f9bc9f5db2924d99a899d20bf82550ca52272da7c7557b0a0",
+   "tokenizer/vocab.txt": "70b25deed256d79365a3c290d6191c31cc2315d952faf18d5c3a334f46e4866e",
+   "tokenizer/tokenizer.vocab": "dbe7ec6bd066c4526080940e1614e6582b9161515e856c2c39a1d49267c88cbc"
+  }
+ },
+ "chain": "constexpr_lut_to_dense(uint1, int8 LUT {-1,+1}) -> constexpr_blockwise_shift_scale(fp16 per-row scale)",
+ "constexpr_inputs_by_module": {
+  "feed_forward1.linear1": {
+   "count": 24,
+   "inputs": {
+    "indices": {
+     "dtype": "uint1",
+     "shape": [
+      4096,
+      1024
+     ]
+    },
+    "lut": {
+     "dtype": "int8",
+     "shape": [
+      1,
+      1,
+      2,
+      1
+     ]
+    },
+    "scale": {
+     "dtype": "float16",
+     "shape": [
+      4096,
+      1
+     ]
+    }
+   }
+  },
+  "feed_forward1.linear2": {
+   "count": 24,
+   "inputs": {
+    "indices": {
+     "dtype": "uint1",
+     "shape": [
+      1024,
+      4096
+     ]
+    },
+    "lut": {
+     "dtype": "int8",
+     "shape": [
+      1,
+      1,
+      2,
+      1
+     ]
+    },
+    "scale": {
+     "dtype": "float16",
+     "shape": [
+      1024,
+      1
+     ]
+    }
+   }
+  },
+  "self_attn.linear_q": {
+   "count": 24,
+   "inputs": {
+    "indices": {
+     "dtype": "uint1",
+     "shape": [
+      1024,
+      1024
+     ]
+    },
+    "lut": {
+     "dtype": "int8",
+     "shape": [
+      1,
+      1,
+      2,
+      1
+     ]
+    },
+    "scale": {
+     "dtype": "float16",
+     "shape": [
+      1024,
+      1
+     ]
+    }
+   }
+  },
+  "self_attn.linear_k": {
+   "count": 24,
+   "inputs": {
+    "indices": {
+     "dtype": "uint1",
+     "shape": [
+      1024,
+      1024
+     ]
+    },
+    "lut": {
+     "dtype": "int8",
+     "shape": [
+      1,
+      1,
+      2,
+      1
+     ]
+    },
+    "scale": {
+     "dtype": "float16",
+     "shape": [
+      1024,
+      1
+     ]
+    }
+   }
+  },
+  "self_attn.linear_v": {
+   "count": 24,
+   "inputs": {
+    "indices": {
+     "dtype": "uint1",
+     "shape": [
+      1024,
+      1024
+     ]
+    },
+    "lut": {
+     "dtype": "int8",
+     "shape": [
+      1,
+      1,
+      2,
+      1
+     ]
+    },
+    "scale": {
+     "dtype": "float16",
+     "shape": [
+      1024,
+      1
+     ]
+    }
+   }
+  },
+  "self_attn.linear_out": {
+   "count": 24,
+   "inputs": {
+    "indices": {
+     "dtype": "uint1",
+     "shape": [
+      1024,
+      1024
+     ]
+    },
+    "lut": {
+     "dtype": "int8",
+     "shape": [
+      1,
+      1,
+      2,
+      1
+     ]
+    },
+    "scale": {
+     "dtype": "float16",
+     "shape": [
+      1024,
+      1
+     ]
+    }
+   }
+  },
+  "conv.pointwise_conv1": {
+   "count": 24,
+   "inputs": {
+    "indices": {
+     "dtype": "uint1",
+     "shape": [
+      2048,
+      1024,
+      1
+     ]
+    },
+    "lut": {
+     "dtype": "int8",
+     "shape": [
+      1,
+      1,
+      1,
+      2,
+      1
+     ]
+    },
+    "scale": {
+     "dtype": "float16",
+     "shape": [
+      2048,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  "conv.pointwise_conv2": {
+   "count": 24,
+   "inputs": {
+    "indices": {
+     "dtype": "uint1",
+     "shape": [
+      1024,
+      1024,
+      1
+     ]
+    },
+    "lut": {
+     "dtype": "int8",
+     "shape": [
+      1,
+      1,
+      1,
+      2,
+      1
+     ]
+    },
+    "scale": {
+     "dtype": "float16",
+     "shape": [
+      1024,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  "feed_forward2.linear1": {
+   "count": 24,
+   "inputs": {
+    "indices": {
+     "dtype": "uint1",
+     "shape": [
+      4096,
+      1024
+     ]
+    },
+    "lut": {
+     "dtype": "int8",
+     "shape": [
+      1,
+      1,
+      2,
+      1
+     ]
+    },
+    "scale": {
+     "dtype": "float16",
+     "shape": [
+      4096,
+      1
+     ]
+    }
+   }
+  },
+  "feed_forward2.linear2": {
+   "count": 24,
+   "inputs": {
+    "indices": {
+     "dtype": "uint1",
+     "shape": [
+      1024,
+      4096
+     ]
+    },
+    "lut": {
+     "dtype": "int8",
+     "shape": [
+      1,
+      1,
+      2,
+      1
+     ]
+    },
+    "scale": {
+     "dtype": "float16",
+     "shape": [
+      1024,
+      1
+     ]
+    }
+   }
+  }
+ },
+ "encoded_bytes_total": 73187808,
+ "encoded_bytes_by_const": {
+  "indices": 72351744,
+  "lut": 480,
+  "scale": 835584
+ },
+ "program_constexpr_literals": {
+  "b4": {
+   "constexpr_lut_to_dense": {
+    "indices: uint1 [4096, 1024], lut: int8 [1, 1, 2, 1]": 48,
+    "indices: uint1 [1024, 4096], lut: int8 [1, 1, 2, 1]": 48,
+    "indices: uint1 [1024, 1024], lut: int8 [1, 1, 2, 1]": 96,
+    "indices: uint1 [2048, 1024, 1], lut: int8 [1, 1, 1, 2, 1]": 24,
+    "indices: uint1 [1024, 1024, 1], lut: int8 [1, 1, 1, 2, 1]": 24
+   },
+   "constexpr_blockwise_shift_scale": {
+    "data: int8 [4096, 1024], scale: fp16 [4096, 1]": 48,
+    "data: int8 [1024, 4096], scale: fp16 [1024, 1]": 48,
+    "data: int8 [1024, 1024], scale: fp16 [1024, 1]": 96,
+    "data: int8 [2048, 1024, 1], scale: fp16 [2048, 1, 1]": 24,
+    "data: int8 [1024, 1024, 1], scale: fp16 [1024, 1, 1]": 24
+   }
+  },
+  "b8": {
+   "constexpr_lut_to_dense": {
+    "indices: uint1 [4096, 1024], lut: int8 [1, 1, 2, 1]": 48,
+    "indices: uint1 [1024, 4096], lut: int8 [1, 1, 2, 1]": 48,
+    "indices: uint1 [1024, 1024], lut: int8 [1, 1, 2, 1]": 96,
+    "indices: uint1 [2048, 1024, 1], lut: int8 [1, 1, 1, 2, 1]": 24,
+    "indices: uint1 [1024, 1024, 1], lut: int8 [1, 1, 1, 2, 1]": 24
+   },
+   "constexpr_blockwise_shift_scale": {
+    "data: int8 [4096, 1024], scale: fp16 [4096, 1]": 48,
+    "data: int8 [1024, 4096], scale: fp16 [1024, 1]": 48,
+    "data: int8 [1024, 1024], scale: fp16 [1024, 1]": 96,
+    "data: int8 [2048, 1024, 1], scale: fp16 [2048, 1, 1]": 24,
+    "data: int8 [1024, 1024, 1], scale: fp16 [1024, 1, 1]": 24
+   }
+  },
+  "b15": {
+   "constexpr_lut_to_dense": {
+    "indices: uint1 [4096, 1024], lut: int8 [1, 1, 2, 1]": 48,
+    "indices: uint1 [1024, 4096], lut: int8 [1, 1, 2, 1]": 48,
+    "indices: uint1 [1024, 1024], lut: int8 [1, 1, 2, 1]": 96,
+    "indices: uint1 [2048, 1024, 1], lut: int8 [1, 1, 1, 2, 1]": 24,
+    "indices: uint1 [1024, 1024, 1], lut: int8 [1, 1, 1, 2, 1]": 24
+   },
+   "constexpr_blockwise_shift_scale": {
+    "data: int8 [4096, 1024], scale: fp16 [4096, 1]": 48,
+    "data: int8 [1024, 4096], scale: fp16 [1024, 1]": 48,
+    "data: int8 [1024, 1024], scale: fp16 [1024, 1]": 96,
+    "data: int8 [2048, 1024, 1], scale: fp16 [2048, 1, 1]": 24,
+    "data: int8 [1024, 1024, 1], scale: fp16 [1024, 1, 1]": 24
+   }
+  },
+  "b30": {
+   "constexpr_lut_to_dense": {
+    "indices: uint1 [4096, 1024], lut: int8 [1, 1, 2, 1]": 48,
+    "indices: uint1 [1024, 4096], lut: int8 [1, 1, 2, 1]": 48,
+    "indices: uint1 [1024, 1024], lut: int8 [1, 1, 2, 1]": 96,
+    "indices: uint1 [2048, 1024, 1], lut: int8 [1, 1, 1, 2, 1]": 24,
+    "indices: uint1 [1024, 1024, 1], lut: int8 [1, 1, 1, 2, 1]": 24
+   },
+   "constexpr_blockwise_shift_scale": {
+    "data: int8 [4096, 1024], scale: fp16 [4096, 1]": 48,
+    "data: int8 [1024, 4096], scale: fp16 [1024, 1]": 48,
+    "data: int8 [1024, 1024], scale: fp16 [1024, 1]": 96,
+    "data: int8 [2048, 1024, 1], scale: fp16 [2048, 1, 1]": 24,
+    "data: int8 [1024, 1024, 1], scale: fp16 [1024, 1, 1]": 24
+   }
+  }
+ },
+ "matmul_followed_by_mul": {
+  "b4": 48,
+  "b8": 48,
+  "b15": 48,
+  "b30": 48
+ },
+ "weight_bin_bytes": 153226944,
+ "encoder_mlmodelc_bytes": 156015052,
+ "bundle_bytes": 191954926,
+ "mlpackage_bytes": 155863478,
+ "timing_s": {
+  "build_graph": 3.8,
+  "convert": 31.1,
+  "save": 0.1,
+  "native_blobs": 1.1,
+  "compile": 1.0,
+  "total": 37.3
+ },
+ "peak_rss_mb": {
+  "after_save": 1378.2,
+  "after_compile": 1404.2
+ },
+ "pass_pipeline": "DEFAULT",
+ "opset": "iOS26",
+ "environment": {
+  "coremltools": "9.0",
+  "numpy": "2.2.6",
+  "python": "3.12.14",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "machine": "arm64"
+ },
+ "conversion_manifest": "/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/kea-b1/B1Q/conversion/mb1/B1Q/manifest-multi-localflow-24L.json"
+}

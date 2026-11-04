@@ -1,0 +1,4230 @@
+{
+ "command": "b1check",
+ "linear_cases": 600,
+ "linear_mismatches": 0,
+ "cases": [
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear1",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward1.linear2",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_q",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_k",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_v",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "self_attn.linear_out",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv1",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "conv.pointwise_conv2",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear1",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 0,
+   "module": "feed_forward2.linear2",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear1",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward1.linear2",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_q",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_k",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_v",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "self_attn.linear_out",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv1",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "conv.pointwise_conv2",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear1",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 11,
+   "module": "feed_forward2.linear2",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear1",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward1.linear2",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_q",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_k",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_v",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "self_attn.linear_out",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv1",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "conv.pointwise_conv2",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear1",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 7,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 7,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 7,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 7,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 51,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 51,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 51,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 51,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 101,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 101,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 101,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 101,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 188,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 188,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 188,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 188,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 376,
+   "kernel": "lut_8_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 376,
+   "kernel": "lut_16_1_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 376,
+   "kernel": "lut_8_2_4",
+   "mismatches": 0
+  },
+  {
+   "layer": 23,
+   "module": "feed_forward2.linear2",
+   "M": 376,
+   "kernel": "mma_2_4_2_2",
+   "mismatches": 0
+  }
+ ],
+ "encoder_agreement": {
+  "q2g64_fp16_vs_q2g64_fp32_b4": {
+   "rel_frobenius": 0.0011113875067987869,
+   "max_abs": 0.0006629377603530884,
+   "finite": true
+  },
+  "q2g64_fp16_vs_q2g64_fp32_b15": {
+   "rel_frobenius": 0.001133635863670413,
+   "max_abs": 0.000547364354133606,
+   "finite": true
+  },
+  "b1_fp16_vs_q2g64_fp32_b4": {
+   "rel_frobenius": 0.0009287826409270167,
+   "max_abs": 0.000554308295249939,
+   "finite": true
+  },
+  "b1_fp16_vs_q2g64_fp32_b15": {
+   "rel_frobenius": 0.0010984640650060161,
+   "max_abs": 0.000433214008808136,
+   "finite": true
+  }
+ },
+ "pass": true
+}
