@@ -33,6 +33,20 @@ matmul input; it is exploratory (speed only).
 | B1V(V) | constexpr_lut_to_dense(uintV [out/V, in] = sum_t [c(gV+t) > 0] << t, vector_axis 0,        |
 |        |   lut fp16 [out/V, 1, 2^V, V]: entry e of group g = (+-s_(gV+t) by bit t of e)_t), V = 2, 4 |
 |        |   (vector palettization over V rows: 1 bit per weight, row scales inside the LUT)          |
+
+Timing-only 0/1 arms (binary models; NOT exact: the -sum(x) correction of w = 2b - 1 is deliberately left out,
+so outputs are wrong; they only time a 0/1 matrix with half its entries zero, b = [c > 0]):
+| Z1Q    | constexpr_lut_to_dense(uint1 = b, int8 lut {0, +1}) -> constexpr_blockwise_shift_scale(2 FP16(s)) |
+|        |   (B1Q's chain with zero values in the dense matrix)                                             |
+| Z1S(g) | constexpr_lut_to_sparse(mask uint1 = b, nonzero uint(log2 g) = row % g, lut fp16 [out/g, 1, g, 1] |
+|        |   = {2 s_r0, ..., 2 s_r(g-1)}) -> constexpr_sparse_to_dense, g = 2, 8              (C6s analogue) |
+
+Corrected 0/1 arm (binary models; exact in real arithmetic, not bit-exact in FP16): with w = s (2b - 1),
+  W x = 2 s (b (x - m)) + m (s sum_j c_j),   m = mean of x over its features (per frame),
+because b (x - m) sums a zero-mean vector, so the -sum(x - m) term of 2b - 1 vanishes. Centring keeps the 0/1
+matmul's result the size of the true output (no FP16 cancellation for inputs with a large common mean).
+| Z1C    | Z1Q's weight (uint1 b, int8 lut {0, +1}, shift/scale 2 FP16(s)); reduce_mean, sub before the matmul; |
+|        |   add m x row_sum after, row_sum = FP16(FP16(s_r) sum_j c_rj) per output row                        |
 """
 from __future__ import annotations
 
@@ -44,7 +58,10 @@ import numpy as np
 from .weights import fp16_scale
 
 BINARY_ARMS = ("B1L", "B1S", "B1Q", "B1P", "Bg2", "Bg4", "Bg8", "Bi4", "B1V2", "B1V4")  # 1-bit models only ({-1, +1} codes)
-ENCODER_ARMS = ("C1", "C3", "C4", "C7", "C8", "C6s2", "C6s4", "C6s8", "C6d4", "C6d8", "C5") + BINARY_ARMS
+TIMING_ARMS = ("Z1Q", "Z1S2", "Z1S8")  # 1-bit models only; timing only (not exact, see the module table)
+CORRECTED_ARMS = ("Z1C",)  # 1-bit models only; exact in real arithmetic, not in FP16
+ENCODER_ARMS = (("C1", "C3", "C4", "C7", "C8", "C6s2", "C6s4", "C6s8", "C6d4", "C6d8", "C5") + BINARY_ARMS
+                + TIMING_ARMS + CORRECTED_ARMS)
 EXACT = {"C1", "C3", "C4", "C7", "C8", "C6s2", "C6s4", "C6s8", "C6d4", "C6d8"} | set(BINARY_ARMS)
 CHAINS = {
     "C1": "const fp16 (scale folded into weight)",
@@ -64,18 +81,22 @@ CHAINS = {
     "Bg": "constexpr_lut_to_dense(uintB, fp16 grouped LUT {+-s_r} over g rows, B = log2 2g)",
     "Bi4": "constexpr_blockwise_shift_scale(int4 +-1 codes, fp16 per-row scale)",
     "B1V": "constexpr_lut_to_dense(uintV over V rows, vector_axis 0, fp16 grouped LUT of 2^V V-vectors {+-s_r})",
+    "Z1Q": "timing only: constexpr_lut_to_dense(uint1 b, int8 LUT {0,+1}) -> constexpr_blockwise_shift_scale(2 fp16 s)",
+    "Z1C": "constexpr_lut_to_dense(uint1 b, int8 LUT {0,+1}) -> constexpr_blockwise_shift_scale(2 fp16 s); "
+           "x - mean(x) before the matmul, + mean(x) x fp16 row_sum after",
+    "Z1S": "timing only: constexpr_lut_to_sparse(uint1 mask b, uint(log2 g) row-in-group, fp16 LUT {2 s_r}) -> constexpr_sparse_to_dense",
 }
 BINARY_FAMILIES = {"B1L", "B1S", "B1Q", "B1P", "Bg", "Bi4", "B1V"}
 
 
 def family(arm: str) -> str:
-    if arm.startswith("C6") or arm.startswith("B1V"):
+    if arm.startswith("C6") or arm.startswith("B1V") or arm.startswith("Z1S"):
         return arm[:3]
     return "Bg" if arm.startswith("Bg") else arm
 
 
 def group_size(arm: str) -> int:
-    if arm.startswith("C6") or arm.startswith("B1V"):
+    if arm.startswith("C6") or arm.startswith("B1V") or arm.startswith("Z1S"):
         return int(arm[3:])
     return int(arm[2:]) if arm.startswith("Bg") else 0
 
@@ -100,12 +121,15 @@ class Encoded:
     consts: dict = field(default_factory=dict)
     bits: dict = field(default_factory=dict)   # const name -> element bit width as stored
     post_scale: np.ndarray | None = None       # FP16 per-row scale applied after the matmul (C7, C8)
+    row_sum: np.ndarray | None = None          # per-row s_r sum_j c_rj, added times the input mean (Z1C)
 
     def nbytes(self) -> dict:
         """Stored bytes per const (sub-byte packed) plus post scale."""
         out = {k: packed_bytes(v.size, self.bits[k]) for k, v in self.consts.items()}
         if self.post_scale is not None:
             out["post_scale"] = self.post_scale.nbytes
+        if self.row_sum is not None:
+            out["row_sum"] = self.row_sum.nbytes
         return out
 
     def describe(self) -> dict:
@@ -137,6 +161,8 @@ def encode(arm: str, codes: np.ndarray, scale: np.ndarray, rank: int, dtype=np.f
     w_shape = _shape(rank, out, inp)
     if fam in BINARY_FAMILIES:
         _encode_binary(enc, fam, codes, s16, dt, w_shape)
+    elif fam in ("Z1Q", "Z1S", "Z1C"):
+        _encode_zero_one(enc, fam, codes, s16, dt, w_shape)
     elif fam == "C1":
         enc.consts["weight"] = (codes.astype(dt) * s16[:, None]).reshape(w_shape)
         enc.bits["weight"] = 8 * np.dtype(dt).itemsize
@@ -255,6 +281,37 @@ def _encode_binary(enc: Encoded, fam: str, codes: np.ndarray, s16: np.ndarray, d
         enc.bits["scale"] = fbits
 
 
+def _encode_zero_one(enc: Encoded, fam: str, codes: np.ndarray, s16: np.ndarray, dt, w_shape: tuple) -> None:
+    """The timing-only 0/1 arms (module table): b = [c > 0] with the doubled row scale; codes must be +-1."""
+    if not np.isin(codes, (-1, 1)).all():
+        raise ValueError(f"{enc.arm} encodes 1-bit models only: codes must be -1 or +1")
+    out, rank = enc.out, enc.rank
+    b = (codes > 0).astype(np.uint8)
+    s2 = (2 * s16.astype(np.float32)).astype(dt)  # exact: doubling an FP16 value
+    if fam in ("Z1Q", "Z1C"):
+        if fam == "Z1C":  # exact in FP32 (11-bit scale x |sum| <= 2^11), then rounded once to the graph dtype
+            enc.row_sum = (s16.astype(np.float32) * codes.astype(np.int32).sum(axis=1).astype(np.float32)).astype(dt)
+        enc.consts["indices"] = b.reshape(w_shape).astype(_sub_byte("uint1"))
+        enc.bits["indices"] = 1
+        enc.consts["lut"] = np.array([0, 1], dtype=np.int8).reshape(_shape(rank, 1, 1, 2, 1))
+        enc.bits["lut"] = 8
+        enc.consts["scale"] = s2.reshape(_shape(rank, out, 1))
+        enc.bits["scale"] = 8 * np.dtype(dt).itemsize
+        return
+    g = group_size(enc.arm)
+    if out % g:
+        raise ValueError(f"{enc.arm}: {out} rows are not a multiple of the group size {g}")
+    nbits = int(math.log2(g))
+    mask = b.astype(bool)
+    k = np.broadcast_to((np.arange(out) % g)[:, None], codes.shape).astype(np.uint8)
+    enc.consts["indices_mask"] = b.reshape(w_shape).astype(_sub_byte("uint1"))
+    enc.bits["indices_mask"] = 1
+    enc.consts["indices_nonzero_data"] = k[mask].astype(_sub_byte(f"uint{nbits}"))
+    enc.bits["indices_nonzero_data"] = nbits
+    enc.consts["lut"] = s2.reshape(out // g, g).reshape(_shape(rank, out // g, 1, g, 1))
+    enc.bits["lut"] = 8 * np.dtype(dt).itemsize
+
+
 def weight_var(enc: Encoded, name: str):
     """Emit the constexpr chain (or const) of enc in the current MIL context; returns the dense weight Var."""
     from coremltools.converters.mil import Builder as mb
@@ -271,7 +328,7 @@ def weight_var(enc: Encoded, name: str):
         if fam == "C4":
             return mb.constexpr_blockwise_shift_scale(data=dense, scale=c["scale"], name=name)
         return dense
-    if fam == "C6s":
+    if fam in ("C6s", "Z1S"):
         mask, nonzero = mb.constexpr_lut_to_sparse(indices_mask=c["indices_mask"],
                                                    indices_nonzero_data=c["indices_nonzero_data"], lut=c["lut"],
                                                    name=name + "_sparse")
@@ -280,7 +337,7 @@ def weight_var(enc: Encoded, name: str):
         return mb.constexpr_lut_to_dense(indices=c["indices"], lut=c["lut"], name=name)
     if fam in ("B1L", "Bg", "B1P"):
         return mb.constexpr_lut_to_dense(indices=c["indices"], lut=c["lut"], name=name)
-    if fam in ("B1S", "B1Q"):
+    if fam in ("B1S", "B1Q", "Z1Q", "Z1C"):
         dense = mb.constexpr_lut_to_dense(indices=c["indices"], lut=c["lut"], name=name + "_codes")
         return mb.constexpr_blockwise_shift_scale(data=dense, scale=c["scale"], name=name)
     if fam == "Bi4":
@@ -297,6 +354,14 @@ def apply(enc: Encoded, x, name: str):
 
     fam = family(enc.arm)
     w = weight_var(enc, name + "_weight")
+    if fam == "Z1C":
+        feat = -1 if enc.rank == 2 else 1
+        m = mb.reduce_mean(x=x, axes=[feat], keep_dims=True, name=name + "_mean")
+        xc = mb.sub(x=x, y=m, name=name + "_centred")
+        y = (mb.linear(x=xc, weight=w, name=name + "_mm") if enc.rank == 2
+             else mb.conv(x=xc, weight=w, name=name + "_mm"))
+        c = enc.row_sum if enc.rank == 2 else enc.row_sum.reshape((1, -1) + (1,) * (enc.rank - 2))
+        return mb.add(x=y, y=mb.mul(x=m, y=c, name=name + "_corr"), name=name + "_corrected")
     y = (mb.linear(x=x, weight=w, name=name + "_mm") if enc.rank == 2
          else mb.conv(x=x, weight=w, name=name + "_mm"))
     if enc.post_scale is None:
