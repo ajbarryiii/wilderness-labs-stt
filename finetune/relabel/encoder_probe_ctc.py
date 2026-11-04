@@ -521,11 +521,22 @@ def _set_done(out_dir: Path, name: str, config: dict) -> bool:
     return True
 
 
+def _merge_memory(memory: dict | None, set_peaks: list[dict]) -> dict:
+    """The run's peaks: the larger of the given whole-run (or checkpointed) peaks and the per-set records' process
+    peaks, so a run resumed without reloading keeps the measurement."""
+    out = dict(memory or {"gpu_after_load": None, "host_max_rss_gb": None,
+                          "scope": "recovered from the per-set records (process peaks at the end of each set)"})
+    for key, per_set in (("gpu_allocated_gb", "peak_gpu_memory_gb"), ("gpu_reserved_gb", "peak_gpu_reserved_gb")):
+        values = [v for v in [out.get(key)] + [t.get(per_set) for t in set_peaks] if v is not None]
+        out[key] = max(values) if values else None
+    return out
+
+
 def summarize(out_dir: Path, config: dict, info: dict, checks: dict | None, load_s: float | None,
               memory: dict | None) -> dict:
     import teachers
 
-    heads, timings = {}, {}
+    heads, timings, set_peaks = {}, {}, []
     for head in HEADS:
         heads[head] = {}
         for name in relabel_paths.SETS:
@@ -542,6 +553,7 @@ def summarize(out_dir: Path, config: dict, info: dict, checks: dict | None, load
                                  "diagnostics": {k: v["count"] for k, v in r["diagnostics"].items()}}
             timings[name] = {k: t[k] for k in ("audio_hours", "audio_load_s", "inference_wall_s", "set_wall_s",
                                                  "audio_hours_per_gpu_hour")}
+            set_peaks.append(t)
     done = [n for n in relabel_paths.SETS if all(n in heads[h] for h in HEADS)]
     complete = config["limit"] is None and set(done) == set(relabel_paths.SETS)
     status = "scored" if complete else ("smoke" if config["limit"] is not None else "partial")
@@ -553,7 +565,7 @@ def summarize(out_dir: Path, config: dict, info: dict, checks: dict | None, load
             "source": info, "checks": checks, "heads": heads,
             "timings": {"model_load_s": load_s, "sets": timings, "audio_hours": hours, "inference_wall_s": wall,
                         "audio_hours_per_gpu_hour": hours / (wall / 3600) if wall > 0 else None},
-            "peak_memory": memory,
+            "peak_memory": _merge_memory(memory, set_peaks),
             "job_lease_env": {k: v for k, v in os.environ.items() if k.startswith("AGENT_JOBS_")},
             "gpu_lock": str(relabel_paths.GPU_LOCK) if config["device"] == "cuda" else None}
 
@@ -651,9 +663,10 @@ def _run_locked(args, out_dir: Path, sets, config: dict) -> int:
                                            "checks": checks, "source": info})
         print("implementation checks failed: nothing scored", file=sys.stderr)
         return CHECKS_FAILED_EXIT
-    # Persisted at once, so a run stopped later can resume without losing the checks.
+    # Persisted at once, so a run stopped later can resume without losing the checks or the memory measured so far.
     evaluate.write_json(summary_path, {"status": "in_progress", "complete": False, "config": config,
-                                       "checks": checks, "source": info, "timings": {"model_load_s": load_s}})
+                                       "checks": checks, "source": info, "timings": {"model_load_s": load_s},
+                                       "peak_memory": _memory(device, after_load)})
     for name, manifest in todo:
         result = score_set(probe, name, manifest, args, config, info)
         for head in HEADS:

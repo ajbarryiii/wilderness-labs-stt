@@ -446,7 +446,9 @@ class EntryPointTest(EntryTestBase):
         self.assertEqual(summary["checks"], bad)
 
     def test_a_stop_before_the_summary_resumes_with_the_checks_and_no_rescoring(self) -> None:
-        with mock.patch.object(ep, "summarize", side_effect=KeyboardInterrupt):
+        peaks = {"peak_gpu_memory_gb": 4.5, "peak_gpu_reserved_gb": 4.75}  # as a CUDA run would measure them
+        with mock.patch.object(ep, "summarize", side_effect=KeyboardInterrupt), \
+             mock.patch.object(ep, "_peak_gpu", return_value=peaks):
             with self.assertRaises(KeyboardInterrupt):
                 self.run_main()
         stopped = json.loads((self.out / "summary.json").read_text())
@@ -458,6 +460,20 @@ class EntryPointTest(EntryTestBase):
         summary = json.loads((self.out / "summary.json").read_text())
         self.assertEqual(summary["status"], "smoke")
         self.assertTrue(summary["checks"]["passed"])
+        self.assertEqual(summary["peak_memory"]["gpu_allocated_gb"], 4.5)  # the measurement survives the resume
+        self.assertEqual(summary["peak_memory"]["gpu_reserved_gb"], 4.75)
+
+    def test_peak_memory_is_recovered_from_the_set_records(self) -> None:
+        with mock.patch.object(ep, "_peak_gpu", return_value={"peak_gpu_memory_gb": 3.0, "peak_gpu_reserved_gb": 3.5}):
+            self.assertEqual(self.run_main(), 0)
+        config = json.loads((self.out / "bpe" / "ami_dev.json").read_text())["config"]
+        stopped = {"status": "in_progress", "complete": False, "config": config,
+                   "checks": {"passed": True, "hooks_passive": {"passed": True}}}  # a checkpoint without memory
+        (self.out / "summary.json").write_text(json.dumps(stopped))
+        with mock.patch.object(ep, "load_probe", side_effect=AssertionError("reloaded")):
+            self.assertEqual(self.run_main(), 0)
+        memory = json.loads((self.out / "summary.json").read_text())["peak_memory"]
+        self.assertEqual((memory["gpu_allocated_gb"], memory["gpu_reserved_gb"]), (3.0, 3.5))
 
     def test_written_sets_without_recorded_checks_rerun_only_the_checks(self) -> None:
         self.assertEqual(self.run_main(), 0)
