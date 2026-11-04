@@ -298,6 +298,11 @@ def copy_for(run: Path, plan: dict, variant: str, args) -> Path:
     return dest
 
 
+def functions(bundle: Path, preferred: str = "15,4,8,30") -> str:
+    """The bundle's encoder functions in load order (b15-only bundles hold just "15")."""
+    return lib.load_order(json.loads((Path(bundle) / "bundle.json").read_text())["buckets_seconds"], preferred)
+
+
 def phase_load(args, run: Path, plan: dict) -> None:
     for v in coreml_variants(plan):
         if skipped(args, plan, v):
@@ -306,7 +311,7 @@ def phase_load(args, run: Path, plan: dict) -> None:
             units = lib.parse_variant(v)[2]
             raw = run / "raw" / safe(v)
             bundle = copy_for(run, plan, v, args)
-            order = args.load_order
+            order = functions(bundle, args.load_order)
             if not args.copies_from:
                 path = raw / "load-new-path.jsonl"
                 if not path.exists():
@@ -355,6 +360,7 @@ def phase_latency(args, run: Path, plan: dict) -> None:
                     continue
                 bundle = copy_for(run, plan, v, args)
                 step(args, raw / f"encoder-r{r}.jsonl", [run / "bin" / TOOL, "encoder", "--bundle", bundle, "--units", units,
+                                                         "--order", functions(bundle),
                                                          "--features", inp / "features", "--keys", inp / "keys-encoder.txt",
                                                          "--warmups", args.encoder_warmups, "--reps", args.encoder_reps], args.step_timeout)
                 step(args, raw / f"e2e-r{r}.jsonl", [run / "bin" / TOOL, "service", "--bundle", bundle, "--units", units,
@@ -385,6 +391,7 @@ def phase_accuracy(args, run: Path, plan: dict) -> None:
     # Reference: encoder outputs of every ASR chunk, and the decode-path self-check (precomputed outputs decoded
     # by the harness must reproduce the service's transcripts exactly; validates the external-encoder seam).
     step(args, ref_raw / "encode.jsonl", [exe, "encode", "--bundle", ref_bundle, "--units", lib.parse_variant(ref)[2],
+                                          "--order", functions(ref_bundle),
                                           "--features", inp / "features", "--keys", inp / "keys-asr.txt",
                                           "--out", ref_raw / "encoded"], args.step_timeout)
     step(args, ref_raw / "decode.jsonl", [exe, "decode", "--bundle", ref_bundle, "--list", inp / "asr.tsv",
@@ -415,7 +422,8 @@ def phase_accuracy(args, run: Path, plan: dict) -> None:
                     tmp_keys = raw / "keys-encdiff.txt"
                     raw.mkdir(parents=True, exist_ok=True)
                     tmp_keys.write_text("\n".join(diff_keys) + "\n")
-                    step(args, raw / "encode.jsonl", [exe, "encode", "--bundle", bundle, "--units", units, "--features",
+                    step(args, raw / "encode.jsonl", [exe, "encode", "--bundle", bundle, "--units", units,
+                                                      "--order", functions(bundle), "--features",
                                                       inp / "features", "--keys", tmp_keys, "--out", raw / "encoded"], args.step_timeout)
                     cand_dir = raw / "encoded"
             if not (raw / "encdiff.json").exists():
@@ -643,8 +651,8 @@ def summary_markdown(rep: dict) -> str:
                      None if not L.get("load-same-path") else round(L["load-same-path"]["all_ready_ms"]),
                      None if not L.get("prepare") else round(L["prepare"]["all_ready_ms"]),
                      mb(L.get("new_path_cache_added_bytes"))])
-    lines.append(lib.markdown_table(["variant", "new b15", "new b4", "new b8", "new b30", "new all-4", "fresh 15/4/8/30",
-                                     "fresh all-4", "service prepare all-4", "cache MB created"], rows))
+    lines.append(lib.markdown_table(["variant", "new b15", "new b4", "new b8", "new b30", "new all held", "fresh 15/4/8/30",
+                                     "fresh all held", "service prepare", "cache MB created"], rows))
     lines += ["## Memory (MB). phys = phys_footprint; +neural adds the Neural Engine ledger (neural_nofootprint)", ""]
     rows = []
     for v, e in V.items():

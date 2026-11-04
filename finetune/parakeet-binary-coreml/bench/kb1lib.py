@@ -330,16 +330,26 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
+def load_order(buckets: Sequence[int], preferred: str) -> str:
+    """The functions a bundle holds, in the preferred comma-separated order (e.g. "15,4,8,30")."""
+    order = [b for b in (int(x) for x in preferred.split(",")) if b in buckets]
+    if not order:
+        raise ValueError(f"load order {preferred} names none of the bundle's functions {list(buckets)}")
+    return ",".join(map(str, order))
+
+
 def verify_bundle(directory: Path) -> dict:
     """Check a LocalFlow bundle as the app does (model id, required assets, every listed file's SHA-256, safe
-    relative paths) plus LocalFlow's 4/8/15/30 s buckets. Returns sizes: encoder weight.bin, the Encoder.mlmodelc
+    relative paths) plus LocalFlow's buckets: 15 s (the one the app loads), optionally with 4, 8 and 30 s. Returns sizes: encoder weight.bin, the Encoder.mlmodelc
     files, all listed files (what the app ships and loads), and everything in the directory (extras included)."""
     directory = Path(directory).resolve()
     manifest = json.loads((directory / "bundle.json").read_text())
     if manifest.get("model") != "localflow":
         raise ValueError("bundle.json model is not localflow")
-    if manifest.get("buckets_seconds") != LOCALFLOW_BUCKETS:
-        raise ValueError(f"bundle buckets {manifest.get('buckets_seconds')} are not {LOCALFLOW_BUCKETS}")
+    buckets = manifest.get("buckets_seconds")
+    if (not isinstance(buckets, list) or 15 not in buckets or buckets != sorted(set(buckets))
+            or not set(buckets) <= set(LOCALFLOW_BUCKETS)):
+        raise ValueError(f"bundle buckets {buckets} are not b15 plus any of {LOCALFLOW_BUCKETS}")
     files = manifest.get("files") or {}
     missing = [f for f in REQUIRED_FILES if f not in files]
     if missing:

@@ -222,8 +222,8 @@ func readSamples(_ url: URL) throws -> [Float] {
     return all
 }
 
-/// The runtime's chunk size once every function is prepared (ParakeetModelCache.chunkSamples, .allBuckets).
-let chunkSamples = (LocalParakeetCore.buckets.max() ?? 30) * LocalParakeetCore.sampleRate
+/// The runtime's chunk size (LocalParakeetCore.chunkSamples: the 15 s encoder function since LocalFlow 897f13e).
+let chunkSamples = LocalParakeetCore.chunkSamples
 
 /// Runs `body` on every chunk exactly as LocalParakeetRuntime.transcribe does (silence compaction, then 30 s
 /// windows with 2 s overlap) and returns the assembled transcript of the words `body` returns.
@@ -385,7 +385,7 @@ func modePrepare(_ a: Args) async throws {
     let sampler = MemorySampler()
     usleep(300_000)
     let bundle = try a.url("bundle")
-    let service = LocalParakeetService(startupStrategy: .allBuckets, computeUnits: try a.units())
+    let service = LocalParakeetService(computeUnits: try a.units())
     let daemonsBefore = daemonRSS()
     sampler.mark("prepare")
     let t0 = nowNs()
@@ -399,16 +399,24 @@ func modePrepare(_ a: Args) async throws {
     withExtendedLifetime(service) {}
 }
 
+/// The encoder functions to load (--order, default all four); a b15-only bundle passes "15".
+func functionOrder(_ a: Args) throws -> [Int] {
+    try (a.optional("order") ?? "15,4,8,30").split(separator: ",").map {
+        guard let b = Int($0) else { throw KBError("--order must list integers") }
+        return b
+    }
+}
+
 func modeEncoder(_ a: Args) throws {
     let sampler = MemorySampler()
     let features = try a.url("features")
     let manifest = try featureManifest(features)
     let keys = try readKeys(try a.url("keys"))
     let warmups = try a.int("warmups", 3), reps = try a.int("reps", 10)
-    let (models, loadRows, loadMs) = try loadAll(try a.url("bundle"), units: try a.units(), order: [15, 4, 8, 30], sampler: sampler)
+    let (models, loadRows, loadMs) = try loadAll(try a.url("bundle"), units: try a.units(), order: try functionOrder(a), sampler: sampler)
     emit(["type": "encoder_load", "functions": loadRows, "all_ready_ms": loadMs])
     sampler.mark("predict")
-    for b in LocalParakeetCore.buckets {
+    for b in [4, 8, 15, 30] {  // every function the bundle holds (the app runs only b15 since LocalFlow 897f13e)
         let rows = keys.compactMap { manifest[$0] }.filter { $0.bucket == b }
         guard !rows.isEmpty, let model = models[b] else { continue }
         let t0 = thermal()
@@ -431,7 +439,7 @@ func modeEncode(_ a: Args) throws {
     let features = try a.url("features"), out = try a.url("out")
     try FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
     let manifest = try featureManifest(features)
-    let (models, _, _) = try loadAll(try a.url("bundle"), units: try a.units(), order: [15, 4, 8, 30], sampler: nil)
+    let (models, _, _) = try loadAll(try a.url("bundle"), units: try a.units(), order: try functionOrder(a), sampler: nil)
     var lines = ""
     for key in try readKeys(try a.url("keys")) {
         guard let row = manifest[key], let model = models[row.bucket] else { throw KBError("no features for \(key)") }
@@ -459,7 +467,7 @@ func modeService(_ a: Args) async throws {
     usleep(300_000)
     let bundle = try a.url("bundle")
     let trace = BucketTrace()
-    let service = LocalParakeetService(startupStrategy: .allBuckets, computeUnits: try a.units(), onBucketUsed: { trace.record($0) })
+    let service = LocalParakeetService(computeUnits: try a.units(), onBucketUsed: { trace.record($0) })
     sampler.mark("prepare")
     let t0 = nowNs()
     try await service.prepare(directory: bundle)

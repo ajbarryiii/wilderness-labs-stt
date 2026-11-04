@@ -28,15 +28,21 @@ from types import SimpleNamespace
 import localflow  # noqa: F401  (sys.path for ios/)
 
 MB1_EXPORT_SHA256 = "9873d2f1a53127c673d0201db98cd3ba859ba432f334fef55e9e24fd057b9651"
+# Kea-B' (relabel stage 4 run b100-main): the parakeet-binary-v1 scoring view of its keab-8bit-v1 bundle
+# (c00230f8...); the 8-bit parts are stored there as their FP16 forward weights W8.
+KEAB_PRIME_EXPORT_SHA256 = "ec05526ed7aa7c742ee970c09724b1b8ccfaef6eb10f2ff1a11b031e9dfc4995"
+EXPORTS = {MB1_EXPORT_SHA256: ("kea-b", 250000), KEAB_PRIME_EXPORT_SHA256: ("kea-b-prime", 250000 + 97137)}
 MAC_TOKENIZER = Path("/Users/ajbarry/wilderness-labs-stt-artifacts/parakeet-ios/freeflow-main/export/tokenizer")
 BASE_FILES = ("frontend.json", "frontend.f32bin", "decoder_joint.json", "decoder_joint.f32bin", "vocabulary.json")
 VOCAB_SIZE = 1024
 
 
-def check_export(sha256: str) -> None:
-    if sha256 != MB1_EXPORT_SHA256:
-        raise ValueError("This bundle requires the 1-bit MB1 export (main-binB-m1-lr2e-4, step 250000); "
-                         f"refusing export {sha256}")
+def check_export(sha256: str) -> tuple[str, int]:
+    """(base_model, training_step) of a pinned 1-bit export: MB1 or Kea-B'."""
+    if sha256 not in EXPORTS:
+        raise ValueError("This bundle requires a pinned 1-bit export (MB1 main-binB-m1-lr2e-4 step 250000, "
+                         f"or Kea-B' b100-main); refusing export {sha256}")
+    return EXPORTS[sha256]
 
 
 def vocabulary(tokenizer_dir: Path) -> dict[int, str]:
@@ -62,34 +68,42 @@ def _sha256(path: Path) -> str:
         return hashlib.file_digest(handle, "sha256").hexdigest()
 
 
-def bundle_manifest(output: Path, arm: str, export_sha256: str, files: list[str]) -> dict:
+def bundle_arms() -> tuple[str, ...]:
+    """The 1-bit arms plus the corrected 0/1 arm; the timing-only arms (wrong outputs) never make a bundle."""
     from mil import encodings
 
-    if arm not in encodings.BINARY_ARMS:
-        raise ValueError(f"{arm} is not a 1-bit arm ({', '.join(encodings.BINARY_ARMS)})")
+    return encodings.BINARY_ARMS + encodings.CORRECTED_ARMS
+
+
+def bundle_manifest(output: Path, arm: str, export_sha256: str, files: list[str],
+                    buckets: tuple[int, ...] = localflow.BUCKETS) -> dict:
+    if arm not in bundle_arms():
+        raise ValueError(f"{arm} is not a bundle arm ({', '.join(bundle_arms())})")
+    base_model, training_step = check_export(export_sha256)
     return {
-        "model": "localflow", "display_name": "LocalFlow", "base_model": "kea-b", "training_step": 250000,
+        "model": "localflow", "display_name": "LocalFlow", "base_model": base_model, "training_step": training_step,
         "export_sha256": export_sha256, "encoder": arm, "layout": "plain",
         "compute_units": "cpuAndNeuralEngine", "decoder": "native-fp32",
-        "buckets_seconds": list(localflow.BUCKETS), "sample_rate": 16000,
+        "buckets_seconds": sorted(buckets), "sample_rate": 16000,
         "files": {name: _sha256(Path(output) / name) for name in files},
     }
 
 
-def build(arm: str, output: Path, export: Path | None, tokenizer: Path) -> dict:
+def build(arm: str, output: Path, export: Path | None, tokenizer: Path,
+          buckets: tuple[int, ...] = localflow.BUCKETS) -> dict:
     import artifacts
     import native
     from mil import build as build_mod, weights
     from mil.binary_export import BinaryExportSource
 
-    localflow.apply_buckets()
+    localflow.apply_buckets(buckets)
     export = Path(export or weights.default_path("mb1")).resolve()
     output = artifacts.check(output)
     work = artifacts.check(output.parent)
     t0 = time.time()
     source = BinaryExportSource(export)  # verifies the export file's SHA-256
     export_sha = source.manifest["sha256"]
-    check_export(export_sha)
+    base_model, _ = check_export(export_sha)
     tokenizer_hashes = source.verify_tokenizer(tokenizer)
     # this process only: the "mb1" source reads --export; native blobs read the same file's stored tensors
     original_path = weights.default_path
@@ -110,14 +124,14 @@ def build(arm: str, output: Path, export: Path | None, tokenizer: Path) -> dict:
     for stem in ("frontend", "decoder_joint"):
         path = output / f"{stem}.json"
         data = json.loads(path.read_text())
-        data["provenance"] = {"model": "localflow", "base_model": "kea-b", "export_sha256": export_sha}
+        data["provenance"] = {"model": "localflow", "base_model": base_model, "export_sha256": export_sha}
         path.write_text(json.dumps(data, indent=2) + "\n")
     files = bundle_files(output)
-    bundle = bundle_manifest(output, arm, export_sha, files)
+    bundle = bundle_manifest(output, arm, export_sha, files, buckets)
     (output / "bundle.json").write_text(json.dumps(bundle, indent=2) + "\n")
     weight_bin = encoder_dir / "weights" / "weight.bin"
     record = {
-        "arm": arm, "bundle": str(output), "bundle_json_sha256": _sha256(output / "bundle.json"),
+        "arm": arm, "buckets_seconds": sorted(buckets), "bundle": str(output), "bundle_json_sha256": _sha256(output / "bundle.json"),
         "export": {"dir": str(export), "sha256": export_sha, "format": source.FORMAT},
         "tokenizer": {"dir": str(tokenizer), "verified_against_export_manifest": tokenizer_hashes},
         "chain": manifest["encoding"]["chain"],
@@ -146,12 +160,15 @@ def main() -> None:
     from mil import encodings
 
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("--arm", required=True, choices=encodings.BINARY_ARMS)
+    parser.add_argument("--arm", required=True, choices=bundle_arms())
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--export", type=Path, help="parakeet-binary-v1 export dir (default: weights.default_path('mb1'))")
     parser.add_argument("--tokenizer", type=Path, default=MAC_TOKENIZER)
+    parser.add_argument("--buckets", default=",".join(map(str, localflow.BUCKETS)),
+                        help="encoder functions in seconds (default 15, the one LocalFlow loads; 4,8,15,30 for all)")
     args = parser.parse_args()
-    record = build(args.arm, args.output, args.export, args.tokenizer)
+    record = build(args.arm, args.output, args.export, args.tokenizer,
+                   tuple(int(s) for s in args.buckets.split(",")))
     print(json.dumps({k: record[k] for k in ("arm", "bundle_json_sha256", "weight_bin_bytes", "bundle_bytes",
                                             "timing_s", "peak_rss_mb")}))
 

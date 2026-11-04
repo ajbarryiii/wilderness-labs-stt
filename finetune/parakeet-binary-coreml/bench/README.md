@@ -3,7 +3,7 @@
 Chooses the 1-bit Core ML encoding of kea-b for LocalFlow. The goal is **lowest latency**, with the constraint
 that the encoder uses **less memory than the shipped ternary model (kea-t)**. The harness measures latency, load
 time, memory and accuracy for any number of LocalFlow-format bundles (`bundle.json`, multifunction
-`Encoder.mlmodelc` with b4/b8/b15/b30, native decoder, front end, vocabulary). Each bundle can run on any Core ML
+`Encoder.mlmodelc` with b15 and optionally b4/b8/b30, native decoder, front end, vocabulary). Each bundle can run on any Core ML
 compute units, and an external (non-Core-ML) encoder can be plugged in through a command.
 
 It times LocalFlow's **deployed runtime**: the driver compiles `Sources/Parakeet/*.swift` and

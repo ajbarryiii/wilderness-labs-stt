@@ -261,10 +261,22 @@ class BundleVerification(unittest.TestCase):
                 lib.verify_bundle(root)
 
     def test_wrong_model_or_buckets_fail(self):
-        for kwargs in ({"model": "other"}, {"buckets": (2, 4, 8, 15)}):
+        for kwargs in ({"model": "other"}, {"buckets": (2, 4, 8, 15)}, {"buckets": (4, 8, 30)}, {"buckets": ()}):
             with tempfile.TemporaryDirectory() as d:
                 with self.assertRaises(ValueError):
                     lib.verify_bundle(write_bundle(Path(d), **kwargs))
+
+    def test_b15_only_bundle_verifies(self):
+        # LocalFlow loads only b15 (since 897f13e), so a bundle may hold just that function.
+        with tempfile.TemporaryDirectory() as d:
+            self.assertEqual(lib.verify_bundle(write_bundle(Path(d), buckets=(15,)))["manifest"]["buckets_seconds"], [15])
+
+    def test_load_order_keeps_preferred_order_of_held_functions(self):
+        self.assertEqual(lib.load_order([4, 8, 15, 30], "15,4,8,30"), "15,4,8,30")
+        self.assertEqual(lib.load_order([15], "15,4,8,30"), "15")
+        self.assertEqual(lib.load_order([8, 15], "4,8,15,30"), "8,15")
+        with self.assertRaises(ValueError):
+            lib.load_order([15], "4,8")
 
     def test_unsafe_or_missing_paths_fail(self):
         with tempfile.TemporaryDirectory() as d:

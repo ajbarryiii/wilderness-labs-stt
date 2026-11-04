@@ -276,7 +276,7 @@ def timings(path: Path, units, calls: int, warmup: int = 3, functions=None) -> d
 def cmd_probe(args) -> None:
     from mil import build
 
-    localflow.apply_buckets()
+    localflow.apply_buckets(localflow.ALL_BUCKETS)
     units = [u for u in args.units.split(",") if u]
     for arm in arms_arg(args.arms, reference=True):
         t0 = time.time()
@@ -312,7 +312,7 @@ def cmd_bench(args) -> None:
     rotated per round) and function; per (arm, function) the median over rounds of the per-round medians."""
     import coremltools as ct
 
-    localflow.apply_buckets()
+    localflow.apply_buckets(localflow.ALL_BUCKETS)
     arms = arms_arg(args.arms, reference=True)
     u = args.unit
     rounds: dict = {a: {fn: [] for fn in localflow.FUNCTIONS} for a in arms}
@@ -346,7 +346,7 @@ def cmd_bench(args) -> None:
 
 
 def cmd_plan(args) -> None:
-    localflow.apply_buckets()
+    localflow.apply_buckets(localflow.ALL_BUCKETS)
     doc = {"arm": args.arm, "path": args.path, "compute_plans": plans(Path(args.path), args.units.split(","))}
     write(args.out or f"plans/{args.arm}.json", doc)
     print(json.dumps({u: {fn: (v.get("ops_by_device"), v.get("cost_share")) for fn, v in p.items() if fn != "_wall_s"}
@@ -358,7 +358,7 @@ def cmd_loadtimes(args) -> None:
     load, and a short timing check (informational)."""
     import coremltools as ct
 
-    localflow.apply_buckets()
+    localflow.apply_buckets(localflow.ALL_BUCKETS)
     path = Path(args.path)
     out = {}
     for u in args.units.split(","):
