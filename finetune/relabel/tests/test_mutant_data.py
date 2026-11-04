@@ -89,6 +89,27 @@ class TestRecordings(unittest.TestCase):
             md.recording_of("yodas", "yodas:xyz")
 
 
+class TestTextRule(unittest.TestCase):
+    """v3.2: lowercase; any character but a letter, a digit, an apostrophe or a space becomes a space; collapse; strip."""
+
+    def test_rule(self):
+        cases = {"HE HOPED THERE WOULD BE STEW": "he hoped there would be stew",
+                 "the rural development policy;": "the rural development policy",
+                 "WELL THE THING IS IT'S S. V. G.": "well the thing is it's s v g",
+                 "YEAH MM-HMM MM-HMM": "yeah mm hmm mm hmm",
+                 "is it just another eu turkey!": "is it just another eu turkey",
+                 "  20 \u20ac,\tin 2019?\n": "20 in 2019",
+                 "Caf\u00e9 na\u00efve": "caf\u00e9 na\u00efve",
+                 "...": "", "": "", "- -": ""}
+        for raw, want in cases.items():
+            self.assertEqual(md.training_text(raw), want, raw)
+
+    def test_idempotent(self):
+        for raw in ("A B. C", "it's -- fine", "x;y"):
+            once = md.training_text(raw)
+            self.assertEqual(md.training_text(once), once)
+
+
 class TestSelect(unittest.TestCase):
     def rows(self):
         return [
@@ -253,12 +274,12 @@ class TestSelectAndAudio(unittest.TestCase):
                 elif kind == 1:
                     shard.append(row(ls_id(10 + i % 5, 100 + i % 3, i), "librispeech", text="café"))
                 elif kind == 2:
-                    shard.append(row(vox_id(i % 9, i), "voxpopuli", text="the cut"))
+                    shard.append(row(vox_id(i % 9, i), "voxpopuli", text="the cut; it's done."))
                 elif kind == 3:
-                    shard.append(row(ami_id(f"ES20{i % 6:02d}a", i), "ami", text="yeah okay"))
+                    shard.append(row(ami_id(f"ES20{i % 6:02d}a", i), "ami", text="YEAH OKAY" if i % 2 else "-- ."))
                 else:
                     shard.append(row(ls_id(20 + i % 7, 200 + i % 11, i), "librispeech", seconds=1 + (i % 5),
-                                     text="hello world"))
+                                     text="HELLO WORLD"))
             rows.append(shard)
         cls.c1 = fake_c1(TMP / "world" / "c1", rows)
         cls.deny = TMP / "world" / "relabel"
@@ -280,6 +301,31 @@ class TestSelectAndAudio(unittest.TestCase):
         self.assertEqual(s["counts"]["librispeech"]["uncovered"], s["uncovered"]["count"])
         self.assertTrue(all(c["tokens"] == StandInTokenizer().text_to_ids(c["text"]) for c in clips.values()))
         self.assertEqual(s["denylist"]["recordings_for_these_sources"], {"librispeech": 0, "voxpopuli": 0, "ami": 0})
+
+    def test_training_text_rule_applied_and_empty_dropped(self):
+        s, clips = self.summary, self.data.clips
+        self.assertTrue(all(c["text"] == md.training_text(c["reference"]) for c in clips.values()))
+        self.assertIn("hello world", {c["text"] for c in clips.values()})
+        self.assertIn("the cut it's done", {c["text"] for c in clips.values()})
+        self.assertFalse(any(c["text"] == "" or c["text"] != c["text"].lower() for c in clips.values()))
+        empty_ami = sum(1 for k in range(4) for j in range(70) if j % 7 == 3 and (70 * k + j) % 2 == 0)
+        self.assertGreater(empty_ami, 0)
+        self.assertEqual(s["counts"]["ami"]["empty"], empty_ami)
+        self.assertEqual(s["counts"]["librispeech"]["empty"], 0)
+        self.assertEqual(s["empty"]["count"], empty_ami)
+        self.assertEqual(s["text_rule"], md.TEXT_RULE)
+
+    def test_text_stats_per_source(self):
+        st = self.summary["text_stats"]
+        for src in md.SOURCES:
+            rows = [c for c in self.data.clips.values() if c["source"] == src]
+            tokens = sum(len(c["tokens"]) for c in rows)
+            seconds = sum(c["duration"] for c in rows)
+            self.assertAlmostEqual(st[src]["tokens_per_second"], tokens / seconds)
+            for rate in ("12.5", "13"):
+                frames = {c["id"]: md.nominal_frames(c["samples"], float(rate)) for c in rows}
+                share = sum(len(c["tokens"]) > frames[c["id"]] for c in rows) / len(rows)
+                self.assertAlmostEqual(st[src]["share_tokens_over_frames"][rate], share)
 
     def test_heldout_is_disjoint_from_the_plan(self):
         held = set(self.data.heldout_ids())

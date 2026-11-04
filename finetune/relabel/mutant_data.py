@@ -8,9 +8,12 @@ compact audio store (mutant plan "Training data" and "Training protocol").
 Clips. Every unique clip of LibriSpeech, VoxPopuli English train and AMI IHM train in the C1 replay store
 ($RELABEL_ROOT/pool-audio/<config id>/shards/<k>.audio.parquet: one row per id, at its first occurrence) whose
 reference_kind is "human", after the global denylist ($RELABEL_ROOT/pool/denylist.json; it lists no recording of these
-three sources, which select checks and records). The text is the stored reference, verbatim, tokenized with B0's
-tokenizer (model.tokenizer.text_to_ids, as train.tokenize). A clip whose tokens include the tokenizer's unknown id is
-not covered and is dropped from every arm (counted and listed). Hygiene: no training id is an H4 dev id, and no
+three sources, which select checks and records). The training text (plan v3.2, TEXT_RULE, training_text) is the
+stored reference lowercased, every character other than a letter, a digit, an apostrophe or a space replaced by a
+space, whitespace collapsed and stripped; it is tokenized with B0's tokenizer (model.tokenizer.text_to_ids, as
+train.tokenize). A clip whose training text is empty, or whose tokens include the tokenizer's unknown id, is dropped
+from every arm (counted per source and listed). data.json reports per source the tokens per second and the share of
+clips with more tokens than nominal encoder frames (12.5 and 13 Hz; not a filter). Hygiene: no training id is an H4 dev id, and no
 LibriSpeech speaker or AMI meeting of the H4 dev sets is a training one.
 
 Recordings (the held-out unit): LibriSpeech the chapter (<speaker>-<chapter>), VoxPopuli the event audio the segment
@@ -68,7 +71,10 @@ SHARDS_PER_POOL = 20
 BUDGET_SAMPLES = batchplan.BUDGET_SAMPLES          # 600 s at 16 kHz
 SAMPLE_RATE = batchplan.SAMPLE_RATE
 PLAN_SEED = 20261104
-PLAN_KIND, PLAN_VERSION = "relabel-mutant-plan", 1
+PLAN_KIND, PLAN_VERSION = "relabel-mutant-plan", 2     # 2: the v3.2 text rule
+TEXT_RULE = ("lowercase; every character other than a letter, a digit, an apostrophe (') or a space becomes a space; "
+             "whitespace collapsed; stripped")
+NOMINAL_RATES = (12.5, 13.0)
 META_COLUMNS = ("id", "source", "duration", "samples", "reference", "reference_kind", "pcm_sha256")
 _REC = {"librispeech": re.compile(r"^librispeech:((\d+)-\d+)-\d+$"),
         "voxpopuli": re.compile(r"^voxpopuli:(\d{8}-\d{4}-PLENARY(?:-[A-Za-z0-9]+)?)-en_"),
@@ -76,7 +82,8 @@ _REC = {"librispeech": re.compile(r"^librispeech:((\d+)-\d+)-\d+$"),
 RULES = {
     "clips": "C1 audio-shard rows (first occurrences) with source in librispeech/voxpopuli/ami and reference_kind "
              "human, minus denylisted recordings",
-    "coverage": "B0 tokenizer text_to_ids of the stored reference has no unknown id",
+    "text": TEXT_RULE,
+    "coverage": "the training text is not empty and B0's tokenizer text_to_ids of it has no unknown id",
     "recording": "librispeech <speaker>-<chapter>; voxpopuli the event id before '-en_' (<date>-<time>-PLENARY[-<suffix>]); "
                  "ami the meeting",
     "heldout": "per source, recordings by sha256(salt \\0 source \\0 recording) then name, held out while the "
@@ -191,6 +198,32 @@ def select_rows(rows, denied: dict[str, set[str]]) -> tuple[list[dict], dict]:
         c["selected"] += 1
         out.append({**r, "recording": rec})
     return out, counts
+
+
+def training_text(reference: str) -> str:
+    """The v3.2 text rule (TEXT_RULE)."""
+    kept = "".join(ch if (ch.isalpha() or ch.isdigit() or ch in "' ") else " " for ch in reference.lower())
+    return " ".join(kept.split())
+
+
+def nominal_frames(samples: int, rate: float) -> int:
+    """Encoder frames of a clip at a nominal frame rate (for the tokens-over-frames share; not a filter)."""
+    return int(samples * rate // SAMPLE_RATE)
+
+
+def text_stats(clips: list[dict]) -> dict:
+    out = {}
+    for s in SOURCES:
+        rows = [c for c in clips if c["source"] == s]
+        if not rows:
+            continue
+        tokens = [len(c["tokens"]) for c in rows]
+        out[s] = {"clips": len(rows), "tokens_per_second": sum(tokens) / sum(c["duration"] for c in rows),
+                  "mean_clip_tokens_per_second": float(np.mean([t / c["duration"] for t, c in zip(tokens, rows)])),
+                  "share_tokens_over_frames": {f"{r:g}": sum(t > nominal_frames(c["samples"], r)
+                                                             for t, c in zip(tokens, rows)) / len(rows)
+                                               for r in NOMINAL_RATES}}
+    return out
 
 
 def coverage(tokenizer, text: str) -> tuple[list[int], bool]:
@@ -341,8 +374,8 @@ def load_plan(directory: Path) -> Plan:
 
 # ----------------------------------------------------------------------------- clip table
 
-TABLE_COLUMNS = ("id", "source", "recording", "shard", "row", "duration", "samples", "text", "pcm_sha256", "tokens",
-                 "split")
+TABLE_COLUMNS = ("id", "source", "recording", "shard", "row", "duration", "samples", "reference", "text", "pcm_sha256",
+                 "tokens", "split")
 
 
 def write_table(path: Path, clips: list[dict]) -> str:
@@ -486,18 +519,23 @@ def select(lay: Layout, force: bool = False, tokenizer=None, tokenizer_sha256: s
     selected, counts = select_rows(rows(), denied)
     if tokenizer is None:
         tokenizer, tokenizer_sha256 = b0_tokenizer()
-    uncovered, empty, kept = [], 0, []
+    uncovered, empty, kept = [], [], []
+    for s in SOURCES:
+        counts[s].update(empty=0, uncovered=0)
     for c in selected:
-        ids, ok = coverage(tokenizer, c["reference"])
+        text = training_text(c["reference"])
+        if not text:
+            empty.append({"id": c["id"], "reference": c["reference"]})
+            counts[c["source"]]["empty"] += 1
+            continue
+        ids, ok = coverage(tokenizer, text)
         if not ok:
-            uncovered.append({"id": c["id"], "text": c["reference"]})
-            counts[c["source"]].setdefault("uncovered", 0)
+            uncovered.append({"id": c["id"], "reference": c["reference"], "text": text})
             counts[c["source"]]["uncovered"] += 1
             continue
-        empty += not ids
         kept.append({"id": c["id"], "source": c["source"], "recording": c["recording"], "shard": c["shard"],
                      "row": c["row"], "duration": float(c["duration"]), "samples": int(c["samples"]),
-                     "text": c["reference"], "pcm_sha256": c["pcm_sha256"], "tokens": ids})
+                     "reference": c["reference"], "text": text, "pcm_sha256": c["pcm_sha256"], "tokens": ids})
     held = heldout_recordings(kept)
     for c in kept:
         c["split"] = "heldout" if c["recording"] in held[c["source"]] else "train"
@@ -518,8 +556,9 @@ def select(lay: Layout, force: bool = False, tokenizer=None, tokenizer_sha256: s
     summary = {
         "plan": PLAN, "created_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "smoke_shards": lay.smoke_shards,
         "c1": {"dir": str(c1), "shards_read": int(n_shards)}, "rules": RULES, "sources": list(SOURCES),
-        "counts": counts, "uncovered": {"count": len(uncovered), "items": uncovered},
-        "empty_text_kept": empty, "tokenizer_sha256_of_model": tokenizer_sha256,
+        "counts": counts, "text_rule": TEXT_RULE, "uncovered": {"count": len(uncovered), "items": uncovered},
+        "empty": {"count": len(empty), "items": empty}, "text_stats": text_stats(kept),
+        "text_stats_train": text_stats(train), "tokenizer_sha256_of_model": tokenizer_sha256,
         "denylist": {"path": str(deny_path), "sha256": lshards.sha256_file(deny_path),
                      "recordings_for_these_sources": {s: len(denied.get(s, ())) for s in SOURCES}},
         "heldout": {"fraction": HELDOUT_FRACTION, "salt": HELDOUT_SALT,
@@ -651,9 +690,9 @@ def main(argv: list[str] | None = None) -> int:
     lay = layout(args.smoke_shards)
     if args.cmd == "select":
         s = select(lay, force=args.force)
-        print(json.dumps({k: s[k] for k in ("counts", "train", "heldout", "plan_identity", "empty_text_kept")},
+        print(json.dumps({k: s[k] for k in ("counts", "train", "heldout", "plan_identity", "text_stats")},
                          indent=1, default=str))
-        print(f"uncovered: {s['uncovered']['count']}")
+        print(f"empty: {s['empty']['count']}, uncovered: {s['uncovered']['count']}")
         return 0
     if args.cmd == "audio":
         return build_audio(lay, args.budget_minutes)
