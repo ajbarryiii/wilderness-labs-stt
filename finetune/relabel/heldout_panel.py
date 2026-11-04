@@ -32,8 +32,9 @@ gains "panel": its configuration (model, identity, set, manifest SHA-256, limit,
 the tracked tree was dirty, and CUBLAS_WORKSPACE_CONFIG as the process saw it.
 
 Cross-check: after loading, each path re-scores one set of an existing record of the same model (crosscheck_input:
-stem-chem for the x1 arms and B0p, yodas_dev for T* and its encoder) and compares: same configuration, same
-utterances, WER within score_domain.CROSSCHECK_POINTS. A production run that fails it writes crosscheck.json and
+stem-chem for the x1 arms and B0p, yodas_dev for T*'s encoder, ami_dev for T*) and compares: same configuration, same
+utterances, WER within score_domain.CROSSCHECK_POINTS. T*'s is an H4 set: on yodas_dev a single generation that runs
+to the token cap moves the WER by about 0.27 points (2026-11-04). A production run that fails it writes crosscheck.json and
 nothing else (exit 6); a --limit smoke compares its first N utterances and only records the result.
 
 Outputs: $RELABEL_ROOT/heldout-panel/<model>/<set>.json, crosscheck.json and run.json (this process: timings, peak
@@ -82,7 +83,8 @@ X1_ARMS = ("b100-main", "b100-control")
 EVAL_EXT = ("lectures-a", "medical-b")
 SCORED = {"b100-main": EVAL_EXT, "b100-control": EVAL_EXT, "B0p": EVAL_EXT, "tstar": SETS, "tstar-encoder": SETS}
 CROSSCHECK_STEM = "stem-chem"
-CROSSCHECK_DEV = "yodas_dev"
+CROSSCHECK_DEV = "yodas_dev"      # T*'s encoder
+CROSSCHECK_TSTAR = "ami_dev"      # T*: an H4 set
 
 LOCK_BUSY_EXIT = 3
 LOW_MEMORY_EXIT = 4
@@ -332,8 +334,8 @@ class TStar(Scorer):
     def crosscheck_input(self):
         import evaluate
 
-        manifest = evaluate.resolve_manifest(CROSSCHECK_DEV)[1]
-        return CROSSCHECK_DEV, manifest, self.recorded_dir / f"{CROSSCHECK_DEV}.json"
+        manifest = evaluate.resolve_manifest(CROSSCHECK_TSTAR)[1]
+        return CROSSCHECK_TSTAR, manifest, self.recorded_dir / f"{CROSSCHECK_TSTAR}.json"
 
     def load(self, device):
         self.device = device

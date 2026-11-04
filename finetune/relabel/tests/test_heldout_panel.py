@@ -339,7 +339,8 @@ class GraniteStandIn(teachers.Teacher):
 
 class TStarPathTest(FlowBase):
     def diagnostic(self, **change) -> Path:
-        """A stand-in for the diagnostic's T* records: its summary's configuration and a yodas_dev record."""
+        """A stand-in for the diagnostic's T* records: its summary's configuration and an ami_dev record (T*'s
+        cross-check set, an H4 set)."""
         teacher = GraniteStandIn()
         args = argparse.Namespace(limit=None, shortest=0, batch_size=teacher.batch_size,
                                   max_batch_seconds=teacher.max_batch_seconds, device="cpu")
@@ -349,9 +350,9 @@ class TStarPathTest(FlowBase):
         (out / "summary.json").write_text(json.dumps({"status": "scored", "config": config}))
         teacher.load("cpu")
         args.limit = 2
-        record = score_teacher.score_set(teacher, "yodas_dev", evaluate.resolve_manifest("yodas_dev")[1], args,
+        record = score_teacher.score_set(teacher, "ami_dev", evaluate.resolve_manifest("ami_dev")[1], args,
                                          torch.device("cpu"), teacher.info())
-        (out / "yodas_dev.json").write_text(json.dumps(record))
+        (out / "ami_dev.json").write_text(json.dumps(record))
         return out
 
     def run_tstar(self):
@@ -376,7 +377,8 @@ class TStarPathTest(FlowBase):
         self.assertEqual(data["panel"]["config"]["identity"]["revision"], GraniteStandIn.revision)
         self.assertEqual(data["term_kind"], "technical")
         check = json.loads((hp.output_dir("tstar", 2) / "crosscheck.json").read_text())
-        self.assertEqual(check["set"], "yodas_dev")
+        self.assertEqual(check["set"], "ami_dev")
+        self.assertIn("ami_dev", relabel_paths.H4)
         self.assertEqual(check["identical_hypotheses"], 2)
 
     def test_another_configuration_than_the_diagnostics_is_refused(self) -> None:
