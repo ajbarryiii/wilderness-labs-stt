@@ -768,6 +768,19 @@ def _decoding_config(model) -> dict | None:
         return None
 
 
+def scoring_encoder(arm: str, features: dict, device, loader=None) -> mf.ArmEncoder:
+    """The arm's encoder as the run's stored features were made: the batching restored (one clip per pass after the
+    FP32-isolation fallback), then its identity checked against the features' (else RuntimeError)."""
+    enc = (loader or mf.load_arm)(arm, device)
+    want = features["encoder"]
+    if hasattr(enc, "one_clip"):
+        enc.one_clip = want.get("batching") == "one clip per pass"
+    if enc.identity() != want:
+        raise RuntimeError(f"{arm}: the scoring encoder's identity differs from the run's features: "
+                           f"{enc.identity()} != {want}")
+    return enc
+
+
 def scoring_model(weights: Path, device):
     model = evaluate.load_pretrained("cpu")
     init_decoder(model)
@@ -785,7 +798,8 @@ def score(lay: md.Layout, arm: str, stage: str, names: list[str], limit: int | N
     if not (run_dir(lay, arm, stage) / "summary.json").exists():
         raise SystemExit(f"{arm} {stage} is not complete")
     model, payload = scoring_model(weights, device)
-    enc = mf.load_arm(arm, device)
+    features = json.loads((run_dir(lay, arm, stage) / "config.json").read_text())["config"]["features"]
+    enc = scoring_encoder(arm, features, device)
     source = {"arm": arm, "stage": stage, "weights": str(weights), "weights_sha256": evaluate.sha256_file(weights),
               "trained_sha256": state_sha256(payload["model"]), "step": payload["step"],
               "run_config_sha256": payload["config_sha256"], "encoder": enc.identity()}

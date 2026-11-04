@@ -311,6 +311,33 @@ class TestDevOnly(unittest.TestCase):
         load.assert_not_called()
 
 
+class TestScoringEncoder(unittest.TestCase):
+    """Scoring encodes as the run's features were made: the one-clip fallback is restored, an identity mismatch refused."""
+
+    class Arm:
+        arm = "D-Q"
+
+        def __init__(self, revision="r1"):
+            self.one_clip, self.revision = False, revision
+
+        def identity(self):
+            return {"arm": self.arm, "revision": self.revision,
+                    "batching": "one clip per pass" if self.one_clip else "batched"}
+
+    def test_fallback_restored(self):
+        features = {"encoder": {"arm": "D-Q", "revision": "r1", "batching": "one clip per pass"}}
+        enc = mt.scoring_encoder("D-Q", features, torch.device("cpu"), loader=lambda a, d: self.Arm())
+        self.assertTrue(enc.one_clip)
+        features = {"encoder": {"arm": "D-Q", "revision": "r1", "batching": "batched"}}
+        enc = mt.scoring_encoder("D-Q", features, torch.device("cpu"), loader=lambda a, d: self.Arm())
+        self.assertFalse(enc.one_clip)
+
+    def test_identity_mismatch_refused(self):
+        features = {"encoder": {"arm": "D-Q", "revision": "r0", "batching": "batched"}}
+        with self.assertRaises(RuntimeError):
+            mt.scoring_encoder("D-Q", features, torch.device("cpu"), loader=lambda a, d: self.Arm())
+
+
 class TestSmokeIsolation(unittest.TestCase):
     def test_run_dirs(self):
         prod, smoke = md.layout(), md.layout(40)
