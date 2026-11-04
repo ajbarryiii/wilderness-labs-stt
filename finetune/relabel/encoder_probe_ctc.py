@@ -29,7 +29,9 @@ Writes <out>/<head>/<set>.json in evaluate.py's per-set layout (records with id,
 I, scored, duration, plus labels: the collapsed head outputs) and <out>/summary.json (conventions and sources,
 revision, library versions, precision, checks, timings, peak memory). <out> is $RELABEL_ROOT/encoder-probe/ctc for a
 full run and relabel_paths.SMOKE/encoder-probe-ctc-limit<N>[-cpu] with --limit. A set already written for both heads
-by an identical configuration is skipped unless --force.
+by an identical configuration is skipped unless --force. The checks are written to summary.json as soon as they pass;
+if every set is written but no passed checks are recorded for the configuration (a run stopped before its summary),
+the checks run again and nothing is re-scored. Peak memory is the whole run's (allocator peaks are never reset).
 
 GPU discipline as score_teacher.py: the parakeet GPU lock is taken before anything touches CUDA (exit 3 if busy);
 the job lease is the caller's; --device cpu (smoke only) takes no lock; no model load below --min-available-gb of
@@ -441,9 +443,18 @@ def run_config(args) -> dict:
 
 
 def _peak_gpu(device: torch.device) -> dict:
+    """The process's CUDA allocator peaks so far (never reset: they include model loading and the checks)."""
     cuda = device.type == "cuda"
     return {"peak_gpu_memory_gb": torch.cuda.max_memory_allocated(device) / 2**30 if cuda else None,
             "peak_gpu_reserved_gb": torch.cuda.max_memory_reserved(device) / 2**30 if cuda else None}
+
+
+def _memory(device: torch.device, after_load: dict | None) -> dict:
+    """Whole-run peaks: CUDA allocator (since process start), allocator state right after loading, host max RSS."""
+    peak = _peak_gpu(device)
+    return {"gpu_allocated_gb": peak["peak_gpu_memory_gb"], "gpu_reserved_gb": peak["peak_gpu_reserved_gb"],
+            "gpu_after_load": after_load, "scope": "whole run, since process start (allocator peaks never reset)",
+            "host_max_rss_gb": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 2**20}
 
 
 def score_set(probe: Probe, name: str, manifest: Path, args, config: dict, source: dict) -> dict[str, dict]:
@@ -453,9 +464,6 @@ def score_set(probe: Probe, name: str, manifest: Path, args, config: dict, sourc
     padded, load_s, infer_s = [], 0.0, 0.0
     counts = {"bpe_special_id_clips": [], "bpe_skip_changed_clips": [], "char_above_255_clips": [],
               "enc_len_formula_differs_clips": []}
-    cuda = probe.device.type == "cuda"
-    if cuda:
-        torch.cuda.reset_peak_memory_stats(probe.device)
     wall = time.perf_counter()
     for k, r in enumerate(records):
         start = time.perf_counter()
@@ -484,7 +492,8 @@ def score_set(probe: Probe, name: str, manifest: Path, args, config: dict, sourc
     hours = sum(r["duration"] for r in records) / 3600
     throughput = {"audio_load_s": load_s, "inference_wall_s": infer_s, "set_wall_s": time.perf_counter() - wall,
                   "audio_hours": hours, "audio_hours_per_gpu_hour": hours / (infer_s / 3600) if infer_s > 0 else None,
-                  "clips_per_pass": 1, **_peak_gpu(probe.device)}
+                  "clips_per_pass": 1, "peak_scope": "process so far (includes loading and the checks)",
+                  **_peak_gpu(probe.device)}
     diagnostics = {k: {"count": len(v), "ids": v[:50]} for k, v in counts.items()}
     out, manifest_sha = {}, evaluate.sha256_file(manifest)
     for head in HEADS:
@@ -512,10 +521,11 @@ def _set_done(out_dir: Path, name: str, config: dict) -> bool:
     return True
 
 
-def summarize(out_dir: Path, config: dict, info: dict, checks: dict | None, load_s: float | None) -> dict:
+def summarize(out_dir: Path, config: dict, info: dict, checks: dict | None, load_s: float | None,
+              memory: dict | None) -> dict:
     import teachers
 
-    heads, timings, peaks = {}, {}, []
+    heads, timings = {}, {}
     for head in HEADS:
         heads[head] = {}
         for name in relabel_paths.SETS:
@@ -532,22 +542,18 @@ def summarize(out_dir: Path, config: dict, info: dict, checks: dict | None, load
                                  "diagnostics": {k: v["count"] for k, v in r["diagnostics"].items()}}
             timings[name] = {k: t[k] for k in ("audio_hours", "audio_load_s", "inference_wall_s", "set_wall_s",
                                                  "audio_hours_per_gpu_hour")}
-            peaks.append(t)
     done = [n for n in relabel_paths.SETS if all(n in heads[h] for h in HEADS)]
     complete = config["limit"] is None and set(done) == set(relabel_paths.SETS)
     status = "scored" if complete else ("smoke" if config["limit"] is not None else "partial")
     hours = sum(timings[n]["audio_hours"] for n in done)
     wall = sum(timings[n]["inference_wall_s"] for n in done)
-    peak = lambda key: max((p[key] or 0.0 for p in peaks), default=None)  # noqa: E731
     return {"status": status, "complete": complete, "plan": PLAN, "config": config, "teacher": TEACHER,
             "hf_id": HF_ID, "revision": REVISION, "versions": teachers.library_versions(), "precision": PRECISION,
             "conventions": CONVENTIONS, "conventions_sha256": config["conventions_sha256"], "reference": REFERENCE,
             "source": info, "checks": checks, "heads": heads,
             "timings": {"model_load_s": load_s, "sets": timings, "audio_hours": hours, "inference_wall_s": wall,
                         "audio_hours_per_gpu_hour": hours / (wall / 3600) if wall > 0 else None},
-            "peak_memory": {"gpu_allocated_gb": peak("peak_gpu_memory_gb"),
-                            "gpu_reserved_gb": peak("peak_gpu_reserved_gb"),
-                            "host_max_rss_gb": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 2**20},
+            "peak_memory": memory,
             "job_lease_env": {k: v for k, v in os.environ.items() if k.startswith("AGENT_JOBS_")},
             "gpu_lock": str(relabel_paths.GPU_LOCK) if config["device"] == "cuda" else None}
 
@@ -611,33 +617,43 @@ def _run_locked(args, out_dir: Path, sets, config: dict) -> int:
             print(f"{name}: already written for both heads with this configuration, skipping", flush=True)
             continue
         todo.append((name, manifest))
-    if not todo:
-        summary_path = out_dir / "summary.json"
-        old = json.loads(summary_path.read_text()) if summary_path.exists() else {}
-        summary = summarize(out_dir, config, old.get("source", {}), old.get("checks"),
-                            old.get("timings", {}).get("model_load_s"))
+    summary_path = out_dir / "summary.json"
+    old = json.loads(summary_path.read_text()) if summary_path.exists() else {}
+    old_checks = old.get("checks") if old.get("config") == config else None
+    if not todo and (old_checks or {}).get("passed"):
+        summary = summarize(out_dir, config, old.get("source", {}), old_checks,
+                            old.get("timings", {}).get("model_load_s"), old.get("peak_memory"))
         evaluate.write_json(summary_path, summary)
         print(f"summary: status {summary['status']}; {summary_path}", flush=True)
         return 0
+    if not todo:
+        # Every set is written, but no passed checks are recorded for this configuration (a run stopped before its
+        # summary): run checks 1-3 again, without re-scoring.
+        print("all sets written; no passed implementation checks recorded: running the checks only", flush=True)
     if available_memory_gb() < args.min_available_gb:
         print(f"refusing to load: {available_memory_gb():.1f} GB host memory available, "
               f"--min-available-gb {args.min_available_gb}", file=sys.stderr)
         return LOW_MEMORY_EXIT
     out_dir.mkdir(parents=True, exist_ok=True)
-    evaluate.write_json(out_dir / "summary.json", {"status": "in_progress", "complete": False, "config": config})
+    evaluate.write_json(summary_path, {"status": "in_progress", "complete": False, "config": config})
     start = time.perf_counter()
     probe, info = load_probe(device)
     load_s = info.get("model_load_s") or (time.perf_counter() - start)
+    after_load = ({"allocated_gb": torch.cuda.memory_allocated(device) / 2**30,
+                   "reserved_gb": torch.cuda.memory_reserved(device) / 2**30} if device.type == "cuda" else None)
     print(f"{TEACHER} encoder probe: loaded in {load_s:.1f} s", flush=True)
     manifests = {n: evaluate.read_manifest(evaluate.resolve_manifest(n)[1]) for n in relabel_paths.SETS}
     checks = run_checks(probe, manifests)
     print("checks: " + ", ".join(f"{k} {'pass' if checks.get(k, {}).get('passed') else 'FAIL'}"
                                  for k in ("hooks_passive", "pre_feedback", "determinism")), flush=True)
     if not checks["passed"]:
-        evaluate.write_json(out_dir / "summary.json", {"status": "checks_failed", "complete": False, "config": config,
-                                                       "checks": checks, "source": info})
+        evaluate.write_json(summary_path, {"status": "checks_failed", "complete": False, "config": config,
+                                           "checks": checks, "source": info})
         print("implementation checks failed: nothing scored", file=sys.stderr)
         return CHECKS_FAILED_EXIT
+    # Persisted at once, so a run stopped later can resume without losing the checks.
+    evaluate.write_json(summary_path, {"status": "in_progress", "complete": False, "config": config,
+                                       "checks": checks, "source": info, "timings": {"model_load_s": load_s}})
     for name, manifest in todo:
         result = score_set(probe, name, manifest, args, config, info)
         for head in HEADS:
@@ -649,9 +665,9 @@ def _run_locked(args, out_dir: Path, sets, config: dict) -> int:
         print(f"{name}: n={result['bpe']['utterances']} {wers} infer {t['inference_wall_s']:.1f} s "
               f"({t['audio_hours_per_gpu_hour'] or 0:.0f} audio h/h) padded {result['bpe']['padded_short']}",
               flush=True)
-    summary = summarize(out_dir, config, info, checks, load_s)
-    evaluate.write_json(out_dir / "summary.json", summary)
-    print(f"summary: status {summary['status']}; {out_dir / 'summary.json'}", flush=True)
+    summary = summarize(out_dir, config, info, checks, load_s, _memory(device, after_load))
+    evaluate.write_json(summary_path, summary)
+    print(f"summary: status {summary['status']}; {summary_path}", flush=True)
     return 0
 
 

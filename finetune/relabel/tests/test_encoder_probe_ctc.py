@@ -445,6 +445,33 @@ class EntryPointTest(EntryTestBase):
         self.assertEqual(summary["status"], "checks_failed")
         self.assertEqual(summary["checks"], bad)
 
+    def test_a_stop_before_the_summary_resumes_with_the_checks_and_no_rescoring(self) -> None:
+        with mock.patch.object(ep, "summarize", side_effect=KeyboardInterrupt):
+            with self.assertRaises(KeyboardInterrupt):
+                self.run_main()
+        stopped = json.loads((self.out / "summary.json").read_text())
+        self.assertEqual(stopped["status"], "in_progress")
+        self.assertTrue(stopped["checks"]["passed"])  # persisted as soon as they passed
+        with mock.patch.object(ep, "load_probe", side_effect=AssertionError("reloaded")), \
+             mock.patch.object(ep, "score_set", side_effect=AssertionError("re-scored")):
+            self.assertEqual(self.run_main(), 0)
+        summary = json.loads((self.out / "summary.json").read_text())
+        self.assertEqual(summary["status"], "smoke")
+        self.assertTrue(summary["checks"]["passed"])
+
+    def test_written_sets_without_recorded_checks_rerun_only_the_checks(self) -> None:
+        self.assertEqual(self.run_main(), 0)
+        config = json.loads((self.out / "bpe" / "ami_dev.json").read_text())["config"]
+        # e.g. a --force rerun stopped while loading: the summary holds no checks, every set is still written
+        (self.out / "summary.json").write_text(json.dumps({"status": "in_progress", "complete": False,
+                                                           "config": config}))
+        with mock.patch.object(ep, "score_set", side_effect=AssertionError("re-scored")):
+            self.assertEqual(self.run_main(), 0)
+        summary = json.loads((self.out / "summary.json").read_text())
+        self.assertEqual(summary["status"], "smoke")
+        self.assertTrue(summary["checks"]["passed"])
+        self.assertEqual(summary["checks"]["determinism"]["clips"], 50)
+
     def test_interrupted_run_does_not_leave_a_finished_summary(self) -> None:
         self.assertEqual(self.run_main(), 0)
         with mock.patch.object(ep.Probe, "decode", side_effect=KeyboardInterrupt):
