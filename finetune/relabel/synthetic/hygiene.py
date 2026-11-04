@@ -17,6 +17,8 @@ evaluated and recorded as flags):
     duplicate        same normalized text as an earlier kept sentence
     near_duplicate   word-bigram Jaccard >= NEAR_JACCARD with an earlier kept sentence (MinHash candidates,
                      exact Jaccard check), in sentence-id order
+                     (earlier kept sentences include `prior`, normalized texts kept before this run: run pairs passes
+                     full's kept sentences and its earlier rounds', synthetic plan v5; none for v1's runs)
 
 The spoken text is the sentence after labeling.filters.map_text (NFKC, curly quotes and dashes mapped); the
 pronunciation layer renders it for the TTS engines (synthetic/pronounce.py). The label is the spoken text with
@@ -98,11 +100,25 @@ class NearDuplicates:
         hs = [self._h(s) for s in shingles]
         return [min((a * h + b) % _PRIME for h in hs) for a, b in zip(self.a, self.b)]
 
+    def _keys(self, sh: set[str]) -> list[tuple]:
+        sig = self._signature(sh)
+        return [(i, tuple(sig[i * self.rows:(i + 1) * self.rows])) for i in range(self.bands)]
+
+    def _add(self, sh: set[str], keys: list[tuple]) -> None:
+        idx = len(self.sets)
+        self.sets.append(sh)
+        for k in keys:
+            self.buckets[k].append(idx)
+
+    def add(self, words: Sequence[str]) -> None:
+        """Adds a sentence without checking it (an earlier kept sentence from outside the run)."""
+        sh = bigrams(words)
+        self._add(sh, self._keys(sh))
+
     def check_add(self, words: Sequence[str]) -> bool:
         """True if near-duplicate of an earlier added sentence; otherwise adds it and returns False."""
         sh = bigrams(words)
-        sig = self._signature(sh)
-        keys = [(i, tuple(sig[i * self.rows:(i + 1) * self.rows])) for i in range(self.bands)]
+        keys = self._keys(sh)
         seen = set()
         for k in keys:
             for j in self.buckets.get(k, ()):
@@ -110,10 +126,7 @@ class NearDuplicates:
                     seen.add(j)
                     if jaccard(sh, self.sets[j]) >= self.threshold:
                         return True
-        idx = len(self.sets)
-        self.sets.append(sh)
-        for k in keys:
-            self.buckets[k].append(idx)
+        self._add(sh, keys)
         return False
 
 
@@ -176,9 +189,10 @@ def normalized_rows(records: Sequence[dict], forms=None) -> list[dict]:
 
 
 def run(records: Sequence[dict], split, medical, normalize: Callable[[str], str], coverage: Callable[[str], bool],
-        sets: list, heldout_record: dict, forms=None) -> tuple[list[dict], dict, list[dict]]:
+        sets: list, heldout_record: dict, forms=None, prior: Sequence[str] = ()) -> tuple[list[dict], dict, list[dict]]:
     """(kept sentences, report, every row with its flags and reason) from generator records {id, domain, register,
-    requested, raw} in id order. forms: synthetic.forms.Forms (default: the committed files)."""
+    requested, raw} in id order. forms: synthetic.forms.Forms (default: the committed files). prior: normalized texts
+    of sentences kept before this run, earlier than every record for the duplicate checks (module docstring)."""
     from synthetic import forms as label_forms
     forms = label_forms.Forms.load() if forms is None else forms
     records = normalized_rows(records, forms)
@@ -209,7 +223,9 @@ def run(records: Sequence[dict], split, medical, normalize: Callable[[str], str]
     # Containment against held-out texts, over the sentences that passed the per-sentence rules.
     cand = [(x["id"], x["norm"].split()) for x in rows if not any(x["flags"].values())]
     deny, deny_report = containment(cand, sets)
-    exact, near = set(), NearDuplicates()
+    exact, near = set(prior), NearDuplicates()
+    for text in prior:
+        near.add(text.split())
     kept = []
     for x in rows:
         f = x["flags"]

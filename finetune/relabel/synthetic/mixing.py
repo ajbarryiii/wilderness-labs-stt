@@ -1,7 +1,9 @@
 """The synthetic clip source of the TS / TSn arms (synthetic plan "Mixing"), for training/replay.py's `extra`.
 
 ClipPool.load(run): the kept clips of a generation run (runs/<run>/clips.jsonl, checked against clips.meta.json;
-a provisional run, whose hygiene lacked eval-ext or eval-stem, is refused for training).
+a provisional run, whose hygiene lacked eval-ext or eval-stem, is refused for training). Its hygiene must have run
+under the consumer's term split (split_path; default split.json), or (synthetic plan v5, split v3) under that split's
+base, with every clip's label passing the split's held-out guard (pairs.recheck; a failing clip refuses the pool).
 
 plan(real_seconds, clip_seconds, seed, share): the fixed, seeded assignment of synthetic clips to consumed batches.
 - Clip order: a seeded permutation of the pool (pass 0), then a new seeded permutation for each further pass, so
@@ -51,7 +53,12 @@ class ClipPool:
         self.by_id = {c["id"]: c for c in clips}
 
     @classmethod
-    def load(cls, run: str | Path, allow_provisional: bool = False, verify_audio: bool = True) -> "ClipPool":
+    def load(cls, run: str | Path, allow_provisional: bool = False, verify_audio: bool = True,
+             synthetic_hygiene: bool = True, split_path: Path | None = None) -> "ClipPool":
+        """A clip store's kept clips. synthetic_hygiene=False: a store in the same format from another source (b0prime
+        plan v4 "Extra sources"), which has no synthetic term split to check; its manifest is still checked, and its
+        meta must say it is complete. split_path: the term split the consumer trains under (default split.json); a
+        pool of its base split is accepted if every label passes its held-out guard (module docstring)."""
         d = layout.run_dir(run) if isinstance(run, str) else Path(run)
         meta = json.loads((d / "clips.meta.json").read_text())
         data = (d / "clips.jsonl").read_bytes()
@@ -60,11 +67,20 @@ class ClipPool:
             raise RuntimeError(f"{d}/clips.jsonl does not match clips.meta.json")
         if meta.get("provisional") and not allow_provisional:
             raise RuntimeError(f"{d}: provisional run (hygiene without eval-ext/eval-stem); not usable for training")
-        current = hashlib.sha256(layout.split_path().read_bytes()).hexdigest() if layout.split_path().exists() else None
+        if not synthetic_hygiene:
+            if meta.get("complete") is not True:
+                raise RuntimeError(f"{d}: the clip source is not complete (clips.meta.json)")
+            return cls(read_jsonl(d / "clips.jsonl"), identity=sha, verify_audio=verify_audio)
+        path = layout.split_path() if split_path is None else Path(split_path)
+        current = hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else None
+        clips = read_jsonl(d / "clips.jsonl")
         if (meta.get("hygiene_split_sha256") is None or meta["hygiene_split_sha256"] != current) and not allow_provisional:
-            raise RuntimeError(f"{d}: hygiene did not run under the current term split (split_sha256 "
-                               f"{meta.get('hygiene_split_sha256')} vs {current}); rerun hygiene and finalize")
-        return cls(read_jsonl(d / "clips.jsonl"), identity=sha, verify_audio=verify_audio)
+            if split_path is None:
+                raise RuntimeError(f"{d}: hygiene did not run under the current term split (split_sha256 "
+                                   f"{meta.get('hygiene_split_sha256')} vs {current}); rerun hygiene and finalize")
+            from synthetic import pairs
+            pairs.recheck(clips, path, meta.get("hygiene_split_sha256"))
+        return cls(clips, identity=sha, verify_audio=verify_audio)
 
     def read(self, clip_id: str) -> np.ndarray:
         import soundfile as sf
@@ -89,14 +105,27 @@ def clip_order(n: int, seed: int, passes: int, first: int = 0) -> list[int]:
 
 
 def plan(real_seconds: Sequence[float], clip_seconds: Sequence[float], seed: int,
-         share: float = layout.SYNTHETIC_SHARE) -> list[list[int]]:
-    """Per batch, the indices (into clip_seconds) of its synthetic clips (module docstring)."""
+         share: float = layout.SYNTHETIC_SHARE, once: bool = False, take_rest: bool = False,
+         passes: int | None = None) -> list[list[int]]:
+    """Per batch, the indices (into clip_seconds) of its synthetic clips (module docstring).
+
+    once (b0prime plan v4 "Extra sources", a source drawn exactly once): one seeded pass (pass 0), never repeated:
+    the draw stops when the pass is used up; with take_rest, the last batch also takes every clip not drawn yet (the
+    journal's last pool), so every clip is drawn exactly once. Without once the rule is the one above, unchanged.
+    passes (keab-prime plan v1.2, AMI distant microphone: each clip drawn exactly `passes` times): `passes` seeded
+    passes (0 .. passes - 1), never more: the draw stops when they are used up, and take_rest gives the last batch
+    every clip of them not drawn yet. once is passes = 1."""
     n = len(clip_seconds)
     if n == 0:
         raise ValueError("empty clip pool")
+    if passes is not None and (once or int(passes) != passes or passes < 1):
+        raise ValueError(f"passes must be a positive integer, without once (got {passes!r})")
+    limit = 1 if once else (None if passes is None else int(passes))
+    if take_rest and limit is None:
+        raise ValueError("take_rest belongs to a source drawn a fixed number of times")
     need = share * float(sum(real_seconds))
-    passes = int(need / max(sum(clip_seconds), 1e-9)) + 2
-    order = clip_order(n, seed, passes)
+    n_passes = limit if limit is not None else int(need / max(sum(clip_seconds), 1e-9)) + 2
+    order = clip_order(n, seed, n_passes)
     cursor, carry, out = 0, 0.0, []
     for real in real_seconds:
         take: list[int] = []
@@ -105,6 +134,8 @@ def plan(real_seconds: Sequence[float], clip_seconds: Sequence[float], seed: int
             got = 0.0
             while True:
                 if cursor >= len(order):
+                    if limit is not None:
+                        break
                     order += clip_order(n, seed, 1, first=len(order) // n)
                 d = clip_seconds[order[cursor]]
                 if got + d / 2.0 > target:      # adding would overshoot by more than it closes
@@ -114,6 +145,8 @@ def plan(real_seconds: Sequence[float], clip_seconds: Sequence[float], seed: int
                 cursor += 1
             carry = target - got
         out.append(take)
+    if take_rest and out:
+        out[-1] += order[cursor:]
     return out
 
 

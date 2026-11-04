@@ -417,6 +417,23 @@ class ResumeRefusal(unittest.TestCase):
         self.assertIn("--labels-sha256 'old' -> 'new'", out.getvalue())
         self.assertIn("--repetition None ->", out.getvalue())
 
+    def test_another_cleaning_version_is_refused(self):
+        """Cleaning plan v5: a checkpoint made under cleaning version 1 is refused by a version 2 run."""
+        import contextlib
+        import io
+        from training import cleaning
+        tables = cleaning.Tables.load()
+        v1, v2 = (cleaning.Cleaning(tables, version=v).identity() for v in (1, 2))
+        old = self.args(cleaning=v1)
+        with td.seam("B-T"):
+            train.save_checkpoint(self.run, {"step": 100, "args": vars(old), "resume_key": train.resume_key(old)})
+            self.assertEqual(train.load_resume_payload(self.run, self.args(cleaning=dict(v1)))["step"], 100)
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out), self.assertRaises(SystemExit) as stop:
+                train.load_resume_payload(self.run, self.args(cleaning=v2))
+        self.assertEqual(stop.exception.code, train.EXIT_RESUME_MISMATCH)
+        self.assertIn("--cleaning", out.getvalue())
+
     def test_run_train_passes_the_refusal_on(self):
         argv = ["--arm", "B-T", "--lr", "3e-5", "--labels-run", "R"]
         with mock.patch.object(td, "root", lambda: Path(self.tmp.name)), \

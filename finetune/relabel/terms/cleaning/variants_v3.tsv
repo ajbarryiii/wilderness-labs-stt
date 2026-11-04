@@ -1,0 +1,8 @@
+# Label cleaning, layer 1, cleaning version 3: pure spelling-variant groups added to variants.tsv (same format and rules;
+# versions 1 and 2 read variants.tsv alone, unchanged). A canonical form may carry non-ASCII letters only when B0's
+# tokenizer covers it (filter 4). Schrödinger (cleaning plan v7): the evaluation normalizer folds the diacritic, so the
+# canonical form is counted by normalized word (T*: "Schrödinger" and "Schrodinger" 40 times against 34
+# "Schroedinger"), written in T*'s most frequent form of it. The possessives are listed because whole-token matching
+# excludes a following "'s". Other surnames ("Schroeder", "Schröder") are different words, left as written.
+Schrödinger	Schroedinger	Schrodinger
+Schrödinger's	Schroedinger's	Schrodinger's

@@ -1,7 +1,8 @@
 """Contract tests (CPU): label cleaning's rules (cleaning plan "Layer 1", "Layer 2", Check 1): the tables' load-time
 checks, whole-token longest-first matching, idempotent layer 1, disjoint layers, the dialect class and its quote
 guard, option-only members, the capitalization rule, the read-time order, empty texts, the identity block and the
-layer 2 decision rule. Store, artifact and runner contracts are in test_training_cleaning_store.py."""
+layer 2 decision rule; spelled-out acronyms and cleaning versions 1 and 2 (plan v5). Store, artifact and runner
+contracts are in test_training_cleaning_store.py."""
 from __future__ import annotations
 
 import random
@@ -287,7 +288,9 @@ class ReadTime(unittest.TestCase):
 class Identity(unittest.TestCase):
     def test_identity_block_changes_with_any_table_and_the_artifact(self):
         base = C.Cleaning(tables()).identity()
-        self.assertEqual(set(base), {"version", "tables_sha256", "choices_sha256"})
+        # contract change (cleaning plan v6, 2026-10-29): version 2's identity also names layer 0's rule
+        self.assertEqual(set(base), {"version", "tables_sha256", "choices_sha256", "layer0"})
+        self.assertEqual(set(C.Cleaning(tables(), version=1).identity()), {"version", "tables_sha256", "choices_sha256"})
         self.assertEqual(base["version"], C.VERSION)
         self.assertIsNone(base["choices_sha256"])
         for key in ("forms", "variants", "dialect", "choices"):
@@ -324,6 +327,364 @@ class Identity(unittest.TestCase):
             (Path(d) / "dialect.tsv").unlink()
             with self.assertRaises(RuntimeError):
                 C.Tables.load(d)
+
+
+ACR = None
+
+
+def v2(text: str) -> str:
+    """Cleaning version 2 without an artifact (layer 1 with spelled-out acronyms)."""
+    global ACR
+    if ACR is None:
+        ACR = C.Cleaning(tables(forms=FORMS + "macos\tmacOS\n"), version=2)
+    return ACR.clean(text, "i1", "T*")
+
+
+class Acronyms(unittest.TestCase):
+    """Cleaning plan v5 "Spelled-out acronyms": layer 1 of cleaning version 2."""
+
+    def test_spelled_out_runs_become_the_compact_acronym(self):
+        for t in ("an A. P. I. call", "an A.P.I. call", "an A P I call", "an A. P.I. call"):
+            self.assertEqual(v2(t), "an API call", t)
+        self.assertEqual(v2("A. P. I. calls"), "API calls")
+        self.assertEqual(v2("the F B I, the C. I. A. and N.A.S.A.'s rover"), "the FBI, the CIA and NASAs rover")
+        self.assertEqual(v2("two T. V. sets"), "two TV sets")              # two letters dotted with a space
+
+    def test_plural(self):
+        for t in ("two G. P. U. s here", "two G.P.U.s here", "two G P U's here", "two G P Us here",
+                  "two G P U s here", "two G.P.U.'s here"):
+            self.assertEqual(v2(t), "two GPUs here", t)
+        self.assertEqual(v2("the G.P.U.s."), "the GPUs.")                   # the sentence's period is not the run's
+        # after a dotted run, a capital with an attached "s" is a word starting a sentence, not a plural
+        for t in ("hard R. Is that why", "the R. As such", "the A. B. Us and"):
+            self.assertEqual(v2(t), t, t)
+        self.assertEqual(v2("the G.P.U's"), "the GPUs")
+
+    def test_final_period(self):
+        self.assertEqual(v2("…the A. P. I."), "…the API.")                  # the label's last character: kept
+        self.assertEqual(v2("the A.P.I."), "the API.")
+        self.assertEqual(v2("the A.P.I. and"), "the API and")              # else dropped with the others
+        self.assertEqual(v2("the A. P. I., then"), "the API, then")
+        self.assertEqual(v2("the A P I."), "the API.")
+        self.assertEqual(v2("the A P I. then"), "the API. then")           # undotted: the period is the sentence's
+
+    def test_exclusions_are_left_as_written(self):
+        for t in ("the U.S. economy", "in D.C.", "the U.S", "300 B.C. and 9 A.M.",     # two letters, dotted, no space
+                  "the T V is on", "N I 2 R", "grades A B and", "a T V.",            # two letters, undotted
+                  "I I think", "I. I. I said",                                          # only "I": a stutter
+                  "J. A. Mellon wrote", "J.R.R. Tolkien", "J A Mellon", "by J. R. R. O'Brien",  # initials
+                  "A-V-E-N-S-A-R", "it's A-P-I"):                                       # hyphens are not separators
+            self.assertEqual(v2(t), t, t)
+
+    def test_exclusions_take_precedence(self):
+        self.assertEqual(v2("…the A. P. I. We went"), "…the A. P. I. We went")   # initials, a stated loss
+        self.assertEqual(v2("the A P I Gateway"), "the A P I Gateway")
+        self.assertEqual(v2("the A P I API"), "the API API")               # an all-capitals word is no name
+
+    def test_whole_token_boundaries(self):
+        for t in ("xA B C", "e.A B C", "an a p i call", "it's É P I", "the A B C-D", "co-A B C"):
+            self.assertEqual(v2(t), t, t)
+        self.assertEqual(v2("the A B C D1 way"), "the ABC D1 way")         # "D1" is not a single letter
+        self.assertEqual(v2("the A P Is"), "the APIs")
+        self.assertEqual(v2("the A P I's docs"), "the APIs docs")          # a possessive reads as a plural
+        self.assertEqual(v2("(A P I)"), "(API)")
+        self.assertEqual(v2("A P I"), "API")
+
+    def test_before_the_forms_table(self):
+        self.assertEqual(v2("the H T M L page"), "the HTML page")
+        self.assertEqual(v2("on M A C O S today"), "on macOS today")       # compact, then the table's casing
+        out, edits = ACR.edits("on M A C O S, h t m l", "i1", "T*")
+        self.assertEqual(out, "on macOS, h t m l")                         # lowercase letters are no run
+        self.assertEqual([(e.layer, e.table, e.group, e.original, e.replacement) for e in edits],
+                         [(1, "acronyms", "spelled-out", "M A C O S", "macOS")])
+
+    def test_edit_coordinates_and_identical_label_sets(self):
+        text = "Maybe the A. P. I., gonna use G P U s and the H T M L."
+        tabs = tables()
+        spec = spec_with(tabs, text, ["may be"])
+        spec = C.Cleaning(tabs, spec.choices, version=2)
+        out, edits = spec.edits(text, "i1", "T*")
+        self.assertEqual(out, "May be the API, going to use GPUs and the HTML.")
+        self.assertEqual([(e.layer, e.table) for e in edits],
+                         [(2, "choices"), (1, "acronyms"), (1, "dialect"), (1, "acronyms"), (1, "acronyms")])
+        for e in edits:
+            self.assertEqual(text[e.start:e.end], e.original)
+            self.assertEqual(out[e.out_start:e.out_end], e.replacement)
+        b0 = C.Cleaning(tabs, version=2)
+        for t in ("the A. P. I. and G P U s", "J. A. Mellon and the C P U"):
+            self.assertEqual(b0.clean(t, "i", "T*"), b0.clean(t, "i", "B0"))
+
+    def test_layer1_never_touches_a_layer2_span(self):
+        tabs = tables(choices=CHOICES + "x y\txy\n")
+        text = "the X Y Z here"
+        spec = C.Cleaning(tabs, spec_with(tabs, text, [None]).choices, version=2)
+        self.assertEqual(spec.clean(text, "i1", "T*"), text)
+        self.assertEqual(C.Cleaning(tabs, version=2).clean("the W Y Z here", "i1", "T*"), "the WYZ here")
+
+    def test_idempotent_never_empty(self):
+        rng = random.Random(5)
+        pieces = ["A", "P", "I", "G", "U", "T", "V", "J", "M", "s", "'s", "Mellon", "API", "the", "U.S.", "html",
+                  "gonna", "x", "1", "-", ",", "é", "macos", "O'Brien", "okay", "Okay", "lithium", "ion", "Is", "As"]
+        seps = [" ", ". ", ".", "", "-", "  "]
+        for _ in range(4000):
+            t = "".join(rng.choice(pieces) + rng.choice(seps) for _ in range(rng.randint(1, 10))).strip()
+            once = v2(t)
+            self.assertEqual(v2(once), once, t)
+            self.assertEqual(bool(once), bool(t), t)
+        self.assertEqual(v2(""), "")
+
+    def test_committed_table_outputs_are_left_by_the_acronym_rule(self):
+        tabs = C.Tables.load()
+        spec = C.Cleaning(tabs, version=2)
+        for e in tabs.layer1.entries.values():
+            self.assertEqual(spec.clean(e.output, "i", "T*"), e.output)
+        self.assertEqual(spec.clean("the H T M L and the P T S D", "i", "T*"), "the HTML and the PTSD")
+        # the initials exclusion reads the next word as the tables write it, so a second pass agrees (review r1)
+        for t in ("the A P I uv visible", "the A P I r tree", "J. A. Gaussian", "the A P I gaussian"):
+            once = spec.clean(t, "i", "T*")
+            self.assertEqual(spec.clean(once, "i", "T*"), once, t)
+        self.assertEqual(spec.clean("the A P I uv visible", "i", "T*"), "the A P I UV-visible")
+        # a table edit that splits an excluded chain exposes a run, cleaned in the same call (review r2)
+        text = "P T S D. M R Is"
+        out, edits = spec.edits(text, "i", "T*")
+        self.assertEqual(out, "PTSD. MRIs")
+        self.assertEqual(spec.clean(out, "i", "T*"), out)
+        self.assertEqual([(e.table, e.original, e.replacement) for e in edits],
+                         [("variants", "P T S D", "PTSD"), ("acronyms", "M R Is", "MRIs")])
+        for e in edits:
+            self.assertEqual((text[e.start:e.end], out[e.out_start:e.out_end]), (e.original, e.replacement))
+        rng = random.Random(9)
+        pieces = ["P", "T", "S", "D", "M", "R", "I", "Is", "s", "uv", "visible", "r", "tree", "x", "ray", "X", "H",
+                  "html", "gonna", "Mellon", "chi", "squared", "C", "lithium", "ion", "gpu", "G"]
+        for _ in range(3000):
+            t = "".join(rng.choice(pieces) + rng.choice([" ", ". ", ".", "-"]) for _ in range(rng.randint(1, 9)))
+            once, edits = spec.edits(t.strip(), "i", "T*")
+            self.assertEqual(spec.clean(once, "i", "T*"), once, t)
+            pos, rebuilt = 0, []
+            for e in edits:
+                rebuilt += [t.strip()[pos:e.start], e.replacement]
+                pos = e.end
+            self.assertEqual("".join(rebuilt) + t.strip()[pos:], once, t)
+        for t in ("the A P I okay", "the A P I Okay"):                  # test tables: okay -> OK, all capitals
+            self.assertEqual(v2(t), "the API OK", t)
+            self.assertEqual(v2(v2(t)), "the API OK", t)
+
+    def test_an_acronym_edit_keeps_its_run_as_written(self):
+        spec = C.Cleaning(tables(variants=VARIANTS + "chest x-ray\tchest xray\n"), version=2)
+        out, edits = spec.edits("a CHEST X R A Y today", "i", "T*")
+        self.assertEqual(out, "a Chest x-ray today")
+        self.assertEqual([(e.table, e.original, e.replacement, e.run) for e in edits],
+                         [("acronyms", "CHEST X R A Y", "Chest x-ray", "X R A Y")])
+        self.assertEqual(spec.edits("the G. P. U. s", "i", "T*")[1][0].run, "G. P. U. s")
+        self.assertIsNone(spec.edits("Gonna", "i", "T*")[1][0].run)
+
+
+class Versions(unittest.TestCase):
+    """Cleaning plan v5 "Version": version 2 adds the acronym rule; version 1 (stages 2b and 2c) is unchanged."""
+
+    def test_versions(self):
+        # contract change (cleaning plan v7, 2026-10-30): version 3 exists; the default stays version 2 (stage 3)
+        self.assertEqual(C.VERSIONS, (1, 2, 3))
+        self.assertEqual(C.VERSION, 2)
+        for bad in (0, 4):
+            with self.assertRaises(ValueError):
+                C.Cleaning(tables(), version=bad)
+
+    def test_version_1_is_layer1_without_the_acronym_rule(self):
+        t = tables()
+        v1 = C.Cleaning(t, version=1)
+        self.assertEqual(v1.clean("an A. P. I. call, gonna", "i", "T*"), "an A. P. I. call, going to")
+        rng = random.Random(3)
+        words = ["A", "P.", "I.", "G", "U", "s", "html", "gonna", "okay", "data", "set", "the", ",", "'em", "T", "V"]
+        for _ in range(2000):
+            text = " ".join(rng.choice(words) for _ in range(rng.randint(1, 10)))
+            self.assertEqual(v1.edits(text, "i", "T*"), t.layer1.apply(text), text)
+
+    def test_identity_differs_between_versions(self):
+        t = tables()
+        a, b = C.Cleaning(t, version=1).identity(), C.Cleaning(t, version=2).identity()
+        self.assertEqual((a["version"], b["version"]), (1, 2))
+        self.assertEqual(a["tables_sha256"], b["tables_sha256"])
+        self.assertNotEqual(a, b)
+        self.assertEqual(C.Cleaning(t).identity(), b)                      # the default is version 2
+
+    def test_an_artifact_of_the_other_version_is_refused(self):
+        t = tables()
+        for made, read in ((1, 2), (2, 1)):
+            art = Artifact(t, {})
+            art.manifest["version"] = made
+            with self.assertRaises(C.ArtifactMismatch):
+                C.Cleaning(t, art, version=read)
+            self.assertEqual(C.Cleaning(t, art, version=made).identity()["version"], made)
+
+    def test_directories_per_version(self):
+        from unittest import mock
+        with mock.patch("labeling.layout.relabel_root", lambda: Path("/R")):
+            self.assertEqual(C.production_dir("main-f3", 1), Path("/R/cleaning/main-f3/v1"))
+            self.assertEqual(C.production_dir("main-f3", 2), Path("/R/cleaning/main-f3/v2"))
+            self.assertEqual(C.audit_dir(1), Path("/R/cleaning/audit"))       # the version 1 sheets stay put
+            self.assertEqual(C.audit_dir(2), Path("/R/cleaning/audit/v2"))
+            with mock.patch.object(C.Cleaning, "load", lambda tables_dir=None, choices_dir=None, version=None:
+                                   (choices_dir, version)):
+                self.assertEqual(C.production("main-f3"), (Path("/R/cleaning/main-f3/v1"), 1))   # stages 2b, 2c
+                self.assertEqual(C.production("main-f3", 2), (Path("/R/cleaning/main-f3/v2"), 2))
+
+
+def t0(t: str, b: str, protect=()) -> str:
+    return C.punctuation_transfer(t, b, protect)[0]
+
+
+def apply_edits(text: str, edits) -> str:
+    """The edits (original coordinates) applied to text."""
+    out, pos = [], 0
+    for e in sorted(edits, key=lambda e: (e.start, e.end)):
+        out.append(text[pos:e.start])
+        out.append(e.replacement)
+        pos = e.end
+    return "".join(out) + text[pos:]
+
+
+class PunctuationTransfer(unittest.TestCase):
+    """Cleaning plan v6 "Layer 0": B0's punctuation transferred into T*'s labels (version 2, T* only, rule union)."""
+
+    def test_union_adds_b0s_marks_where_t_star_has_none(self):
+        self.assertEqual(t0("so we went home then we slept", "So, we went home. Then we slept."),
+                         "so, we went home. Then we slept.")
+        out, edits = C.punctuation_transfer("so we went home then we slept", "So, we went home. Then we slept.")
+        self.assertEqual([(e.layer, e.table, e.group, e.original, e.replacement) for e in edits],
+                         [(0, "punctuation", "mark", "", ","), (0, "punctuation", "mark", "", "."),
+                          (0, "punctuation", "capital", "t", "T"), (0, "punctuation", "mark", "", ".")])
+        self.assertEqual(apply_edits("so we went home then we slept", edits), out)
+        self.assertEqual([out[e.out_start:e.out_end] for e in edits], [",", ".", "T", "."])
+
+    def test_word_keys_unchanged_except_a_first_letter_after_a_sentence_mark(self):
+        rng = random.Random(5)
+        vocab = ["the", "dog", "ran", "home", "then", "it", "slept", "ok", "yes", "and", "so"]
+        marks = ["", "", "", ",", ".", "?", "!", ";"]
+        for _ in range(3000):
+            n = rng.randint(1, 9)
+            words = [rng.choice(vocab) for _ in range(n)]
+            t = " ".join(w + rng.choice(["", "", "", ","]) for w in words)
+            b_words = [w if rng.random() > 0.1 else rng.choice(vocab) for w in words]
+            b = " ".join((w.capitalize() if rng.random() < 0.3 else w) + rng.choice(marks) for w in b_words)
+            out = t0(t, b)
+            tw, ow = C._words(t), C._words(out)
+            self.assertEqual([w.key for w in tw], [w.key for w in ow], (t, b))
+            for k, (x, y) in enumerate(zip(tw, ow)):
+                if x.core != y.core:          # only a first letter, upper-cased, after a transferred end mark
+                    self.assertEqual((x.core[1:], x.core[0].upper()), (y.core[1:], y.core[0]), (t, b))
+                    self.assertIn(C._mark(ow[k - 1].trail), C.PUNCT_ENDS)
+                    self.assertFalse(C._mark(tw[k - 1].trail))
+                # no mark removed or changed
+                if C._mark(x.trail):
+                    self.assertEqual(C._mark(x.trail), C._mark(y.trail), (t, b))
+            self.assertEqual(t0(out, b), out, (t, b))                     # idempotent
+
+    def test_no_mark_is_removed_or_changed(self):
+        self.assertEqual(t0("yes! we did, ok", "Yes. We did. Ok."), "yes! we did, ok.")
+
+    def test_unchanged_labels_are_byte_identical(self):
+        for t, b in (("a  b\tc", "a b c"), ("  lead and trail  ", "lead and trail"), ("it is, ok.", "It is, ok.")):
+            self.assertIs(C.punctuation_transfer(t, b)[0], t)
+        self.assertEqual(t0("so  we\twent", "So, we, went."), "so,  we,\twent.")      # spacing kept around marks
+
+    def test_every_other_byte_is_kept(self):
+        """Differs from the analysis prototype (scripts/transfer.py), which re-joined every token of a changed label
+        with single spaces: here a mark is inserted in place, so whitespace runs, leading and trailing space and a
+        detached punctuation token stay as T* wrote them."""
+        self.assertEqual(t0('he said hello " then', 'He said hello," then.'), 'he said hello, " then.')
+        self.assertEqual(t0("  ok  thanks ", "Ok, thanks."), "  ok,  thanks. ")
+        self.assertEqual(t0("well - ok then", "Well, ok then."), "well - ok then.")      # "-" joins well's trail
+
+    def test_guard_and_empty_b0(self):
+        t = "one two three four five six seven eight nine ten"
+        self.assertEqual(t0(t, ""), t)
+        self.assertEqual(t0(t, "   "), t)
+        three = "one two three four five six seven X Y Z."          # 3 of 10 keys differ: at the guard, transferred
+        self.assertEqual(t0(t, three), t)                             # the last word differs: no aligned last pair
+        b3 = "One, two three four five six seven eight X Y Z."       # 1 insertion + 2 substitutions = 0.3
+        self.assertEqual(t0(t, b3), "one, two three four five six seven eight nine ten")
+        b4 = "One, two three four five six X Y Z W."                 # 4 / 10 > 0.3: the whole label is skipped
+        self.assertEqual(t0(t, b4), t)
+
+    def test_abbreviation_and_false_start_exclusions(self):
+        self.assertEqual(t0("the us economy grew", "The U.S. economy grew."), "the us economy grew.")
+        self.assertEqual(t0("the- the dog ran", "The, the dog ran."), "the- the dog ran.")   # a false start
+        self.assertEqual(t0('he said "hello" then', 'He said "hello," then.'), 'he said "hello," then.')  # closers
+
+    def test_boundary_condition_and_last_words(self):
+        # B0 dropped trailing words: its final period does not land mid-label
+        self.assertEqual(t0("we went to the store today", "We went to the store."), "we went to the store today")
+        self.assertEqual(t0("ok thanks", "Ok, thanks."), "ok, thanks.")                    # both last words
+        self.assertEqual(t0("ok thanks for all the help today", "Ok, thanks for all the help."),
+                         "ok, thanks for all the help today")                                # T*'s word is not last
+        self.assertEqual(t0("we can do that", "We can do that, sir."), "we can do that")    # B0's word is not last
+
+    def test_capital_only_after_a_transferred_end_mark_that_b0_capitalizes(self):
+        self.assertEqual(t0("done so we left", "Done. So we left."), "done. So we left.")
+        self.assertEqual(t0("done so we left", "Done. so we left."), "done. so we left.")
+        self.assertEqual(t0("done so we left", "Done; So we left."), "done; so we left.")
+        self.assertEqual(t0("done 3pm we left", "Done. 3PM we left."), "done. 3pm we left.")   # no letter first
+
+    def test_the_alignment_tie_break_is_fixed(self):
+        # T* "a a b" against B0 "a, b": the second "a" is aligned (backtrace from the end, diagonal first)
+        self.assertEqual(C.key_matches(["a", "a", "b"], ["a", "b"]), [(1, 0), (2, 1)])
+        self.assertEqual(t0("a a b c d e f", "a, b c d e f"), "a a, b c d e f")
+        self.assertEqual(C.key_matches(["x", "y"], ["x", "y"]), [(0, 0), (1, 1)])
+        self.assertEqual(C.key_errors(["a", "b", "c"], ["a", "c"]), 1)
+
+    def test_never_inside_a_layer_2_span(self):
+        t = "it may be so"
+        s = t.index("may be")
+        self.assertEqual(t0(t, "It may, be so.", [(s, s + len("may be"))]), "it may be so.")
+        self.assertEqual(t0(t, "It may, be so."), "it may, be so.")
+        t = "done maybe so"
+        s = t.index("maybe")
+        self.assertEqual(t0(t, "Done. Maybe so.", [(s, s + 5)]), "done. maybe so.")       # no capital inside it
+
+
+class Layer0InCleaning(unittest.TestCase):
+    """Layer 0 inside the read-time order (layer 2, then layer 0, then layer 1), its label sets and identity."""
+
+    def test_order_label_sets_and_versions(self):
+        t = tables()
+        v2, v1 = C.Cleaning(t, version=2), C.Cleaning(t, version=1)
+        # layer 0 then layer 1: the comma lands after "gonna", which layer 1 then writes as "going to"
+        self.assertEqual(v2.clean("gonna go home now", "i", "T*", "Gonna, go home, now."),
+                         "going to, go home, now.")
+        out, edits = v2.edits("gonna go home now", "i", "T*", "Gonna, go home, now.")
+        self.assertEqual(apply_edits("gonna go home now", edits), out)
+        self.assertEqual(sorted({(e.layer, e.table) for e in edits}), [(0, "punctuation"), (1, "dialect")])
+        # an overlapping layer 0 capital and layer 1 form become one edit of layer 1
+        out, edits = v2.edits("done html is", "i", "T*", "Done. Html is.")
+        self.assertEqual(out, "done. HTML is.")
+        self.assertEqual([(e.layer, e.table, e.original, e.replacement) for e in edits],
+                         [(0, "punctuation", "", "."), (1, "forms", "html", "HTML"), (0, "punctuation", "", ".")])
+        # B0's label set is untouched by layer 0, and version 1 has no layer 0
+        self.assertEqual(v2.clean("so we went", "i", "B0", "So, we went."), "so we went")
+        self.assertEqual(v1.clean("so we went", "i", "T*", "So, we went."), "so we went")
+        self.assertEqual(v2.clean("so we went", "i", "T*"), "so we went")                  # no donor: nothing
+        self.assertFalse(v1.needs_donor("T*"))
+        self.assertTrue(v2.needs_donor("T*"))
+        self.assertFalse(v2.needs_donor("B0"))
+
+    def test_layer_2_choices_then_layer_0(self):
+        tabs = tables()
+        text = "maybe so we left the house early today"
+        b0 = "Maybe so, we left the house early today."
+        spec = spec_with(tabs, text, ["may be"])
+        self.assertEqual(spec.clean(text, "i1", "T*", b0), "may be so, we left the house early today.")
+        out, edits = spec.edits(text, "i1", "T*", b0)
+        self.assertEqual(apply_edits(text, edits), out)
+        self.assertEqual([(e.layer, e.original, e.replacement) for e in edits],
+                         [(2, "maybe", "may be"), (0, "", ","), (0, "", ".")])
+
+    def test_identity(self):
+        t = tables()
+        ident = C.Cleaning(t, version=2).identity()
+        self.assertEqual((ident["layer0"]["rule"], ident["layer0"]["guard"], ident["layer0"]["label_set"]),
+                         ("union", 0.3, "T*"))
+        self.assertNotIn("layer0", C.Cleaning(t, version=1).identity())
 
 
 if __name__ == "__main__":

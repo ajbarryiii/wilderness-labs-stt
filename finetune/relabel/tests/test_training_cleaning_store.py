@@ -360,6 +360,405 @@ class Check(World):
         self.assertFalse(g["disabled"])
 
 
+ACRONYM_T, ACRONYM_B0 = "the A. P. I. of {}", "b0 the A P I of {}"
+
+
+class Versions(World):
+    """Cleaning plan v5: version 2 adds spelled-out acronyms to layer 1 for both label sets; version 1 (stages 2b and
+    2c) reads today's texts; the version is in the store identity, the artifact and the runner's outputs."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        d = cls.root / "copies" / "acronym"
+        cls.pool, cls.lab = d / "pool", d / "labels"
+        shutil.copytree(cls.w.pool, cls.pool)
+        shutil.copytree(cls.w.labels_dir, cls.lab)
+        run = json.loads((cls.lab / "run.json").read_text())
+        run["pool_dir"] = str(cls.pool.relative_to(cls.root))
+        (cls.lab / "run.json").write_text(json.dumps(run))
+        cls.raw = {}
+        manifest = json.loads((cls.lab / "manifest.json").read_text())
+        for k in range(2):                       # one kept label with a human reference in each of two label shards
+            path = cls.lab / "shards" / f"{shards.shard_name(k)}.labels.parquet"
+            t = pq.read_table(path)
+            rows = t.to_pylist()
+            n = next(n for n, r in enumerate(rows) if r["disposition"] == "kept" and r["reference_kind"] == "human")
+            rows[n]["text"], rows[n]["b0_raw"] = ACRONYM_T.format(k), ACRONYM_B0.format(k)
+            cls.raw[rows[n]["id"]] = (rows[n]["text"], rows[n]["b0_raw"])
+            pq.write_table(pa.Table.from_pylist(rows, schema=t.schema), path)
+            meta_path = path.with_name(f"{shards.shard_name(k)}.json")
+            meta = json.loads(meta_path.read_text())
+            meta["sha256"] = shards.sha256_file(path)
+            meta_path.write_text(json.dumps(meta))
+            for s in manifest["shards"]:
+                if s["file"] == path.name:
+                    s["sha256"] = meta["sha256"]
+        (cls.lab / "manifest.json").write_text(json.dumps(manifest))
+
+    def open(self, label_set, cleaning):
+        return tlabels.LabelStore.open(self.lab, self.pool, label_set=label_set, through_batch=TOTAL,
+                                       cleaning=cleaning)
+
+    def test_store_texts_and_identity_per_version(self):
+        for ls, col in (("T*", 0), ("B0", 1)):
+            plain = self.open(ls, None)
+            v1 = self.open(ls, C.Cleaning.load(self.tables, version=1))
+            v2 = self.open(ls, C.Cleaning.load(self.tables, version=2))
+            for i, texts in self.raw.items():
+                self.assertEqual(plain.text(i), texts[col])
+                self.assertEqual(v1.text(i), C.Cleaning.load(self.tables, version=1).clean(texts[col], i, ls))
+                self.assertIn("A. P. I." if ls == "T*" else "A P I", v1.text(i))         # version 1: as written
+                self.assertIn("the API of", v2.text(i))
+            for i in plain._texts:
+                self.assertEqual((v1.kept(i), v2.kept(i)), (plain.kept(i), plain.kept(i)))
+                if i not in self.raw:
+                    self.assertEqual(v2.text(i), v1.text(i))
+            self.assertEqual((v1.identity["cleaning"]["version"], v2.identity["cleaning"]["version"]), (1, 2))
+            self.assertEqual(v2.identity["cleaned_labels"] - v1.identity["cleaned_labels"],
+                             len(self.raw) if ls == "T*" else 0)    # B0 labels are all cleaned already ("b0")
+            self.assertEqual(len({plain.identity["sha256"], v1.identity["sha256"], v2.identity["sha256"]}), 3)
+
+    def test_artifact_per_version_reuses_the_layer2_decisions(self):
+        work = self.root / "cleaning" / "fixture" / "v1-of-version-test"
+        R.spans(self.w.labels_dir, work, tables_dir=self.tables, version=1)
+        shutil.copytree(self.work / "decisions", work / "decisions")
+        m1 = R.assemble(work, self.w.labels_dir, tables_dir=self.tables, version=1)
+        self.assertEqual(m1["version"], 1)
+        self.assertEqual(json.loads((work / "spans.json").read_text())["version"], 1)
+        self.assertEqual(C.Cleaning.load(self.tables, work, version=1).identity()["version"], 1)
+        with self.assertRaises(C.ArtifactMismatch):
+            C.Cleaning.load(self.tables, work, version=2)
+        with self.assertRaises(RuntimeError):                       # spans of another version
+            R.assemble(work, self.w.labels_dir, tables_dir=self.tables, version=2)
+        self.assertEqual(pq.read_table(work / "choices.parquet").to_pylist(),
+                         pq.read_table(self.work / "choices.parquet").to_pylist())
+
+    def test_check_screens_the_class_and_reserves_its_audit_share(self):
+        work = self.root / "cleaning" / "acronym" / "v2"
+        with mock.patch.object(R, "AUDIT_SAMPLE", 6), mock.patch.object(R, "AUDIT_ACRONYMS", 2):
+            r = R.check(self.lab, work, out_dir=work, layer1_only=True, tables_dir=self.tables, version=2)
+        self.assertEqual(r["version"], 2)
+        g = r["check3"]["groups"]["acronyms:spelled-out"]
+        self.assertEqual({k: g["cells"][k]["changed"] for k in ("T*", "B0")}, {"T*": 2, "B0": 2})
+        self.assertEqual(r["check5"]["edits_per_group"]["acronyms:spelled-out"], {"T*": 2, "B0": 2})
+        a = r["acronyms"]
+        self.assertEqual(a["changed_spans"], {"T*": 2, "B0": 2})
+        self.assertEqual(sum(a["compact"]["API"].values()), 4)
+        sample = (C.audit_dir(2) / "check-sample-layer1.tsv").read_text().splitlines()[1:]
+        tables = [row.split("\t")[2] for row in sample]
+        self.assertEqual(len(sample), 6)
+        self.assertEqual(tables.count("acronyms"), 2)
+        sheet = (C.audit_dir(2) / "acronyms-layer1.txt").read_text()
+        self.assertIn("changed spans: T* 2, B0 2", sheet)
+        self.assertIn("API: T* 2, B0 2", sheet)
+        self.assertTrue((work / "check-layer1.json").exists())
+        v1 = R.check(self.lab, work, out_dir=self.root / "v1-check", layer1_only=True, tables_dir=self.tables,
+                     version=1)
+        self.assertNotIn("acronyms:spelled-out", v1["check3"]["groups"])
+        self.assertNotIn("acronyms", v1)
+
+    def test_the_acronym_class_is_reported_not_judged(self):
+        """Cleaning plan v6 (AJ): Check 3 reports the class, never disables it, even where the original matches the
+        references more often."""
+        screen = {"acronyms:spelled-out": {"T*": {"aligned": 40, "original_matches": 39, "cleaned_matches": 1}},
+                  "dialect:gonna": {"T*": {"aligned": 40, "original_matches": 39, "cleaned_matches": 1}}}
+        from collections import Counter
+        v = R.judge({g: {ls: Counter(c) for ls, c in cells.items()} for g, cells in screen.items()})
+        self.assertEqual((v["acronyms:spelled-out"]["disabled"], v["acronyms:spelled-out"]["reported_not_judged"]),
+                         (False, True))
+        self.assertEqual(v["acronyms:spelled-out"]["original_matches_more_in"], ["T*", "both"])
+        self.assertTrue(v["dialect:gonna"]["disabled"])
+
+
+L0_T, L0_B0 = "so we went home then we slept {}", "So, we went home. Then we slept {}."
+
+
+class Layer0Store(World):
+    """Cleaning plan v6 "Layer 0" through the label store: version 2 cleans T*'s labels with the same record's b0_raw
+    as the donor; B0's labels and version 1 are untouched; the runner audits 50 layer 0 edits and never screens them."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        d = cls.root / "copies" / "layer0"
+        cls.pool, cls.lab = d / "pool", d / "labels"
+        shutil.copytree(cls.w.pool, cls.pool)
+        shutil.copytree(cls.w.labels_dir, cls.lab)
+        run = json.loads((cls.lab / "run.json").read_text())
+        run["pool_dir"] = str(cls.pool.relative_to(cls.root))
+        (cls.lab / "run.json").write_text(json.dumps(run))
+        cls.raw = {}
+        manifest = json.loads((cls.lab / "manifest.json").read_text())
+        for k in range(2):
+            path = cls.lab / "shards" / f"{shards.shard_name(k)}.labels.parquet"
+            t = pq.read_table(path)
+            rows = t.to_pylist()
+            n = next(n for n, r in enumerate(rows) if r["disposition"] == "kept" and r["reference_kind"] == "human")
+            rows[n]["text"], rows[n]["b0_raw"] = L0_T.format(k), L0_B0.format(k)
+            cls.raw[rows[n]["id"]] = (rows[n]["text"], rows[n]["b0_raw"])
+            pq.write_table(pa.Table.from_pylist(rows, schema=t.schema), path)
+            meta_path = path.with_name(f"{shards.shard_name(k)}.json")
+            meta = json.loads(meta_path.read_text())
+            meta["sha256"] = shards.sha256_file(path)
+            meta_path.write_text(json.dumps(meta))
+            for s in manifest["shards"]:
+                if s["file"] == path.name:
+                    s["sha256"] = meta["sha256"]
+        (cls.lab / "manifest.json").write_text(json.dumps(manifest))
+
+    def open(self, label_set, version):
+        return tlabels.LabelStore.open(self.lab, self.pool, label_set=label_set, through_batch=TOTAL,
+                                       cleaning=C.Cleaning.load(self.tables, version=version))
+
+    def test_t_star_takes_b0s_marks_and_b0_is_untouched(self):
+        t2, t1, b2 = self.open("T*", 2), self.open("T*", 1), self.open("B0", 2)
+        for k, (i, (t, b)) in enumerate(sorted(self.raw.items())):
+            self.assertEqual(t2.text(i), f"so, we went home. Then we slept {t.split()[-1]}.")
+            self.assertEqual(t1.text(i), t)
+            self.assertEqual(b2.text(i), b)
+        self.assertEqual(t2.identity["cleaning"]["layer0"]["rule"], "union")
+        self.assertNotEqual(t2.identity["sha256"], t1.identity["sha256"])
+
+    def test_the_runner_audits_layer0_and_never_screens_it(self):
+        work = self.root / "cleaning" / "layer0" / "v2"
+        with mock.patch.object(R, "AUDIT_SAMPLE", 4), mock.patch.object(R, "AUDIT_ACRONYMS", 1), \
+                mock.patch.object(R, "AUDIT_PUNCTUATION", 3):
+            r = R.check(self.lab, work, out_dir=work, layer1_only=True, tables_dir=self.tables, version=2)
+        self.assertEqual(r["check5"]["edits_per_group"]["punctuation:mark"], {"T*": 6})
+        self.assertEqual(r["check5"]["edits_per_group"]["punctuation:capital"], {"T*": 2})
+        self.assertFalse(any(g.startswith("punctuation") for g in r["check3"]["groups"]))
+        sample = (C.audit_dir(2) / "check-sample-layer1.tsv").read_text().splitlines()[1:]
+        self.assertEqual(sum(row.split("\t")[2] == "punctuation" for row in sample), 3)
+
+
+V3_T = "Fitz, F I T Z, gave 10 milligrams per kilogram to the U.S. I hope, the Schroedinger cat and OPX {}"
+V3_B0 = "b0 Fitz, F I T Z, gave 10 milligrams per kilogram to the U.S. I hope, the Schroedinger cat and OPX {}"
+V3_TABLES = {**TABLES, "spelling_cues.tsv": (C.TABLES_DIR / "spelling_cues.tsv").read_text(encoding="utf-8"),
+             "units.tsv": (C.TABLES_DIR / "units.tsv").read_text(encoding="utf-8"),
+             "variants_v3.tsv": "Schrodinger\tSchroedinger\n", "choices_v3.tsv": "OpEx*\tOPX\n"}
+
+
+class Version3Store(World):
+    """Cleaning plan v7 through the label store and the runner: the acronym lexicon artifact (built from the run's raw
+    labels, bound to its contract, in the identity), version 3's texts for both label sets, Check 3's not-judged
+    classes, the audit's added strata, the size check against version 2, and Check 6's blind sheet."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        d = cls.root / "copies" / "version3"
+        cls.pool, cls.lab = d / "pool", d / "labels"
+        shutil.copytree(cls.w.pool, cls.pool)
+        shutil.copytree(cls.w.labels_dir, cls.lab)
+        run = json.loads((cls.lab / "run.json").read_text())
+        run["pool_dir"] = str(cls.pool.relative_to(cls.root))
+        (cls.lab / "run.json").write_text(json.dumps(run))
+        cls.raw = {}
+        manifest = json.loads((cls.lab / "manifest.json").read_text())
+        for k in range(2):                       # three kept labels with a human reference, over two label shards
+            path = cls.lab / "shards" / f"{shards.shard_name(k)}.labels.parquet"
+            t = pq.read_table(path)
+            rows = t.to_pylist()
+            picked = [n for n, r in enumerate(rows) if r["disposition"] == "kept" and r["reference_kind"] == "human"]
+            for n in picked[:2 if k == 0 else 1]:
+                rows[n]["text"], rows[n]["b0_raw"] = V3_T.format(len(cls.raw)), V3_B0.format(len(cls.raw))
+                cls.raw[rows[n]["id"]] = (rows[n]["text"], rows[n]["b0_raw"])
+            pq.write_table(pa.Table.from_pylist(rows, schema=t.schema), path)
+            meta_path = path.with_name(f"{shards.shard_name(k)}.json")
+            meta = json.loads(meta_path.read_text())
+            meta["sha256"] = shards.sha256_file(path)
+            meta_path.write_text(json.dumps(meta))
+            for s in manifest["shards"]:
+                if s["file"] == path.name:
+                    s["sha256"] = meta["sha256"]
+        (cls.lab / "manifest.json").write_text(json.dumps(manifest))
+        cls.tables3 = cls.write_tables(cls.root / "tables-v3", V3_TABLES)
+        cls.work3 = cls.root / "cleaning" / "version3" / "v3"
+        cls.lexicon = R.lexicon(cls.lab, cls.work3)
+
+    def open(self, label_set, cleaning):
+        return tlabels.LabelStore.open(self.lab, self.pool, label_set=label_set, through_batch=TOTAL,
+                                       cleaning=cleaning)
+
+    def spec3(self, lexicon_dir=None):
+        return C.Cleaning.load(self.tables3, version=3, lexicon_dir=lexicon_dir or self.work3)
+
+    def test_the_lexicon_is_counted_from_the_raw_labels_and_bound_to_the_run(self):
+        m = self.lexicon
+        self.assertEqual(m["contract_sha256"], R.Run(self.lab).contract_sha256)
+        self.assertEqual(m["thresholds"], C.LEXICON)
+        self.assertEqual(m["file_sha256"], hashlib.sha256((self.work3 / C.LEXICON_FILE).read_bytes()).hexdigest())
+        self.assertEqual(m["kept_ids"], sum(r["disposition"] == "kept" for r in self.w.records.values()))
+        with mock.patch.dict(C.LEXICON, {"compact": 0, "recordings": 1}):
+            work = self.root / "cleaning" / "version3-low" / "v3"
+            R.lexicon(self.lab, work, workers=2)
+            lex = C.Lexicon.load(work)
+            recordings = len({C.recording_of(i) for i in self.raw})
+            self.assertEqual(lex.entries["OPX"], (6, 0, recordings))          # compact in both label sets
+            self.assertEqual(lex.entries["FITZ"], (0, 6, recordings))         # spelled in both
+        self.assertNotIn("OPX", C.Lexicon.load(self.work3).entries)             # under the real thresholds
+        acc = {}
+        C.count_lexicon("src:rec_a_1", ["the O P X and OPX's", "b0 the OPX"], acc)
+        C.count_lexicon("src:rec_b_1", ["O-P-X"], acc)
+        self.assertEqual(acc["OPX"], [2, 2, {"src:rec_a", "src:rec_b"}])
+        self.assertEqual(C.recording_of("librispeech:1234-5678-0001"), "librispeech:1234")
+        self.assertEqual(C.recording_of("src:rec_a_7"), "src:rec_a")
+
+    def test_store_texts_and_identity(self):
+        v2 = C.Cleaning.load(self.tables, version=2)
+        for ls, col in (("T*", 0), ("B0", 1)):
+            spec = self.spec3()
+            store = self.open(ls, spec)
+            for i, texts in self.raw.items():
+                want = spec.clean(texts[col], i, ls, texts[1] if ls == "T*" else None)
+                self.assertEqual(store.text(i), want)
+                for piece in ("Fitz, F-I-T-Z,", "10 mg/kg", "the USI hope", "the Schrodinger cat"):
+                    self.assertIn(piece, want)
+            ident = store.identity["cleaning"]
+            self.assertEqual((ident["version"], ident["lexicon_sha256"]), (3, self.lexicon["file_sha256"]))
+            self.assertNotEqual(store.identity["sha256"], self.open(ls, v2).identity["sha256"])
+
+    def test_a_lexicon_of_another_run_or_damaged_is_refused(self):
+        d = self.root / "copies" / "lexicon-contract"
+        shutil.copytree(self.work3, d)
+        m = json.loads((d / C.LEXICON_MANIFEST).read_text())
+        m["contract_sha256"] = "0" * 64
+        (d / C.LEXICON_MANIFEST).write_text(json.dumps(m))
+        with self.assertRaises(C.ArtifactMismatch):
+            self.open("T*", self.spec3(d))
+        d = self.root / "copies" / "lexicon-damaged"
+        shutil.copytree(self.work3, d)
+        (d / C.LEXICON_FILE).write_bytes((d / C.LEXICON_FILE).read_bytes() + b"x")
+        with self.assertRaises(C.ArtifactMismatch):
+            self.spec3(d)
+        with self.assertRaises(C.ArtifactMismatch):
+            C.Cleaning.load(self.tables3, version=3)                          # no lexicon at all
+
+    def test_check_reports_the_classes_audits_them_and_sizes_them_against_version_2(self):
+        sheets = self.root / "sheets-v3"
+        with mock.patch.object(R, "AUDIT_SAMPLE", 4), mock.patch.object(R, "AUDIT_ACRONYMS", 1), \
+                mock.patch.object(R, "AUDIT_SPELLING", 2), mock.patch.object(R, "AUDIT_UNITS", 2), \
+                mock.patch.object(R, "MIN_JUDGED", 1):
+            r = R.check(self.lab, self.work3, out_dir=self.work3, layer1_only=True, tables_dir=self.tables3,
+                        version=3, audit=sheets)
+        groups = r["check3"]["groups"]
+        for g in ("acronyms:spelling", "units:mg/kg"):
+            self.assertTrue(groups[g]["reported_not_judged"], g)
+            self.assertFalse(groups[g]["disabled"], g)
+        self.assertNotIn("units:mg/kg", r["check3"]["disabled"])
+        v = r["version3"]
+        both = {"T*": 3, "B0": 3}
+        self.assertEqual(v["labels_changed_vs_version_2"], both)
+        self.assertEqual(v["labels_changed_vs_version_2_per_kind"], {"undone": both})        # no trim
+        self.assertEqual(v["occurrences"][R.UNITS_CLASS], both)
+        self.assertEqual(v["occurrences"]["variants:Schrodinger"], both)
+        self.assertEqual(v["layer2_spans_of_added_sets"]["choices:OpEx|OPX"], both)
+        self.assertEqual(v["unattributed_labels"], {})
+        self.assertEqual(v["expected"][R.UNITS_CLASS]["T*"]["measured"], 3)
+        self.assertTrue(v["expected"][R.UNITS_CLASS]["T*"]["over_25_percent"])
+        self.assertEqual(v["runs_per_class"]["acronym"], both)                               # "U.S. I"
+        rows = [line.split("\t") for line in (sheets / "check-sample-layer1.tsv").read_text().splitlines()[1:]]
+        self.assertEqual(sum(row[3] == "spelling" for row in rows), 2)
+        self.assertEqual(sum(row[2] == "units" for row in rows), 2)
+
+    def test_census_sheet_is_blind_and_keyed(self):
+        out = self.root / "census"
+        first = sorted(self.raw)[0]
+        r = R.census(self.lab, out, lexicon_dir=self.work3, tables_dir=self.tables3, exclude={(first, "FITZ")})
+        self.assertEqual(r["population"], {"changes words": 3, "compacted": 3})
+        self.assertEqual(r["excluded_tuning_runs"], {"changes words": 1})
+        self.assertEqual(r["sample"], {"changes words": 2, "compacted": 3})
+        sheet = [line.split("\t") for line in (out / "census-sheet.tsv").read_text().splitlines()]
+        key = [line.split("\t") for line in (out / "census-key.tsv").read_text().splitlines()]
+        self.assertEqual(len(sheet), 1 + r["rows"])
+        self.assertEqual([row[0] for row in sheet[1:]], [row[0] for row in key[1:]])
+        for row in sheet[1:]:
+            self.assertEqual(len(row), 5)
+            self.assertEqual(row[2:], ["", "", ""])                         # no class, no stratum
+        contexts = {row[1] for row in sheet[1:]}
+        self.assertTrue(any("[[F I T Z]]" in c for c in contexts))
+        self.assertTrue(any("[[U.S. I]]" in c for c in contexts))
+        header = key[0]
+        by_run = {row[header.index("run")]: row for row in key[1:]}
+        self.assertEqual(by_run["F I T Z"][header.index("class")], "spelling")
+        self.assertEqual(by_run["F I T Z"][header.index("version 2 output")], "FITZ")
+        self.assertEqual(by_run["U.S. I"][header.index("strata")], "compacted")
+        self.assertEqual(by_run["U.S. I"][header.index("version 3 output")], "USI")
+        with mock.patch.object(R, "CENSUS_COMPACTED", 1):                     # membership is not the sample
+            R.census(self.lab, out, lexicon_dir=self.work3, tables_dir=self.tables3, exclude=set())
+        key = [line.split("\t") for line in (out / "census-key.tsv").read_text().splitlines()]
+        self.assertEqual(sorted(row[1] for row in key[1:]), ["changes words"] * 3 + ["compacted"])
+
+    def test_census_supplement_lists_only_new_first_stratum_runs(self):
+        out = self.root / "census-supplement"
+        first, *rest = sorted(self.raw)
+        R.census(self.lab, out, lexicon_dir=self.work3, tables_dir=self.tables3, exclude=set())
+        key = (out / "census-key.tsv").read_text().splitlines()
+        head = key[0].split("\t")
+        kept = [key[0]] + [line for line in key[1:] if line.split("\t")[head.index("id")] != first]
+        # an earlier census holding the other ids' rows, one spelling row recorded with another class
+        k = next(n for n, line in enumerate(kept) if n and line.split("\t")[head.index("class")] == "spelling")
+        kept[k] = kept[k].replace("\tspelling\t", "\tacronym\t")
+        earlier = out / "earlier-key.tsv"
+        earlier.write_text("\n".join(kept) + "\n")
+        before = {p.name: p.read_bytes() for p in out.iterdir()}
+        r = R.census(self.lab, out, lexicon_dir=self.work3, tables_dir=self.tables3, exclude=set(),
+                     supplement_of=earlier)
+        sheet = [line.split("\t") for line in (out / "census-sheet-supplement.tsv").read_text().splitlines()]
+        skey = [line.split("\t") for line in (out / "census-key-supplement.tsv").read_text().splitlines()]
+        self.assertEqual(sheet[0], (out / "census-sheet.tsv").read_text().splitlines()[0].split("\t"))
+        self.assertEqual(len(sheet), 2)                                       # the one id not in the earlier census
+        self.assertEqual(sheet[1][2:], ["", "", ""])
+        self.assertIn("[[F I T Z]]", sheet[1][1])
+        self.assertEqual(int(sheet[1][0]), 1 + max(int(line.split("\t")[0]) for line in kept[1:]))
+        self.assertEqual((skey[1][skey[0].index("id")], skey[1][skey[0].index("drawn in")]), (first, "changes words"))
+        self.assertEqual([c["n"] for c in r["earlier_rows_changed"]], [int(kept[k].split("\t")[0])])
+        self.assertEqual(r["earlier_rows_changed"][0]["now"]["class"], "spelling")
+        for name, data in before.items():                                    # the earlier files are untouched
+            self.assertEqual((out / name).read_bytes(), data, name)
+
+    def test_census_requires_the_tuning_runs_to_exclude(self):
+        out = self.root / "census-no-exclude"
+        with self.assertRaises(TypeError):
+            R.census(self.lab, out, lexicon_dir=self.work3, tables_dir=self.tables3)
+        with self.assertRaises(ValueError):
+            R.census(self.lab, out, lexicon_dir=self.work3, tables_dir=self.tables3, exclude=None)
+        with self.assertRaises(SystemExit), mock.patch("sys.stderr"):
+            R.main(["census", "--labels-run", "fixture", "--version", "3"])
+        self.assertFalse(out.exists())
+
+
+class AcronymRisks(unittest.TestCase):
+    """The audit counts the residual-risk classes the plan names (review p4) among the class's changed spans."""
+
+    def risks(self, text: str) -> list[str]:
+        spec = C.Cleaning(C.Tables({"forms.tsv": "", "variants.tsv": "", "dialect.tsv": "", "choices.tsv": ""}))
+        out, edits = spec.edits(text, "i", "T*")
+        self.assertEqual(len(edits), 1, text)
+        return R.acronym_risks(text, edits[0])
+
+    def test_named_classes(self):
+        self.assertEqual(R.acronym_shape("G. P. U. s"), (3, "dotted+spaced", True, True))
+        self.assertEqual(R.acronym_shape("A P I"), (3, "spaced", False, False))
+        self.assertTrue(any(r.startswith("dotted, 6+") for r in self.risks("it's I.L.L.U.S.T.R.I.O.U.S. there")))
+        self.assertTrue(any(r.startswith("spelled word") for r in self.risks("cat, that's C A T")))
+        self.assertTrue(any(r.startswith("variables") for r in self.risks("A I J equals the sum")))
+        self.assertTrue(any(r.startswith("notes") and "music" in r for r in self.risks("the chord E G D E G D")))
+        self.assertTrue(any(r.startswith("two letters") for r in self.risks("and I. A lot of it")))
+        self.assertTrue(any(r.startswith("mixed") for r in self.risks("than I. A P I is")))
+        self.assertTrue(any(r.startswith("the whole label") for r in self.risks("M. I. N. E.")))
+        self.assertTrue(any(r.startswith("a single lowercase") for r in self.risks("uh L. C. d. screen")))
+        self.assertEqual(self.risks("the A. P. I. call"), [])
+        # statistics of a composed edit come from its run as written, not the table words merged into it (review r1)
+        spec = C.Cleaning(C.Tables({"forms.tsv": "chi squared\tchi-squared\n", "variants.tsv": "", "dialect.tsv": "",
+                                    "choices.tsv": ""}))
+        text = "the C H I squared test"
+        e = spec.edits(text, "i", "T*")[1][0]
+        self.assertEqual((e.original, e.run), ("C H I squared", "C H I"))
+        self.assertEqual(R.acronym_shape(e.run), (3, "spaced", False, False))
+
+
 class Lease(unittest.TestCase):
     """GPU commands respect the agent-jobs VRAM lease (AGENT_JOBS_VRAM_FRACTION) before any model is loaded."""
 

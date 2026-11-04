@@ -8,7 +8,8 @@ of every domain and side). Only references are read (the manifests' "text", norm
 A domain with fewer than MIN_TARGETED targeted-term occurrences over eval-stem and dev-technical together is
 UNDERPOWERED and stays out of the pooled claim. Missing parts are listed; the result is final only when every part
 of both sets is present ("complete").
-Output: $RELABEL_ROOT/synthetic/terms/coverage.json.
+Output: $RELABEL_ROOT/synthetic/terms/coverage.json (split v2), coverage.v3.json for split v3 (synthetic plan v5,
+recomputed under v3: `out`).
 """
 from __future__ import annotations
 
@@ -39,7 +40,7 @@ def count(split: vocab.Split, texts_by_part: dict[str, list[str]]) -> dict:
             "min_targeted": MIN_TARGETED}
 
 
-def run(split: vocab.Split | None = None) -> dict:
+def run(split: vocab.Split | None = None, out=None) -> dict:
     import devsets
     from devsets import layout as dlayout
     layout.require_mount()
@@ -56,7 +57,7 @@ def run(split: vocab.Split | None = None) -> dict:
                 texts[part] = [json.loads(line)["text"] for line in f if line.strip()]
     res = count(split, texts) | {"missing_parts": missing, "complete": not missing,
                                  "split_entries": len(split.entries)}
-    out = layout.terms_dir() / "coverage.json"
+    out = layout.terms_dir() / "coverage.json" if out is None else out
     out.parent.mkdir(parents=True, exist_ok=True)
     tmp = out.with_name(out.name + f".tmp{os.getpid()}")
     tmp.write_text(json.dumps(res, indent=1) + "\n")

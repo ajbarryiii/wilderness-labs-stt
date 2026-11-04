@@ -106,8 +106,19 @@ def time_region(replay, start: int, stop: int, max_seconds: float) -> dict:
             "stopped_early": n < stop - start}
 
 
+def region_extra_files(replay, start: int, stop: int) -> list[str]:
+    """The audio files of the extra-source rows (a version 2 or 3 plan's clip stores; both recordings of a pair) of
+    planned batches [start, stop), so a region starts cold for them too."""
+    rows = getattr(replay, "_syn", None) or {}
+    files = {c["audio_filepath"] for (t, _), (_, c, _, _) in rows.items() if start <= t < stop}
+    files |= {c["ihm_audio_filepath"] for (t, _), (_, c, _, _) in rows.items()        # a pair's teacher recording
+              if start <= t < stop and "ihm_audio_filepath" in c}
+    return sorted(files)
+
+
 def run(plan, pool_dir: Path, store: Path, regions: list[tuple[int, int]], readers: list[str],
-        max_seconds: float = MAX_SECONDS) -> dict:
+        max_seconds: float = MAX_SECONDS, sources=None) -> dict:
+    """sources: a multi-source version 2 plan's replay.ExtraSource list (stage 3's read probe with both stores)."""
     from training import poolaudio
     from training import replay as treplay
     from training.labels import needed_shards
@@ -118,15 +129,18 @@ def run(plan, pool_dir: Path, store: Path, regions: list[tuple[int, int]], reade
     for reader in readers:
         for lo, hi in regions:
             t0 = time.monotonic()
-            r = treplay.PlannedReplay(plan, pool_dir, audio=reader, store=store)
+            r = treplay.PlannedReplay(plan, pool_dir, audio=reader, store=store,
+                                      **({} if sources is None else {"sources": sources}))
             opened = time.monotonic() - t0
             if reader == "materialized":
                 files = [store / "pools" / f"{poolaudio.pool_name(p)}.flac" for p in range(lo, min(hi + 1, plan.n_pools))]
             else:
                 files = c1_files
-            dropped = drop_cache(files)
+            extra = region_extra_files(r, plan.pool_start(lo), plan.pool_start(hi))
+            dropped = drop_cache(list(files) + extra)
             res = time_region(r, plan.pool_start(lo), plan.pool_start(hi), max_seconds)
             res.update(reader=reader, pools=[lo, hi], open_seconds=opened, cache_dropped_files=dropped,
+                       extra_source_files=len(extra),
                        rss_gib=rss_gib(), hwm_gib=hwm_gib(),
                        meets_required=res["batches_per_s"] is not None and res["batches_per_s"] >= need)
             out["regions"].append(res)
