@@ -321,10 +321,21 @@ def pad_features(feats: list[torch.Tensor], dtype=torch.float32) -> tuple[torch.
     return out, lengths
 
 
+def reset_decoder_cache(model) -> None:
+    """Drop the greedy decoder's CUDA-graph state: NeMo's label-looping computer caches the prediction network's
+    state and projected output after the start symbol when it builds its graphs, and keeps them while the batch shape
+    fits, so after training steps they would be the old weights'. The pinned graph mode is kept."""
+    computer = getattr(getattr(getattr(model, "decoding", None), "decoding", None), "decoding_computer", None)
+    if computer is not None and hasattr(computer, "reset_cuda_graphs_state"):
+        computer.reset_cuda_graphs_state()
+
+
 def decode_features(model, feats: list[torch.Tensor], durations: list[float], device) -> list[str]:
     """Greedy TDT transcripts of per-clip features with the model's decoding (B0's greedy_batch config), strict FP32,
-    eval mode, in mutant_features.make_batches batches; RNG and modes restored."""
+    eval mode, in mutant_features.make_batches batches; RNG and modes restored. The decoder's cached graph state is
+    reset first (reset_decoder_cache), so every pass decodes with the current weights."""
     device = torch.device(device)
+    reset_decoder_cache(model)
     if device.type == "cuda":
         import score_domain
         score_domain.binary_on_path()

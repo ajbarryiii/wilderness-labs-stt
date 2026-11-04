@@ -58,6 +58,26 @@ class TestCuda(unittest.TestCase):
         b = mt.heldout_metric(t.model, items, torch.device("cuda"))
         self.assertEqual(a, b)
 
+    def test_decoding_after_training_uses_the_current_weights(self):
+        """The label-looping decoder caches the start symbol's prediction-network state and projected output when it
+        builds its CUDA graphs; a held-out pass after more training must decode as a fresh model with those weights."""
+        t = self.trainer("cache")
+        items = heldout_items(dim=1024)
+        t.run_steps(2)
+        mt.heldout_metric(t.model, items, torch.device("cuda"))          # builds the graph state at step-2 weights
+        t.run_steps(3)
+        got = mt.heldout_metric(t.model, items, torch.device("cuda"))
+        fresh = evaluate.load_pretrained("cpu")
+        mt.init_decoder(fresh)
+        mt.load_trained(fresh, mt.trained_state(t.model))
+        fresh.decoder.cuda()
+        fresh.joint.cuda()
+        want = mt.heldout_metric(fresh, items, torch.device("cuda"))
+        self.assertEqual(got, want)
+        cached = t.model.decoding.decoding.decoding_computer.state.decoder_output_after_sos
+        ref = fresh.decoding.decoding.decoding_computer.state.decoder_output_after_sos
+        self.assertTrue(torch.equal(cached, ref))
+
     def test_loss_at_13_hz_frame_counts(self):
         model = evaluate.load_pretrained("cpu")
         mt.init_decoder(model)
