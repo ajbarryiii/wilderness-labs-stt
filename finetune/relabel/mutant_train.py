@@ -917,6 +917,9 @@ def train_command(a, lay: md.Layout, device) -> int:
         if not main_summary.exists():
             raise SystemExit(f"{a.arm}: the main run is not complete")
         lr = json.loads(main_summary.read_text())["lr"]
+    if (run_dir(lay, a.arm, stage, lr) / "summary.json").exists():
+        log(f"{a.arm} {run_dir(lay, a.arm, stage, lr).name}: already complete")
+        return 0
     steps = a.steps if (smoke and stage == "pilot") else None
     sched = schedule(stage, lr, data.plan.n_batches, pilot_steps=steps,
                      pilot_warmup=max(1, steps // 10) if steps else None)

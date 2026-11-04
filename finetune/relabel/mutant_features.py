@@ -4,7 +4,6 @@
     ./python mutant_features.py extract --arm D-B|D-T|D-Q [--smoke-shards N] [--pools A-B] [--workers W]
                                         [--budget-minutes M] [--lock-wait S]        precompute (GPU)
     ./python mutant_features.py checks --arm D-T|D-Q [--smoke-shards N]             per-clip (and Qwen rate) checks (GPU)
-    ./python mutant_features.py throughput --arm X [--clips N] [--smoke-shards N]   encoder throughput probe (GPU)
 
 Every arm maps a 16 kHz clip (zero-padded to evaluate.MIN_DECODE_SECONDS as every record is: evaluate.pad_short) to
 1024-d vectors, stored in bfloat16 (STORE_DTYPE); training, the held-out metric and the dev and domain scores all
@@ -22,7 +21,8 @@ read them through encode_clips, the one code path:
   clip's 128-bin log-mel comes from the snapshot's feature extractor on that clip alone, with the processor's audio
   settings (padding True, truncation False, attention mask, n_window 50: the clip is its own longest, so the STFT's
   end padding never depends on other clips; clips under 0.5 s are zero-padded by the extractor as the diagnostic's
-  were), computed on the CPU as the diagnostic's processor did. Clips are batched (evaluate.make_batches) by
+  were), computed on the CPU as the diagnostic's processor did. Clips are batched (evaluate.make_batches, at most
+  QWEN_MAX_BATCH_SECONDS of audio: the convolutions run every 1 s chunk of a batch at once) by
   zero-padding the mel axis and the mask; the encoder packs each clip into its own attention windows (cu_seqlens),
   and its output after ln_post (before the multimodal projector) is split per clip by
   _get_feat_extract_output_lengths of the clip's mask: 13 frames per second of audio.
@@ -67,6 +67,7 @@ STORE_DTYPE = torch.bfloat16
 FRAME_RATE = {"D-B": 12.5, "D-T": 12.5, "D-Q": 13.0}
 FEATURE_VERSION = 1
 BATCH_SIZE, MAX_BATCH_SECONDS = 64, 1200.0       # evaluate.make_batches, as the B0 records' scoring
+QWEN_MAX_BATCH_SECONDS = 300.0                   # D-Q: its convolutions run every 1 s chunk of a batch at once
 BF16_TOLERANCE = 2.0 ** -5
 CHECK_CLIPS = 50
 QWEN_HF_ID = "Qwen/Qwen3-ASR-1.7B-hf"
@@ -111,10 +112,10 @@ class ArmEncoder:
         raise NotImplementedError
 
 
-def make_batches(durations: list[float]) -> list[list[int]]:
-    """evaluate.make_batches (longest first, 64 clips, at most 1,200 s) over clips given by duration."""
+def make_batches(durations: list[float], max_seconds: float = MAX_BATCH_SECONDS) -> list[list[int]]:
+    """evaluate.make_batches (longest first, 64 clips, at most max_seconds) over clips given by duration."""
     records = [{"duration": float(d), "id": f"{i:09d}"} for i, d in enumerate(durations)]
-    return evaluate.make_batches(records, BATCH_SIZE, MAX_BATCH_SECONDS)
+    return evaluate.make_batches(records, BATCH_SIZE, max_seconds)
 
 
 def _freeze(module: nn.Module) -> nn.Module:
@@ -215,7 +216,14 @@ class QwenArm(ArmEncoder):
     def modules(self) -> list[nn.Module]:
         return [self.tower]
 
+    def batches(self, durations):
+        return make_batches(durations, QWEN_MAX_BATCH_SECONDS)
+
     def encode_prepared(self, items):
+        return [h.to("cpu", STORE_DTYPE) for h in self.raw(items, self.dtype)]
+
+    def raw(self, items, dtype) -> list[torch.Tensor]:
+        """The tower's per-clip outputs computed in `dtype` (the tower cast for the call), before storage rounding."""
         from transformers.models.qwen3_asr.modeling_qwen3_asr import _get_feat_extract_output_lengths
         width = max(m.shape[1] for m, _ in items)
         mel = torch.zeros(len(items), items[0][0].shape[0], width, dtype=torch.float32)
@@ -224,18 +232,25 @@ class QwenArm(ArmEncoder):
             mel[row, :, :m.shape[1]] = torch.from_numpy(m)
             mask[row, :len(k)] = torch.from_numpy(k)
         lengths = _get_feat_extract_output_lengths(mask.sum(-1)).tolist()
-        with torch.no_grad():
-            hidden = self.tower(input_features=mel.to(self.device, self.dtype),
-                                input_features_mask=mask.to(self.device)).last_hidden_state
+        own = next(self.tower.parameters()).dtype
+        try:
+            if dtype != own:
+                self.tower.to(dtype)
+            with torch.no_grad(), evaluate.strict_fp32(self.device):
+                hidden = self.tower(input_features=mel.to(self.device, dtype),
+                                    input_features_mask=mask.to(self.device)).last_hidden_state
+        finally:
+            if dtype != own:
+                self.tower.to(own)
         if hidden.shape[0] != sum(lengths):
             raise FeatureError(f"Qwen encoder returned {hidden.shape[0]} frames, the lengths say {sum(lengths)}")
-        return [h.to("cpu", STORE_DTYPE) for h in torch.split(hidden, lengths)]
+        return [h.float().cpu() for h in torch.split(hidden, lengths)]
 
     def identity(self) -> dict:
         return {"arm": self.arm, "hf_id": QWEN_HF_ID, "revision": QWEN_REVISION, "precision": str(self.dtype),
                 "attn_implementation": getattr(getattr(self.tower, "config", None), "_attn_implementation", None),
                 "mel": self.preparer.identity(), "batching": f"evaluate.make_batches({BATCH_SIZE}, "
-                f"{MAX_BATCH_SECONDS}), mel axis and mask zero-padded", "output": "audio tower after ln_post, "
+                f"{QWEN_MAX_BATCH_SECONDS}), mel axis and mask zero-padded", "output": "audio tower after ln_post, "
                 "before the projector, split by _get_feat_extract_output_lengths", "source": self.source}
 
 
@@ -327,6 +342,30 @@ def per_clip_check(enc: ArmEncoder, clips: list[np.ndarray], durations: list[flo
             "per_clip_max_abs_diff": [r["max_abs_diff"] for r in rows],
             "passed": bool(same and (equal or ratio <= BF16_TOLERANCE)),
             "rule": "equal, or max |batched - alone| <= 2^-5 x the clip's RMS feature value (bf16 rounding)"}
+
+
+def _abs(rows: list[tuple[torch.Tensor, torch.Tensor]]) -> dict:
+    d = [(a - b).abs() for a, b in rows]
+    return {"max_abs": max(float(x.max()) for x in d), "mean_abs": float(torch.cat([x.flatten() for x in d]).mean())}
+
+
+def qwen_noise_floor(enc: QwenArm, clips: list[np.ndarray], durations: list[float]) -> dict:
+    """Reported with the per-clip check, never part of its rule: whether a batched-vs-alone difference is rounding.
+    The same clips with the tower in FP32 (batched vs alone: structural isolation), and the bf16 computation's own error
+    against FP32 (each clip alone): the bf16 noise floor of these clips."""
+    prepared = [enc.preparer(evaluate.pad_short(np.asarray(c, dtype=np.float32))[0]) for c in clips]
+    out = {}
+    for name, dtype in (("bf16", torch.bfloat16), ("fp32", torch.float32)):
+        batched: list = [None] * len(clips)
+        for b in enc.batches(durations):
+            for i, f in zip(b, enc.raw([prepared[i] for i in b], dtype)):
+                batched[i] = f
+        alone = [enc.raw([p], dtype)[0] for p in prepared]
+        out[name] = {"batched": batched, "alone": alone}
+    return {"fp32_batched_vs_alone": _abs(list(zip(out["fp32"]["batched"], out["fp32"]["alone"]))),
+            "bf16_batched_vs_alone": _abs(list(zip(out["bf16"]["batched"], out["bf16"]["alone"]))),
+            "bf16_alone_vs_fp32_alone": _abs(list(zip(out["bf16"]["alone"], out["fp32"]["alone"]))),
+            "note": "diagnostic only (not the check's rule); outputs before bfloat16 storage rounding"}
 
 
 def qwen_rate_check(enc: QwenArm, clips: list[np.ndarray], durations: list[float]) -> dict:
@@ -534,12 +573,17 @@ def peak_memory(device: torch.device) -> dict:
 
 
 def run_checks(enc: ArmEncoder) -> dict:
+    """The plan's checks for the arm: per-clip features for D-T and D-Q (B0 is batched as its records were, with no
+    per-clip requirement), and Qwen's frame rate."""
+    if enc.arm == "D-B":
+        return {"arm": enc.arm, "passed": True, "note": "no per-clip check: D-B is batched as B0's records were"}
     records = check_clips()
     clips = [evaluate.load_audio(r["audio_filepath"]) for r in records]
     durations = [r["duration"] for r in records]
     out = {"arm": enc.arm, "clip_ids": [r["id"] for r in records], "per_clip": per_clip_check(enc, clips, durations)}
     if enc.arm == "D-Q":
         out["rate"] = qwen_rate_check(enc, clips, durations)
+        out["noise_floor"] = qwen_noise_floor(enc, clips, durations)
     out["passed"] = all(v["passed"] for k, v in out.items() if isinstance(v, dict) and "passed" in v)
     return out
 
@@ -560,15 +604,18 @@ def locked(label: str, wait: float, fn):
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("cmd", choices=("extract", "checks", "throughput"))
+    parser.add_argument("cmd", choices=("extract", "checks"))
     parser.add_argument("--arm", choices=ARMS, required=True)
     parser.add_argument("--smoke-shards", type=int)
     parser.add_argument("--pools", help="A-B (inclusive) or A")
     parser.add_argument("--workers", type=int, default=6)
     parser.add_argument("--budget-minutes", type=float)
-    parser.add_argument("--clips", type=int, default=400, help="throughput: training clips to encode")
     parser.add_argument("--lock-wait", type=float, default=3600.0)
+    parser.add_argument("--smoke-ignore-failed-checks", action="store_true",
+                        help="smoke only: extract although the checks failed (plumbing runs; never production)")
     args = parser.parse_args(argv)
+    if args.smoke_ignore_failed_checks and args.smoke_shards is None:
+        parser.error("--smoke-ignore-failed-checks needs --smoke-shards")
     lay = md.layout(args.smoke_shards)
     relabel_paths.require_mount()
     device = torch.device("cuda")
@@ -580,58 +627,33 @@ def main(argv: list[str] | None = None) -> int:
         t0 = time.perf_counter()
         enc = load_arm(args.arm, device)
         load_s = time.perf_counter() - t0
-        if args.cmd == "checks" or args.cmd == "extract":
-            path = checks_path(lay, args.arm)
-            old = json.loads(path.read_text()) if path.exists() else None
-            if old and old.get("passed") and old.get("encoder") == enc.identity():
-                checks = old
-            else:
-                checks = run_checks(enc) | {"encoder": enc.identity(), "load_s": load_s,
-                                            "memory": peak_memory(device)}
-                md.write_json(path, checks)
-            print(json.dumps({k: v for k, v in checks.items() if k not in ("clip_ids", "encoder")}, default=str)[:3000],
-                  flush=True)
-            if not checks["passed"]:
-                print("feature checks failed: nothing extracted; report to the architect", file=sys.stderr)
-                return CHECKS_FAILED_EXIT
-            if args.cmd == "checks":
-                return 0
-            pools = None
-            if args.pools:
-                a, _, b = args.pools.partition("-")
-                pools = list(range(int(a), int(b or a) + 1))
-            extract(lay, enc, pools, args.workers, args.budget_minutes)
-            md.write_json(lay.features / args.arm / f"extract-memory-{os.getpid()}.json", peak_memory(device))
+        path = checks_path(lay, args.arm)
+        old = json.loads(path.read_text()) if path.exists() else None
+        if old and old.get("passed") and old.get("encoder") == enc.identity():
+            checks = old
+        else:
+            checks = run_checks(enc) | {"encoder": enc.identity(), "load_s": load_s,
+                                        "memory": peak_memory(device)}
+            md.write_json(path, checks)
+        print(json.dumps({k: v for k, v in checks.items() if k not in ("clip_ids", "encoder")}, default=str)[:3000],
+              flush=True)
+        if not checks["passed"] and not (args.smoke_ignore_failed_checks and lay.smoke):
+            print("feature checks failed: nothing extracted; report to the architect", file=sys.stderr)
+            return CHECKS_FAILED_EXIT
+        if not checks["passed"]:
+            print("feature checks failed: extracting anyway for a smoke run (--smoke-ignore-failed-checks)",
+                  file=sys.stderr)
+        if args.cmd == "checks":
             return 0
-        return throughput(lay, enc, args.clips, load_s, device)
+        pools = None
+        if args.pools:
+            a, _, b = args.pools.partition("-")
+            pools = list(range(int(a), int(b or a) + 1))
+        extract(lay, enc, pools, args.workers, args.budget_minutes)
+        md.write_json(lay.features / args.arm / f"extract-memory-{os.getpid()}.json", peak_memory(device))
+        return 0
 
     return locked(f"relabel mutant_features {args.cmd} {args.arm}", args.lock_wait, run)
-
-
-def throughput(lay: md.Layout, enc: ArmEncoder, n: int, load_s: float, device: torch.device) -> int:
-    """Encoder throughput on the first n training clips of pool 0 (audio decoded beforehand, not timed)."""
-    data = md.Data.load(lay)
-    audio = md.PoolAudio(lay, data, 0)
-    ids = data.pool_ids(0)[:n]
-    clips = [audio.clip(i) for i in ids]
-    durations = [data.clips[i]["duration"] for i in ids]
-    prep_t = time.perf_counter()
-    prepared = [enc.preparer(evaluate.pad_short(c)[0]) for c in clips]
-    prep_s = time.perf_counter() - prep_t
-    encode_prepared_in_batches(enc, prepared[: min(8, len(prepared))], durations[: min(8, len(prepared))])  # warm-up
-    torch.cuda.synchronize()
-    t = time.perf_counter()
-    feats = encode_prepared_in_batches(enc, prepared, durations)
-    torch.cuda.synchronize()
-    wall = time.perf_counter() - t
-    hours = sum(durations) / 3600
-    out = {"arm": enc.arm, "clips": len(ids), "audio_hours": hours, "encode_s": wall,
-           "audio_hours_per_gpu_hour": hours / (wall / 3600), "cpu_prepare_s_single_process": prep_s,
-           "frames": sum(int(f.shape[0]) for f in feats), "bytes_per_audio_hour":
-           sum(int(f.numel()) * 2 for f in feats) / hours, "load_s": load_s, "memory": peak_memory(device)}
-    md.write_json(lay.features / enc.arm / "throughput.json", out)
-    print(json.dumps(out, indent=1), flush=True)
-    return 0
 
 
 if __name__ == "__main__":
