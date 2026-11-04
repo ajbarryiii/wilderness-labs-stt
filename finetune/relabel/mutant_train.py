@@ -699,8 +699,20 @@ def pilot_results(lay: md.Layout, arm: str) -> dict[float, dict]:
 
 # ----------------------------------------------------------------------------- scoring
 
+SCORE_SETS = tuple(relabel_paths.SETS) + tuple(t5clusters.SETS)     # dev and domain sets only: never a test set
+
+
+def check_sets(names: list[str]) -> list[str]:
+    """The requested sets, if every one is an H4, YODAS or T5 set (by name, never a path); else ValueError."""
+    bad = [n for n in names if n not in SCORE_SETS]
+    if bad:
+        raise ValueError(f"only the dev and T5 sets are scored ({', '.join(SCORE_SETS)}); refused: {bad}")
+    return list(names)
+
+
 def set_manifests(names: list[str]) -> dict[str, Path]:
     import score_domain
+    names = check_sets(names)
     out = {}
     t5 = [n for n in names if n in t5clusters.SETS]
     domain = score_domain.part_manifests(t5, None) if t5 else {}
@@ -756,6 +768,7 @@ def scoring_model(weights: Path, device):
 
 
 def score(lay: md.Layout, arm: str, stage: str, names: list[str], limit: int | None, device) -> dict:
+    names = check_sets(names)
     weights = run_dir(lay, arm, stage) / "final.pt"
     if not (run_dir(lay, arm, stage) / "summary.json").exists():
         raise SystemExit(f"{arm} {stage} is not complete")
@@ -844,7 +857,7 @@ def parse_args(argv):
     p.add_argument("--budget-minutes", type=float, default=110.0)
     p.add_argument("--ckpt-minutes", type=float, default=20.0)
     p.add_argument("--stage", choices=("main", "extension"), default="main")
-    p.add_argument("--sets", nargs="+")
+    p.add_argument("--sets", nargs="+", choices=SCORE_SETS)
     p.add_argument("--limit", type=int)
     p.add_argument("--confirm-extension", action="store_true")
     p.add_argument("--lock-wait", type=float, default=3600.0)

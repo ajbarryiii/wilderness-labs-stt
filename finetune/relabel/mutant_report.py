@@ -1,7 +1,7 @@
 """Mutant (encoder probe 2) analysis and preregistered readout (mutant plan "Evaluation" and "Readout"): CPU only,
 from records and the runs' held-out curves.
 
-    ./python mutant_report.py [--smoke-shards N] [--out PATH] [--replicates N] [--seed S]
+    ./python mutant_report.py [--smoke-shards N] [--replicates N] [--seed S]
 
 Inputs: each arm's records at its final stage (decoder/<arm>/<set>.json after the main run, decoder/<arm>/extension/
 after the extension; every arm at the same stage, since the extension applies to all), B0's own records (H4 + YODAS:
@@ -289,17 +289,14 @@ def pilots(lay: md.Layout) -> dict:
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--smoke-shards", type=int)
-    p.add_argument("--out", type=Path)
     p.add_argument("--replicates", type=int, default=REPLICATES)
     p.add_argument("--seed", type=int, default=SEED)
     a = p.parse_args(argv)
     lay = md.layout(a.smoke_shards)
-    out = a.out or (lay.records / "report.json")
-    production = not lay.smoke and a.replicates == REPLICATES and a.seed == SEED
-    if out.resolve() == (md.layout().records / "report.json").resolve():
-        relabel_paths.require_mount()
-        if not production:
-            raise SystemExit("refusing to write the production report from smoke inputs or other settings")
+    out = lay.records / "report.json"     # the layout's own records directory (smoke: under relabel_paths.SMOKE)
+    relabel_paths.require_mount()
+    if not lay.smoke and (a.replicates, a.seed) != (REPLICATES, SEED):
+        raise SystemExit("the production report uses the bootstrap's defaults (--replicates/--seed are smoke options)")
     try:
         curves, extended = curves_of(lay)
         stage = "extension" if extended else "main"

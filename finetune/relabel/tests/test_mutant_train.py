@@ -294,6 +294,23 @@ class TestHeldoutMetric(unittest.TestCase):
         self.assertEqual(x, (random.random(), float(torch.rand(1))))
 
 
+class TestDevOnly(unittest.TestCase):
+    def test_scoring_refuses_test_sets_and_paths(self):
+        for bad in ("librispeech_clean", "ami", "tedlium", "earnings22", "/tmp/x.jsonl"):
+            with self.assertRaises(SystemExit):
+                mt.parse_args(["score", "--arm", "D-B", "--smoke-shards", "40", "--sets", bad, "--limit", "5"])
+            with self.assertRaises(ValueError):
+                mt.check_sets(["librispeech_dev_clean", bad])
+        self.assertEqual(mt.check_sets(["ami_dev", "tech-dev-2"]), ["ami_dev", "tech-dev-2"])
+        self.assertEqual(set(mt.SCORE_SETS), set(relabel_paths.SETS) | set(mt.t5clusters.SETS))
+
+    def test_score_checks_sets_before_loading_anything(self):
+        with mock.patch.object(mt, "scoring_model") as load:
+            with self.assertRaises(ValueError):
+                mt.score(md.layout(40), "D-B", "main", ["librispeech_clean"], 5, torch.device("cpu"))
+        load.assert_not_called()
+
+
 class TestSmokeIsolation(unittest.TestCase):
     def test_run_dirs(self):
         prod, smoke = md.layout(), md.layout(40)

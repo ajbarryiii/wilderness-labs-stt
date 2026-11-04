@@ -175,6 +175,19 @@ def write_world(root, rates, b0_rate=0.06, extension=False):
     return dirs, b0, ids
 
 
+class TestReportDestination(unittest.TestCase):
+    def test_report_goes_to_the_layout_records_only(self):
+        import mutant_data as md
+        with self.assertRaises(SystemExit):
+            mr.main(["--out", "report.json"])
+        with self.assertRaises(SystemExit):
+            mr.main(["--replicates", "50"])
+        import unittest.mock as um
+        with um.patch.object(mr, "curves_of", side_effect=mr.AnalysisError("stop here")) as c:
+            self.assertEqual(mr.main(["--smoke-shards", "40", "--replicates", "50"]), 2)
+        c.assert_called_once_with(md.layout(40))
+
+
 class TestAnalyze(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
