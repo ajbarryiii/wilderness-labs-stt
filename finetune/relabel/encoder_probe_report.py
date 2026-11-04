@@ -22,9 +22,9 @@ the full dev sets. One draw per set serves every model; the H4 mean is recompute
 s is computed per replicate from that replicate's WERs (replicate_wers repeats bootstrap.paired's seeded draws, which
 the contract tests check). YODAS has no clusters: point values only.
 
-Checks: 4 (each head's librispeech_dev_clean WER at most 10%; otherwise the readout is withheld and 20 example
-hypotheses are reported) and 5 (every record's S, D, I recompute from ref_norm and hyp_norm, analyze.realign; a
-mismatch stops the analysis). Checks 1-3 come from the probe's summary.
+Checks: 4 (librispeech_dev_clean WER at most 10% for bpe and 25% for the half-depth char-mid head; otherwise the
+readout is withheld and 20 example hypotheses are reported) and 5 (every record's S, D, I recompute from ref_norm and
+hyp_norm, analyze.realign; a mismatch stops the analysis). Checks 1-3 come from the probe's summary.
 
 Readout (preregistered, primary head bpe, H4): A if Delta_enc >= +0.30 with its 90% interval excluding 0; C if
 Delta_enc <= -0.30 with its interval excluding 0; B otherwise.
@@ -51,7 +51,8 @@ MODELS = (B0, TSTAR) + HEADS
 PRIMARY = "bpe"
 THRESHOLD = 0.30        # readout margin, points (the diagnostic's teacher margin)
 S_MIN_GAIN = 0.30       # per-set s only where |WER(B0) - WER(T*)| >= this
-GROSS_WER_MAX = 10.0    # check 4, librispeech_dev_clean, points
+CHAR, BPE = ep.CHAR, ep.BPE
+GROSS_WER_MAX = {BPE: 10.0, CHAR: 25.0}  # check 4, librispeech_dev_clean, points (plan v2.2: char-mid is half depth)
 GROSS_SET = "librispeech_dev_clean"
 EXAMPLES = 20
 EPS = 1e-9
@@ -65,7 +66,8 @@ DEFINITIONS = {
     "s": ("(WER(head) - WER(T*)) / (WER(B0) - WER(T*)); descriptive: the probe encodes one clip per pass, the T* "
           "records padded batches, so s does not isolate the projector and LLM; per set only where "
           "|WER(B0) - WER(T*)| >= 0.30"),
-    "char_minus_bpe": "points: WER(char) - WER(bpe)",
+    "char_mid_minus_bpe": "points: WER(char-mid) - WER(bpe)",
+    "char-mid": "the character head on the middle-layer logits (8 of 16 layers): a half-depth lower bound, no gate",
     "rates": "points: 100 * S, D or I / reference words",
     "empty_hypothesis_rate": "share of scored records whose normalized hypothesis is empty",
     "intervals": ("90% paired cluster bootstrap (training/bootstrap.py defaults), clusters from "
@@ -183,12 +185,12 @@ READOUT_TEXT = {"A": "T*'s encoder alone beats B0: encoder distillation looks pr
 
 def gross_sanity(models: dict, sets: list[str]) -> dict:
     """Check 4: each head's librispeech_dev_clean WER is at most 10% (a gross alarm, not a validation)."""
-    out = {"set": GROSS_SET, "max_wer": GROSS_WER_MAX, "wer": {}, "heads": {}}
+    out = {"set": GROSS_SET, "max_wer": dict(GROSS_WER_MAX), "wer": {}, "heads": {}}
     for head in HEADS:
         rows = models[head][GROSS_SET]
         w = _wer(counts(rows))
         out["wer"][head] = w
-        out["heads"][head] = {"passed": w <= GROSS_WER_MAX + EPS, "examples": [
+        out["heads"][head] = {"passed": w <= GROSS_WER_MAX[head] + EPS, "examples": [
             {"id": r["id"], "ref": r["ref"], "hyp": r["hyp"]} for r in [r for r in rows if r["scored"]][:EXAMPLES]]}
     out["passed"] = all(v["passed"] for v in out["heads"].values())
     return out
@@ -205,7 +207,7 @@ def analyze(dirs: dict[str, Path], replicates: int = REPLICATES, seed: int = SEE
             checked[m][name] = len(models[m][name])
     h4_sets = [n for n in relabel_paths.H4 if n in sets]
     tabs = tables(models, h4_sets)
-    contrasts = {"char": (B0, "char"), "bpe": (B0, "bpe"), "char_minus_bpe": ("char", "bpe")}
+    contrasts = {CHAR: (B0, CHAR), BPE: (B0, BPE), "char_mid_minus_bpe": (CHAR, BPE)}
     paired = bootstrap.paired(tabs, contrasts, h4_sets, replicates=replicates, seed=seed)
     reps = replicate_wers(tabs, list(MODELS), replicates, seed)
 
@@ -231,8 +233,8 @@ def analyze(dirs: dict[str, Path], replicates: int = REPLICATES, seed: int = SEE
                 s_ci = _ci(s_value(reps[name][head], reps[name][TSTAR], reps[name][B0]))
             entry["s"][head] = {"eligible": eligible, "point": s_value(wer[head], wer[TSTAR], wer[B0])
                                 if eligible else None, "ci90": s_ci}
-        entry["char_minus_bpe"] = {"point": wer["char"] - wer["bpe"],
-                                   "ci90": paired["sets"][name]["char_minus_bpe"]["ci"] if boot else None}
+        entry["char_mid_minus_bpe"] = {"point": wer[CHAR] - wer[BPE],
+                                       "ci90": paired["sets"][name]["char_mid_minus_bpe"]["ci"] if boot else None}
         per_set[name] = entry
 
     mean = lambda f: float(np.mean([f(per_set[n]) for n in h4_sets]))  # noqa: E731
@@ -248,7 +250,8 @@ def analyze(dirs: dict[str, Path], replicates: int = REPLICATES, seed: int = SEE
                     "ci90": _ci(s_value(h4_reps[h], h4_reps[TSTAR], h4_reps[B0])),
                     "nonfinite_replicates": int((~np.isfinite(s_value(h4_reps[h], h4_reps[TSTAR],
                                                                        h4_reps[B0]))).sum())} for h in HEADS},
-          "char_minus_bpe": {"point": h4_wer["char"] - h4_wer["bpe"], "ci90": paired["mean"]["char_minus_bpe"]["ci"]},
+          "char_mid_minus_bpe": {"point": h4_wer[CHAR] - h4_wer[BPE],
+                                 "ci90": paired["mean"]["char_mid_minus_bpe"]["ci"]},
           "teacher_gain": h4_wer[B0] - h4_wer[TSTAR]}
 
     c4 = gross_sanity(models, sets)

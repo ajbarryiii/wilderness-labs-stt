@@ -239,6 +239,38 @@ class MidCaptureTest(unittest.TestCase):
             cap.logits()
 
 
+class CharMidTest(unittest.TestCase):
+    """Plan v2.2: char-mid decodes the same captured middle-layer logits that weight the pooling, and the final layer
+    is never passed to encoder.out."""
+
+    def test_char_mid_reads_the_pooling_logits_and_never_the_final_layer(self) -> None:
+        probe = stand_in_probe()
+        clip = (0.3 * np.sin(np.arange(16000) / 7.0) * np.linspace(0, 1, 16000)).astype(np.float32)
+        calls, weighted, greedied = [], [], []
+        real_importance, real_greedy = ep.importance, ep.greedy
+        weigh = lambda x: (weighted.append(x), real_importance(x))[1]  # noqa: E731
+        decode = lambda x: (greedied.append(x), real_greedy(x))[1]  # noqa: E731
+        hook = probe.encoder.out.register_forward_hook(lambda m, a, o: calls.append(a[0].shape))
+        try:
+            with mock.patch.object(ep, "importance", side_effect=weigh), \
+                 mock.patch.object(ep, "greedy", side_effect=decode):
+                out = probe.decode(clip)
+        finally:
+            hook.remove()
+        self.assertEqual(len(calls), 1)  # only the encoder's own middle-layer call: the final layer never reaches it
+        self.assertEqual(len(weighted), 1)
+        self.assertEqual(len(greedied), 2)  # char-mid, then bpe
+        char_input = greedied[0]
+        self.assertEqual(char_input.shape[-1], probe.encoder.out.out_features)
+        self.assertTrue(torch.equal(char_input, weighted[0][0]))  # the very logits that weight the pooling
+        with torch.inference_mode():
+            final, mid = ep.encode(probe.encoder, probe.features(clip))
+        frames, labels = real_greedy(mid[0])
+        self.assertEqual(out["char_frames"], frames)
+        self.assertEqual(out["char"], ep.char_text(labels))
+        self.assertEqual(ep.HEADS, ("char-mid", "bpe"))
+
+
 class ClipChecksTest(unittest.TestCase):
     """Implementation checks 1-3 as functions, on the tiny encoder and real dev audio."""
 

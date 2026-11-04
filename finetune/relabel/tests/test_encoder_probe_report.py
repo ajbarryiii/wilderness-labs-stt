@@ -25,11 +25,12 @@ import relabel_paths  # noqa: E402
 from training import bootstrap, devsplit  # noqa: E402
 
 TMP = relabel_paths.ARTIFACTS / "tmp" / "tests" / "encoder-probe-report"
-MODELS = ("B0", "T*", "char", "bpe")
+MODELS = ("B0", "T*", "char-mid", "bpe")
 
 # One id pattern per set, as the real manifests have them (devsplit.cluster_of reads the cluster from the id).
 ID = {"librispeech_dev_clean": "librispeech:{c}-100-{k:04d}", "librispeech_dev_other": "librispeech:{c}-200-{k:04d}",
-      "ami_dev": "ami:AMI_ES20{c}a_H00_FEE041_{k:07d}_0000001", "voxpopuli_dev": "voxpopuli:2009020{c}-0900-PLENARY-{k}-en_x",
+      "ami_dev": "ami:AMI_ES20{c}a_H00_FEE041_{k:07d}_0000001",
+      "voxpopuli_dev": "voxpopuli:2009020{c}-0900-PLENARY-{k}-en_x",
       "yodas_dev": "yodas:en000_{c}_{k}"}
 REF = "a b c d e f g h i j"  # 10 words
 
@@ -71,11 +72,11 @@ def write(root: Path, models: dict[str, dict[str, list[dict]]], checks: dict | N
         shutil.rmtree(root)
     dirs = {"B0": root / "b0", "T*": root / "tstar", "probe": root / "probe"}
     config = {"limit": limit, "probe": "encoder-probe-ctc"}
-    for m, directory in (("B0", dirs["B0"]), ("T*", dirs["T*"]), ("char", dirs["probe"] / "char"),
+    for m, directory in (("B0", dirs["B0"]), ("T*", dirs["T*"]), ("char-mid", dirs["probe"] / "char-mid"),
                          ("bpe", dirs["probe"] / "bpe")):
         directory.mkdir(parents=True)
         for name, rows in models[m].items():
-            body = {"set": name, "limit": limit, "config": config if m in ("char", "bpe") else {"limit": None},
+            body = {"set": name, "limit": limit, "config": config if m in ("char-mid", "bpe") else {"limit": None},
                     "records": rows}
             (directory / f"{name}.json").write_text(json.dumps(body))
     (dirs["T*"] / "summary.json").write_text(json.dumps({
@@ -85,7 +86,7 @@ def write(root: Path, models: dict[str, dict[str, list[dict]]], checks: dict | N
           "determinism": {"passed": True}}
     (dirs["probe"] / "summary.json").write_text(json.dumps({
         "status": status, "complete": status == "scored", "config": config, "checks": checks or ok,
-        "heads": {h: sorted(relabel_paths.SETS) for h in ("char", "bpe")}}))
+        "heads": {h: sorted(relabel_paths.SETS) for h in ("char-mid", "bpe")}}))
     return dirs
 
 
@@ -94,14 +95,14 @@ def base_errors() -> dict:
     bpe 2 (3.33)."""
     return {"B0": {n: [1, 1, 1, 1, 1, 1] for n in relabel_paths.SETS},
             "T*": {n: [1, 0, 1, 0, 1, 0] for n in relabel_paths.SETS},
-            "char": {n: [2, 2, 1, 1, 0, 0] for n in relabel_paths.SETS},
+            "char-mid": {n: [2, 2, 1, 1, 0, 0] for n in relabel_paths.SETS},
             "bpe": {n: [0, 0, 1, 0, 1, 0] for n in relabel_paths.SETS}}
 
 
 class PointTest(unittest.TestCase):
     def setUp(self) -> None:
         relabel_paths.require_mount()
-        self.models = build(base_errors(), unscored={"B0": ["mm"], "T*": [""], "char": ["uh huh"], "bpe": ["yeah"]})
+        self.models = build(base_errors(), unscored={"B0": ["mm"], "T*": [""], "char-mid": ["uh huh"], "bpe": ["yeah"]})
         self.dirs = write(TMP / "point", self.models)
         self.report = rep.analyze(self.dirs, replicates=200)
 
@@ -112,15 +113,15 @@ class PointTest(unittest.TestCase):
         self.assertEqual(s["reference_words"], 60)
         self.assertAlmostEqual(s["wer"]["B0"], 10.0)
         self.assertAlmostEqual(s["wer"]["T*"], 5.0)
-        self.assertAlmostEqual(s["wer"]["char"], 10.0)
+        self.assertAlmostEqual(s["wer"]["char-mid"], 10.0)
         self.assertAlmostEqual(s["wer"]["bpe"], 10 / 3)
 
     def test_delta_enc_and_s_per_set_and_on_h4(self) -> None:
         s = self.report["sets"]["librispeech_dev_clean"]
         self.assertAlmostEqual(s["delta_enc"]["bpe"]["point"], 10.0 - 10 / 3)
-        self.assertAlmostEqual(s["delta_enc"]["char"]["point"], 0.0)
+        self.assertAlmostEqual(s["delta_enc"]["char-mid"]["point"], 0.0)
         self.assertAlmostEqual(s["s"]["bpe"]["point"], (10 / 3 - 5.0) / (10.0 - 5.0))
-        self.assertAlmostEqual(s["s"]["char"]["point"], 1.0)
+        self.assertAlmostEqual(s["s"]["char-mid"]["point"], 1.0)
         h4 = self.report["h4"]
         self.assertEqual(h4["sets"], relabel_paths.H4)
         self.assertAlmostEqual(h4["wer"]["bpe"], 10 / 3)
@@ -145,18 +146,18 @@ class PointTest(unittest.TestCase):
         self.assertEqual(ami["T*"]["nonempty_share"], 0.0)
         self.assertEqual(ami["bpe"]["nonempty_share"], 1.0)
         self.assertEqual(ami["bpe"]["excluded"], 1)
-        self.assertIn("char_minus_bpe", s)
-        self.assertAlmostEqual(s["char_minus_bpe"]["point"], 10.0 - 10 / 3)
+        self.assertIn("char_mid_minus_bpe", s)
+        self.assertAlmostEqual(s["char_mid_minus_bpe"]["point"], 10.0 - 10 / 3)
 
     def test_rates_count_deletions_and_insertions(self) -> None:
         models = build(base_errors())
         for name in relabel_paths.SETS:
-            models["char"][name] = [rec(r["id"], REF, hyp_with(1, "del")) for r in models["char"][name]]
+            models["char-mid"][name] = [rec(r["id"], REF, hyp_with(1, "del")) for r in models["char-mid"][name]]
             models["bpe"][name] = [rec(r["id"], REF, hyp_with(2, "ins")) for r in models["bpe"][name]]
             models["bpe"][name][0] = rec(models["bpe"][name][0]["id"], REF, "")
         report = rep.analyze(write(TMP / "rates", models), replicates=50)
         s = report["sets"]["voxpopuli_dev"]
-        self.assertAlmostEqual(s["rates"]["char"]["deletion"], 10.0)
+        self.assertAlmostEqual(s["rates"]["char-mid"]["deletion"], 10.0)
         self.assertAlmostEqual(s["rates"]["bpe"]["insertion"], 100 * 10 / 60)
         self.assertAlmostEqual(s["rates"]["bpe"]["deletion"], 100 * 10 / 60)
         self.assertAlmostEqual(s["empty_hypothesis_rate"]["bpe"], 1 / 6)
@@ -208,9 +209,9 @@ class BootstrapTest(unittest.TestCase):
     def test_delta_intervals_are_bootstrap_paired(self) -> None:
         report = rep.analyze(self.dirs, replicates=300)
         tables = rep.tables({m: self.models[m] for m in MODELS}, relabel_paths.H4)
-        theirs = bootstrap.paired(tables, {"bpe": ("B0", "bpe"), "char": ("B0", "char")}, relabel_paths.H4,
+        theirs = bootstrap.paired(tables, {"bpe": ("B0", "bpe"), "char-mid": ("B0", "char-mid")}, relabel_paths.H4,
                                   replicates=300)
-        for head in ("bpe", "char"):
+        for head in ("bpe", "char-mid"):
             self.assertEqual(report["h4"]["delta_enc"][head]["ci90"], theirs["mean"][head]["ci"])
             for name in relabel_paths.H4:
                 self.assertEqual(report["sets"][name]["delta_enc"][head]["ci90"], theirs["sets"][name][head]["ci"])
@@ -218,11 +219,11 @@ class BootstrapTest(unittest.TestCase):
     def test_one_draw_serves_every_model(self) -> None:
         tables = rep.tables({m: self.models[m] for m in MODELS}, relabel_paths.H4)
         reps = rep.replicate_wers(tables, list(MODELS), replicates=400, seed=7)
-        theirs = bootstrap.paired(tables, {"d": ("B0", "bpe"), "e": ("T*", "char")}, relabel_paths.H4,
+        theirs = bootstrap.paired(tables, {"d": ("B0", "bpe"), "e": ("T*", "char-mid")}, relabel_paths.H4,
                                   replicates=400, seed=7)
         diff = np.mean([reps[n]["B0"] - reps[n]["bpe"] for n in relabel_paths.H4], axis=0)
         self.assertEqual(bootstrap._ci(diff, 0.90), theirs["mean"]["d"]["ci"])
-        diff = reps["ami_dev"]["T*"] - reps["ami_dev"]["char"]
+        diff = reps["ami_dev"]["T*"] - reps["ami_dev"]["char-mid"]
         self.assertEqual(bootstrap._ci(diff, 0.90), theirs["sets"]["ami_dev"]["e"]["ci"])
 
     def test_clusters_not_utterances_are_resampled(self) -> None:
@@ -238,12 +239,12 @@ class BootstrapTest(unittest.TestCase):
     def test_s_per_replicate_is_degenerate_for_the_endpoints(self) -> None:
         models = build(base_errors())
         models["bpe"] = models["T*"]   # s = 0 in every replicate
-        models["char"] = models["B0"]  # s = 1 in every replicate
+        models["char-mid"] = models["B0"]  # s = 1 in every replicate
         report = rep.analyze(write(TMP / "ends", models), replicates=200)
         for scope in (report["h4"], report["sets"]["ami_dev"]):
             self.assertEqual(scope["s"]["bpe"]["ci90"], [0.0, 0.0])
-            self.assertEqual(scope["s"]["char"]["ci90"], [1.0, 1.0])
-            self.assertEqual(scope["delta_enc"]["char"]["ci90"], [0.0, 0.0])
+            self.assertEqual(scope["s"]["char-mid"]["ci90"], [1.0, 1.0])
+            self.assertEqual(scope["delta_enc"]["char-mid"]["ci90"], [0.0, 0.0])
 
     def test_deterministic(self) -> None:
         a = rep.analyze(self.dirs, replicates=200)
@@ -278,17 +279,31 @@ class ChecksTest(unittest.TestCase):
     def setUp(self) -> None:
         relabel_paths.require_mount()
 
-    def test_check_4_dev_clean_above_10_percent_withholds_the_readout(self) -> None:
+    def test_check_4_dev_clean_above_25_percent_for_char_mid_withholds_the_readout(self) -> None:
         errors = base_errors()
-        errors["char"]["librispeech_dev_clean"] = [2, 2, 2, 1, 1, 1]  # 15%
+        errors["char-mid"]["librispeech_dev_clean"] = [3, 3, 3, 3, 2, 2]  # 26.7%
         report = rep.analyze(write(TMP / "check4", build(errors)), replicates=50)
         c4 = report["checks"]["gross_sanity"]
         self.assertFalse(c4["passed"])
-        self.assertAlmostEqual(c4["wer"]["char"], 15.0)
+        self.assertAlmostEqual(c4["wer"]["char-mid"], 100 * 16 / 60)
+        self.assertEqual(c4["max_wer"], {"bpe": 10.0, "char-mid": 25.0})
         self.assertTrue(c4["heads"]["bpe"]["passed"])
-        self.assertEqual(len(c4["heads"]["char"]["examples"]), 6)  # at most 20 (only 6 here)
+        self.assertEqual(len(c4["heads"]["char-mid"]["examples"]), 6)  # at most 20 (only 6 here)
         self.assertIsNone(report["readout"]["label"])
         self.assertIn("gross_sanity", report["readout"]["withheld"])
+
+    def test_check_4_thresholds_are_10_for_bpe_and_25_for_char_mid(self) -> None:
+        errors = base_errors()
+        errors["char-mid"]["librispeech_dev_clean"] = [3, 3, 3, 3, 2, 1]  # 25.0%: passes (half-depth head)
+        report = rep.analyze(write(TMP / "check4b", build(errors)), replicates=50)
+        self.assertTrue(report["checks"]["gross_sanity"]["passed"])
+        self.assertIsNotNone(report["readout"]["label"])
+        errors["bpe"]["librispeech_dev_clean"] = [2, 2, 1, 1, 1, 0]  # 11.7%: fails
+        report = rep.analyze(write(TMP / "check4c", build(errors)), replicates=50)
+        c4 = report["checks"]["gross_sanity"]
+        self.assertFalse(c4["heads"]["bpe"]["passed"])
+        self.assertTrue(c4["heads"]["char-mid"]["passed"])
+        self.assertIsNone(report["readout"]["label"])
 
     def test_failed_scorer_checks_stop_the_analysis(self) -> None:
         bad = {"passed": False, "hooks_passive": {"passed": True}, "pre_feedback": {"passed": False},

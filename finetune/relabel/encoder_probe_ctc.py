@@ -11,7 +11,9 @@ shorter than evaluate.MIN_DECODE_SECONDS zero-padded exactly as score_teacher.py
 Two heads, both greedy (frame argmax, merge repeats, drop the blank), with the conventions of IBM's reference
 (CONVENTIONS, each with its source; REFERENCE lists the files, read only):
 
-- char: the encoder's character head encoder.out [348] on the final layer at 50 Hz; output i is chr(i), 0 the blank.
+- char-mid: the encoder's character head encoder.out [348] at 50 Hz, as the encoder itself computes it at its middle
+        layer (the same pre-update logits that weight the pooling; the final layer is never passed to encoder.out,
+        plan v2.2); output i is chr(i), 0 the blank. It reads 8 of the 16 layers: a half-depth lower bound.
 - bpe:  the BPE head of out_llm.safetensors [100353] on 12.5 Hz vectors: the final layer pooled over windows of 4
         frames with weights 1 - P(blank) from the middle layer's character-head posteriors; output 0 is the blank and
         output i is tokenizer id i - 1, detokenized by the snapshot's tokenizer with special tokens skipped.
@@ -63,7 +65,9 @@ HF_ID = "ibm-granite/granite-speech-5.0-2b"
 REVISION = "f4e68169fa2a5751acc4b5da9957855e5e8fc3f1"
 OUT = relabel_paths.ARTIFACTS / "encoder-probe" / "ctc"
 SMOKE_NAME = "encoder-probe-ctc"
-HEADS = ("char", "bpe")
+CHAR, BPE = "char-mid", "bpe"
+HEADS = (CHAR, BPE)
+HEAD_KEY = {CHAR: "char", BPE: "bpe"}  # the head's prefix in Probe.decode's output
 CHECKS_FAILED_EXIT = 5
 
 BLANK = 0
@@ -82,8 +86,17 @@ _REPO = "github.com/ibm-granite/granite-speech-models, commit edac28f3a88af98dfa
 BPE_NB = "speculative_decoding_bpe.ipynb"
 CHAR_NB = "speculative_decoding_notebook.ipynb"
 PAPER = "arXiv 2603.11243v1"
+FORWARD = "modeling_granite_speech.py"
+CARD = "granite-speech-5.0-2b model card"
 REFERENCE = {
     "files": {
+        FORWARD: {"location": "transformers 5.17.0 (the shared runtime), "
+                              "models/granite_speech/modeling_granite_speech.py",
+                  "note": "GraniteSpeechCTCEncoder.forward applies self.out only at idx == num_layers // 2 "
+                          "(1-based), on a clone of the layer output, then updates that output in place"},
+        CARD: {"location": f"README.md of {HF_ID} at revision {REVISION}",
+               "note": "'self-conditioned CTC from the middle layer'; 'The middle layer also provides non-blank "
+                       "probabilities that are used for frame-level posterior-weighted pooling'"},
         BPE_NB: {"location": f"{_REPO}, notebooks/{BPE_NB}", "git_blob": "29177dc2fba69cd8b8792a887d213d82a5376e85",
                  "sha256": "366ffb2440cd700170cb9cd8e4c015903d2759a194527941b900b871f811f15f",
                  "note": "written for granite-speech-4.1-2b; linked as the speculative-decoding notebook by the "
@@ -93,14 +106,21 @@ REFERENCE = {
                   "note": f"the grapheme CTC notebook {BPE_NB} cell b67c6578 contrasts itself with; written for "
                           "granite-4.0-1b-speech; its cells have no ids and are cited by function"},
         PAPER: {"location": "arxiv.org/abs/2603.11243 (Saon et al., Self-Speculative Decoding for LLM-based ASR with "
-                            "CTC Encoder Drafts)", "sha256": "9902b1bc91838ece03ac5b3827f45d4570500f51c1246c20a4d95a564af7ddfc"},
+                            "CTC Encoder Drafts)",
+                "sha256": "9902b1bc91838ece03ac5b3827f45d4570500f51c1246c20a4d95a564af7ddfc"},
     },
     "handling": "downloaded into an empty directory under $RELABEL_ROOT/tmp; read as text, never executed or imported",
 }
 CONVENTIONS = {
-    "char_layer": {"value": "final layer: encoder.out applied to the encoder's last_hidden_state",
-                   "source": f"{CHAR_NB} ctc_decode (Step 1): ctc_logits = model.encoder.out(embeddings), "
-                             "embeddings = encoder_output.last_hidden_state"},
+    "char_layer": {
+        "value": "middle layer (char-mid): the logits the encoder's own call of encoder.out returns after layer "
+                 "num_layers // 2, before the in-place update (the same logits that weight the pooling); the final "
+                 "layer is never passed to encoder.out",
+        "source": f"{FORWARD} (GraniteSpeechCTCEncoder.forward: self.out only at idx == num_layers // 2); {CARD} "
+                  f"('self-conditioned CTC from the middle layer'); {BPE_NB} cells 46d183fe and c9ed2e2d (encoder.out "
+                  f"used only at the middle layer); plan v2.2. {CHAR_NB} ctc_decode applies it to the final layer, but "
+                  "that notebook is for granite-4.0-1b-speech and the use does not carry over: on 5.0-2b the "
+                  "final-layer reading had 0-1% blank frames and WER 105-156% on every dev set (smoke run)"},
     "char_blank": {"value": "output 0", "source": f"{CHAR_NB} ctc_decode: non_blank = dedup[dedup > 0]; "
                                                    f"{BPE_NB} cell c9ed2e2d: importance = 1 - probs[:, :, 0] (blank)"},
     "char_map": {"value": "output i -> chr(i) (also for i >= 256, as the reference does)",
@@ -255,7 +275,8 @@ class Probe:
         return inputs["input_features"].to(self.device, self.dtype)
 
     def heads(self, samples: int, final: torch.Tensor, mid_logits: torch.Tensor) -> dict:
-        char_frames, char_labels = greedy(self.encoder.out(final[0]))
+        """Both heads from one pass: char-mid decodes the middle-layer logits, the same ones that weight the pooling."""
+        char_frames, char_labels = greedy(mid_logits[0])
         n = pooled_length(samples, final.shape[1])
         pooled = posterior_weighted_pool(final, importance(mid_logits), WINDOW)[0, :n]
         bpe_frames, bpe_labels = greedy(self.out_llm(pooled.to(self.out_llm.weight.dtype)))
@@ -475,10 +496,11 @@ def score_set(probe: Probe, name: str, manifest: Path, args, config: dict, sourc
         out = probe.decode(clip)
         infer_s += time.perf_counter() - start
         for head in HEADS:
-            hyp = out[head]
+            key = HEAD_KEY[head]
+            hyp = out[key]
             rows[head].append({"id": r["id"], "ref": r["text"], "hyp": hyp, **evaluate.score(r["text"], hyp),
-                               "duration": r["duration"], "labels": out[f"{head}_labels"],
-                               "frames": out["frames"] if head == "char" else out["pooled_frames"]})
+                               "duration": r["duration"], "labels": out[f"{key}_labels"],
+                               "frames": out["frames"] if head == CHAR else out["pooled_frames"]})
         if out["bpe_special_ids"]:
             counts["bpe_special_id_clips"].append(r["id"])
         if out["bpe_skip_changed"]:
