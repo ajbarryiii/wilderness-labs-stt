@@ -27,11 +27,17 @@ read them through encode_clips, the one code path:
   and its output after ln_post (before the multimodal projector) is split per clip by
   _get_feat_extract_output_lengths of the clip's mask: 13 frames per second of audio.
 
-Checks (plan "Features are per clip" and "About D-Q's encoder"): per_clip_check compares each of 50 mixed-length
-clips' features computed in the production batching with the clip encoded alone (equal, or within bf16 rounding:
-max |a - b| <= BF16_TOLERANCE x the clip's RMS feature value, where BF16_TOLERANCE = 2^-5 is four bfloat16 epsilons;
-the max-abs difference is reported either way); qwen_rate_check compares output frames with the formula and with
-the audio's duration (13 Hz). If either fails, nothing is extracted (exit 5) and the architect is told.
+Checks (plan "Features are per clip", "What 'within bf16 rounding' means" v3.2, "About D-Q's encoder"):
+per_clip_check encodes 50 mixed-length dev clips in the production batching and each clip alone. Bitwise equal
+passes (D-T, one clip per pass). Otherwise the arm passes only if, on the same clips, (1) FP32 isolation: with TF32
+off for matmuls and convolutions (evaluate.strict_fp32; the settings are read back and recorded), batched and
+clip-alone FP32 outputs differ by at most FP32_ISOLATION_MAX = 1e-3 max-abs; and (2) noise floor: per clip, the bf16
+batched-vs-alone mean-abs and max-abs differences are at most NOISE_MARGIN = 1.1 x that clip's bf16-alone-vs-FP32-alone
+values. checked(): if (1) fails, the arm is switched to one clip per pass (one_clip) and checked again; if only (2)
+fails, nothing is extracted (exit 5) and the architect is told. qwen_rate_check compares D-Q's output frames with
+_get_feat_extract_output_lengths and with the audio's duration (13 Hz). D-B has no per-clip check (it is batched as
+B0's records were). After an arm's extraction, token_frame_stats writes per source the tokens per second and the
+share of clips with more tokens than the arm's stored frames (reported, not a filter).
 
 Store: <features>/<arm>/{pools,heldout}/<ppppp>.bin (the pool's clips' vectors, bfloat16, concatenated in C1 order;
 training clips in pools/, held-out clips in heldout/) with <ppppp>.json written last (ids, frame offsets and counts,
@@ -68,7 +74,8 @@ FRAME_RATE = {"D-B": 12.5, "D-T": 12.5, "D-Q": 13.0}
 FEATURE_VERSION = 1
 BATCH_SIZE, MAX_BATCH_SECONDS = 64, 1200.0       # evaluate.make_batches, as the B0 records' scoring
 QWEN_MAX_BATCH_SECONDS = 300.0                   # D-Q: its convolutions run every 1 s chunk of a batch at once
-BF16_TOLERANCE = 2.0 ** -5
+FP32_ISOLATION_MAX = 1e-3
+NOISE_MARGIN = 1.1
 CHECK_CLIPS = 50
 QWEN_HF_ID = "Qwen/Qwen3-ASR-1.7B-hf"
 QWEN_REVISION = "bcd2b5b7f32b480ab5790554cfa8347f246a14f3"
@@ -212,11 +219,14 @@ class QwenArm(ArmEncoder):
         self.tower, self.device, self.dtype = _freeze(tower).to(device), torch.device(device), dtype
         self.preparer = QwenPreparer(feature_extractor)
         self.source = source or {}
+        self.one_clip = False            # set by checked() after an FP32 isolation failure
 
     def modules(self) -> list[nn.Module]:
         return [self.tower]
 
     def batches(self, durations):
+        if self.one_clip:
+            return [[i] for i in range(len(durations))]
         return make_batches(durations, QWEN_MAX_BATCH_SECONDS)
 
     def encode_prepared(self, items):
@@ -249,8 +259,8 @@ class QwenArm(ArmEncoder):
     def identity(self) -> dict:
         return {"arm": self.arm, "hf_id": QWEN_HF_ID, "revision": QWEN_REVISION, "precision": str(self.dtype),
                 "attn_implementation": getattr(getattr(self.tower, "config", None), "_attn_implementation", None),
-                "mel": self.preparer.identity(), "batching": f"evaluate.make_batches({BATCH_SIZE}, "
-                f"{QWEN_MAX_BATCH_SECONDS}), mel axis and mask zero-padded", "output": "audio tower after ln_post, "
+                "mel": self.preparer.identity(), "batching": "one clip per pass" if self.one_clip else
+                f"evaluate.make_batches({BATCH_SIZE}, {QWEN_MAX_BATCH_SECONDS}), mel axis and mask zero-padded", "output": "audio tower after ln_post, "
                 "before the projector, split by _get_feat_extract_output_lengths", "source": self.source}
 
 
@@ -327,45 +337,95 @@ def compare(a: torch.Tensor, b: torch.Tensor) -> dict:
             "differing_fraction": float((x != y).float().mean()) if x.numel() else 0.0}
 
 
+def tf32_state() -> dict:
+    return {"matmul_allow_tf32": bool(torch.backends.cuda.matmul.allow_tf32),
+            "cudnn_allow_tf32": bool(torch.backends.cudnn.allow_tf32),
+            "float32_matmul_precision": torch.get_float32_matmul_precision()}
+
+
+def _diff(a: torch.Tensor, b: torch.Tensor) -> tuple[float, float]:
+    d = (a.float() - b.float()).abs()
+    return (float(d.mean()), float(d.max())) if d.numel() else (0.0, 0.0)
+
+
+def noise_floor(enc: ArmEncoder, clips: list[np.ndarray], durations: list[float]) -> dict:
+    """Parts (1) and (2) of the v3.2 rule from the arm's raw(items, dtype) outputs (before storage rounding)."""
+    prepared = [enc.preparer(evaluate.pad_short(np.asarray(c, dtype=np.float32))[0]) for c in clips]
+    device = getattr(enc, "device", torch.device("cpu"))
+
+    def outputs(dtype) -> tuple[list, list]:
+        batched: list = [None] * len(prepared)
+        for b in enc.batches(durations):
+            for i, f in zip(b, enc.raw([prepared[i] for i in b], dtype)):
+                batched[i] = f
+        return batched, [enc.raw([p], dtype)[0] for p in prepared]
+
+    with evaluate.strict_fp32(device):                # TF32 off for matmuls and convolutions
+        tf32 = tf32_state()
+        f32_b, f32_a = outputs(torch.float32)
+    b16_b, b16_a = outputs(torch.bfloat16)
+    rows = []
+    for k in range(len(prepared)):
+        iso = _diff(f32_b[k], f32_a[k])[1]
+        bm, bx = _diff(b16_b[k], b16_a[k])
+        rm, rx = _diff(b16_a[k], f32_a[k])
+        rows.append({"fp32_batched_vs_alone_max": iso, "bf16_batched_vs_alone_mean": bm,
+                     "bf16_batched_vs_alone_max": bx, "bf16_vs_fp32_alone_mean": rm, "bf16_vs_fp32_alone_max": rx,
+                     "within_floor": bm <= NOISE_MARGIN * rm and bx <= NOISE_MARGIN * rx})
+    iso_max = max(r["fp32_batched_vs_alone_max"] for r in rows)
+    return {"tf32": tf32,
+            "isolation": {"max_abs": iso_max, "limit": FP32_ISOLATION_MAX, "passed": iso_max <= FP32_ISOLATION_MAX},
+            "bf16": {"margin": NOISE_MARGIN, "clips_over": sum(not r["within_floor"] for r in rows),
+                     "max_ratio_mean": max(r["bf16_batched_vs_alone_mean"] / r["bf16_vs_fp32_alone_mean"]
+                                           if r["bf16_vs_fp32_alone_mean"] else float("inf") for r in rows),
+                     "max_ratio_max": max(r["bf16_batched_vs_alone_max"] / r["bf16_vs_fp32_alone_max"]
+                                          if r["bf16_vs_fp32_alone_max"] else float("inf") for r in rows),
+                     "passed": all(r["within_floor"] for r in rows)},
+            "per_clip": rows}
+
+
 def per_clip_check(enc: ArmEncoder, clips: list[np.ndarray], durations: list[float]) -> dict:
-    """Features in the production batching against each clip encoded alone (plan "Features are per clip")."""
+    """Production-batched features against each clip encoded alone, by the v3.2 rule (module docstring)."""
     batched = encode_clips(enc, clips, durations)
     rows = [compare(b, encode_clips(enc, [c], [d])[0]) for b, c, d in zip(batched, clips, durations)]
     same = all(r["same_shape"] for r in rows)
     equal = same and all(r["equal"] for r in rows)
-    ratio = max((r["ratio"] for r in rows), default=0.0) if same else None
-    sizes = [len(b) for b in enc.batches(durations)]
-    return {"arm": enc.arm, "clips": len(clips), "batch_sizes": sizes, "same_shapes": same, "equal": equal,
-            "max_abs_diff": max(r["max_abs_diff"] for r in rows) if same else None,
-            "max_diff_over_rms": ratio, "tolerance_over_rms": BF16_TOLERANCE,
-            "differing_fraction_max": max(r["differing_fraction"] for r in rows) if same else None,
-            "per_clip_max_abs_diff": [r["max_abs_diff"] for r in rows],
-            "passed": bool(same and (equal or ratio <= BF16_TOLERANCE)),
-            "rule": "equal, or max |batched - alone| <= 2^-5 x the clip's RMS feature value (bf16 rounding)"}
+    out = {"arm": enc.arm, "clips": len(clips), "batch_sizes": [len(b) for b in enc.batches(durations)],
+           "same_shapes": same, "equal": equal,
+           "max_abs_diff": max(r["max_abs_diff"] for r in rows) if same else None,
+           "differing_fraction_max": max(r["differing_fraction"] for r in rows) if same else None,
+           "rule": "bitwise equal; otherwise FP32 isolation (max-abs <= 1e-3, TF32 off) and the bf16 noise floor "
+                   "(per clip mean-abs and max-abs <= 1.1 x bf16-vs-FP32)"}
+    if equal:
+        return out | {"passed": True, "failed_part": None}
+    if not same:
+        return out | {"passed": False, "failed_part": "shapes"}
+    if not hasattr(enc, "raw"):
+        return out | {"passed": False, "failed_part": "not bitwise equal and no FP32 path"}
+    nf = noise_floor(enc, clips, durations)
+    failed = None if nf["isolation"]["passed"] and nf["bf16"]["passed"] else \
+        ("isolation" if not nf["isolation"]["passed"] else "noise_floor")
+    return out | {"noise_floor": nf, "passed": failed is None, "failed_part": failed}
 
 
-def _abs(rows: list[tuple[torch.Tensor, torch.Tensor]]) -> dict:
-    d = [(a - b).abs() for a, b in rows]
-    return {"max_abs": max(float(x.max()) for x in d), "mean_abs": float(torch.cat([x.flatten() for x in d]).mean())}
+def checked(enc: ArmEncoder, clips: list[np.ndarray], durations: list[float]) -> dict:
+    """run_checks' clips through the plan's checks; after an FP32 isolation failure the arm is switched to one clip
+    per pass and checked again (the first result is kept under "first")."""
+    out = check_set(enc, clips, durations)
+    if not out["passed"] and (out.get("per_clip") or {}).get("failed_part") == "isolation" and \
+            hasattr(enc, "one_clip") and not enc.one_clip:
+        enc.one_clip = True
+        out = check_set(enc, clips, durations) | {"first": out, "fallback": "one clip per pass after the FP32 "
+                                                                            "isolation failure"}
+    return out
 
 
-def qwen_noise_floor(enc: QwenArm, clips: list[np.ndarray], durations: list[float]) -> dict:
-    """Reported with the per-clip check, never part of its rule: whether a batched-vs-alone difference is rounding.
-    The same clips with the tower in FP32 (batched vs alone: structural isolation), and the bf16 computation's own error
-    against FP32 (each clip alone): the bf16 noise floor of these clips."""
-    prepared = [enc.preparer(evaluate.pad_short(np.asarray(c, dtype=np.float32))[0]) for c in clips]
-    out = {}
-    for name, dtype in (("bf16", torch.bfloat16), ("fp32", torch.float32)):
-        batched: list = [None] * len(clips)
-        for b in enc.batches(durations):
-            for i, f in zip(b, enc.raw([prepared[i] for i in b], dtype)):
-                batched[i] = f
-        alone = [enc.raw([p], dtype)[0] for p in prepared]
-        out[name] = {"batched": batched, "alone": alone}
-    return {"fp32_batched_vs_alone": _abs(list(zip(out["fp32"]["batched"], out["fp32"]["alone"]))),
-            "bf16_batched_vs_alone": _abs(list(zip(out["bf16"]["batched"], out["bf16"]["alone"]))),
-            "bf16_alone_vs_fp32_alone": _abs(list(zip(out["bf16"]["alone"], out["fp32"]["alone"]))),
-            "note": "diagnostic only (not the check's rule); outputs before bfloat16 storage rounding"}
+def check_set(enc: ArmEncoder, clips: list[np.ndarray], durations: list[float]) -> dict:
+    out = {"arm": enc.arm, "per_clip": per_clip_check(enc, clips, durations)}
+    if enc.arm == "D-Q":
+        out["rate"] = qwen_rate_check(enc, clips, durations)
+    out["passed"] = all(v["passed"] for k, v in out.items() if isinstance(v, dict) and "passed" in v)
+    return out
 
 
 def qwen_rate_check(enc: QwenArm, clips: list[np.ndarray], durations: list[float]) -> dict:
@@ -532,6 +592,25 @@ def extract_pool(lay: md.Layout, enc: ArmEncoder, data: md.Data, p: int, workers
             "frames": sum(int(f.shape[0]) for f in feats)}
 
 
+def token_frame_stats(lay: md.Layout, arm: str, data: md.Data) -> dict:
+    """Per source, over every selected clip: tokens per second and the share of clips with more tokens than the arm's
+    stored frames (reported, not a filter)."""
+    frames = {}
+    for p in range(data.plan.n_pools):
+        for kind in ("pools", "heldout"):
+            meta = json.loads(store_paths(lay.features / arm, kind, p)["meta"].read_text())
+            frames.update(zip(meta["ids"], meta["frames"]))
+    out = {}
+    for s in md.SOURCES:
+        rows = [c for c in data.clips.values() if c["source"] == s]
+        if rows:
+            tokens = sum(len(c["tokens"]) for c in rows)
+            out[s] = {"clips": len(rows), "tokens_per_second": tokens / sum(c["duration"] for c in rows),
+                      "frames_per_second": sum(frames[c["id"]] for c in rows) / sum(c["duration"] for c in rows),
+                      "share_tokens_over_frames": sum(len(c["tokens"]) > frames[c["id"]] for c in rows) / len(rows)}
+    return out
+
+
 def extract(lay: md.Layout, enc: ArmEncoder, pools: list[int] | None = None, workers: int = 6,
             budget_minutes: float | None = None) -> list[dict]:
     """Precompute (and commit per pool) the arm's features of every pool's clips; committed pools are skipped."""
@@ -554,6 +633,11 @@ def extract(lay: md.Layout, enc: ArmEncoder, pools: list[int] | None = None, wor
         print(f"extract {enc.arm}: pool {p} committed: {r['clips']} clips, {r['audio_hours']:.2f} h, encode "
               f"{r['encode_s']:.0f} s, wall {r['wall_s']:.0f} s ({r['audio_hours'] / max(r['wall_s'], 1e-9) * 3600:.0f}"
               " audio h per wall h)", flush=True)
+        md.write_json(arm_dir / "extract-log" / f"{p:05d}.json", r)
+    if all(committed(store_paths(arm_dir, k, p), [i for i in data.pool_ids(p) if data.clips[i]["split"] == split],
+                     identity) for p in range(data.plan.n_pools) for k, split in (("pools", "train"),
+                                                                                 ("heldout", "heldout"))):
+        md.write_json(arm_dir / "token-frames.json", token_frame_stats(lay, enc.arm, data))
     return done
 
 
@@ -573,19 +657,14 @@ def peak_memory(device: torch.device) -> dict:
 
 
 def run_checks(enc: ArmEncoder) -> dict:
-    """The plan's checks for the arm: per-clip features for D-T and D-Q (B0 is batched as its records were, with no
-    per-clip requirement), and Qwen's frame rate."""
+    """The plan's checks for the arm on check_clips(): none for D-B (batched as B0's records were), checked() for D-T and
+    D-Q."""
     if enc.arm == "D-B":
         return {"arm": enc.arm, "passed": True, "note": "no per-clip check: D-B is batched as B0's records were"}
     records = check_clips()
     clips = [evaluate.load_audio(r["audio_filepath"]) for r in records]
     durations = [r["duration"] for r in records]
-    out = {"arm": enc.arm, "clip_ids": [r["id"] for r in records], "per_clip": per_clip_check(enc, clips, durations)}
-    if enc.arm == "D-Q":
-        out["rate"] = qwen_rate_check(enc, clips, durations)
-        out["noise_floor"] = qwen_noise_floor(enc, clips, durations)
-    out["passed"] = all(v["passed"] for k, v in out.items() if isinstance(v, dict) and "passed" in v)
-    return out
+    return {"clip_ids": [r["id"] for r in records]} | checked(enc, clips, durations)
 
 
 def checks_path(lay: md.Layout, arm: str) -> Path:
@@ -611,11 +690,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--workers", type=int, default=6)
     parser.add_argument("--budget-minutes", type=float)
     parser.add_argument("--lock-wait", type=float, default=3600.0)
-    parser.add_argument("--smoke-ignore-failed-checks", action="store_true",
-                        help="smoke only: extract although the checks failed (plumbing runs; never production)")
     args = parser.parse_args(argv)
-    if args.smoke_ignore_failed_checks and args.smoke_shards is None:
-        parser.error("--smoke-ignore-failed-checks needs --smoke-shards")
     lay = md.layout(args.smoke_shards)
     relabel_paths.require_mount()
     device = torch.device("cuda")
@@ -629,6 +704,8 @@ def main(argv: list[str] | None = None) -> int:
         load_s = time.perf_counter() - t0
         path = checks_path(lay, args.arm)
         old = json.loads(path.read_text()) if path.exists() else None
+        if old and old.get("passed") and old.get("fallback") and hasattr(enc, "one_clip"):
+            enc.one_clip = True                       # the check passed after the one-clip fallback
         if old and old.get("passed") and old.get("encoder") == enc.identity():
             checks = old
         else:
@@ -637,12 +714,9 @@ def main(argv: list[str] | None = None) -> int:
             md.write_json(path, checks)
         print(json.dumps({k: v for k, v in checks.items() if k not in ("clip_ids", "encoder")}, default=str)[:3000],
               flush=True)
-        if not checks["passed"] and not (args.smoke_ignore_failed_checks and lay.smoke):
+        if not checks["passed"]:
             print("feature checks failed: nothing extracted; report to the architect", file=sys.stderr)
             return CHECKS_FAILED_EXIT
-        if not checks["passed"]:
-            print("feature checks failed: extracting anyway for a smoke run (--smoke-ignore-failed-checks)",
-                  file=sys.stderr)
         if args.cmd == "checks":
             return 0
         pools = None

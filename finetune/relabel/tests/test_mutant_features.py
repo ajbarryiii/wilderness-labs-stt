@@ -10,6 +10,7 @@ Run from finetune/relabel:  ./python -m unittest discover -s tests -v
 """
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import unittest
@@ -129,6 +130,91 @@ class TestQwen(unittest.TestCase):
         self.assertEqual(a.shape[1] % 100, 0)
 
 
+class RawArm(mf.ArmEncoder):
+    """A stand-in with an FP32 path: deterministic features of each clip, plus controlled differences: `iso` added to a
+    batched FP32 pass, `batched` to a batched bf16 pass, `rounding` to every bf16 pass (its error against FP32)."""
+    arm = "raw"
+
+    def __init__(self, iso=0.0, batched=0.0, rounding=0.01):
+        self.preparer = mf.Preparer()
+        self.iso, self.batched_err, self.rounding = iso, batched, rounding
+        self.one_clip = False
+        self.lin = nn.Linear(1, 4)
+
+    def batches(self, durations):
+        return [[i] for i in range(len(durations))] if self.one_clip else [list(range(len(durations)))]
+
+    def modules(self):
+        return [self.lin]
+
+    def encode_prepared(self, items):
+        return [f.to(mf.STORE_DTYPE) for f in self.raw(items, torch.bfloat16)]
+
+    def raw(self, items, dtype):
+        out = []
+        for k, c in enumerate(items):
+            frames = torch.from_numpy(c[: len(c) // 1280 * 1280].reshape(-1, 1280).mean(1, keepdims=True)).float()
+            f = torch.cat([frames * (j + 1) for j in range(4)], dim=1)
+            sign = torch.ones_like(f)
+            sign[:, ::2] = -1
+            if dtype == torch.bfloat16:
+                f = f + self.rounding * sign
+                if len(items) > 1:
+                    f = f + self.batched_err * sign.roll(1, dims=1)
+            elif len(items) > 1:
+                f = f + self.iso
+            out.append(f)
+        return out
+
+    def identity(self):
+        return {"arm": self.arm, "one_clip": self.one_clip}
+
+
+class TestNoiseFloorRule(unittest.TestCase):
+    """v3.2 "What 'within bf16 rounding' means": (1) FP32 batched vs alone max-abs <= 1e-3 with TF32 off (recorded);
+    (2) per clip, bf16 batched-vs-alone mean-abs and max-abs <= 1.1 x that clip's bf16-vs-FP32 values."""
+
+    def setUp(self):
+        self.clips, self.durations = mixed_clips()
+
+    def test_within_the_noise_floor_passes(self):
+        out = mf.per_clip_check(RawArm(iso=5e-4, batched=0.0105, rounding=0.01), self.clips, self.durations)
+        self.assertFalse(out["equal"])
+        self.assertTrue(out["passed"], out)
+        nf = out["noise_floor"]
+        self.assertTrue(nf["isolation"]["passed"])
+        self.assertTrue(nf["bf16"]["passed"])
+        self.assertEqual(nf["tf32"], {"matmul_allow_tf32": False, "cudnn_allow_tf32": False,
+                                      "float32_matmul_precision": "highest"})
+        self.assertEqual(len(nf["per_clip"]), len(self.clips))
+
+    def test_above_the_noise_floor_fails(self):
+        out = mf.per_clip_check(RawArm(iso=0.0, batched=0.0115, rounding=0.01), self.clips, self.durations)
+        self.assertFalse(out["passed"])
+        self.assertEqual(out["failed_part"], "noise_floor")
+
+    def test_fp32_isolation_failure_and_the_one_clip_fallback(self):
+        arm = RawArm(iso=2e-3, batched=0.005, rounding=0.01)    # bf16 within the floor, FP32 not isolated
+        out = mf.per_clip_check(arm, self.clips, self.durations)
+        self.assertFalse(out["passed"])
+        self.assertEqual(out["failed_part"], "isolation")
+        checks = mf.checked(arm, self.clips, self.durations)
+        self.assertTrue(arm.one_clip)
+        self.assertTrue(checks["passed"])
+        self.assertEqual(checks["first"]["per_clip"]["failed_part"], "isolation")
+        self.assertTrue(checks["per_clip"]["equal"])
+
+    def test_noise_floor_failure_has_no_fallback(self):
+        arm = RawArm(iso=0.0, batched=0.05, rounding=0.01)
+        checks = mf.checked(arm, self.clips, self.durations)
+        self.assertFalse(checks["passed"])
+        self.assertFalse(arm.one_clip)
+
+    def test_no_smoke_override(self):
+        with self.assertRaises(SystemExit):
+            mf.main(["extract", "--arm", "D-Q", "--smoke-shards", "40", "--smoke-ignore-failed-checks"])
+
+
 class TestPerClipCheck(unittest.TestCase):
     def test_batch_dependent_encoder_fails(self):
         clips, durations = mixed_clips()
@@ -245,6 +331,18 @@ class TestStore(unittest.TestCase):
             with mock.patch.object(mf, "write_features", wraps=mf.write_features) as spy:
                 mf.extract(lay, arm, workers=0)
             self.assertEqual(spy.call_count, 0)
+        import mutant_train as mt
+        items = mt.heldout_items(lay, arm.arm, data, mf.store_identity(arm, data))
+        self.assertEqual(sorted(it["id"] for it in items), data.heldout_ids())
+        self.assertTrue(all(it["text"] == data.clips[it["id"]]["reference"] for it in items))
+        stats = json.loads((lay.features / arm.arm / "token-frames.json").read_text())
+        for src, st in stats.items():
+            rows = [c for c in data.clips.values() if c["source"] == src]
+            frames = {i: f.shape[0] for p in range(data.plan.n_pools) for kind in ("pools", "heldout")
+                      for i, f in ((i, mf.FeatureFile(mf.store_paths(lay.features / arm.arm, kind, p)).get(i))
+                                   for i in mf.FeatureFile(mf.store_paths(lay.features / arm.arm, kind, p)).ids)}
+            self.assertAlmostEqual(st["share_tokens_over_frames"],
+                                   sum(len(c["tokens"]) > frames[c["id"]] for c in rows) / len(rows))
 
 
 if __name__ == "__main__":
