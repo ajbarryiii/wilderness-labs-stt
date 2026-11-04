@@ -34,7 +34,8 @@ the step, so the step is the scheduler's whole state.
 
 Held-out metric (the only metric for learning-rate selection and the plateau check): greedy TDT decoding of the
 held-out slice's stored features (B0's decoding, strict FP32, batches of mutant_features.make_batches), each clip
-scored by evaluate.score against its stored reference; the metric is the corpus WER over the scored clips (100 x
+scored by evaluate.score against its stored human reference (as the dev records are scored against their manifests'
+references; the v3.2 training text is only the training target); the metric is the corpus WER over the scored clips (100 x
 errors / reference words), per source for information. Every RNG is restored afterwards and decoding never changes
 the training trajectory. Evaluated at step 3,000 (pilot), at round(25, 50, 75, 100% of S) (main) and at the
 extension's end; the step-75% and step-S weights are kept (ckpt/step-<n>.pt). Pilot checkpoints are discarded at the
@@ -649,7 +650,7 @@ def heldout_items(lay: md.Layout, arm: str, data: md.Data, identity: dict) -> li
             raise mf.FeatureError(f"held-out pool {p}: features of another identity")
         for i in f.ids:
             c = data.clips[i]
-            items.append({"id": i, "feats": f.get(i).clone(), "text": c["text"], "source": c["source"],
+            items.append({"id": i, "feats": f.get(i).clone(), "text": c["reference"], "source": c["source"],
                           "duration": c["duration"]})
     if sorted(it["id"] for it in items) != data.heldout_ids():
         raise mf.FeatureError("the stored held-out features do not cover the held-out slice")
