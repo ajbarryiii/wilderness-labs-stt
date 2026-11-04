@@ -448,6 +448,8 @@ def compare(new: dict, recorded: dict, name: str, recorded_path: Path, limit: in
     return {"set": name, "recorded": str(recorded_path), "limit": limit, "recorded_wer": wer_old, "wer": wer_new,
             "difference_points": difference, "tolerance_points": score_domain.CROSSCHECK_POINTS,
             "identical_hypotheses": sum(r["hyp"] == old[r["id"]]["hyp"] for r in rows if r["id"] in old),
+            "differing": [{"id": r["id"], "recorded": old[r["id"]]["hyp"], "now": r["hyp"]}
+                          for r in rows if r["id"] in old and r["hyp"] != old[r["id"]]["hyp"]][:50],
             "utterances": len(rows), "recorded_utterances": len(old), "missing_ids": missing[:20],
             "config_equal": config_equal, "pass": same_population and config_equal and within,
             "gating": limit is None}
