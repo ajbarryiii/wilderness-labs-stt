@@ -296,6 +296,17 @@ class FlowTest(FlowBase):
             self.assertEqual(self.run_panel(Probing(cross=cross)), 0)
         self.assertTrue(seen["held"])
 
+    def test_run_peak_is_the_maximum_over_loading_the_crosscheck_and_every_set(self) -> None:
+        """A scorer that resets the allocator's peaks per set (score_teacher.decode_set) must not hide an earlier
+        set's peak: readings after loading, the cross-check and two sets are 1, 2, 7 and 3 GiB."""
+        readings = iter([(1.0, 1.5), (2.0, 2.5), (7.0, 7.5), (3.0, 3.5)])
+        cross = ("stem-chem", manifest_of("stem-chem"), self.recorded("stem-chem", 3))
+        with mock.patch.dict(hp.SCORED, {"b100-main": ("stem-chem", "lectures-a")}), \
+             mock.patch.object(hp, "gpu_peaks", lambda device: next(readings)):
+            self.assertEqual(self.run_panel(StandInScorer(cross=cross)), 0)
+        memory = json.loads((hp.output_dir("b100-main", 3) / "run.json").read_text())["memory"]
+        self.assertEqual((memory["peak_gpu_allocated_gb"], memory["peak_gpu_reserved_gb"]), (7.0, 7.5))
+
     def test_low_host_memory_refuses_to_load(self) -> None:
         cross = ("stem-chem", manifest_of("stem-chem"), self.recorded("stem-chem", 3))
         scorer = StandInScorer(cross=cross)

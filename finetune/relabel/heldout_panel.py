@@ -37,7 +37,7 @@ utterances, WER within score_domain.CROSSCHECK_POINTS. A production run that fai
 nothing else (exit 6); a --limit smoke compares its first N utterances and only records the result.
 
 Outputs: $RELABEL_ROOT/heldout-panel/<model>/<set>.json, crosscheck.json and run.json (this process: timings, peak
-GPU and host memory, the job lease). --limit N writes to relabel_paths.SMOKE/heldout-panel/<model>-limit<N>/, never
+GPU memory (Peaks: sampled after loading, the cross-check and each set) and host memory, the job lease). --limit N writes to relabel_paths.SMOKE/heldout-panel/<model>-limit<N>/, never
 the production path. A set already written with the same panel configuration is skipped unless --force.
 
 GPU: the parakeet GPU lock (score_teacher.gpu_lock) is taken before anything touches CUDA (exit 3 if not free within
@@ -455,14 +455,33 @@ def compare(new: dict, recorded: dict, name: str, recorded_path: Path, limit: in
             "gating": limit is None}
 
 
-def _peaks(device) -> dict:
+def gpu_peaks(device) -> tuple[float, float] | None:
+    """The CUDA allocator's (allocated, reserved) peaks in GiB since its last reset (None off CUDA)."""
     import torch
 
-    cuda = device.type == "cuda"
-    return {"peak_gpu_allocated_gb": torch.cuda.max_memory_allocated(device) / 2**30 if cuda else None,
-            "peak_gpu_reserved_gb": torch.cuda.max_memory_reserved(device) / 2**30 if cuda else None,
-            "host_max_rss_gb": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 2**20,
-            "scope": "this process, since it started (allocator peaks never reset)"}
+    if device.type != "cuda":
+        return None
+    return torch.cuda.max_memory_allocated(device) / 2**30, torch.cuda.max_memory_reserved(device) / 2**30
+
+
+class Peaks:
+    """The run's GPU peaks: the maximum of the allocator's peaks sampled after loading, the cross-check and every set
+    (score_teacher.decode_set resets them per set, so the last reading alone would be the last set's)."""
+
+    def __init__(self, device):
+        self.device, self.allocated, self.reserved = device, None, None
+
+    def sample(self) -> None:
+        got = gpu_peaks(self.device)
+        if got is not None:
+            self.allocated = max(got[0], self.allocated or 0.0)
+            self.reserved = max(got[1], self.reserved or 0.0)
+
+    def summary(self) -> dict:
+        return {"peak_gpu_allocated_gb": self.allocated, "peak_gpu_reserved_gb": self.reserved,
+                "host_max_rss_gb": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 2**20,
+                "scope": "this process: GPU, the maximum of the allocator peaks after loading, the cross-check and "
+                         "each set; host, the maximum resident set size"}
 
 
 def run(model: str, limit: int | None = None, lock_wait: float = 3600.0, force: bool = False,
@@ -502,7 +521,7 @@ def _run_locked(model, scorer, inputs, configs, todo, out, limit, min_available_
               f"--min-available-gb {min_available_gb}", file=sys.stderr)
         return LOW_MEMORY_EXIT
     out.mkdir(parents=True, exist_ok=True)
-    timings, start = {}, time.perf_counter()
+    timings, start, peaks = {}, time.perf_counter(), Peaks(device)
     try:
         try:
             scorer.load(device)
@@ -512,12 +531,14 @@ def _run_locked(model, scorer, inputs, configs, todo, out, limit, min_available_
             print("implementation checks failed: nothing scored", file=sys.stderr)
             return CHECKS_FAILED_EXIT
         timings["load_s"] = time.perf_counter() - start
+        peaks.sample()
         print(f"{model}: loaded in {timings['load_s']:.1f} s", flush=True)
         name, manifest, recorded_path = scorer.crosscheck_input()
         started = time.perf_counter()
         new = scorer.score(name, manifest, limit)
         check = compare(new, read_json(recorded_path), name, recorded_path, limit)
         check["wall_s"] = time.perf_counter() - started
+        peaks.sample()
         write_json(out / "crosscheck.json", check)
         print(f"cross-check {name}: WER {check['wer']:.3f} vs recorded {check['recorded_wer']:.3f} "
               f"({check['identical_hypotheses']}/{check['utterances']} identical, configuration "
@@ -537,6 +558,7 @@ def _run_locked(model, scorer, inputs, configs, todo, out, limit, min_available_
                                "utc": utc()}
             write_json(out / f"{name}.json", result)
             wer = result.get("wer")
+            peaks.sample()
             sets[name] = {"wall_s": time.perf_counter() - started, "utterances": result["utterances"],
                           "audio_hours": result.get("audio_hours"), "wer": None if not wer else 100 * wer["wer"]}
             tr = result.get("term_recall")
@@ -544,7 +566,7 @@ def _run_locked(model, scorer, inputs, configs, todo, out, limit, min_available_
                   + ("" if not tr or tr["recall"] is None else f" term recall {tr['recall']:.4f}"), flush=True)
         write_json(out / "run.json", {
             "model": model, "status": "complete", "limit": limit, "identity": scorer.identity, "scorer": scorer.scorer,
-            "scorer_info": scorer.info(), "timings": timings, "sets": sets, "memory": _peaks(device),
+            "scorer_info": scorer.info(), "timings": timings, "sets": sets, "memory": peaks.summary(),
             "job_lease_env": {k: v for k, v in os.environ.items() if k.startswith("AGENT_JOBS_")},
             "gpu_lock": str(relabel_paths.GPU_LOCK), "code": code_commit(), "utc": utc()})
     finally:
