@@ -84,9 +84,7 @@ print(transcribe(model, ["clip.wav"]))
 
 `load_kea_b.py` checks every file against its manifest and rebuilds an ordinary FP32 NeMo model. You get the
 accuracy above, but not the memory or speed savings: those come from running the 1-bit weights directly, as our
-kernels do.
-
-![Animation of the i8x1 kernel in five stages: 1-bit weights packed with one scale per row; per-frame INT8 activations; bits expanded to ±1 bytes; one INT8 tensor-core instruction with exact INT32 sums; one FP32 rescale per output](assets/kea-b-0.1-i8x1-kernel.webp)
+GPU kernels do.
 
 ## Files
 
