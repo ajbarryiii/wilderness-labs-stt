@@ -195,6 +195,10 @@ def gather(run_summary: Path, run_config: Path, plan_json: Path, registry_json: 
     summary = json.loads(Path(run_summary).read_text())
     config = json.loads(Path(run_config).read_text())
     teacher = config["args"]["teacher"]
+    teacher_config = json.loads((Path(teacher["path"]).parent / "config.json").read_text())["args"]
+    if teacher_config.get("label_set") != config["args"].get("label_set"):
+        raise ProvenanceError("the encoder teacher was trained on another label set than the run")
+    teacher_cleaning = teacher_config["cleaning_version"]
     plan = json.loads(Path(plan_json).read_text())
     registry = json.loads(Path(registry_json).read_text())
     corpora = {k: dict(data.HF_SOURCES[k]) for k in ("yodas", "peoples_speech", "voxpopuli", "ami")}
@@ -224,7 +228,8 @@ def gather(run_summary: Path, run_config: Path, plan_json: Path, registry_json: 
                    if isinstance(t, type) and getattr(t, "name", None) == llayout.TEACHER)
     tools = {
         "encoder teacher (B0′)": {"name": "B0′, an unreleased FP32 fine-tune of nvidia/parakeet-tdt-0.6b-v2 on the "
-                                    "same labels", "revision": f"sha256 {teacher['sha256']}", "license": "CC-BY-4.0"},
+                                    f"label teacher's transcripts (label-cleaning version {teacher_cleaning})",
+                                    "revision": f"sha256 {teacher['sha256']}", "license": "CC-BY-4.0"},
         "label teacher (T*)": {"name": granite.hf_id, "hf_id": granite.hf_id, "revision": granite.revision,
                                "license": granite.license},
         "label cleaning and synthetic text": {"alias": slayout.TEXTGEN},

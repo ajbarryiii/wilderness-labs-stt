@@ -15,8 +15,8 @@ Kea-B 0.0's training.
   synthetic speech, the sentences it was synthesized from. The first two went through a fixed label-cleaning pass
   (casing, spelling variants, acronyms, spelled letters, dose units; for the teacher's transcripts also
   same-sound spellings chosen by an open-weight LLM).
-- Encoder teacher: B0′, an FP32 fine-tune of the original model on the same labels (not released); Kea-B 0.1
-  matched its encoder outputs.
+- Encoder teacher: B0′, an FP32 fine-tune of the original model on the label teacher's transcripts (an earlier
+  label-cleaning version; not released); Kea-B 0.1 matched its encoder outputs.
 - Prediction and joint networks: B0′'s, converted once to INT8 and kept frozen.
 
 ## Recipe
