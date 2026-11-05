@@ -1,6 +1,6 @@
 # Binary-weight QAT of Parakeet-TDT-0.6B-v2
 
-**Published:** on Hugging Face as [Kea-B](https://huggingface.co/rajb3/kea-b)
+**Published:** on Hugging Face as [Kea-B](https://huggingface.co/wildernesslabs/kea-b)
 (CC-BY-4.0). The upload folder is built by `hf/stage.py` (61 required checks) and
 was verified from a fresh download before being made public
 ([plans/release.md](plans/release.md)).
