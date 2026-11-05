@@ -134,6 +134,14 @@ def sync_cuda() -> None:
         torch.cuda.synchronize()
 
 
+def safe_sync() -> None:
+    """sync_cuda(), reporting instead of raising if the context itself is broken (the original error stays)."""
+    try:
+        sync_cuda()
+    except Exception as exc:                   # a faulted context: nothing more can be drained
+        print(f"CUDA synchronize at exit failed: {exc}", file=sys.stderr)
+
+
 class FeatureError(RuntimeError):
     pass
 
@@ -751,9 +759,11 @@ def checks_path(lay: md.Layout, arm: str) -> Path:
 
 
 def locked(label: str, wait: float, fn):
-    """fn() under the parakeet GPU lock and clean_stop(). On a requested stop, whatever exception surfaces (Stopped, or
-    an error it caused, such as a DataLoader worker death), CUDA is synchronized while the lock and the handlers are
-    still held, and STOPPED_EXIT is returned; a stop while waiting for the lock returns STOPPED_EXIT too."""
+    """fn() under the parakeet GPU lock and clean_stop(). CUDA is synchronized on every way out of fn() (success, error
+    or stop) while the lock and the handlers are still held, so no GPU work is left queued at exit (under MPS a client
+    exiting with work in flight can fault its neighbours). On a requested stop, whatever exception surfaces (Stopped,
+    or an error it caused, such as a DataLoader worker death), STOPPED_EXIT is returned; a stop while waiting for the
+    lock returns STOPPED_EXIT too."""
     import score_teacher
     with clean_stop() as stop:
         try:
@@ -763,10 +773,11 @@ def locked(label: str, wait: float, fn):
                 except BaseException as exc:
                     if not stop.requested:
                         raise
-                    sync_cuda()
                     print(f"stopped (signal {stop.signum}; surfaced as {type(exc).__name__}); CUDA synchronized; the "
                           "next run resumes", file=sys.stderr)
                     return STOPPED_EXIT
+                finally:
+                    safe_sync()        # every exit, success or failure: no GPU work left queued (MPS neighbours)
         except score_teacher.LockBusy as exc:
             print(f"refusing to run: {exc}", file=sys.stderr)
             return score_teacher.LOCK_BUSY_EXIT

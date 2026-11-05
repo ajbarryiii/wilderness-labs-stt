@@ -30,6 +30,9 @@ class TestCuda(unittest.TestCase):
         train.deterministic_mode()
         shutil.rmtree(TMP, ignore_errors=True)
 
+    def tearDown(self):
+        torch.cuda.synchronize()        # a failed assertion leaves no GPU work queued (shared GPU under MPS)
+
     def trainer(self, run, stop_after=None):
         model = evaluate.load_pretrained("cpu")
         mt.init_decoder(model)

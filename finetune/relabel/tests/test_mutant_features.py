@@ -382,6 +382,42 @@ class TestProcessGroupStop(unittest.TestCase):
         del arm_ids, stale
 
 
+class TestSyncOnEveryExit(unittest.TestCase):
+    """locked() synchronizes CUDA on success and on failure too, inside the GPU lock."""
+
+    def test_sync_on_success_failure_and_stop(self):
+        events = []
+
+        class Lock:
+            def __enter__(self):
+                events.append("lock")
+
+            def __exit__(self, *exc):
+                events.append("unlock")
+                return False
+        with mock.patch("score_teacher.gpu_lock", return_value=Lock()), \
+                mock.patch.object(mf, "sync_cuda", side_effect=lambda: events.append("sync")):
+            self.assertEqual(mf.locked("t", 1.0, lambda: 7), 7)
+            self.assertEqual(events, ["lock", "sync", "unlock"])
+            events.clear()
+
+            def boom():
+                raise ValueError("failed run")
+            with self.assertRaises(ValueError):
+                mf.locked("t", 1.0, boom)
+            self.assertEqual(events, ["lock", "sync", "unlock"])
+
+    def test_a_broken_context_does_not_hide_the_error(self):
+        with mock.patch("score_teacher.gpu_lock") as lock, \
+                mock.patch.object(mf, "sync_cuda", side_effect=RuntimeError("context faulted")):
+            lock.return_value.__enter__.return_value = None
+
+            def boom():
+                raise ValueError("the original error")
+            with self.assertRaises(ValueError):
+                mf.locked("t", 1.0, boom)
+
+
 class TestStaleTemporaryFiles(unittest.TestCase):
     def test_only_files_of_dead_writers_are_removed(self):
         d = TMP / "stale"
