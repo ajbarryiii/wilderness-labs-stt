@@ -51,10 +51,12 @@ the job's VRAM lease (AGENT_JOBS_VRAM_FRACTION) is applied on the current device
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import os
 import resource
+import signal
 import sys
 import time
 from pathlib import Path
@@ -84,6 +86,28 @@ QWEN_RATE_TOLERANCE = 0.15
 QWEN_AUDIO_KWARGS = {"sampling_rate": 16000, "padding": True, "truncation": False, "return_attention_mask": True,
                      "n_window": 50, "return_tensors": "pt"}
 CHECKS_FAILED_EXIT = 5
+STOPPED_EXIT = 76
+
+
+class Stopped(Exception):
+    """SIGTERM or SIGINT, raised in the main thread so the process exits normally (CUDA synchronized, never killed
+    mid-kernel: under MPS a client killed by a signal can fault the other clients on the GPU)."""
+
+
+def _raise_stopped(signum, frame):
+    raise Stopped(f"signal {signum}")
+
+
+@contextlib.contextmanager
+def clean_stop():
+    """SIGTERM and SIGINT raise Stopped for the duration; on Stopped, CUDA is synchronized and STOPPED_EXIT returned by
+    the caller (an extraction pool in progress stays uncommitted and is redone by the next run)."""
+    old = {s: signal.signal(s, _raise_stopped) for s in (signal.SIGTERM, signal.SIGINT)}
+    try:
+        yield
+    finally:
+        for s, h in old.items():
+            signal.signal(s, h)
 
 
 class FeatureError(RuntimeError):
@@ -674,11 +698,16 @@ def checks_path(lay: md.Layout, arm: str) -> Path:
 def locked(label: str, wait: float, fn):
     import score_teacher
     try:
-        with score_teacher.gpu_lock(label, wait):
+        with clean_stop(), score_teacher.gpu_lock(label, wait):
             return fn()
     except score_teacher.LockBusy as exc:
         print(f"refusing to run: {exc}", file=sys.stderr)
         return score_teacher.LOCK_BUSY_EXIT
+    except Stopped as exc:
+        if torch.cuda.is_available() and torch.cuda.is_initialized():
+            torch.cuda.synchronize()
+        print(f"stopped ({exc}); CUDA synchronized; the next run resumes", file=sys.stderr)
+        return STOPPED_EXIT
 
 
 def main(argv: list[str] | None = None) -> int:

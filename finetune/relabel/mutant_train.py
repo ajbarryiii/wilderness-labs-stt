@@ -927,11 +927,16 @@ def main(argv: list[str] | None = None) -> int:
 
     import score_teacher
     try:
-        with score_teacher.gpu_lock(f"relabel mutant_train {a.cmd} {a.arm}", a.lock_wait):
+        with mf.clean_stop(), score_teacher.gpu_lock(f"relabel mutant_train {a.cmd} {a.arm}", a.lock_wait):
             return run()
     except score_teacher.LockBusy as exc:
         print(f"refusing to run: {exc}", file=sys.stderr)
         return score_teacher.LOCK_BUSY_EXIT
+    except mf.Stopped as exc:
+        if torch.cuda.is_available() and torch.cuda.is_initialized():
+            torch.cuda.synchronize()
+        print(f"stopped ({exc}); CUDA synchronized; the next run resumes", file=sys.stderr)
+        return mf.STOPPED_EXIT
     except ResumeError as exc:
         print(f"refusing to resume: {exc}", file=sys.stderr)
         return EXIT_RESUME_MISMATCH

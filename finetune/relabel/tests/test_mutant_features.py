@@ -215,6 +215,24 @@ class TestNoiseFloorRule(unittest.TestCase):
             mf.main(["extract", "--arm", "D-Q", "--smoke-shards", "40", "--smoke-ignore-failed-checks"])
 
 
+class TestCleanStop(unittest.TestCase):
+    """SIGTERM during a GPU command ends it through a normal exit (Stopped -> STOPPED_EXIT), never by the signal."""
+
+    def test_sigterm_is_a_clean_stop_and_handlers_are_restored(self):
+        import signal
+        before = signal.getsignal(signal.SIGTERM)
+
+        def work():
+            os.kill(os.getpid(), signal.SIGTERM)
+            for _ in range(1000):
+                pass
+            raise AssertionError("not stopped")
+        with mock.patch("score_teacher.gpu_lock") as lock:
+            lock.return_value.__enter__.return_value = None
+            self.assertEqual(mf.locked("test", 1.0, work), mf.STOPPED_EXIT)
+        self.assertIs(signal.getsignal(signal.SIGTERM), before)
+
+
 class TestPerClipCheck(unittest.TestCase):
     def test_batch_dependent_encoder_fails(self):
         clips, durations = mixed_clips()
