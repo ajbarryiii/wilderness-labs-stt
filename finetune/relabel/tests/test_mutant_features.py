@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+from pathlib import Path
 import unittest
 from unittest import mock
 
@@ -247,6 +248,138 @@ class TestCleanStop(unittest.TestCase):
             lock.return_value.__enter__.return_value = None
             self.assertEqual(mf.locked("test", 1.0, work), mf.STOPPED_EXIT)
         self.assertFalse(issubclass(mf.Stopped, Exception))
+
+
+CHILD = r"""
+import contextlib, sys, time
+from pathlib import Path
+from unittest import mock
+import torch
+import evaluate, mutant_data as md, mutant_features as mf, score_teacher
+
+root = Path(sys.argv[1])
+lay = md.Layout(root / "w", root / "features", root / "decoder", None)
+
+
+class SlowPreparer(mf.Preparer):
+    def __call__(self, clip):
+        time.sleep(0.02)
+        return clip
+
+
+class SlowArm(mf.ArmEncoder):
+    arm = "slow"
+
+    def __init__(self):
+        self.preparer, self.lin = SlowPreparer(), torch.nn.Linear(1, 4)
+
+    def batches(self, durations):
+        return [[i] for i in range(len(durations))]
+
+    def modules(self):
+        return [self.lin]
+
+    def identity(self):
+        return {"arm": "slow"}
+
+    def encode_prepared(self, items):
+        # the stop lands inside the encoder's context managers, whose unwinding takes a while (SlowUnwind), so the
+        # dying workers' SIGCHLD can raise inside it, as with the real inference contexts
+        with torch.no_grad(), evaluate.strict_fp32(torch.device("cpu")), SlowUnwind():
+            time.sleep(0.3)
+            return [torch.zeros(3, 4, dtype=mf.STORE_DTYPE) for _ in items]
+
+
+class SlowUnwind:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, kind, value, tb):
+        if kind is not None:
+            time.sleep(0.5)
+        return False
+
+
+def synced():
+    print("SYNCED", flush=True)
+
+
+mf.sync_cuda = synced
+score_teacher.gpu_lock = lambda label, wait: contextlib.nullcontext()
+
+
+def work():
+    print("STARTED", flush=True)
+    mf.extract(lay, SlowArm(), workers=6)
+    return 0
+
+
+with mock.patch.object(md.relabel_paths, "require_mount"):
+    rc = mf.locked("process-group stop test", 1.0, work)
+print("RC", rc, flush=True)
+sys.exit(rc)
+"""
+
+
+class TestProcessGroupStop(unittest.TestCase):
+    """A job stop signals the whole process group: extraction with six real DataLoader workers still ends through
+    locked()'s stop path (CUDA synchronized, exit STOPPED_EXIT), leaves no process behind, and a later run completes."""
+
+    def test_sigterm_to_the_process_group_during_extraction(self):
+        import signal
+        import subprocess
+        import time as _time
+        world = data_tests.TestSelectAndAudio
+        world.setUpClass()
+        root = TMP / "pg"
+        shutil.rmtree(root, ignore_errors=True)
+        lay = md.Layout(root / "w", root / "features", root / "decoder", None)
+        shutil.copytree(world.lay.root, lay.root)
+        with mock.patch.object(md.relabel_paths, "require_mount"):
+            md.build_audio(lay)
+        (root / "child.py").write_text(CHILD)
+        here = Path(__file__).resolve().parent.parent
+        for attempt in range(3):
+            shutil.rmtree(lay.features, ignore_errors=True)
+            p = subprocess.Popen([str(here / "python"), str(root / "child.py"), str(root)], cwd=str(here),
+                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, start_new_session=True)
+            lines = []
+            for line in p.stdout:
+                lines.append(line)
+                if line.startswith("STARTED"):
+                    break
+            _time.sleep(1.5)
+            os.killpg(p.pid, signal.SIGTERM)
+            out, _ = p.communicate(timeout=120)
+            out = "".join(lines) + out
+            self.assertEqual(p.returncode, mf.STOPPED_EXIT, out[-3000:])
+            self.assertIn("SYNCED", out)
+            self.assertIn("RC 76", out)
+            deadline = _time.time() + 20
+            while _time.time() < deadline:
+                try:
+                    os.killpg(p.pid, 0)
+                except ProcessLookupError:
+                    break
+                _time.sleep(0.2)
+            else:
+                self.fail("processes of the stopped group are still running")
+        arm_ids = data_tests.TestSelectAndAudio.data
+        data = md.Data.load(lay)
+        with mock.patch.object(md.relabel_paths, "require_mount"):
+            stale = [f for kind in ("pools", "heldout") for f in (lay.features / "slow" / kind).glob("*.tmp*")]
+            exec_ns = {}
+            exec(compile(CHILD.split("def synced")[0], "child", "exec"), exec_ns)
+            mf.extract(lay, exec_ns["SlowArm"](), workers=0)
+        self.assertFalse([f for kind in ("pools", "heldout") for f in (lay.features / "slow" / kind).glob("*.tmp*")])
+        for q in range(data.plan.n_pools):
+            ids = data.pool_ids(q)
+            for kind, split in (("pools", "train"), ("heldout", "heldout")):
+                want = [i for i in ids if data.clips[i]["split"] == split]
+                self.assertTrue(mf.committed(mf.store_paths(lay.features / "slow", kind, q), want, {
+                    "version": mf.FEATURE_VERSION, "arm": "slow", "encoder": {"arm": "slow"}, "store_dtype": "bfloat16",
+                    "pad_short_seconds": evaluate.MIN_DECODE_SECONDS, "plan_sha256": data.plan.sha256}))
+        del arm_ids, stale
 
 
 class TestStaleTemporaryFiles(unittest.TestCase):

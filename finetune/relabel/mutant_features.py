@@ -96,20 +96,42 @@ class Stopped(BaseException):
     KeyboardInterrupt is, so no `except Exception` on the way (ours, NeMo's, transformers') swallows it."""
 
 
-def _raise_stopped(signum, frame):
-    raise Stopped(f"signal {signum}")
+class StopState:
+    """Whether a stop was requested in a clean_stop() scope (the first SIGTERM or SIGINT; later ones are ignored)."""
+
+    def __init__(self):
+        self.requested, self.signum = False, None
+
+    def handler(self, signum, frame):
+        if self.requested:
+            return                              # one stop: a second signal never interrupts the unwinding
+        self.requested, self.signum = True, signum
+        raise Stopped(f"signal {signum}")
 
 
 @contextlib.contextmanager
 def clean_stop():
-    """SIGTERM and SIGINT raise Stopped for the duration; on Stopped, CUDA is synchronized and STOPPED_EXIT returned by
-    the caller (an extraction pool in progress stays uncommitted and is redone by the next run)."""
-    old = {s: signal.signal(s, _raise_stopped) for s in (signal.SIGTERM, signal.SIGINT)}
+    """SIGTERM and SIGINT raise Stopped (once) for the duration; yields the StopState. The caller synchronizes CUDA and
+    returns STOPPED_EXIT whenever a stop was requested, whatever exception surfaced (locked)."""
+    state = StopState()
+    old = {s: signal.signal(s, state.handler) for s in (signal.SIGTERM, signal.SIGINT)}
     try:
-        yield
+        yield state
     finally:
         for s, h in old.items():
             signal.signal(s, h)
+
+
+def ignore_stop_signals(*_) -> None:
+    """DataLoader worker_init_fn: workers ignore SIGTERM and SIGINT (a process-group stop reaches them too); the main
+    process stops them through the loader's own shutdown, and they exit with it."""
+    signal.signal(signal.SIGTERM, signal.SIG_IGN)
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+
+def sync_cuda() -> None:
+    if torch.cuda.is_available() and torch.cuda.is_initialized():
+        torch.cuda.synchronize()
 
 
 class FeatureError(RuntimeError):
@@ -598,7 +620,7 @@ def extract_pool(lay: md.Layout, enc: ArmEncoder, data: md.Data, p: int, workers
     batches = enc.batches(durations)
     loader = torch.utils.data.DataLoader(_PoolSet(audio.path, entries, batches, enc.preparer), batch_size=None,
                                          shuffle=False, num_workers=workers, persistent_workers=False,
-                                         collate_fn=_as_is)
+                                         collate_fn=_as_is, worker_init_fn=ignore_stop_signals if workers else None)
     feats: list[torch.Tensor | None] = [None] * len(ids)
     t_enc, t0 = 0.0, time.perf_counter()
     for idx, items in loader:
@@ -729,18 +751,30 @@ def checks_path(lay: md.Layout, arm: str) -> Path:
 
 
 def locked(label: str, wait: float, fn):
+    """fn() under the parakeet GPU lock and clean_stop(). On a requested stop, whatever exception surfaces (Stopped, or
+    an error it caused, such as a DataLoader worker death), CUDA is synchronized while the lock and the handlers are
+    still held, and STOPPED_EXIT is returned; a stop while waiting for the lock returns STOPPED_EXIT too."""
     import score_teacher
-    try:
-        with clean_stop(), score_teacher.gpu_lock(label, wait):
-            return fn()
-    except score_teacher.LockBusy as exc:
-        print(f"refusing to run: {exc}", file=sys.stderr)
-        return score_teacher.LOCK_BUSY_EXIT
-    except Stopped as exc:
-        if torch.cuda.is_available() and torch.cuda.is_initialized():
-            torch.cuda.synchronize()
-        print(f"stopped ({exc}); CUDA synchronized; the next run resumes", file=sys.stderr)
-        return STOPPED_EXIT
+    with clean_stop() as stop:
+        try:
+            with score_teacher.gpu_lock(label, wait):
+                try:
+                    return fn()
+                except BaseException as exc:
+                    if not stop.requested:
+                        raise
+                    sync_cuda()
+                    print(f"stopped (signal {stop.signum}; surfaced as {type(exc).__name__}); CUDA synchronized; the "
+                          "next run resumes", file=sys.stderr)
+                    return STOPPED_EXIT
+        except score_teacher.LockBusy as exc:
+            print(f"refusing to run: {exc}", file=sys.stderr)
+            return score_teacher.LOCK_BUSY_EXIT
+        except BaseException:
+            if not stop.requested:
+                raise
+            print(f"stopped (signal {stop.signum}) before the GPU lock was taken", file=sys.stderr)
+            return STOPPED_EXIT
 
 
 def main(argv: list[str] | None = None) -> int:

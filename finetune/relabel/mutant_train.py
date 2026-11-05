@@ -933,21 +933,14 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         return train_command(a, lay, device)
 
-    import score_teacher
-    try:
-        with mf.clean_stop(), score_teacher.gpu_lock(f"relabel mutant_train {a.cmd} {a.arm}", a.lock_wait):
+    def guarded() -> int:
+        try:
             return run()
-    except score_teacher.LockBusy as exc:
-        print(f"refusing to run: {exc}", file=sys.stderr)
-        return score_teacher.LOCK_BUSY_EXIT
-    except mf.Stopped as exc:
-        if torch.cuda.is_available() and torch.cuda.is_initialized():
-            torch.cuda.synchronize()
-        print(f"stopped ({exc}); CUDA synchronized; the next run resumes", file=sys.stderr)
-        return mf.STOPPED_EXIT
-    except ResumeError as exc:
-        print(f"refusing to resume: {exc}", file=sys.stderr)
-        return EXIT_RESUME_MISMATCH
+        except ResumeError as exc:
+            print(f"refusing to resume: {exc}", file=sys.stderr)
+            return EXIT_RESUME_MISMATCH
+
+    return mf.locked(f"relabel mutant_train {a.cmd} {a.arm}", a.lock_wait, guarded)
 
 
 def train_command(a, lay: md.Layout, device) -> int:
@@ -992,6 +985,9 @@ def train_command(a, lay: md.Layout, device) -> int:
                 budget_minutes=a.budget_minutes, init=init)
     status = t.run()
     log(f"{a.arm} {out.name}: {status} at step {t.step}/{sched.end_step}; data wait {batches.wait_s:.0f} s")
+    if status == "signal":
+        mf.sync_cuda()
+        return mf.STOPPED_EXIT          # checkpointed; a non-zero exit so a job chain does not move past the run
     if status == "complete" and stage == "pilot":
         import shutil
         shutil.rmtree(out / "ckpt", ignore_errors=True)
