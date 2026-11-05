@@ -78,6 +78,18 @@ def gpu_lock(label: str, wait_s: float, poll_s: float = 5.0):
             fcntl.flock(handle, fcntl.LOCK_UN)
 
 
+def vram_lease(device) -> None:
+    """Cap PyTorch's allocator at the job's shared VRAM lease (AGENT_JOBS_VRAM_FRACTION; none outside a lease) on
+    the device's index, or on the current device for an index-less "cuda" (set_per_process_memory_fraction refuses
+    a device without an index)."""
+    import torch
+
+    fraction = os.environ.get("AGENT_JOBS_VRAM_FRACTION")
+    if fraction and device.type == "cuda":
+        index = device.index if device.index is not None else torch.cuda.current_device()
+        torch.cuda.set_per_process_memory_fraction(float(fraction), index)
+
+
 def available_memory_gb() -> float:
     with open("/proc/meminfo") as handle:
         for line in handle:
@@ -299,9 +311,7 @@ def _run_locked(teacher, args, out_dir: Path, sets, config: dict) -> int:
     device = torch.device(args.device)
     if device.type == "cuda" and not torch.cuda.is_available():
         raise SystemExit("CUDA is required")
-    fraction = os.environ.get("AGENT_JOBS_VRAM_FRACTION")
-    if fraction and device.type == "cuda":
-        torch.cuda.set_per_process_memory_fraction(float(fraction), device)
+    vram_lease(device)
     todo = []
     for name, manifest in sets:
         path = out_dir / f"{name}.json"
