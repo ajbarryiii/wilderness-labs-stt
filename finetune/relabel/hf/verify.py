@@ -1,7 +1,7 @@
 """Verify a download (or any local copy) of the Kea-B 0.1 repository against the PASSED stage report
 (release-kea-b-0.1 plan "Upload": checks a-c). Never uploads.
 
-    job start kea-b-0.1-verify --needs gpu:shared --vram 16G --mem 16G --priority normal \\
+    job start kea-b-0.1-verify --needs gpu:shared --vram 14G --mem 14G --priority normal \\
         --env HF_HUB_OFFLINE=1 -- ./python -m hf.verify FOLDER          (from finetune/relabel)
     ./python -m hf.verify FOLDER --listing-only                          (a: listing and hashes only; CPU)
 
@@ -14,7 +14,8 @@
 (c) That model, with the repository's evaluator (evaluate.evaluate_set at K-fp's batch 64 and 1200 s, decoder pinned
     to no_while_loops), reproduces K-fp's LibriSpeech test-clean result exactly: the unrounded WER and its edit
     counts, compared with K-fp's recorded set file.
-The result goes to --out (default: verify/<folder name>-<UTC>.json beside the stage report); exit 0 only if every
+Measured 2026-11-04 on the staging folder: host peak 10.8 GB, GPU 12.0 GB allocated (K-fp's batch 64), 40 s once
+the shared GPU lock is free. The result goes to --out (default: verify/<folder name>-<UTC>.json beside the stage report); exit 0 only if every
 check passed. Running it on the staging folder itself is the dry run.
 """
 from __future__ import annotations

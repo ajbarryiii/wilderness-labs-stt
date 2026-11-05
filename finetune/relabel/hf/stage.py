@@ -1,8 +1,10 @@
 """Stage the Hugging Face repository of Kea-B 0.1 (stage 4's run b100-main) and check it (release-kea-b-0.1 plan
 "Staging, upload, verification"). Never uploads.
 
-    job start kea-b-0.1-stage --needs gpu:shared --vram 8G --mem 20G --priority normal \\
+    job start kea-b-0.1-stage --needs gpu:shared --vram 4G --mem 16G --priority normal \\
         --env HF_HUB_OFFLINE=1 -- ./python -m hf.stage            (from finetune/relabel)
+
+Measured 2026-11-04: host peak 12.8 GB, GPU peak 3.2 GB, under a minute once the shared GPU lock is free.
 
 Outputs, under $RELABEL_ROOT/release/kea-b-0.1/: staging/ (the Hub repository layout), stage-report.json (PASSED)
 or stage-report.FAILED.json, provenance.json (the derived training-source mapping; private). Graphics are copied from
