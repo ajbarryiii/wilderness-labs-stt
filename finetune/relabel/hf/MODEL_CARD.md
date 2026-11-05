@@ -29,7 +29,7 @@ tags:
 
 Kea-B 0.1 is an English speech recognizer in {{bundle_mb}} MB. It is NVIDIA's
 [Parakeet-TDT-0.6B-v2](https://huggingface.co/{{base_id}}) with almost every weight stored as a single bit (+1 or
-−1, with one scale per row) and the rest of the decoder in 8-bit integers. The original is {{original_mb}} MB.
+−1, with one scale per row) and its decoder in 8-bit integers. The original is {{original_mb}} MB.
 
 Across the seven English test sets NVIDIA reports, it averages a {{keab_mean}}% word error rate, against
 {{nvidia_mean}}% for the original. [Kea-B 0.0](https://huggingface.co/{{kea_b0}}) scored {{kea_b0_mean}}% at
