@@ -209,7 +209,7 @@ def _leading_phrase(name: str) -> str:
 def scrub_terms(registry: dict, allowed_aliases, extra_terms=()) -> list[str]:
     """Terms no published file may contain: for every registry entry not in allowed_aliases (the release's training
     sources and tools), its alias, its name, the name's leading phrase, its distinctive tokens (internal capitals or
-    digits, e.g. "PriMock57"), and its repository, Hub id, mirror and URL; plus the held-out set aliases and
+    digits, e.g. "Corpus57"), and its repository, Hub id, mirror and URL; plus the held-out set aliases and
     extra_terms. Matching is case-insensitive."""
     terms = set(HELDOUT_SET_ALIASES) | {t for t in extra_terms if t}
     for alias, entry in registry.items():
