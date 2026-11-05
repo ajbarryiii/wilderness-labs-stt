@@ -36,7 +36,7 @@ Across the seven English test sets NVIDIA reports, it averages a {{keab_mean}}% 
 {{kea_b0_mb}} MB, so 0.1 is both smaller and more accurate. It even edges out our 2-bit
 [Kea-T](https://huggingface.co/{{kea_t}}) ({{kea_t_mean}}%) at about half its size.
 
-![Model size against mean WER: Kea-B 0.1 sits below and left of Kea-B 0.0 and Kea-T](assets/kea-b-0.1-size-vs-wer.png)
+![Model size against mean WER: Kea-B 0.1 is smaller and more accurate than Kea-B 0.0 and Kea-T](assets/kea-b-0.1-size-vs-wer.png)
 
 ## Results
 

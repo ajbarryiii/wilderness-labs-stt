@@ -64,6 +64,7 @@ Kea-B 0.1's FP32-path development WERs: {{dev_fp_sets}}.
 ## Method notes
 
 - Decoding: preprocessor, encoder, then NeMo's greedy TDT decoder (durations 0-4, at most 10 symbols per frame),
-  strict FP32 (autocast off, TF32 off), dither 0, on CUDA with NeMo's `no_while_loops` CUDA-graph decoder.
+  dither 0, on CUDA. K-fp: strict FP32 (autocast off, TF32 off) with NeMo's `no_while_loops`
+  CUDA-graph decoder. K-x1: the i8x1 encoder kernels with NeMo's `full_graph` CUDA-graph decoder.
 - Environment: NeMo {{nemo_version}}, torch {{torch_version}}, one RTX 5090.
 - No intervals are reported for the test sets.
