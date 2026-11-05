@@ -198,6 +198,12 @@ class Scrub(unittest.TestCase):
             (self.tmp / p).unlink()
         self.assertEqual(kit.scrub_findings(self.tmp, terms, ["build-box-7"]), [])
 
+    def test_image_metadata_is_searched_for_every_kind_of_term(self):
+        (self.tmp / "assets").mkdir()
+        (self.tmp / "assets" / "chart.png").write_bytes(b"\x89PNG\r\n\x1a\n\x00tEXtComment\x00secret-corpus on build-box-7")
+        found = sorted(f["term"] for f in kit.scrub_findings(self.tmp, ["secret-corpus"], ["build-box-7"]))
+        self.assertEqual(found, ["hostname", "secret-corpus"])
+
     def test_safetensors_header_is_searched(self):
         from safetensors.torch import save_file
         save_file({"w": torch.zeros(2)}, self.tmp / "x.safetensors", metadata={"path": "/home/someone/x"})
@@ -215,8 +221,9 @@ class FakeApi:
         self.calls.append(("model_info", repo_id))
         return type("Info", (), {"private": self.private})()
 
-    def upload_folder(self, **kw):
-        self.calls.append(("upload_folder", kw))
+    def create_commit(self, **kw):
+        ops = {op.path_in_repo: op.path_or_fileobj for op in kw["operations"]}
+        self.calls.append(("create_commit", {**kw, "operations": ops}))
         return type("Commit", (), {"oid": "c0ffee", "commit_url": "https://hub/commit/c0ffee"})()
 
 
@@ -260,9 +267,9 @@ class Approval(unittest.TestCase):
     def test_upload_creates_private_then_uploads_and_records_the_commit(self):
         api = FakeApi()
         record = up.upload(self.report, self.folder, self.report["bundle_sha256"], api)
-        self.assertEqual([c[0] for c in api.calls], ["create_repo", "model_info", "upload_folder"])
+        self.assertEqual([c[0] for c in api.calls], ["create_repo", "model_info", "create_commit"])
         self.assertEqual(api.calls[0][2], {"repo_type": "model", "private": True, "exist_ok": False})
-        self.assertEqual(api.calls[2][1]["folder_path"], str(self.folder))
+        self.assertEqual(api.calls[2][1]["operations"], {"README.md": b"card\n", "compat/manifest.json": b"{}\n"})
         self.assertEqual(record["commit"], "c0ffee")
         self.assertEqual(record["bundle_sha256"], self.report["bundle_sha256"])
 
@@ -270,7 +277,22 @@ class Approval(unittest.TestCase):
         api = FakeApi(private=False)
         with self.assertRaises(up.UploadRefused):
             up.upload(self.report, self.folder, self.report["bundle_sha256"], api)
-        self.assertNotIn("upload_folder", [c[0] for c in api.calls])
+        self.assertNotIn("create_commit", [c[0] for c in api.calls])
+
+    def test_upload_sends_exactly_the_approved_files_and_bytes(self):
+        (self.folder / ".gitattributes").write_text("* filter=lfs\n")   # ignored by the listing, never uploaded
+        api = FakeApi()
+        up.upload(self.report, self.folder, self.report["bundle_sha256"], api)
+        self.assertEqual(sorted(api.calls[2][1]["operations"]), sorted(self.report["files"]))
+
+    def test_upload_refuses_bytes_that_differ_from_the_report(self):
+        api = FakeApi()
+        report = copy.deepcopy(self.report)
+        report["files"]["README.md"]["sha256"] = "0" * 64
+        report["bundle_sha256"] = kit.bundle_sha256("org/model", report["files"])
+        with self.assertRaises(up.UploadRefused):
+            up.upload(report, self.folder, report["bundle_sha256"], api)
+        self.assertNotIn("create_commit", [c[0] for c in api.calls])
 
 
 class Listing(unittest.TestCase):

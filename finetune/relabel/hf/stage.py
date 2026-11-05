@@ -26,7 +26,8 @@ first check runs (required_checks), so none can be skipped silently:
 5. Documents: rendered from templates with every number computed from the result files (test.json, the run summary,
    results.json, the staged files); no placeholder is left; the card's YAML and its table and model-index are the
    computed ones.
-6. Scrubbing: no staged file holds a machine path, this host's name, or a name, alias or URL of a private registry
+6. Scrubbing: no staged file holds one of our machine paths (/mnt/, /home/, /Users/, /nix/store; the manifests'
+   NeMo config keeps NVIDIA's original /lustre/... tokenizer directory, as Kea-B 0.0's did), this host's name, or a name, alias or URL of a private registry
    source that the release does not train on; manifests ship in release form (machine paths under "extra" removed;
    the report records each original's SHA-256 and the removed keys).
 7. Size facts (bundle tensor bytes, file sizes) are computed from the staged files.

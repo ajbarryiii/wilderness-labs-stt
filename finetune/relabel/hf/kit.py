@@ -244,7 +244,8 @@ def file_text(path: Path) -> str:
 
 
 def scrub_findings(folder: Path, terms, hosts=()) -> list[dict]:
-    """[{file, term}] of every machine path pattern, hostname or term found in a published file under folder."""
+    """[{file, term}] of every machine path pattern, hostname or term found in a published file under folder. Every
+    file gets every check, images included (their metadata chunks are searched as Latin-1 text)."""
     folder = Path(folder)
     found = []
     lowered = [(t, t.lower()) for t in terms]
@@ -252,10 +253,6 @@ def scrub_findings(folder: Path, terms, hosts=()) -> list[dict]:
         if not _published(folder, p):
             continue
         rel = p.relative_to(folder).as_posix()
-        if rel.startswith(f"{ASSETS}/") and p.suffix.lower() in (".png", ".gif", ".webp", ".jpg", ".jpeg", ".mp4"):
-            text = p.read_bytes().decode("latin-1")    # images: metadata could carry a path; terms not checked
-            found += [{"file": rel, "term": pat} for pat in MACHINE_PATTERNS if pat in text]
-            continue
         text = file_text(p)
         low = text.lower()
         found += [{"file": rel, "term": pat} for pat in MACHINE_PATTERNS if pat in text]
