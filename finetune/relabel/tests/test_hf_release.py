@@ -386,8 +386,12 @@ class Documents(unittest.TestCase):
         stage.card_checks(docs["MODEL_CARD.md"], inputs["test"], inputs["prov"], inputs["repo_id"], checks, info)
         self.assertEqual(len(checks), 3)
         self.assertTrue(all(checks.values()), checks)
-        self.assertIn("![size-vs-wer](assets/size-vs-wer.png)", docs["MODEL_CARD.md"])
+        self.assertTrue(stage.asset_links({"README.md": docs["MODEL_CARD.md"]}))
         self.assertIn("91.24 MB", docs["MODEL_CARD.md"])
+
+    def test_asset_links_finds_every_relative_asset_image_and_link(self):
+        docs = {"a": "![x](assets/one.png) and [see](assets/two.webp)", "b": "![y](https://e.org/assets/no.png) ![z](assets/one.png)"}
+        self.assertEqual(stage.asset_links(docs), {"one.png", "two.webp"})
 
     def test_render_refuses_missing_values_and_leftovers(self):
         with self.assertRaises(kit.RenderError):

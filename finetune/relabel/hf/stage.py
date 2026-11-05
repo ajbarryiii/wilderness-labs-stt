@@ -42,7 +42,9 @@ import argparse
 import datetime
 import importlib.util
 import json
+import math
 import os
+import re
 import shutil
 import sys
 import traceback
@@ -77,7 +79,7 @@ LABELS = {"librispeech_clean": "LS clean", "librispeech_other": "LS other", "ami
 DATASET_NAMES = {"librispeech_clean": "LibriSpeech test-clean", "librispeech_other": "LibriSpeech test-other",
                  "ami": "AMI test", "earnings22": "Earnings-22 test", "gigaspeech": "GigaSpeech test",
                  "spgispeech": "SPGISpeech test", "voxpopuli": "VoxPopuli test", "common_voice": "Common Voice test"}
-CARD_ROWS = (("NVIDIA published", "nvidia/parakeet-tdt-0.6b-v2 (NVIDIA's published numbers)"),
+CARD_ROWS = (("NVIDIA published", "[Original](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2) (NVIDIA's numbers)"),
              ("M1", f"[Kea-T](https://huggingface.co/{KEA_T})"),
              ("MB1", f"[Kea-B 0.0](https://huggingface.co/{KEA_B0})"),
              ("Kea-B' K-fp", "**Kea-B 0.1 (this model)**"))
@@ -108,6 +110,7 @@ FIXED_CHECKS = (
     "staged file set == the expected layout",
     "staged weights and tokenizer files == their sources (SHA-256)",
     "training sources derived from the run's records, all permissive",
+    "5 the documents' image links == the staged assets, each linked at least once",
 )
 
 
@@ -225,14 +228,12 @@ def values(*, test: dict, summary: dict, config: dict, results: dict, prov: dict
     hours = (datetime.datetime.strptime(summary["finished_utc"], "%Y-%m-%dT%H:%M:%SZ")
              - datetime.datetime.strptime(summary["started_utc"], "%Y-%m-%dT%H:%M:%SZ")).total_seconds() / 3600
     sched = config["args"]["schedule"]
-    graphics = "\n\n".join(f"![{Path(a).stem}](assets/{a})" for a in assets) or "<!-- no graphics staged -->"
     datasets = pv.card_datasets(prov)
     return {
         "repo_id": repo_id, "repo_name": repo_id.split("/")[1], "kea_b0": KEA_B0, "kea_t": KEA_T, "github": GITHUB,
         "base_id": BASE_ID, "base_revision": BASE_REVISION,
         "datasets_yaml": "\n".join(f"- {d}" for d in datasets),
         "model_index": model_index_yaml(test, repo_id.split("/")[1]),
-        "graphics": graphics,
         "card_table": md_table(results_header(test), results_rows(test, CARD_ROWS)),
         "eval_table": md_table(results_header(test), results_rows(test, EVAL_ROWS)),
         "diff_table": md_table(["Difference", *(LABELS[c] for c in cols)],
@@ -254,7 +255,7 @@ def values(*, test: dict, summary: dict, config: dict, results: dict, prov: dict
         "keab_cv": f2(kfp["common_voice"]), "kea_b0_cv": f2(mb1["common_voice"]),
         "keab_ls_clean": f2(kfp["librispeech_clean"]),
         "spgi_delta": f2(test["differences"]["Kea-B' K-fp - MB1"]["spgispeech"]["points"]),
-        "x1_max_set_diff": f2(x1_max),
+        "x1_max_set_diff": f"{math.ceil(round(x1_max * 100, 9)) / 100:.2f}",   # an upper bound, rounded up
         "bundle_mb": f"{sizes['bundle_tensor_bytes'] / 1e6:.2f}", "bundle_file_bytes": f"{sizes['bundle_file_bytes']:,}",
         "view_file_bytes": f"{sizes['view_file_bytes']:,}", "view_mb": f"{sizes['view_tensor_bytes'] / 1e6:.1f}",
         "kea_b0_mb": f"{test['sizes_mb']['MB1']:.1f}", "kea_t_mb": f"{test['sizes_mb']['M1']:.1f}",
@@ -268,6 +269,11 @@ def values(*, test: dict, summary: dict, config: dict, results: dict, prov: dict
         "training_table": pv.training_table(prov), "synthetic_parts": pv.synthetic_parts(prov),
         "notice_data": pv.notice_data(prov), "notice_tools": pv.notice_tools(prov),
     }
+
+
+def asset_links(docs: dict[str, str]) -> set[str]:
+    """The asset file names that the documents' Markdown images and links point at (relative assets/ paths)."""
+    return {m for text in docs.values() for m in re.findall(r"\]\(assets/([^)\s]+)\)", text)}
 
 
 def card_checks(card: str, test: dict, prov: dict, repo_id: str, checks: dict, info: dict) -> None:
@@ -424,6 +430,7 @@ def stage(repo_id: str, *, gpu: bool = True) -> tuple[bool, dict, Path]:
             (tmp / rel).write_text(docs[rel])
         checks[FIXED_CHECKS[9]] = not any(kit.unfilled(t) for t in docs.values())
         card_checks(docs["README.md"], test, prov, repo_id, checks, info)
+        checks[FIXED_CHECKS[19]] = asset_links(docs) == set(assets)
 
         listing = kit.listing(tmp)
         checks[FIXED_CHECKS[16]] = sorted(listing) == kit.expected_files(assets)
