@@ -388,13 +388,19 @@ def config_sha256(config: dict) -> str:
 
 
 def _save(path: Path, payload: dict) -> None:
+    """Write tmp, fsync, keep the old file as previous.pt by a hard link, then replace: latest.pt exists at every moment
+    after the first checkpoint, whatever stops the process between the steps."""
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(f"{path.name}.tmp{os.getpid()}")
     torch.save(payload, tmp)
     with open(tmp, "rb") as h:
         os.fsync(h.fileno())
     if path.exists():
-        os.replace(path, path.with_name("previous.pt" if path.name == "latest.pt" else path.name + ".previous"))
+        previous = path.with_name("previous.pt" if path.name == "latest.pt" else path.name + ".previous")
+        link = previous.with_name(f"{previous.name}.tmp{os.getpid()}")
+        link.unlink(missing_ok=True)
+        os.link(path, link)
+        os.replace(link, previous)
     os.replace(tmp, path)
 
 
@@ -419,6 +425,8 @@ class Trainer:
         self.acc = {"n": 0, "loss": 0.0, "norm": 0.0, "seconds": 0.0, "time": 0.0}
         self.stop_reason: str | None = None
         latest = self.run_dir / "ckpt" / "latest.pt"
+        if not latest.exists() and (self.run_dir / "ckpt" / "previous.pt").exists():
+            latest = self.run_dir / "ckpt" / "previous.pt"       # never left so by _save; a lost latest.pt resumes
         cfg_path = self.run_dir / "config.json"
         if cfg_path.exists() and json.loads(cfg_path.read_text()).get("config_sha256") != self.config_sha:
             raise ResumeError(f"{self.run_dir} was made by another configuration")

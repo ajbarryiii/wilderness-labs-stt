@@ -232,6 +232,39 @@ class TestCleanStop(unittest.TestCase):
             self.assertEqual(mf.locked("test", 1.0, work), mf.STOPPED_EXIT)
         self.assertIs(signal.getsignal(signal.SIGTERM), before)
 
+    def test_a_broad_except_does_not_swallow_the_stop(self):
+        import signal
+
+        def work():
+            try:
+                os.kill(os.getpid(), signal.SIGTERM)
+                for _ in range(1000):
+                    pass
+            except Exception:                      # as library load paths do
+                pass
+            raise AssertionError("the stop was swallowed")
+        with mock.patch("score_teacher.gpu_lock") as lock:
+            lock.return_value.__enter__.return_value = None
+            self.assertEqual(mf.locked("test", 1.0, work), mf.STOPPED_EXIT)
+        self.assertFalse(issubclass(mf.Stopped, Exception))
+
+
+class TestStaleTemporaryFiles(unittest.TestCase):
+    def test_only_files_of_dead_writers_are_removed(self):
+        d = TMP / "stale"
+        shutil.rmtree(d, ignore_errors=True)
+        d.mkdir(parents=True)
+        dead = next(p for p in range(4_190_000, 4_000_000, -1) if not mf._alive(p))
+        files = {"00003.bin": "committed", "00003.json": "marker", f"00004.bin.tmp{dead}": "stale",
+                 f"00004.json.tmp{dead}": "stale", f"00005.bin.tmp{os.getpid()}": "own",
+                 f"00006.bin.tmp{os.getppid()}": "alive"}
+        for name in files:
+            (d / name).write_text(name)
+        removed = mf.remove_stale_tmp(d)
+        self.assertEqual(sorted(removed), sorted(n for n, k in files.items() if k == "stale"))
+        self.assertEqual(sorted(p.name for p in d.iterdir()), sorted(n for n, k in files.items() if k != "stale"))
+        self.assertEqual(mf.remove_stale_tmp(TMP / "missing-dir"), [])
+
 
 class TestPerClipCheck(unittest.TestCase):
     def test_batch_dependent_encoder_fails(self):

@@ -18,6 +18,7 @@ import math
 import os
 import random
 import shutil
+from pathlib import Path
 import unittest
 from unittest import mock
 
@@ -211,6 +212,31 @@ class TestTrainer(unittest.TestCase):
         self.assertEqual([e["step"] for e in full.evals], [3, 6, 9, 12])
         self.assertTrue((TMP / "full" / "ckpt" / "step-9.pt").exists())
         self.assertTrue((TMP / "full" / "summary.json").exists())
+
+    def test_an_interrupted_checkpoint_save_keeps_latest(self):
+        t = self.make("save", stop_after=3)
+        self.assertEqual(t.run(), "stopped")
+        latest = TMP / "save" / "ckpt" / "latest.pt"
+        real = mt.os.replace
+
+        def stop_before_latest(src, dst):
+            if Path(dst) == latest:
+                raise mt.mf.Stopped("between the steps")
+            return real(src, dst)
+        t.run_steps(1)
+        with mock.patch.object(mt.os, "replace", side_effect=stop_before_latest):
+            with self.assertRaises(mt.mf.Stopped):
+                t.checkpoint()
+        self.assertTrue(latest.exists())
+        self.assertEqual(self.make("save").step, 3)
+
+    def test_resume_falls_back_to_previous(self):
+        t = self.make("prev", stop_after=2)
+        t.run()
+        t.run_steps(2)
+        t.checkpoint()
+        (TMP / "prev" / "ckpt" / "latest.pt").unlink()
+        self.assertEqual(self.make("prev").step, 2)
 
     def test_learning_rate_of_every_step_is_the_schedule(self):
         t = self.make("lr")

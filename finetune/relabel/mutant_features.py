@@ -55,6 +55,7 @@ import contextlib
 import hashlib
 import json
 import os
+import re
 import resource
 import signal
 import sys
@@ -89,9 +90,10 @@ CHECKS_FAILED_EXIT = 5
 STOPPED_EXIT = 76
 
 
-class Stopped(Exception):
+class Stopped(BaseException):
     """SIGTERM or SIGINT, raised in the main thread so the process exits normally (CUDA synchronized, never killed
-    mid-kernel: under MPS a client killed by a signal can fault the other clients on the GPU)."""
+    mid-kernel: under MPS a client killed by a signal can fault the other clients on the GPU). A BaseException, as
+    KeyboardInterrupt is, so no `except Exception` on the way (ours, NeMo's, transformers') swallows it."""
 
 
 def _raise_stopped(signum, frame):
@@ -635,6 +637,32 @@ def token_frame_stats(lay: md.Layout, arm: str, data: md.Data) -> dict:
     return out
 
 
+_TMP = re.compile(r"\.tmp(\d+)$")
+
+
+def _alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def remove_stale_tmp(directory: Path) -> list[str]:
+    """Delete the *.tmp<pid> files that earlier interrupted writers left in `directory` (their pid no longer runs);
+    a running writer's file and every committed file are kept."""
+    removed = []
+    if Path(directory).is_dir():
+        for f in sorted(Path(directory).iterdir()):
+            m = _TMP.search(f.name)
+            if m and int(m.group(1)) != os.getpid() and not _alive(int(m.group(1))):
+                f.unlink(missing_ok=True)
+                removed.append(f.name)
+    return removed
+
+
 def extract(lay: md.Layout, enc: ArmEncoder, pools: list[int] | None = None, workers: int = 6,
             budget_minutes: float | None = None) -> list[dict]:
     """Precompute (and commit per pool) the arm's features of every pool's clips; committed pools are skipped."""
@@ -642,6 +670,11 @@ def extract(lay: md.Layout, enc: ArmEncoder, pools: list[int] | None = None, wor
     data = md.Data.load(lay)
     identity = store_identity(enc, data)
     arm_dir = lay.features / enc.arm
+    for kind in ("pools", "heldout"):
+        stale = remove_stale_tmp(arm_dir / kind)
+        if stale:
+            print(f"extract {enc.arm}: removed stale temporary files of interrupted runs in {kind}/: {stale}",
+                  flush=True)
     done, t0 = [], time.time()
     for p in (range(data.plan.n_pools) if pools is None else pools):
         ids = data.pool_ids(p)
