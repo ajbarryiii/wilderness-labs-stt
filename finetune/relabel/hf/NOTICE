@@ -1,0 +1,52 @@
+kea-b-0.1
+
+Model weights and documents (bundle.safetensors, manifest.json, tokenizer/,
+compat/, README.md, EVALUATION.md, TRAINING.md, assets/): CC-BY-4.0, see
+LICENSE. Software (load_kea_b.py): MIT License, copyright and permission notice
+at the top of that file.
+
+This model is a modified version of {{base_id}}
+(https://huggingface.co/{{base_id}}, revision
+{{base_revision}}), (c) NVIDIA, licensed CC-BY-4.0
+(https://creativecommons.org/licenses/by/4.0/). The modified model is
+distributed under the same license; see LICENSE. No endorsement by NVIDIA is
+implied.
+
+Lineage: {{base_id}} -> kea-t (https://huggingface.co/{{kea_t}},
+ternary encoder) -> kea-b 0.0 (https://huggingface.co/{{kea_b0}}, 1-bit
+encoder) -> this model, which continues kea-b 0.0's training.
+
+Changes made to the original model:
+- The 264 encoder matrices of the 24 encoder layers (feed_forward1/2.linear1/2,
+  self-attention linear_q, linear_k, linear_v, linear_out, linear_pos, and
+  conv.pointwise_conv1/2) were retrained as binary weights {-1, +1} with one
+  scale per output row, with quantization-aware and activation-aware training
+  (per-frame INT8 activations), distilling from a fine-tuned copy of the
+  original model (B0', not released). The codes are stored at one bit per
+  weight; the row scales in FP16.
+- The prediction network and the joint network were replaced by B0''s and
+  stored in INT8 with one FP32 scale per output row; the encoder's
+  pre_encode.out was retrained through its INT8 weights and is stored the same
+  way.
+- All other tensors are stored in FP16, except the feature-extraction window
+  and mel filterbank (FP32) and integer BatchNorm counters.
+- The weights are distributed as safetensors with manifests and a standalone
+  loader (load_kea_b.py) instead of a .nemo archive; compat/ holds the same
+  weights in kea-b 0.0's format. The tokenizer files and the model
+  configuration are unchanged copies from the original .nemo archive.
+
+Training data (audio). Training targets: for the recorded corpora, transcripts
+produced by the label teacher below (the single-distant-microphone AMI audio
+took the label of its headset recording); for Common Voice, its read sentences;
+for the synthetic speech, the generated sentences it was synthesized from.
+The recorded corpora's and Common Voice's targets went through the label-cleaning
+pass described in TRAINING.md.
+Other human transcripts were used only for filtering.
+{{notice_data}}
+
+Models and tools used to make the training targets and data:
+{{notice_tools}}
+
+Training and evaluation code:
+{{github}}/tree/main/finetune/relabel,
+MIT License, Copyright (c) 2026 ajbarryiii.
