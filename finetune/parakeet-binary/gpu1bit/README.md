@@ -6,7 +6,7 @@ machine it was developed on. It depends on files and paths that exist only there
 limits" below. To run the models elsewhere, use the standalone loaders published with them.
 
 `gpu1bit` runs the binary-weight Parakeet MB1 (published as
-[rajb3/kea-b](https://huggingface.co/rajb3/kea-b)) on the RTX 5090 straight from its 1-bit export:
+[wildernesslabs/kea-b](https://huggingface.co/wildernesslabs/kea-b)) on the RTX 5090 straight from its 1-bit export:
 - the 264 quantized layers stay resident at 1 bit per weight (75,497,472 B of codes);
 - the projections run on custom INT8 tensor-core kernels (`int8_mma`) that expand the ±1 weights in
   registers;
@@ -16,7 +16,7 @@ limits" below. To run the models elsewhere, use the standalone loaders published
 Activations are split into **two INT8 parts (x2) by default**. Before 2026-10-22 they were split into
 three (x3). On full dev, x2 recognises like x3 and uses less energy.
 
-The ternary sibling M1 ([rajb3/kea-t](https://huggingface.co/rajb3/kea-t)) has the same x2 default.
+The ternary sibling M1 ([wildernesslabs/kea-t](https://huggingface.co/wildernesslabs/kea-t)) has the same x2 default.
 It runs through `gpu1bit.runtime_m1` on its own expanded runtime.
 
 Plans: [../plans/gpu-kernel.md](../plans/gpu-kernel.md) and
@@ -75,8 +75,8 @@ The recorded runs loaded the exports from the development machine's run director
 
 The published repositories hold the same export files plus their model cards and loaders.
 
-**The export checks accept the downloaded layouts** (`hf download rajb3/kea-b`, `hf download
-rajb3/kea-t`). This was checked on the CPU, with copies of the export files plus the extra files of
+**The export checks accept the downloaded layouts** (`hf download wildernesslabs/kea-b`, `hf download
+wildernesslabs/kea-t`). This was checked on the CPU, with copies of the export files plus the extra files of
 each repository:
 - the manifest's format;
 - the SHA-256 of every file the manifest lists;

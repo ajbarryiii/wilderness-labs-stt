@@ -6,8 +6,8 @@ Low-bit, low-power speech-to-text. This repository contains:
 - a custom CUDA runtime for it whose expanded mode, on an RTX 5090, has lower
   latency, process VRAM and GPU energy than our own optimized BF16 build of the
   original for the clips we measured;
-- a binary-weight (1-bit) version of that Parakeet, 105.3 MB, about 0.6 WER
-  points behind the original;
+- a binary-weight (1-bit) version of that Parakeet: Kea-B 0.1 is 91.3 MB and
+  0.33 WER points behind NVIDIA's published numbers;
 - a ternary Whisper tiny.en;
 - packed binary/ternary CPU and GPU kernels.
 
@@ -58,9 +58,10 @@ bundle and is excluded from the mean.
 | FP32 original (our scoring) | 1.70 | 3.19 | 11.15 | 11.24 | 9.78 | 2.14 | 5.94 | 6.45 | 2,472 MB |
 | Ternary, no training | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 180.8 MB |
 | **Ternary, QAT** | **2.05** | **4.20** | **10.42** | **11.72** | **10.35** | **2.94** | **6.19** | **6.84** | **180.8 MB** |
-| Binary, QAT (Kea-B) | 2.20 | 4.56 | 10.65 | 12.17 | 10.46 | 3.01 | 6.30 | 7.05 | 105.3 MB |
+| Binary, QAT (Kea-B 0.0) | 2.20 | 4.56 | 10.65 | 12.17 | 10.46 | 3.01 | 6.30 | 7.05 | 105.3 MB |
+| **Binary, QAT, new teacher (Kea-B 0.1)** | **2.07** | **4.32** | **9.89** | **10.86** | **10.29** | 3.67 | 6.29 | **6.77** | **91.3 MB** |
 
-Model: [rajb3/kea-t](https://huggingface.co/rajb3/kea-t)
+Model: [wildernesslabs/kea-t](https://huggingface.co/wildernesslabs/kea-t)
 (CC-BY-4.0). Its standalone loader needs `nemo_toolkit[asr]` and rebuilds dense
 FP32 weights. The CUDA runtime, its benchmark and its tests are in
 [`finetune/parakeet-ternary/inference/`](finetune/parakeet-ternary/inference/)
@@ -70,13 +71,20 @@ number: [`finetune/parakeet-ternary/`](finetune/parakeet-ternary/), results in
 Common Voice, outside the leaderboard mean and the training mixture, shows the
 largest gap (12.56% against 8.50%).
 
-The binary sibling, [rajb3/kea-b](https://huggingface.co/rajb3/kea-b)
+The binary sibling, [wildernesslabs/kea-b](https://huggingface.co/wildernesslabs/kea-b)
 (CC-BY-4.0), is trained from the ternary model with the same 264 modules
 constrained to {-1, +1}. It averages **7.05% from a 105.3 MB file**, against
 6.84% for Kea-T and 6.45% for the original, and its loader works the same way.
 Training, export and test scoring:
 [`finetune/parakeet-binary/`](finetune/parakeet-binary/), results in
 [`finetune/parakeet-binary/results/TEST.md`](finetune/parakeet-binary/results/TEST.md).
+
+**Kea-B 0.1 (November 2026),** [wildernesslabs/kea-b-0.1](https://huggingface.co/wildernesslabs/kea-b-0.1)
+(CC-BY-4.0), continues Kea-B 0.0's training with labels from a stronger teacher, activation-aware training for the
+INT8 × 1-bit GPU kernels, an INT8 decoder, and far-field meeting, Common Voice and technical speech. It averages
+**6.77% from a 91.3 MB bundle**: smaller than Kea-B 0.0 and Kea-T, and more accurate than both. SPGISpeech is the
+exception (3.67% against 3.01%). Training, staging and test scoring:
+[`finetune/relabel/`](finetune/relabel/), release kit in [`finetune/relabel/hf/`](finetune/relabel/hf/).
 
 **Earlier result (September 2026):** Whisper tiny.en with every attention and
 feed-forward projection *and* the token embedding constrained to three values
